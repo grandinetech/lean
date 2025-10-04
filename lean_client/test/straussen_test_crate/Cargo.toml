@@ -1,0 +1,10 @@
+[package]
+name = "straussen_test_crate"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+[dev-dependencies]
+
+[workspace]
