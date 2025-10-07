@@ -19,5 +19,5 @@ pub struct TestCase<T> {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TestVector<T> {
     pub test_cases: Vec<TestCase<T>>,
-    pub config: ContainerConfig,
+    pub config: Config,
 }

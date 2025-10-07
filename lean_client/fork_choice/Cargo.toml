@@ -1,6 +1,13 @@
 [package]
-name = "fork_choice"
+name = "fork-choice"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
+containers = { path = "../containers" }
+ssz = { git = "https://github.com/grandinetech/grandine", package = "ssz", branch = "develop"}
+ssz_derive = { git = "https://github.com/grandinetech/grandine", package = "ssz_derive", branch = "develop" }
+typenum = "1.17.0"
+
+[dev-dependencies]
+ssz_rs = "0.9"

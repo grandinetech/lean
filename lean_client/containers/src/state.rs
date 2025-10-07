@@ -1,4 +1,4 @@
-use crate::{Bytes32, Checkpoint, ContainerConfig, Slot, Uint64, ValidatorIndex, block::{Block, BlockBody, BlockHeader, SignedBlock, hash_tree_root}, SignedVote};
+use crate::{Bytes32, Checkpoint, Config, Slot, Uint64, ValidatorIndex, block::{Block, BlockBody, BlockHeader, SignedBlock, hash_tree_root}, SignedVote};
 use ssz::PersistentList as List;
 use ssz_derive::Ssz;
 use serde::{Deserialize, Serialize};
@@ -11,7 +11,7 @@ pub const JUSTIFICATIONS_VALIDATORS_MAX: usize = VALIDATOR_REGISTRY_LIMIT * JUST
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
 pub struct State {
     // --- configuration (spec-local) ---
-    pub config: ContainerConfig,
+    pub config: Config ,
 
     // --- slot / header tracking ---
     pub slot: Slot,
@@ -50,7 +50,7 @@ impl State {
             body_root: hash_tree_root(&body_for_root),
         };
         Self {
-            config: ContainerConfig { genesis_time: genesis_time.0, num_validators: num_validators.0 },
+            config: Config { genesis_time: genesis_time.0, num_validators: num_validators.0 },
             slot: Slot(0),
             latest_block_header: header,
             latest_justified: Checkpoint { root: Bytes32(ssz::H256::zero()), slot: Slot(0) },

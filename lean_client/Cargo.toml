@@ -1,5 +1,5 @@
 [workspace]
-members = ["chain", "containers"]
+members = ["chain", "containers", "fork_choice"]
 resolver = "2"
 
 [package]
