@@ -1,6 +1,39 @@
 [workspace]
-members = ["chain", "containers"]
+members = [
+    "chain",
+    "containers",
+    "fork_choice",
+    "lean_tests",
+    "networking",
+    "validator"
+]
 resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+authors = ["TODO"]
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+alloy-consensus = "0.1.0"
+alloy-primitives = "0.1.0"
+anyhow = "1.0"
+paste = "1.0.15"
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+snap = "1.1"
+ssz = { git = "https://github.com/grandinetech/grandine", package = "ssz", branch = "develop" }
+ssz-derive = { git = "https://github.com/grandinetech/grandine", package = "ssz_derive", branch = "develop" }
+ssz-types = "0.3.0"
+tokio = { version = "1.0", features = ["full"] }
+tree-hash = "0.4.0"
+typenum = "1.19"
+
+[workspace.dev-dependencies]
+rstest = "0.18.2"
+pretty_assertions = "1.4.0"
+serde_json = "1.0.107"
 
 [package]
 name = "lean_client"
@@ -8,3 +41,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+chain = { path = "./chain" }
+containers = { path = "./containers" }
+fork_choice = { path = "./fork_choice" }
+lean_tests = { path = "./lean_tests" }
+networking = { path = "./networking" }
+validator = { path = "./validator" }

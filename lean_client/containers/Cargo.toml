@@ -8,11 +8,12 @@ name = "containers"
 path = "src/lib.rs"
 
 [dependencies]
-ssz = { git = "https://github.com/grandinetech/grandine", package = "ssz", branch = "develop", submodules = false }
+ssz = { git = "https://github.com/grandinetech/grandine", package = "ssz", branch = "develop", submodules = true }
 ssz_derive = { git = "https://github.com/grandinetech/grandine", package = "ssz_derive", branch = "develop", submodules = false }
 typenum = "1"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
+hex = "0.4.3"
 
 [dev-dependencies]
 rstest = "0.18"

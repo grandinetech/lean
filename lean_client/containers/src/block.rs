@@ -35,8 +35,9 @@ pub struct SignedBlock {
     pub signature: Bytes32,
 }
 
-// Helper function to compute hash tree root
-pub fn hash_tree_root<T: SszHash>(value: &T) -> Bytes32 {
+/// Compute the SSZ hash tree root for any type implementing `SszHash`.
+pub fn hash_tree_root<T: ssz::SszHash>(value: &T) -> Bytes32 {
     let h = value.hash_tree_root();
     Bytes32(h)
 }
+
