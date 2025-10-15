@@ -4,3 +4,12 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+containers = { path = "../containers" }
+chain = { path = "../chain" }
+ssz = { git = "https://github.com/grandinetech/grandine", package = "ssz", branch = "develop", submodules = false }
+ssz_derive = { git = "https://github.com/grandinetech/grandine", package = "ssz_derive", branch = "develop", submodules = false }
+serde = { version = "1.0", features = ["derive"] }
+typenum = "1"
+
+[dev-dependencies]
+pretty_assertions = "1.4"

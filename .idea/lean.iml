@@ -13,6 +13,7 @@
       <sourceFolder url="file://$MODULE_DIR$/lean_client/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/lean_client/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/lean_client/validator/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/lean_client/fork_choice/tests" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/lean_client/target" />
     </content>
     <orderEntry type="inheritedJdk" />
