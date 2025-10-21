@@ -3,7 +3,6 @@ members = [
     "chain",
     "containers",
     "fork_choice",
-    "lean_tests",
     "networking",
     "validator"
 ]
@@ -44,6 +43,5 @@ edition = "2021"
 chain = { path = "./chain" }
 containers = { path = "./containers" }
 fork_choice = { path = "./fork_choice" }
-lean_tests = { path = "./lean_tests" }
 networking = { path = "./networking" }
 validator = { path = "./validator" }
