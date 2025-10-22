@@ -3,8 +3,7 @@ Implemented based on the [forkchoice.md](https://github.com/leanEthereum/leanSpe
 
 Tests taken from the [testing part of the repository](https://github.com/leanEthereum/leanSpec/tree/main/tests/lean_spec/subspecs/forkchoice).
 
-
-# About our implementation fork-choice
+# Implementation
 
 ## Helpers
 
@@ -34,4 +33,3 @@ Tests taken from the [testing part of the repository](https://github.com/leanEth
 `on_attestation`
 
 `on_block`
-

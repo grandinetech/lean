@@ -6,6 +6,7 @@ use containers::{
 };
 
 pub type Interval = u64;
+pub const SLOTS_PER_EPOCH: u64 = 32;
 pub const INTERVALS_PER_SLOT: Interval = 8;
 pub const SECONDS_PER_SLOT: u64 = 12;
 
@@ -45,11 +46,12 @@ pub fn get_forkchoice_store(
     }
 }
 
+// LMD-Ghost
 pub fn get_fork_choice_head(
     store: &Store,
     root: Root,
-    votes: &HashMap<ValidatorIndex, Checkpoint>,
-    min_score: usize,
+    latest_votes: &HashMap<ValidatorIndex, Checkpoint>,
+    min_votes: usize,
 ) -> Root {
     let mut root = root;
     if root.0.is_zero() {
@@ -63,7 +65,7 @@ pub fn get_fork_choice_head(
     let mut vote_weights: HashMap<Root, usize> = HashMap::new();
     let root_slot = store.blocks[&root].message.slot;
 
-    for v in votes.values() {
+    for v in latest_votes.values() {
         if store.blocks.contains_key(&v.root) {
             let mut curr = v.root;
             while store.blocks[&curr].message.slot > root_slot {
@@ -79,7 +81,7 @@ pub fn get_fork_choice_head(
     let mut child_map: HashMap<Root, Vec<Root>> = HashMap::new();
     for (block_hash, block) in &store.blocks {
         if !block.message.parent_root.0.is_zero() {
-            if vote_weights.get(block_hash).copied().unwrap_or(0) >= min_score {
+            if vote_weights.get(block_hash).copied().unwrap_or(0) >= min_votes {
                 child_map
                     .entry(block.message.parent_root)
                     .or_default()
