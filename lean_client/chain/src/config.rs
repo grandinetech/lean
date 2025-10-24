@@ -1,8 +1,3 @@
-/// Core consensus parameters and chain presets
-/// for the Lean Consensus Experimental Chain.
-
-/// A value in basis points (1/10000).
-/// Valid range: 0 <= value <= 10000
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BasisPoint(pub u64);
 

@@ -3,7 +3,7 @@ use ssz_derive::Ssz;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use std::fmt;
-use hex::FromHex; // for decoding hex
+use hex::FromHex;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Ssz, Default, Serialize, Deserialize)]
 #[ssz(transparent)]
@@ -23,9 +23,8 @@ impl FromStr for Bytes32 {
     type Err = hex::FromHexError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // decode the hex string into 32-byte array
         let bytes: [u8; 32] = <[u8; 32]>::from_hex(s)?;
-        Ok(Bytes32(H256::from(bytes))) // wrap in H256, then Bytes32
+        Ok(Bytes32(H256::from(bytes)))
     }
 }
 

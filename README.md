@@ -3,4 +3,4 @@ Block Chain technology university course
 
 Initial 2
 
-test vectors run by going into lean_tests and executing >make test
+tests run by executing in lean_client folder following command:  cargo test --workspace

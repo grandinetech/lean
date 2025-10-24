@@ -3,7 +3,6 @@ members = [
     "chain",
     "containers",
     "fork_choice",
-    "lean_tests",
     "networking",
     "validator"
 ]
@@ -58,3 +57,10 @@ serde_json = "1.0.107"
 name = "lean_client"
 version = "0.1.0"
 edition = "2021"
+
+[dependencies]
+chain = { path = "./chain" }
+containers = { path = "./containers" }
+fork_choice = { path = "./fork_choice" }
+networking = { path = "./networking" }
+validator = { path = "./validator" }

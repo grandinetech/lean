@@ -27,13 +27,13 @@ pub struct State {
     pub historical_block_hashes: Vec<Bytes32>,
 
     // --- flattened justification tracking ---
+    // Flattened votes vector. Not all fields are required from grandine ssz
     #[ssz(skip)]
     #[serde(skip)]
     pub justified_slots: Vec<bool>,
     #[ssz(skip)]
     #[serde(skip)]
     pub justifications_roots: Vec<Bytes32>,
-    // Flattened votes vector. Enforced by logic/tests to not exceed limits.
     #[ssz(skip)]
     #[serde(skip)]
     pub justifications_validators: Vec<bool>,
@@ -70,13 +70,13 @@ impl State {
     pub fn get_justifications(&self) -> BTreeMap<Bytes32, Vec<bool>> {
         // Chunk validator votes per root using the fixed registry limit
         let limit = VALIDATOR_REGISTRY_LIMIT;
-    self.justifications_roots
+        self.justifications_roots
             .iter()
             .enumerate()
             .map(|(i, root)| {
                 let start = i * limit;
                 let end = start + limit;
-        (*root, self.justifications_validators[start..end].to_vec())
+                (*root, self.justifications_validators[start..end].to_vec())
             })
             .collect()
     }
@@ -94,13 +94,13 @@ impl State {
             flat.extend_from_slice(&v);
         }
 
-    self.justifications_roots = roots;
-    self.justifications_validators = flat;
+        self.justifications_roots = roots;
+        self.justifications_validators = flat;
         self
     }
 
     pub fn with_historical_hashes(mut self, hashes: Vec<Bytes32>) -> Self {
-    self.historical_block_hashes = hashes;
+        self.historical_block_hashes = hashes;
         self
     }
 
@@ -111,8 +111,8 @@ impl State {
         let mut state = self.process_slots(block.slot);
         state = state.process_block(&block);
 
-    let state_for_hash = state.clone();
-    let state_root = hash_tree_root(&state_for_hash);
+        let state_for_hash = state.clone();
+        let state_root = hash_tree_root(&state_for_hash);
         assert!(block.state_root == state_root, "Invalid block state root");
 
         state
@@ -158,14 +158,14 @@ impl State {
         if !self.is_proposer(block.proposer_index) { std::panic::panic_any(String::from("Incorrect block proposer")); }
 
         // Create a mutable clone for hash computation
-    let latest_header_for_hash = self.latest_block_header.clone();
-    let parent_root = hash_tree_root(&latest_header_for_hash);
-    if block.parent_root != parent_root { std::panic::panic_any(String::from("Block parent root mismatch")); }
+        let latest_header_for_hash = self.latest_block_header.clone();
+        let parent_root = hash_tree_root(&latest_header_for_hash);
+        if block.parent_root != parent_root { std::panic::panic_any(String::from("Block parent root mismatch")); }
 
-    let mut new_historical_hashes = self.historical_block_hashes.clone();
+        let mut new_historical_hashes = self.historical_block_hashes.clone();
         new_historical_hashes.push(parent_root);
 
-    let mut new_justified_slots = self.justified_slots.clone();
+        let mut new_justified_slots = self.justified_slots.clone();
         new_justified_slots.push(self.latest_block_header.slot == Slot(0));
 
         let num_empty_slots = (block.slot.0 - self.latest_block_header.slot.0 - 1) as usize;
@@ -174,8 +174,8 @@ impl State {
             new_justified_slots.extend(vec![false; num_empty_slots]);
         }
 
-    let body_for_hash = block.body.clone();
-    let body_root = hash_tree_root(&body_for_hash);
+        let body_for_hash = block.body.clone();
+        let body_root = hash_tree_root(&body_for_hash);
 
         let new_latest_block_header = BlockHeader {
             slot: block.slot,
@@ -307,7 +307,7 @@ impl State {
 
         new_state.latest_justified = latest_justified;
         new_state.latest_finalized = latest_finalized;
-    new_state.justified_slots = justified_slots;
+        new_state.justified_slots = justified_slots;
 
         new_state
     }
@@ -353,7 +353,7 @@ mod tests {
         let new_state = genesis_state.process_slots(target_slot);
 
         assert_eq!(new_state.slot, target_slot);
-    let genesis_state_for_hash = genesis_state.clone(); //this is sooooo bad
+    let genesis_state_for_hash = genesis_state.clone();
     assert_eq!(new_state.latest_block_header.state_root, hash_tree_root(&genesis_state_for_hash));
     }
 
