@@ -1,26 +1,23 @@
 use std::{
     collections::HashMap,
-    convert::TryInto,
-    fs,
     net::IpAddr,
     num::{NonZeroU8, NonZeroUsize},
     path::PathBuf,
     sync::Arc,
 };
 
-use alloy_primitives::hex;
 use anyhow::{Result, anyhow};
 use containers::ssz::SszWrite;
 use futures::StreamExt;
 use libp2p::{
     Multiaddr, SwarmBuilder,
     connection_limits::{self, ConnectionLimits},
-    gossipsub::{Event as GossipsubEvent, IdentTopic, MessageAuthenticity},
+    gossipsub::{Event, IdentTopic, MessageAuthenticity},
     identify,
     multiaddr::Protocol,
     swarm::{Config, Swarm, SwarmEvent},
 };
-use libp2p_identity::{Keypair, PeerId, secp256k1};
+use libp2p_identity::{Keypair, PeerId};
 use parking_lot::Mutex;
 use tokio::select;
 use tracing::{info, warn};
@@ -41,7 +38,6 @@ pub struct NetworkServiceConfig {
     pub gossipsub_config: GossipsubConfig,
     pub socket_address: IpAddr,
     pub socket_port: u16,
-    pub request_response_protocols: Vec<String>,
 }
 
 impl NetworkServiceConfig {
@@ -54,12 +50,7 @@ impl NetworkServiceConfig {
             gossipsub_config,
             socket_address,
             socket_port,
-            request_response_protocols: Vec::new(),
         }
-    }
-
-    pub fn add_request_response_protocol<S: Into<String>>(&mut self, protocol: S) {
-        self.request_response_protocols.push(protocol.into());
     }
 }
 
@@ -185,8 +176,8 @@ where
         }
     }
 
-    async fn handle_gossipsub_event(&mut self, event: GossipsubEvent) -> Option<NetworkEvent> {
-        if let GossipsubEvent::Message { message, .. } = event {
+    async fn handle_gossipsub_event(&mut self, event: Event) -> Option<NetworkEvent> {
+        if let Event::Message { message, .. } = event {
             match GossipsubMessage::decode(&message.topic, &message.data) {
                 Ok(GossipsubMessage::Block(signed_block)) => {
                     info!("block");
@@ -302,13 +293,7 @@ where
         )
             .map_err(|err| anyhow!("Failed to create gossipsub behaviour: {err:?}"))?;
 
-        let req_resp = req_resp::build(
-            if cfg.request_response_protocols.is_empty() {
-                vec!["/lean/req/1".to_string()]
-            } else {
-                cfg.request_response_protocols.clone()
-            }
-        );
+        let req_resp = req_resp::build(vec!["/lean/req/1".to_string()]);
 
         let connection_limits = connection_limits::Behaviour::new(
             ConnectionLimits::default()
