@@ -8,6 +8,7 @@ impl TestRunner {
     pub fn run_sequential_block_processing_tests<P: AsRef<Path>>(path: P) -> Result<(), Box<dyn std::error::Error>> {
         let json_content = fs::read_to_string(path)?;
         
+        // Parse the wrapper structure first
         let wrapper: serde_json::Value = serde_json::from_str(&json_content)?;
         let test_case: TestCase<State> = serde_json::from_value(wrapper["test_case"].clone())?;
 

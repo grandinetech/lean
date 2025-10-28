@@ -3,6 +3,7 @@
         "network": "Devnet",
         "pre": {
             "config": {
+                "num_validators": 4,
                 "genesis_time": 0
             },
             "slot": 0,
@@ -21,68 +22,65 @@
                 "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
                 "slot": 0
             },
-            "historical_block_hashes": {
-                "data": []
-            },
-            "justified_slots": {
-                "data": []
-            },
-            "validators": {
-                "data": [
-                    {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-                    },
-                    {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-                    },
-                    {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-                    },
-                    {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-                    }
-                ]
-            },
-            "justifications_roots": {
-                "data": []
-            },
-            "justifications_validators": {
-                "data": []
-            }
+            "historical_block_hashes": [
+                
+            ],
+            "justified_slots": [
+                
+            ],
+            "validators": [
+                {
+                    "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                },
+                {
+                    "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                },
+                {
+                    "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                },
+                {
+                    "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                }
+            ],
+            "justifications_roots": [],
+            "justifications_validators": []
         },
         "blocks": [
             {
-                "slot": 1,
-                "proposer_index": 1,
-                "parent_root": "0xc0d44f989da630e63b222085a226fea923e2cc5321ba4c4aa4978b528949827e",
-                "state_root": "0x57c159521023a7181e36310c0e30f3fa4b49449df06fbb40023ae6db29b9d200",
-                "body": {
-                    "attestations": {
-                        "data": []
+                "message": {
+                    "slot": 1,
+                    "proposer_index": 1,
+                    "parent_root": "0xc0d44f989da630e63b222085a226fea923e2cc5321ba4c4aa4978b528949827e",
+                    "state_root": "0x57c159521023a7181e36310c0e30f3fa4b49449df06fbb40023ae6db29b9d200",
+                    "body": {
+                        "attestations":  []
                     }
-                }
+                },
+                "signature": "0x0000000000000000000000000000000000000000000000000000000000000000"
             },
             {
-                "slot": 2,
-                "proposer_index": 2,
-                "parent_root": "0xad26b6bd334c3210c3776ae2cb5ca6f27c89fdd7d1f9e9e08324f4c584b87134",
-                "state_root": "0xb229cd5597a4c28c8895b60113d6a6b86602d19aa364f1bdeb6ecd5f51ae0756",
-                "body": {
-                    "attestations": {
-                        "data": []
+                "message": {
+                    "slot": 2,
+                    "proposer_index": 2,
+                    "parent_root": "0xad26b6bd334c3210c3776ae2cb5ca6f27c89fdd7d1f9e9e08324f4c584b87134",
+                    "state_root": "0xb229cd5597a4c28c8895b60113d6a6b86602d19aa364f1bdeb6ecd5f51ae0756",
+                    "body": {
+                        "attestations": []
                     }
-                }
+                },
+                "signature": "0x0000000000000000000000000000000000000000000000000000000000000000"
             },
             {
-                "slot": 3,
-                "proposer_index": 3,
-                "parent_root": "0x60097245852f36359a7246aed4600ebbaf98fd62dc101cdc4a12f9089d858f05",
-                "state_root": "0xa657eb75b0473cac0f4ae137861e9aedd9cdf80b16cade35deb10d61482b8244",
-                "body": {
-                    "attestations": {
-                        "data": []
+                "message": {
+                    "slot": 3,
+                    "proposer_index": 3,
+                    "parent_root": "0x60097245852f36359a7246aed4600ebbaf98fd62dc101cdc4a12f9089d858f05",
+                    "state_root": "0xa657eb75b0473cac0f4ae137861e9aedd9cdf80b16cade35deb10d61482b8244",
+                    "body": {
+                        "attestations": []
                     }
-                }
+                },
+                "signature": "0x0000000000000000000000000000000000000000000000000000000000000000"
             }
         ],
         "post": {
@@ -92,9 +90,9 @@
         "_info": {
             "hash": "0x770ab19dc1aebaf11a7b98f58a45274c23aa6cbbd2ec0bac6f1c34a54214147c",
             "comment": "`leanSpec` generated test",
-            "test-id": "tests/consensus/devnet/stf_examples/test_blocks.py::test_sequential_blocks[fork_Devnet]",
+            "test_id": "tests/consensus/devnet/stf_examples/test_blocks.py::test_sequential_blocks[fork_Devnet]",
             "description": "Test processing a sequence of blocks in consecutive slots. Uses default pre-state.",
-            "fixture-format": "state_transition_test"
+            "fixture_format": "state_transition_test"
         }
     }
 }
