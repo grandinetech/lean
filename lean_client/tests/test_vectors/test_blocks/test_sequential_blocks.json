@@ -1,5 +1,5 @@
 {
-    "tests/consensus/devnet/stf_examples/test_blocks.py::test_sequential_blocks[fork_Devnet][fork_devnet-state_transition_test]": {
+    "test_case": {
         "network": "Devnet",
         "pre": {
             "config": {
