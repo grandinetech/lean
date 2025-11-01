@@ -178,15 +178,7 @@ where
 
     async fn handle_gossipsub_event(&mut self, event: Event) -> Option<NetworkEvent> {
         if let Event::Message { message, .. } = event {
-            match GossipsubMessage::decode(&message.topic, &message.data) {
-                Ok(GossipsubMessage::Block(signed_block)) => {
-                    info!("block");
-                }
-                Ok(GossipsubMessage::Vote(signed_vote)) => {
-                    info!("vote");
-                }
-                Err(err) => warn!(%err, "gossip decode failed"),
-            }
+            info!("Received gossipsub message");
         }
         None
     }
