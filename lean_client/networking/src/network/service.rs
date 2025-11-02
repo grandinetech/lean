@@ -23,7 +23,7 @@ use tokio::select;
 use tracing::{info, warn};
 
 use crate::{
-    bootnodes::BootnodeSource,
+    bootnodes::{BootnodeSource, StaticBootnodes},
     compressor::Compressor,
     gossipsub::{self, config::GossipsubConfig, message::GossipsubMessage, topic::GossipsubKind},
     network::behaviour::{LeanNetworkBehaviour, LeanNetworkBehaviourEvent},
@@ -38,6 +38,7 @@ pub struct NetworkServiceConfig {
     pub gossipsub_config: GossipsubConfig,
     pub socket_address: IpAddr,
     pub socket_port: u16,
+    bootnodes: StaticBootnodes,
 }
 
 impl NetworkServiceConfig {
@@ -45,11 +46,20 @@ impl NetworkServiceConfig {
         gossipsub_config: GossipsubConfig,
         socket_address: IpAddr,
         socket_port: u16,
+        bootnodes: Vec<String>,
     ) -> Self {
+        let bootnodes = StaticBootnodes::new(
+            bootnodes
+                .iter()
+                .filter_map(|addr_str| addr_str.parse().ok())
+                .collect::<Vec<Multiaddr>>(),
+        );
+
         NetworkServiceConfig {
             gossipsub_config,
             socket_address,
             socket_port,
+            bootnodes,
         }
     }
 }
@@ -112,11 +122,9 @@ where
         Ok(service)
     }
 
-    pub async fn start<B>(&mut self, bootnodes: B) -> Result<()>
-    where
-        B: BootnodeSource,
+    pub async fn start(&mut self) -> Result<()>
     {
-        self.connect_to_peers(bootnodes.to_multiaddrs()).await;
+        self.connect_to_peers(self.network_config.bootnodes.to_multiaddrs()).await;
         loop {
             select! {
                 request = self.outbound_p2p_requests.recv() => {
@@ -143,6 +151,13 @@ where
             }
             SwarmEvent::Behaviour(LeanNetworkBehaviourEvent::ReqResp(event)) => {
                 self.handle_request_response_event(event)
+            }
+            SwarmEvent::Behaviour(LeanNetworkBehaviourEvent::Identify(event)) => {
+                self.handle_identify_event(event)
+            }
+            SwarmEvent::Behaviour(_) => {
+                // ConnectionLimits behaviour has no events
+                None
             }
             SwarmEvent::ConnectionEstablished { peer_id, .. } => {
                 self.peer_table
@@ -172,7 +187,28 @@ where
                 warn!(?peer_id, ?error, "Failed to connect to peer");
                 None
             }
-            _ => None,
+            SwarmEvent::NewListenAddr { listener_id, address } => {
+                info!(?listener_id, ?address, "New listen address");
+                None
+            }
+            SwarmEvent::NewExternalAddrCandidate { address } => {
+                info!(?address, "New external address candidate");
+                // Optionally confirm it as an external address so other peers can reach us
+                self.swarm.add_external_address(address);
+                None
+            }
+            SwarmEvent::ExternalAddrConfirmed { address } => {
+                info!(?address, "External address confirmed");
+                None
+            }
+            SwarmEvent::ExternalAddrExpired { address } => {
+                info!(?address, "External address expired");
+                None
+            }
+            _ => {
+                info!(?event, "Unhandled swarm event");
+                None
+            },
         }
     }
 
@@ -196,6 +232,37 @@ where
         _event: ReqRespMessage,
     ) -> Option<NetworkEvent> {
         None
+    }
+
+    fn handle_identify_event(
+        &mut self,
+        event: identify::Event,
+    ) -> Option<NetworkEvent> {
+        match event {
+            identify::Event::Received { peer_id, info, connection_id: _ } => {
+                info!(
+                    peer = %peer_id,
+                    agent_version = %info.agent_version,
+                    protocol_version = %info.protocol_version,
+                    listen_addrs = info.listen_addrs.len(),
+                    protocols = info.protocols.len(),
+                    "Received peer info"
+                );
+                None
+            }
+            identify::Event::Sent { peer_id, connection_id: _ } => {
+                info!(peer = %peer_id, "Sent identify info");
+                None
+            }
+            identify::Event::Pushed { peer_id, .. } => {
+                info!(peer = %peer_id, "Pushed identify update");
+                None
+            }
+            identify::Event::Error { peer_id, error, connection_id: _ } => {
+                warn!(peer = %peer_id, ?error, "Identify error");
+                None
+            }
+        }
     }
 
     async fn connect_to_peers(&mut self, peers: Vec<Multiaddr>) {

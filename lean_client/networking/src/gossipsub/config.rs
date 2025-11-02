@@ -23,7 +23,7 @@ impl GossipsubConfig {
             .mesh_n(6) // D
             .mesh_n_low(4) // D_low
             .mesh_n_high(12) // D_high
-            .mesh_n(6) // D_lazy
+            .gossip_lazy(6) // D_lazy
             .duplicate_cache_time(Duration::from_secs(
                 justification_lookback_slots * seconds_per_slot * 2,
             ))
