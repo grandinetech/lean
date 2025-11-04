@@ -1,14 +1,18 @@
 use crate::{Bytes32, Checkpoint, ContainerConfig, Slot, Uint64, ValidatorIndex, block::{Block, BlockBody, BlockHeader, SignedBlock, hash_tree_root}, SignedVote};
+use crate::{HistoricalBlockHashes, JustificationRoots, JustifiedSlots, JustificationsValidators};
+use crate::validator::Validator;
 use ssz::PersistentList as List;
 use ssz_derive::Ssz;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
+use typenum::U4096;
 
 pub const VALIDATOR_REGISTRY_LIMIT: usize = 1 << 12;     // 4096
 pub const JUSTIFICATION_ROOTS_LIMIT: usize = 1 << 18;    // 262144
 pub const JUSTIFICATIONS_VALIDATORS_MAX: usize = VALIDATOR_REGISTRY_LIMIT * JUSTIFICATION_ROOTS_LIMIT;
 
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct State {
     // --- configuration (spec-local) ---
     pub config: ContainerConfig,
@@ -22,21 +26,21 @@ pub struct State {
     pub latest_finalized: Checkpoint,
 
     // --- historical data ---
-    #[ssz(skip)]
-    #[serde(skip)]
-    pub historical_block_hashes: Vec<Bytes32>,
+    #[serde(with = "crate::serde_helpers")]
+    pub historical_block_hashes: HistoricalBlockHashes,
 
     // --- flattened justification tracking ---
-    // Flattened votes vector. Not all fields are required from grandine ssz
-    #[ssz(skip)]
-    #[serde(skip)]
-    pub justified_slots: Vec<bool>,
-    #[ssz(skip)]
-    #[serde(skip)]
-    pub justifications_roots: Vec<Bytes32>,
-    #[ssz(skip)]
-    #[serde(skip)]
-    pub justifications_validators: Vec<bool>,
+    #[serde(with = "crate::serde_helpers::bitlist")]
+    pub justified_slots: JustifiedSlots,
+    
+    // Validators registry
+    #[serde(with = "crate::serde_helpers")]
+    pub validators: List<Validator, U4096>,
+    
+    #[serde(with = "crate::serde_helpers")]
+    pub justifications_roots: JustificationRoots,
+    #[serde(with = "crate::serde_helpers::bitlist")]
+    pub justifications_validators: JustificationsValidators,
 }
 
 impl State {
@@ -49,34 +53,65 @@ impl State {
             state_root: Bytes32(ssz::H256::zero()),
             body_root: hash_tree_root(&body_for_root),
         };
+        
+        //TEMP: Create validators list with dummy validators
+        let mut validators = List::default();
+        for _ in 0..num_validators.0 {
+            let validator = Validator {
+                pubkey: crate::validator::BlsPublicKey::default(),
+            };
+            validators.push(validator).expect("Failed to add validator");
+        }
+        
         Self {
-            config: ContainerConfig { genesis_time: genesis_time.0, num_validators: num_validators.0 },
+            config: ContainerConfig { genesis_time: genesis_time.0 },
             slot: Slot(0),
             latest_block_header: header,
             latest_justified: Checkpoint { root: Bytes32(ssz::H256::zero()), slot: Slot(0) },
             latest_finalized: Checkpoint { root: Bytes32(ssz::H256::zero()), slot: Slot(0) },
-            historical_block_hashes: Vec::new(),
-            justified_slots: Vec::new(),
-            justifications_roots: Vec::new(),
-            justifications_validators: Vec::new(),
+            historical_block_hashes: HistoricalBlockHashes::default(),
+            justified_slots: JustifiedSlots::default(),
+            validators,
+            justifications_roots: JustificationRoots::default(),
+            justifications_validators: JustificationsValidators::default(),
         }
     }
 
     /// Simple RR proposer rule (round-robin).
     pub fn is_proposer(&self, index: ValidatorIndex) -> bool {
-        (self.slot.0 % self.config.num_validators) == (index.0 % self.config.num_validators)
+        // Count validators by iterating (since PersistentList doesn't have len())
+        let mut num_validators: u64 = 0;
+        let mut i: u64 = 0;
+        loop {
+            match self.validators.get(i) {
+                Ok(_) => {
+                    num_validators += 1;
+                    i += 1;
+                }
+                Err(_) => break,
+            }
+        }
+        
+        if num_validators == 0 {
+            return false; // No validators
+        }
+        (self.slot.0 % num_validators) == (index.0 % num_validators)
     }
 
     pub fn get_justifications(&self) -> BTreeMap<Bytes32, Vec<bool>> {
         // Chunk validator votes per root using the fixed registry limit
         let limit = VALIDATOR_REGISTRY_LIMIT;
-        self.justifications_roots
-            .iter()
+        (&self.justifications_roots)
+            .into_iter()
             .enumerate()
             .map(|(i, root)| {
                 let start = i * limit;
                 let end = start + limit;
-                (*root, self.justifications_validators[start..end].to_vec())
+                // Extract bits from BitList for this root's validator votes
+                let votes: Vec<bool> = (start..end)
+                    .map(|idx| self.justifications_validators.get(idx).map(|b| *b).unwrap_or(false))
+                    .collect();
+                (*root, votes)
             })
             .collect()
     }
@@ -87,20 +122,38 @@ impl State {
         let mut roots: Vec<_> = map.keys().cloned().collect();
         roots.sort();
 
-        let mut flat = Vec::with_capacity(roots.len() * limit);
+        // Build PersistentList by pushing elements
+        let mut new_roots = JustificationRoots::default();
         for r in &roots {
+            new_roots.push(*r).expect("within limit");
+        }
+        
+        // Build BitList: create with length, then set bits
+        let total_bits = roots.len() * limit;
+        let mut new_validators = JustificationsValidators::new(false, total_bits);
+        
+        for (i, r) in roots.iter().enumerate() {
             let v = map.remove(r).expect("root present");
             assert_eq!(v.len(), limit, "vote vector must match validator limit");
-            flat.extend_from_slice(&v);
+            let base = i * limit;
+            for (j, &bit) in v.iter().enumerate() {
+                if bit {
+                    new_validators.set(base + j, true);
+                }
+            }
         }
 
-        self.justifications_roots = roots;
-        self.justifications_validators = flat;
+        self.justifications_roots = new_roots;
+        self.justifications_validators = new_validators;
         self
     }
 
     pub fn with_historical_hashes(mut self, hashes: Vec<Bytes32>) -> Self {
-        self.historical_block_hashes = hashes;
+        let mut new_hashes = HistoricalBlockHashes::default();
+        for h in hashes {
+            new_hashes.push(h).expect("within limit");
+        }
+        self.historical_block_hashes = new_hashes;
         self
     }
 
@@ -162,16 +215,33 @@ impl State {
         let parent_root = hash_tree_root(&latest_header_for_hash);
         if block.parent_root != parent_root { std::panic::panic_any(String::from("Block parent root mismatch")); }
 
-        let mut new_historical_hashes = self.historical_block_hashes.clone();
-        new_historical_hashes.push(parent_root);
+        // Build new PersistentList for historical hashes
+        let mut new_historical_hashes = HistoricalBlockHashes::default();
+        for hash in &self.historical_block_hashes {
+            new_historical_hashes.push(*hash).expect("within limit");
+        }
+        new_historical_hashes.push(parent_root).expect("within limit");
 
-        let mut new_justified_slots = self.justified_slots.clone();
-        new_justified_slots.push(self.latest_block_header.slot == Slot(0));
-
+        // Calculate total number of slots to track
         let num_empty_slots = (block.slot.0 - self.latest_block_header.slot.0 - 1) as usize;
-        if num_empty_slots > 0 {
-            new_historical_hashes.extend(vec![Bytes32(ssz::H256::zero()); num_empty_slots]);
-            new_justified_slots.extend(vec![false; num_empty_slots]);
+        let new_len = self.justified_slots.len() + 1 + num_empty_slots;
+        
+        // Build new BitList with extended length
+        let mut new_justified_slots = JustifiedSlots::new(false, new_len);
+        for i in 0..self.justified_slots.len() {
+            if let Some(bit) = self.justified_slots.get(i) {
+                if *bit {
+                    new_justified_slots.set(i, true);
+                }
+            }
+        }
+        // Set the bit for the latest block header
+        new_justified_slots.set(self.justified_slots.len(), self.latest_block_header.slot == Slot(0));
+        // Empty slots remain false (already initialized)
+
+        // Add empty slots to historical hashes
+        for _ in 0..num_empty_slots {
+            new_historical_hashes.push(Bytes32(ssz::H256::zero())).expect("within limit");
         }
 
         let body_for_hash = block.body.clone();
@@ -201,6 +271,7 @@ impl State {
             latest_finalized: new_latest_finalized,
             historical_block_hashes: new_historical_hashes,
             justified_slots: new_justified_slots,
+            validators: self.validators.clone(),
             justifications_roots: self.justifications_roots.clone(),
             justifications_validators: self.justifications_validators.clone(),
         }
@@ -214,7 +285,7 @@ impl State {
         let mut justifications = self.get_justifications();
         let mut latest_justified = self.latest_justified.clone();
         let mut latest_finalized = self.latest_finalized.clone();
-        let mut justified_slots = self.justified_slots.clone();
+        let justified_slots = self.justified_slots.clone();
 
         // PersistentList doesn't expose iter; convert to Vec for simple iteration for now
         // Build a temporary Vec by probing sequentially until index error
@@ -228,6 +299,12 @@ impl State {
             i += 1;
         }
 
+        // Create mutable working BitList for justified_slots tracking
+        let mut justified_slots_working = Vec::new();
+        for i in 0..justified_slots.len() {
+            justified_slots_working.push(justified_slots.get(i).map(|b| *b).unwrap_or(false));
+        }
+
         for signed_vote in votes_vec.iter() {
                 let vote = signed_vote.data.clone();
                 let target_slot = vote.target.slot;
@@ -238,15 +315,15 @@ impl State {
                 let target_slot_int = target_slot.0 as usize;
                 let source_slot_int = source_slot.0 as usize;
 
-                let source_is_justified = justified_slots.get(source_slot_int).copied().unwrap_or(false);
-                let target_already_justified = justified_slots.get(target_slot_int).copied().unwrap_or(false);
+                let source_is_justified = justified_slots.get(source_slot_int).map(|b| *b).unwrap_or(false);
+                let target_already_justified = justified_slots.get(target_slot_int).map(|b| *b).unwrap_or(false);
 
-                let source_root_matches_history = self.historical_block_hashes.get(source_slot_int)
-                    .map(|&root| root == source_root)
+                let source_root_matches_history = self.historical_block_hashes.get(source_slot_int as u64)
+                    .map(|root| *root == source_root)
                     .unwrap_or(false);
 
-                let target_root_matches_history = self.historical_block_hashes.get(target_slot_int)
-                    .map(|&root| root == target_root)
+                let target_root_matches_history = self.historical_block_hashes.get(target_slot_int as u64)
+                    .map(|root| *root == target_root)
                     .unwrap_or(false);
 
                 let latest_header_for_hash = self.latest_block_header.clone();
@@ -276,14 +353,28 @@ impl State {
                     if validator_id < votes.len() && !votes[validator_id] {
                         votes[validator_id] = true;
 
+                        // Count validators
+                        let mut num_validators: u64 = 0;
+                        let mut i: u64 = 0;
+                        loop {
+                            match self.validators.get(i) {
+                                Ok(_) => {
+                                    num_validators += 1;
+                                    i += 1;
+                                }
+                                Err(_) => break,
+                            }
+                        }
+
                         let count = votes.iter().filter(|&&v| v).count();
-                        if 3 * count >= 2 * self.config.num_validators as usize {
+                        if 3 * count >= 2 * num_validators as usize {
                             latest_justified = vote.target;
 
-                            while justified_slots.len() <= target_slot_int {
-                                justified_slots.push(false);
+                            // Extend justified_slots_working if needed
+                            while justified_slots_working.len() <= target_slot_int {
+                                justified_slots_working.push(false);
                             }
-                            justified_slots[target_slot_int] = true;
+                            justified_slots_working[target_slot_int] = true;
 
                             justifications.remove(&target_root);
 
@@ -307,7 +398,13 @@ impl State {
 
         new_state.latest_justified = latest_justified;
         new_state.latest_finalized = latest_finalized;
-        new_state.justified_slots = justified_slots;
+        
+        // Convert justified_slots_working Vec back to BitList
+        let mut new_justified_slots = JustifiedSlots::with_length(justified_slots_working.len());
+        for (i, &val) in justified_slots_working.iter().enumerate() {
+            new_justified_slots.set(i, val);
+        }
+        new_state.justified_slots = new_justified_slots;
 
         new_state
     }

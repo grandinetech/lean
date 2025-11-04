@@ -33,3 +33,18 @@ impl fmt::Display for Bytes32 {
         write!(f, "{}", hex::encode(self.0.as_bytes()))
     }
 }
+
+// Type-level constants for SSZ collection limits
+use typenum::{U262144, U1073741824}; // 2^18, 4096 * 262144
+
+/// List of historical block root hashes (SSZList<Bytes32, historical_roots_limit>)
+pub type HistoricalBlockHashes = ssz::PersistentList<Bytes32, U262144>;
+
+/// List of justified block roots (SSZList<Bytes32, historical_roots_limit>)
+pub type JustificationRoots = ssz::PersistentList<Bytes32, U262144>;
+
+/// Bitlist tracking justified slots (BitList<historical_roots_limit>)
+pub type JustifiedSlots = ssz::BitList<U262144>; // 2^18
+
+/// Bitlist for tracking validator justifications (BitList<validator_registry_limit * historical_roots_limit>)
+pub type JustificationsValidators = ssz::BitList<U1073741824>; // 4096 * 262144

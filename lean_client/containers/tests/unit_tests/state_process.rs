@@ -19,7 +19,7 @@ use common::{create_block, sample_config};
 #[fixture]
 pub fn genesis_state() -> State {
     let config = sample_config();
-    State::generate_genesis(Uint64(config.genesis_time), Uint64(config.num_validators))
+    State::generate_genesis(Uint64(config.genesis_time), Uint64(10))
 }
 
 #[test]
@@ -68,8 +68,9 @@ fn test_process_block_header_valid() {
 
     assert_eq!(new_state.latest_finalized.root, genesis_header_root);
     assert_eq!(new_state.latest_justified.root, genesis_header_root);
-    assert_eq!(new_state.historical_block_hashes.as_slice(), &[genesis_header_root]);
-    assert_eq!(new_state.justified_slots.as_slice(), &[true]);
+    assert_eq!(new_state.historical_block_hashes.get(0).ok(), Some(&genesis_header_root));
+    let justified_slot_0 = new_state.justified_slots.get(0).map(|b| *b).unwrap_or(false);
+    assert_eq!(justified_slot_0, true);
     assert_eq!(new_state.latest_block_header.slot, Slot(1));
     assert_eq!(new_state.latest_block_header.state_root, Bytes32(ssz::H256::zero()));
 }
@@ -106,6 +107,7 @@ fn test_process_block_header_invalid(
     assert!(panic_msg.contains(expected_error));
 }
 
+// This test verifies that attestations correctly justify and finalize slots
 #[test]
 fn test_process_attestations_justification_and_finalization() {
     let mut state = genesis_state();
@@ -124,7 +126,7 @@ fn test_process_attestations_justification_and_finalization() {
     state = state.process_slots(Slot(5));
 
     let genesis_checkpoint = Checkpoint {
-        root: state.historical_block_hashes[0],
+        root: *state.historical_block_hashes.get(0).unwrap(),
         slot: Slot(0),
     };
 
@@ -146,14 +148,17 @@ fn test_process_attestations_justification_and_finalization() {
         })
         .collect();
 
-    // Convert Vec to DynamicList with maximum
+    // Convert Vec to PersistentList
     let mut votes_list: List<_, U4096> = List::default();
-    for v in votes_for_4 { votes_list.push(v).unwrap(); }
+    for v in votes_for_4 { 
+        votes_list.push(v).unwrap(); 
+    }
 
     let new_state = state.process_attestations(&votes_list);
 
     assert_eq!(new_state.latest_justified, checkpoint4);
-    assert!(new_state.justified_slots[4]);
+    let justified_slot_4 = new_state.justified_slots.get(4).map(|b| *b).unwrap_or(false);
+    assert_eq!(justified_slot_4, true);
     assert_eq!(new_state.latest_finalized, genesis_checkpoint);
     assert!(!new_state.get_justifications().contains_key(&checkpoint4.root));
 }

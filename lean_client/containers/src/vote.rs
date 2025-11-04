@@ -11,6 +11,7 @@ pub struct Vote {
     pub source: Checkpoint,
 }
 
+// TODO: Rename votes to attestation and add functions from leanspec
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
 pub struct SignedVote {
     pub data: Vote,

@@ -28,8 +28,8 @@ fn state(config: ContainerConfig) -> State {
 fn test_get_justifications_empty() {
     let state = state(sample_config());
 
-    assert!(state.justifications_roots.is_empty());
-    assert!(state.justifications_validators.is_empty());
+    assert!(state.justifications_roots.get(0).is_err());
+    assert!(state.justifications_validators.get(0).is_none());
 
     let justifications = state.get_justifications();
     assert!(justifications.is_empty());
@@ -44,8 +44,16 @@ fn test_get_justifications_single_root() {
     votes1[2] = true;
     votes1[5] = true;
 
-    state.justifications_roots = vec![root1];
-    state.justifications_validators = votes1.clone();
+    let mut roots_list = List::default();
+    roots_list.push(root1).unwrap();
+    state.justifications_roots = roots_list;
+    
+    // Convert Vec<bool> to BitList
+    let mut bitlist = ssz::BitList::with_length(DEVNET_CONFIG_VALIDATOR_REGISTRY_LIMIT);
+    for (i, &val) in votes1.iter().enumerate() {
+        bitlist.set(i, val);
+    }
+    state.justifications_validators = bitlist;
 
     let justifications = state.get_justifications();
 
@@ -73,8 +81,18 @@ fn test_get_justifications_multiple_roots() {
 
     let all_votes = [votes1.clone(), votes2.clone(), votes3.clone()].concat();
 
-    state.justifications_roots = vec![root1, root2, root3];
-    state.justifications_validators = all_votes;
+    let mut roots_list = List::default();
+    roots_list.push(root1).unwrap();
+    roots_list.push(root2).unwrap();
+    roots_list.push(root3).unwrap();
+    state.justifications_roots = roots_list;
+    
+    // Convert Vec<bool> to BitList
+    let mut bitlist = ssz::BitList::with_length(all_votes.len());
+    for (i, &val) in all_votes.iter().enumerate() {
+        bitlist.set(i, val);
+    }
+    state.justifications_validators = bitlist;
 
     let justifications = state.get_justifications();
 
@@ -92,15 +110,22 @@ fn test_with_justifications_empty() {
     let config = sample_config();
     let mut initial_state = base_state(config.clone());
 
-    initial_state.justifications_roots = vec![Bytes32(ssz::H256::from_slice(&[1u8;32]))];
-    initial_state.justifications_validators = vec![true; DEVNET_CONFIG_VALIDATOR_REGISTRY_LIMIT];
+    let mut roots_list = List::default();
+    roots_list.push(Bytes32(ssz::H256::from_slice(&[1u8;32]))).unwrap();
+    initial_state.justifications_roots = roots_list;
+    
+    let mut bitlist = ssz::BitList::with_length(DEVNET_CONFIG_VALIDATOR_REGISTRY_LIMIT);
+    for i in 0..DEVNET_CONFIG_VALIDATOR_REGISTRY_LIMIT {
+        bitlist.set(i, true);
+    }
+    initial_state.justifications_validators = bitlist;
 
     let new_state = initial_state.clone().with_justifications(std::collections::BTreeMap::new());
 
-    assert!(new_state.justifications_roots.is_empty());
-    assert!(new_state.justifications_validators.is_empty());
-    assert!(!initial_state.justifications_roots.is_empty());
-    assert!(!initial_state.justifications_validators.is_empty());
+    assert!(new_state.justifications_roots.get(0).is_err());
+    assert!(new_state.justifications_validators.get(0).is_none());
+    assert!(initial_state.justifications_roots.get(0).is_ok());
+    assert!(initial_state.justifications_validators.get(0).is_some());
 }
 
 #[test]
@@ -119,11 +144,16 @@ fn test_with_justifications_deterministic_order() {
 
     let new_state = state.with_justifications(justifications);
 
-    let expected_roots = vec![root1, root2];
+    // Expected roots in sorted order (root1 < root2)
+    assert_eq!(new_state.justifications_roots.get(0).ok(), Some(&root1));
+    assert_eq!(new_state.justifications_roots.get(1).ok(), Some(&root2));
+    
+    // Verify the bitlist contains the concatenated votes
     let expected_validators = [votes1, votes2].concat();
-
-    assert_eq!(new_state.justifications_roots, expected_roots);
-    assert_eq!(new_state.justifications_validators, expected_validators);
+    for (i, &expected_val) in expected_validators.iter().enumerate() {
+        let actual_val = new_state.justifications_validators.get(i).map(|b| *b).unwrap_or(false);
+        assert_eq!(actual_val, expected_val);
+    }
 }
 
 #[test]

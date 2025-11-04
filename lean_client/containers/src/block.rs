@@ -7,10 +7,12 @@ use typenum::U4096;
 
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
 pub struct BlockBody {
+    #[serde(with = "crate::serde_helpers")]
     pub attestations: List<SignedVote, U4096>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BlockHeader {
     pub slot: Slot,
     pub proposer_index: ValidatorIndex,
