@@ -4,3 +4,20 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+containers = {workspace = true}
+alloy-primitives = { workspace = true}
+libp2p = {workspace = true}
+snap = {workspace = true}
+sha2 = { workspace = true }
+anyhow = { workspace = true }
+async-trait = "0.1"
+enr = "0.7"
+futures = "0.3"
+libp2p-identity = { version = "0.2", features = ["secp256k1"] }
+libp2p-mplex = "0.39"
+parking_lot = "0.12"
+tokio = { workspace = true }
+tracing = "0.1"
+yamux = "0.12"
+ssz = { workspace = true }
+serde = { workspace = true }

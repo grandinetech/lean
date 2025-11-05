@@ -15,8 +15,25 @@ authors = ["TODO"]
 license = "MIT OR Apache-2.0"
 
 [workspace.dependencies]
-alloy-consensus = "0.1.0"
-alloy-primitives = "0.1.0"
+chain = { path = "./chain" }
+containers = { path = "./containers" }
+fork_choice = { path = "./fork_choice" }
+networking = { path = "./networking" }
+validator = { path = "./validator" }
+libp2p = {version =  "0.56.0", default-features = false, features = [
+    'dns',
+    'gossipsub',
+    'identify',
+    'macros',
+    'noise',
+    'quic',
+    'request-response',
+    'tcp',
+    'tokio',
+    'yamux'
+] }
+alloy-consensus = "1.0.38"
+alloy-primitives = "1.4.0"
 anyhow = "1.0"
 paste = "1.0.15"
 serde = { version = "1.0", features = ["derive"] }
@@ -28,6 +45,7 @@ ssz-types = "0.3.0"
 tokio = { version = "1.0", features = ["full"] }
 tree-hash = "0.4.0"
 typenum = "1.19"
+sha2 = "0.10"
 
 [workspace.dev-dependencies]
 rstest = "0.18.2"
@@ -44,4 +62,6 @@ chain = { path = "./chain" }
 containers = { path = "./containers" }
 fork_choice = { path = "./fork_choice" }
 networking = { path = "./networking" }
-validator = { path = "./validator" }
+tokio = { version = "1.0", features = ["full"] }
+clap = { version = "4", features = ["derive"] }
+tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }

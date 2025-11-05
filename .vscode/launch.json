@@ -1,0 +1,27 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "sourceLanguages": ["rust"],
+            "request": "launch",
+            "name": "Debug lean_client",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=lean_client",
+                    "--manifest-path=${workspaceFolder}/lean_client/Cargo.toml"
+                ]
+            },
+            "args": [
+                // assumes a lean quickstart local testnet with bootnodes running on ports 9000 and 9001
+                "--bootnodes", "/ip4/127.0.0.1/udp/9000/quic-v1/p2p/16Uiu2HAkvi2sxT75Bpq1c7yV2FjnSQJJ432d6jeshbmfdJss1i6f",
+                "--bootnodes", "/ip4/127.0.0.1/udp/9001/quic-v1/p2p/16Uiu2HAmPQhkD6Zg5Co2ee8ShshkiY4tDePKFARPpCS2oKSLj1E1"
+            ],
+            "env": {
+                "RUST_LOG": "debug"
+            },
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

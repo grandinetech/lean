@@ -1,14 +1,7 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+pub mod bootnodes;
+pub mod compressor;
+pub mod gossipsub;
+pub mod network;
+pub mod req_resp;
+pub mod serde_utils;
+pub mod types;

@@ -1,4 +1,3 @@
 lean_client/target/*
 lean_client/tests/mainnet
-target/rust-analyzer/flycheck0/stderr
-target/rust-analyzer/flycheck0/stdout
+target/*
