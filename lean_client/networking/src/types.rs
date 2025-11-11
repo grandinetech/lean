@@ -94,7 +94,7 @@ impl Display for ChainMessage {
                 write!(f, "ProcessBlock(slot={})", signed_block.message.slot.0)
             }
             ChainMessage::ProcessVote { signed_vote, .. } => {
-                write!(f, "ProcessVote(slot={})", signed_vote.data.slot.0)
+                write!(f, "ProcessVote(slot={})", signed_vote.message.slot.0)
             }
         }
     }

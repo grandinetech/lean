@@ -1,10 +1,10 @@
-use crate::{Bytes32, Slot, Uint64, Checkpoint};
+use crate::{Checkpoint, Slot, Uint64, U4000};
+use ssz::ByteVector;
 use ssz_derive::Ssz;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
 pub struct Vote {
-    pub validator_id: Uint64,
     pub slot: Slot,
     pub head: Checkpoint,
     pub target: Checkpoint,
@@ -14,6 +14,7 @@ pub struct Vote {
 // TODO: Rename votes to attestation and add functions from leanspec
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
 pub struct SignedVote {
-    pub data: Vote,
-    pub signature: Bytes32, //placeholder
+    pub validator_id: Uint64,
+    pub message: Vote,
+    pub signature: ByteVector<U4000>,
 }

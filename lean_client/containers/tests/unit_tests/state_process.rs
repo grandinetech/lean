@@ -6,6 +6,7 @@ use containers::{
     state::State,
     types::{Bytes32, Uint64, ValidatorIndex},
     vote::{SignedVote, Vote},
+    ssz::ByteVector,
 };
 use pretty_assertions::assert_eq;
 use rstest::{fixture, rstest};
@@ -137,14 +138,14 @@ fn test_process_attestations_justification_and_finalization() {
 
     let votes_for_4: Vec<SignedVote> = (0..7)
         .map(|i| SignedVote {
-            data: Vote {
-                validator_id: Uint64(i),
+            validator_id: Uint64(i),
+            message: Vote {
                 slot: Slot(4),
                 head: checkpoint4.clone(),
                 target: checkpoint4.clone(),
                 source: genesis_checkpoint.clone(),
             },
-            signature: Bytes32(ssz::H256::zero()),
+            signature: ByteVector::default(),
         })
         .collect();
 

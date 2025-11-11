@@ -317,7 +317,7 @@ where
                 }
             }
             OutboundP2pRequest::GossipVote(signed_vote) => {
-                let slot = signed_vote.data.slot.0;
+                let slot = signed_vote.message.slot.0;
                 match signed_vote.to_ssz() {
                     Ok(bytes) => {
                         if let Err(err) = self.publish_to_topic(GossipsubKind::Vote, bytes) {

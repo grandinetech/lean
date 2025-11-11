@@ -1,6 +1,5 @@
-use crate::{Bytes32, Slot,  SignedVote, ValidatorIndex};
-use ssz::PersistentList as List;
-use ssz::{SszHash};
+use crate::{Bytes32, Slot,  SignedVote, ValidatorIndex, U4000};
+use ssz::{ByteVector, PersistentList as List};
 use ssz_derive::Ssz;
 use serde::{Deserialize, Serialize};
 use typenum::U4096;
@@ -33,8 +32,7 @@ pub struct Block {
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
 pub struct SignedBlock {
     pub message: Block,
-    /// Placeholder for real signature type
-    pub signature: Bytes32,
+    pub signature: ByteVector<U4000>,
 }
 
 /// Compute the SSZ hash tree root for any type implementing `SszHash`.

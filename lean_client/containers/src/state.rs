@@ -306,7 +306,7 @@ impl State {
         }
 
         for signed_vote in votes_vec.iter() {
-                let vote = signed_vote.data.clone();
+                let vote = signed_vote.message.clone();
                 let target_slot = vote.target.slot;
                 let source_slot = vote.source.slot;
                 let target_root = vote.target.root;
@@ -348,7 +348,7 @@ impl State {
                     justifications.insert(target_root, vec![false; limit]);
                 }
 
-                let validator_id = vote.validator_id.0 as usize;
+                let validator_id = signed_vote.validator_id.0 as usize;
                 if let Some(votes) = justifications.get_mut(&target_root) {
                     if validator_id < votes.len() && !votes[validator_id] {
                         votes[validator_id] = true;
