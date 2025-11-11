@@ -2,7 +2,6 @@ use std::{
     collections::HashMap,
     net::IpAddr,
     num::{NonZeroU8, NonZeroUsize},
-    path::PathBuf,
     sync::Arc,
 };
 
@@ -75,23 +74,27 @@ pub enum NetworkEvent {
     DisconnectPeer(PeerId),
 }
 
-pub struct NetworkService<R>
+pub struct NetworkService<R, S>
 where
     R: P2pRequestSource<OutboundP2pRequest> + Send + 'static,
+    S: ChainMessageSink<ChainMessage> + Send + 'static,
 {
     network_config: Arc<NetworkServiceConfig>,
     swarm: Swarm<LeanNetworkBehaviour>,
     peer_table: Arc<Mutex<HashMap<PeerId, ConnectionState>>>,
     outbound_p2p_requests: R,
+    chain_message_sink: S,
 }
 
-impl<R> NetworkService<R>
+impl<R, S> NetworkService<R, S>
 where
     R: P2pRequestSource<OutboundP2pRequest> + Send + 'static,
+    S: ChainMessageSink<ChainMessage> + Send + 'static,
 {
     pub async fn new(
         network_config: Arc<NetworkServiceConfig>,
         outbound_p2p_requests: R,
+        chain_message_sink: S,
     ) -> Result<Self> {
         let local_key = Keypair::generate_secp256k1();
         let behaviour = Self::build_behaviour(&local_key, &network_config)?;
@@ -114,6 +117,7 @@ where
             swarm,
             peer_table: Arc::new(Mutex::new(HashMap::new())),
             outbound_p2p_requests,
+            chain_message_sink,
         };
 
         service.listen(&multiaddr)?;
@@ -224,10 +228,32 @@ where
             Event::Message { message, .. } => {
                 match GossipsubMessage::decode(&message.topic, &message.data) {
                     Ok(GossipsubMessage::Block(signed_block)) => {
-                        info!("block");
+                        let slot = signed_block.message.slot.0;
+
+                        if let Err(err) = self.chain_message_sink
+                            .send(ChainMessage::ProcessBlock {
+                                signed_block,
+                                is_trusted: false,
+                                should_gossip: true,
+                            })
+                            .await
+                        {
+                            warn!("failed to send block for slot {slot} to chain: {err:?}");
+                        }
                     }
                     Ok(GossipsubMessage::Vote(signed_vote)) => {
-                        info!("vote");
+                        let slot = signed_vote.message.slot.0;
+
+                        if let Err(err) = self.chain_message_sink
+                            .send(ChainMessage::ProcessVote {
+                                signed_vote,
+                                is_trusted: false,
+                                should_gossip: true,
+                            })
+                            .await
+                        {
+                            warn!("failed to send vote for slot {slot} to chain: {err:?}");
+                        }
                     }
                     Err(err) => warn!(%err, "gossip decode failed"),
                 }

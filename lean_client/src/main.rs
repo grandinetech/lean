@@ -1,12 +1,11 @@
 use std::net::IpAddr;
 use std::sync::Arc;
 use clap::Parser;
-use networking::bootnodes::{BootnodeSource, StaticBootnodes};
 use tokio::{sync::mpsc, task};
 use networking::network::{NetworkService, NetworkServiceConfig};
 use networking::gossipsub::config::GossipsubConfig;
 use networking::gossipsub::topic::get_topics;
-use networking::types::OutboundP2pRequest;
+use networking::types::{ChainMessage, OutboundP2pRequest};
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -28,7 +27,8 @@ async fn main() {
 
     let args = Args::parse();
 
-    let (outbound_p2p_sender, outbound_p2p_receiver) = mpsc::unbounded_channel::<OutboundP2pRequest>();
+    let (_outbound_p2p_sender, outbound_p2p_receiver) = mpsc::unbounded_channel::<OutboundP2pRequest>();
+    let (chain_message_sender, mut chain_message_receiver) = mpsc::unbounded_channel::<ChainMessage>();
 
     let fork = "devnet0".to_string();
     let gossipsub_topics = get_topics(fork);
@@ -44,6 +44,7 @@ async fn main() {
     let mut network_service = NetworkService::new(
         network_service_config.clone(),
         outbound_p2p_receiver,
+        chain_message_sender,
     )
         .await
         .expect("Failed to create network service");
@@ -54,9 +55,18 @@ async fn main() {
         }
     });
 
+    let chain_handle = task::spawn(async move {
+        while let Some(message) = chain_message_receiver.recv().await {
+            println!("Received chain message: {}", message);
+        }
+    });
+
     tokio::select! {
         _ = network_handle => {
             println!("Network service finished.");
+        }
+        _ = chain_handle => {
+            println!("Chain service finished.");
         }
     }
 
