@@ -301,9 +301,12 @@ fn verify_checks(
             .get(label)
             .ok_or_else(|| format!("Step {}: Block label '{}' not found", step_idx, label))?;
         if &store.head != expected_root {
+            let actual_slot = store.blocks.get(&store.head).map(|b| b.message.slot.0).unwrap_or(0);
+            let expected_slot = store.blocks.get(expected_root).map(|b| b.message.slot.0).unwrap_or(0);
             return Err(format!(
-                "Step {}: Head root mismatch for label '{}'",
-                step_idx, label
+                "Step {}: Head root mismatch for label '{}' - expected slot {}, got slot {} (known_votes: {}, new_votes: {})",
+                step_idx, label, expected_slot, actual_slot,
+                store.latest_known_votes.len(), store.latest_new_votes.len()
             ));
         }
     }
@@ -385,11 +388,14 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
                     let signed_block = convert_test_block(test_block);
                     let block_root = get_block_root(&signed_block);
 
-                    if let Some(label) = &step.checks.head_root_label {
-                        block_labels.insert(label.clone(), block_root);
-                    }
-
                     on_block(&mut store, signed_block);
+
+                    // Assign label to the current head (not the block being processed)
+                    if let Some(label) = &step.checks.head_root_label {
+                        if !block_labels.contains_key(label) {
+                            block_labels.insert(label.clone(), store.head);
+                        }
+                    }
                 }));
 
                 if step.valid && result.is_err() {

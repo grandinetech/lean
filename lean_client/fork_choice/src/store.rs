@@ -129,14 +129,11 @@ pub fn get_fork_choice_head(
             .max_by(|&&a, &&b| {
                 let wa = vote_weights.get(&a).copied().unwrap_or(0);
                 let wb = vote_weights.get(&b).copied().unwrap_or(0);
+                let slot_a = store.blocks[&a].message.slot;
+                let slot_b = store.blocks[&b].message.slot;
                 wa.cmp(&wb)
-                    .then_with(|| {
-                        store.blocks[&a]
-                            .message
-                            .slot
-                            .cmp(&store.blocks[&b].message.slot)
-                    })
-                    .then_with(|| a.cmp(&b))
+                    .then_with(|| slot_b.cmp(&slot_a))  // Reverse for lower slot
+                    .then_with(|| b.cmp(&a))  // Reverse for smaller root
             })
             .unwrap();
     }
@@ -155,10 +152,13 @@ pub fn update_head(store: &mut Store) {
         store.latest_justified = latest_justified.clone();
     }
 
+    let mut combined_votes = store.latest_known_votes.clone();
+    combined_votes.extend(store.latest_new_votes.clone());
+
     store.head = get_fork_choice_head(
         store,
         store.latest_justified.root,
-        &store.latest_known_votes,
+        &combined_votes,
         0,
     );
 

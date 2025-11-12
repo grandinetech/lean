@@ -51,6 +51,13 @@ pub fn on_block(store: &mut Store, signed_block: SignedBlock) {
     }
     let root = signed_block.message.parent_root;
 
+    let block_time = signed_block.message.slot.0 * INTERVALS_PER_SLOT;
+    if store.time < block_time {
+        store.time = block_time;
+    }
+
+    accept_new_votes(store);
+
     let attest = &signed_block.message.body.attestations;
     for i in 0.. {
         match attest.get(i) {
@@ -86,7 +93,23 @@ pub fn on_block(store: &mut Store, signed_block: SignedBlock) {
         body_root,
     };
 
-    store.blocks.insert(block_root, signed_block);
+    store.blocks.insert(block_root, signed_block.clone());
     store.states.insert(block_root, new_state);
+
+    use containers::checkpoint::Checkpoint;
+    let proposer_vote = Checkpoint {
+        root: block_root,
+        slot: signed_block.message.slot,
+    };
+    let proposer_idx = signed_block.message.proposer_index;
+
+    if store
+        .latest_new_votes
+        .get(&proposer_idx)
+        .map_or(true, |v| v.slot < proposer_vote.slot)
+    {
+        store.latest_new_votes.insert(proposer_idx, proposer_vote);
+    }
+
     update_head(store);
 }
