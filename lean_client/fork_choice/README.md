@@ -9,9 +9,6 @@ Run tests with `cargo test -p fork-choice`
 
 ## Store
 
-Main object of fork-choice.
-
-Use `get_fork_choice_head`
 
 
 
