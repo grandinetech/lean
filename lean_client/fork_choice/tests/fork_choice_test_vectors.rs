@@ -209,7 +209,8 @@ fn convert_test_anchor_block(test_block: &TestAnchorBlock) -> SignedBlock {
 
     for (i, test_att) in test_block.body.attestations.data.iter().enumerate() {
         let signed_vote = convert_test_attestation(test_att);
-        attestations.push(signed_vote)
+        attestations
+            .push(signed_vote)
             .expect(&format!("Failed to add attestation {}", i));
     }
 
@@ -230,7 +231,8 @@ fn convert_test_block(test_block: &TestBlock) -> SignedBlock {
 
     for (i, test_att) in test_block.body.attestations.data.iter().enumerate() {
         let signed_vote = convert_test_attestation(test_att);
-        attestations.push(signed_vote)
+        attestations
+            .push(signed_vote)
             .expect(&format!("Failed to add attestation {}", i));
     }
 
@@ -247,9 +249,13 @@ fn convert_test_block(test_block: &TestBlock) -> SignedBlock {
 }
 
 fn initialize_state_from_test(test_state: &TestAnchorState) -> State {
+    use containers::{
+        HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots,
+    };
+    use ssz::PersistentList as List;
+
     let config = Config {
         genesis_time: test_state.config.genesis_time,
-        num_validators: test_state.validators.data.len() as u64,
     };
 
     let latest_block_header = BlockHeader {
@@ -260,12 +266,42 @@ fn initialize_state_from_test(test_state: &TestAnchorState) -> State {
         body_root: parse_root(&test_state.latest_block_header.body_root),
     };
 
-    let historical_hashes: Vec<Bytes32> = test_state
-        .historical_block_hashes
-        .data
-        .iter()
-        .map(|s| parse_root(s))
-        .collect();
+    let mut historical_block_hashes = HistoricalBlockHashes::default();
+    for hash_str in &test_state.historical_block_hashes.data {
+        historical_block_hashes
+            .push(parse_root(hash_str))
+            .expect("within limit");
+    }
+
+    let mut justified_slots = JustifiedSlots::new(false, test_state.justified_slots.data.len());
+    for (i, &val) in test_state.justified_slots.data.iter().enumerate() {
+        if val {
+            justified_slots.set(i, true);
+        }
+    }
+
+    let mut justifications_roots = JustificationRoots::default();
+    for root_str in &test_state.justifications_roots.data {
+        justifications_roots
+            .push(parse_root(root_str))
+            .expect("within limit");
+    }
+
+    let mut justifications_validators =
+        JustificationsValidators::new(false, test_state.justifications_validators.data.len());
+    for (i, &val) in test_state.justifications_validators.data.iter().enumerate() {
+        if val {
+            justifications_validators.set(i, true);
+        }
+    }
+
+    let mut validators = List::default();
+    for _ in 0..test_state.validators.data.len() {
+        let validator = containers::validator::Validator {
+            pubkey: containers::validator::BlsPublicKey::default(),
+        };
+        validators.push(validator).expect("Failed to add validator");
+    }
 
     State {
         config,
@@ -273,10 +309,11 @@ fn initialize_state_from_test(test_state: &TestAnchorState) -> State {
         latest_block_header,
         latest_justified: convert_test_checkpoint(&test_state.latest_justified),
         latest_finalized: convert_test_checkpoint(&test_state.latest_finalized),
-        historical_block_hashes: historical_hashes,
-        justified_slots: test_state.justified_slots.data.clone(),
-        justifications_roots: test_state.justifications_roots.data.iter().map(|s| parse_root(s)).collect(),
-        justifications_validators: test_state.justifications_validators.data.clone(),
+        historical_block_hashes,
+        justified_slots,
+        validators,
+        justifications_roots,
+        justifications_validators,
     }
 }
 
@@ -301,8 +338,16 @@ fn verify_checks(
             .get(label)
             .ok_or_else(|| format!("Step {}: Block label '{}' not found", step_idx, label))?;
         if &store.head != expected_root {
-            let actual_slot = store.blocks.get(&store.head).map(|b| b.message.slot.0).unwrap_or(0);
-            let expected_slot = store.blocks.get(expected_root).map(|b| b.message.slot.0).unwrap_or(0);
+            let actual_slot = store
+                .blocks
+                .get(&store.head)
+                .map(|b| b.message.slot.0)
+                .unwrap_or(0);
+            let expected_slot = store
+                .blocks
+                .get(expected_root)
+                .map(|b| b.message.slot.0)
+                .unwrap_or(0);
             return Err(format!(
                 "Step {}: Head root mismatch for label '{}' - expected slot {}, got slot {} (known_votes: {}, new_votes: {})",
                 step_idx, label, expected_slot, actual_slot,
@@ -369,10 +414,8 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
         body_root,
     };
 
-
     let config = Config {
         genesis_time: test.anchor_state.config.genesis_time,
-        num_validators: test.anchor_state.validators.data.len() as u64,
     };
 
     let mut store = get_forkchoice_store(anchor_state, anchor_block, config);
@@ -381,7 +424,9 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
     for (step_idx, step) in test.steps.iter().enumerate() {
         match step.step_type.as_str() {
             "block" => {
-                let test_block = step.block.as_ref()
+                let test_block = step
+                    .block
+                    .as_ref()
                     .ok_or_else(|| format!("Step {}: Missing block data", step_idx))?;
 
                 let result = std::panic::catch_unwind(AssertUnwindSafe(|| {
@@ -401,7 +446,8 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
                 if step.valid && result.is_err() {
                     return Err(format!(
                         "Step {}: Block should be valid but processing failed: {:?}",
-                        step_idx, result.err()
+                        step_idx,
+                        result.err()
                     ));
                 } else if !step.valid && result.is_ok() {
                     return Err(format!(
@@ -415,7 +461,8 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
                 }
             }
             "tick" => {
-                let time = step.tick
+                let time = step
+                    .tick
                     .ok_or_else(|| format!("Step {}: Missing tick data", step_idx))?;
                 on_tick(&mut store, time, false);
 
@@ -424,7 +471,9 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
                 }
             }
             "attestation" => {
-                let test_att = step.attestation.as_ref()
+                let test_att = step
+                    .attestation
+                    .as_ref()
                     .ok_or_else(|| format!("Step {}: Missing attestation data", step_idx))?;
 
                 let result = std::panic::catch_unwind(AssertUnwindSafe(|| {
@@ -449,7 +498,10 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
                 }
             }
             _ => {
-                return Err(format!("Step {}: Unknown step type: {}", step_idx, step.step_type));
+                return Err(format!(
+                    "Step {}: Unknown step type: {}",
+                    step_idx, step.step_type
+                ));
             }
         }
     }
@@ -475,8 +527,8 @@ fn run_test_vector_file(test_path: &str) -> Result<(), String> {
 fn test_fork_choice_head_vectors() {
     let test_dir = "../tests/test_vectors/test_fork_choice/test_fork_choice_head";
 
-    let entries = std::fs::read_dir(test_dir)
-        .expect(&format!("Failed to read test directory: {}", test_dir));
+    let entries =
+        std::fs::read_dir(test_dir).expect(&format!("Failed to read test directory: {}", test_dir));
 
     let mut test_count = 0;
     let mut pass_count = 0;
@@ -504,7 +556,10 @@ fn test_fork_choice_head_vectors() {
     }
 
     println!("\n=== Summary ===");
-    println!("Total: {}, Passed: {}, Failed: {}", test_count, pass_count, fail_count);
+    println!(
+        "Total: {}, Passed: {}, Failed: {}",
+        test_count, pass_count, fail_count
+    );
 
     if fail_count > 0 {
         panic!("{} test(s) failed", fail_count);
@@ -515,8 +570,8 @@ fn test_fork_choice_head_vectors() {
 fn test_attestation_processing_vectors() {
     let test_dir = "../tests/test_vectors/test_fork_choice/test_attestation_processing";
 
-    let entries = std::fs::read_dir(test_dir)
-        .expect(&format!("Failed to read test directory: {}", test_dir));
+    let entries =
+        std::fs::read_dir(test_dir).expect(&format!("Failed to read test directory: {}", test_dir));
 
     let mut test_count = 0;
     let mut pass_count = 0;
@@ -544,7 +599,10 @@ fn test_attestation_processing_vectors() {
     }
 
     println!("\n=== Summary ===");
-    println!("Total: {}, Passed: {}, Failed: {}", test_count, pass_count, fail_count);
+    println!(
+        "Total: {}, Passed: {}, Failed: {}",
+        test_count, pass_count, fail_count
+    );
 
     if fail_count > 0 {
         panic!("{} test(s) failed", fail_count);
@@ -555,8 +613,8 @@ fn test_attestation_processing_vectors() {
 fn test_fork_choice_reorgs_vectors() {
     let test_dir = "../tests/test_vectors/test_fork_choice/test_fork_choice_reorgs";
 
-    let entries = std::fs::read_dir(test_dir)
-        .expect(&format!("Failed to read test directory: {}", test_dir));
+    let entries =
+        std::fs::read_dir(test_dir).expect(&format!("Failed to read test directory: {}", test_dir));
 
     let mut test_count = 0;
     let mut pass_count = 0;
@@ -584,7 +642,10 @@ fn test_fork_choice_reorgs_vectors() {
     }
 
     println!("\n=== Summary ===");
-    println!("Total: {}, Passed: {}, Failed: {}", test_count, pass_count, fail_count);
+    println!(
+        "Total: {}, Passed: {}, Failed: {}",
+        test_count, pass_count, fail_count
+    );
 
     if fail_count > 0 {
         panic!("{} test(s) failed", fail_count);
@@ -595,8 +656,8 @@ fn test_fork_choice_reorgs_vectors() {
 fn test_attestation_target_selection_vectors() {
     let test_dir = "../tests/test_vectors/test_fork_choice/test_attestation_target_selection";
 
-    let entries = std::fs::read_dir(test_dir)
-        .expect(&format!("Failed to read test directory: {}", test_dir));
+    let entries =
+        std::fs::read_dir(test_dir).expect(&format!("Failed to read test directory: {}", test_dir));
 
     let mut test_count = 0;
     let mut pass_count = 0;
@@ -624,7 +685,10 @@ fn test_attestation_target_selection_vectors() {
     }
 
     println!("\n=== Summary ===");
-    println!("Total: {}, Passed: {}, Failed: {}", test_count, pass_count, fail_count);
+    println!(
+        "Total: {}, Passed: {}, Failed: {}",
+        test_count, pass_count, fail_count
+    );
 
     if fail_count > 0 {
         panic!("{} test(s) failed", fail_count);

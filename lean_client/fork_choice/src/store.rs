@@ -1,8 +1,11 @@
 use std::collections::HashMap;
 
 use containers::{
-    block::{hash_tree_root, BlockHeader}, checkpoint::Checkpoint, config::Config, state::State, Root, SignedBlock,
-    Slot, ValidatorIndex,
+    block::{hash_tree_root, BlockHeader},
+    checkpoint::Checkpoint,
+    config::Config,
+    state::State,
+    Root, SignedBlock, Slot, ValidatorIndex,
 };
 
 pub fn get_block_root(signed_block: &SignedBlock) -> Root {
@@ -132,8 +135,8 @@ pub fn get_fork_choice_head(
                 let slot_a = store.blocks[&a].message.slot;
                 let slot_b = store.blocks[&b].message.slot;
                 wa.cmp(&wb)
-                    .then_with(|| slot_b.cmp(&slot_a))  // Reverse for lower slot
-                    .then_with(|| b.cmp(&a))  // Reverse for smaller root
+                    .then_with(|| slot_b.cmp(&slot_a)) // Reverse for lower slot
+                    .then_with(|| b.cmp(&a)) // Reverse for smaller root
             })
             .unwrap();
     }
@@ -155,12 +158,7 @@ pub fn update_head(store: &mut Store) {
     let mut combined_votes = store.latest_known_votes.clone();
     combined_votes.extend(store.latest_new_votes.clone());
 
-    store.head = get_fork_choice_head(
-        store,
-        store.latest_justified.root,
-        &combined_votes,
-        0,
-    );
+    store.head = get_fork_choice_head(store, store.latest_justified.root, &combined_votes, 0);
 
     if let Some(state) = store.states.get(&store.head) {
         store.latest_finalized = state.latest_finalized.clone();
@@ -168,7 +166,24 @@ pub fn update_head(store: &mut Store) {
 }
 
 pub fn update_safe_target(store: &mut Store) {
-    let n_validators = store.config.num_validators as usize;
+    // Count validators from the head state
+    let n_validators = if let Some(state) = store.states.get(&store.head) {
+        let mut count: u64 = 0;
+        let mut i: u64 = 0;
+        loop {
+            match state.validators.get(i) {
+                Ok(_) => {
+                    count += 1;
+                    i += 1;
+                }
+                Err(_) => break,
+            }
+        }
+        count as usize
+    } else {
+        0
+    };
+
     let min_score = (n_validators * 2 + 2) / 3;
     let root = store.latest_justified.root;
     store.safe_target = get_fork_choice_head(store, root, &store.latest_new_votes, min_score);

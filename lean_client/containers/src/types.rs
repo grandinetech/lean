@@ -1,7 +1,10 @@
+use hex::FromHex;
 use serde::{Deserialize, Serialize};
 use ssz::H256;
 use ssz_derive::Ssz;
+use std::fmt;
 use std::hash::Hash;
+use std::str::FromStr;
 
 #[derive(
     Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Ssz, Default, Serialize, Deserialize,

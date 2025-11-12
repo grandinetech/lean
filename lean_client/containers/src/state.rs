@@ -1,6 +1,10 @@
-use crate::{Bytes32, Checkpoint, ContainerConfig, Slot, Uint64, ValidatorIndex, block::{Block, BlockBody, BlockHeader, SignedBlock, hash_tree_root}, SignedVote};
-use crate::{HistoricalBlockHashes, JustificationRoots, JustifiedSlots, JustificationsValidators};
 use crate::validator::Validator;
+use crate::{
+    block::{hash_tree_root, Block, BlockBody, BlockHeader, SignedBlock},
+    Bytes32, Checkpoint, Config, SignedVote, Slot, Uint64, ValidatorIndex,
+};
+use crate::{HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots};
+use serde::{Deserialize, Serialize};
 use ssz::PersistentList as List;
 use ssz_derive::Ssz;
 use std::collections::BTreeMap;
@@ -66,10 +70,8 @@ impl State {
         }
 
         Self {
-<<<<<<< HEAD
             config: Config {
                 genesis_time: genesis_time.0,
-                num_validators: num_validators.0,
             },
             slot: Slot(0),
             latest_block_header: header,
@@ -81,22 +83,11 @@ impl State {
                 root: Bytes32(ssz::H256::zero()),
                 slot: Slot(0),
             },
-            historical_block_hashes: Vec::new(),
-            justified_slots: Vec::new(),
-            justifications_roots: Vec::new(),
-            justifications_validators: Vec::new(),
-=======
-            config: ContainerConfig { genesis_time: genesis_time.0 },
-            slot: Slot(0),
-            latest_block_header: header,
-            latest_justified: Checkpoint { root: Bytes32(ssz::H256::zero()), slot: Slot(0) },
-            latest_finalized: Checkpoint { root: Bytes32(ssz::H256::zero()), slot: Slot(0) },
             historical_block_hashes: HistoricalBlockHashes::default(),
             justified_slots: JustifiedSlots::default(),
             validators,
             justifications_roots: JustificationRoots::default(),
             justifications_validators: JustificationsValidators::default(),
->>>>>>> 7d3d18e551eb9b4eeb0490453acbde4154163b09
         }
     }
 
@@ -132,7 +123,12 @@ impl State {
                 let end = start + limit;
                 // Extract bits from BitList for this root's validator votes
                 let votes: Vec<bool> = (start..end)
-                    .map(|idx| self.justifications_validators.get(idx).map(|b| *b).unwrap_or(false))
+                    .map(|idx| {
+                        self.justifications_validators
+                            .get(idx)
+                            .map(|b| *b)
+                            .unwrap_or(false)
+                    })
                     .collect();
                 (*root, votes)
             })
@@ -186,7 +182,12 @@ impl State {
     }
 
     // updated for fork choice tests
-    pub fn state_transition_with_validation(&self, signed_block: SignedBlock, valid_signatures: bool, validate_state_root: bool) -> Self {
+    pub fn state_transition_with_validation(
+        &self,
+        signed_block: SignedBlock,
+        valid_signatures: bool,
+        validate_state_root: bool,
+    ) -> Self {
         assert!(valid_signatures, "Block signatures must be valid");
 
         let block = signed_block.message;
@@ -259,7 +260,9 @@ impl State {
         for hash in &self.historical_block_hashes {
             new_historical_hashes.push(*hash).expect("within limit");
         }
-        new_historical_hashes.push(parent_root).expect("within limit");
+        new_historical_hashes
+            .push(parent_root)
+            .expect("within limit");
 
         // Calculate total number of slots to track
         let num_empty_slots = (block.slot.0 - self.latest_block_header.slot.0 - 1) as usize;
@@ -275,12 +278,17 @@ impl State {
             }
         }
         // Set the bit for the latest block header
-        new_justified_slots.set(self.justified_slots.len(), self.latest_block_header.slot == Slot(0));
+        new_justified_slots.set(
+            self.justified_slots.len(),
+            self.latest_block_header.slot == Slot(0),
+        );
         // Empty slots remain false (already initialized)
 
         // Add empty slots to historical hashes
         for _ in 0..num_empty_slots {
-            new_historical_hashes.push(Bytes32(ssz::H256::zero())).expect("within limit");
+            new_historical_hashes
+                .push(Bytes32(ssz::H256::zero()))
+                .expect("within limit");
         }
 
         let body_for_hash = block.body.clone();
@@ -354,39 +362,26 @@ impl State {
             let target_slot_int = target_slot.0 as usize;
             let source_slot_int = source_slot.0 as usize;
 
-<<<<<<< HEAD
-            let source_is_justified = justified_slots
+            let source_is_justified = justified_slots_working
                 .get(source_slot_int)
                 .copied()
                 .unwrap_or(false);
-            let target_already_justified = justified_slots
+            let target_already_justified = justified_slots_working
                 .get(target_slot_int)
                 .copied()
                 .unwrap_or(false);
 
             let source_root_matches_history = self
                 .historical_block_hashes
-                .get(source_slot_int)
-                .map(|&root| root == source_root)
+                .get(source_slot_int as u64)
+                .map(|root| *root == source_root)
                 .unwrap_or(false);
 
             let target_root_matches_history = self
                 .historical_block_hashes
-                .get(target_slot_int)
-                .map(|&root| root == target_root)
+                .get(target_slot_int as u64)
+                .map(|root| *root == target_root)
                 .unwrap_or(false);
-=======
-                let source_is_justified = justified_slots.get(source_slot_int).map(|b| *b).unwrap_or(false);
-                let target_already_justified = justified_slots.get(target_slot_int).map(|b| *b).unwrap_or(false);
-
-                let source_root_matches_history = self.historical_block_hashes.get(source_slot_int as u64)
-                    .map(|root| *root == source_root)
-                    .unwrap_or(false);
-
-                let target_root_matches_history = self.historical_block_hashes.get(target_slot_int as u64)
-                    .map(|root| *root == target_root)
-                    .unwrap_or(false);
->>>>>>> 7d3d18e551eb9b4eeb0490453acbde4154163b09
 
             let latest_header_for_hash = self.latest_block_header.clone();
             let target_matches_latest_header = target_slot == self.latest_block_header.slot
@@ -417,15 +412,28 @@ impl State {
                 if validator_id < votes.len() && !votes[validator_id] {
                     votes[validator_id] = true;
 
-<<<<<<< HEAD
+                    // Count validators
+                    let mut num_validators: u64 = 0;
+                    let mut i: u64 = 0;
+                    loop {
+                        match self.validators.get(i) {
+                            Ok(_) => {
+                                num_validators += 1;
+                                i += 1;
+                            }
+                            Err(_) => break,
+                        }
+                    }
+
                     let count = votes.iter().filter(|&&v| v).count();
-                    if 3 * count >= 2 * self.config.num_validators as usize {
+                    if 3 * count >= 2 * num_validators as usize {
                         latest_justified = vote.target;
 
-                        while justified_slots.len() <= target_slot_int {
-                            justified_slots.push(false);
+                        // Extend justified_slots_working if needed
+                        while justified_slots_working.len() <= target_slot_int {
+                            justified_slots_working.push(false);
                         }
-                        justified_slots[target_slot_int] = true;
+                        justified_slots_working[target_slot_int] = true;
 
                         justifications.remove(&target_root);
 
@@ -436,30 +444,6 @@ impl State {
                                 break;
                             }
                         }
-=======
-                        // Count validators
-                        let mut num_validators: u64 = 0;
-                        let mut i: u64 = 0;
-                        loop {
-                            match self.validators.get(i) {
-                                Ok(_) => {
-                                    num_validators += 1;
-                                    i += 1;
-                                }
-                                Err(_) => break,
-                            }
-                        }
-
-                        let count = votes.iter().filter(|&&v| v).count();
-                        if 3 * count >= 2 * num_validators as usize {
-                            latest_justified = vote.target;
-
-                            // Extend justified_slots_working if needed
-                            while justified_slots_working.len() <= target_slot_int {
-                                justified_slots_working.push(false);
-                            }
-                            justified_slots_working[target_slot_int] = true;
->>>>>>> 7d3d18e551eb9b4eeb0490453acbde4154163b09
 
                         if is_finalizable {
                             latest_finalized = vote.source;

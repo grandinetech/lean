@@ -1,7 +1,6 @@
 use crate::{Bytes32, SignedVote, Slot, ValidatorIndex};
 use serde::{Deserialize, Serialize};
 use ssz::PersistentList as List;
-use ssz::SszHash;
 use ssz_derive::Ssz;
 use typenum::U4096;
 
