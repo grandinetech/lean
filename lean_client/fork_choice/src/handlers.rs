@@ -72,13 +72,8 @@ pub fn on_block(store: &mut Store, signed_block: SignedBlock) {
         }
     };
 
-    // For fork choice testing, we skip state root validation
-    // since test vectors have pre-computed state roots that may not match our implementation
     let mut new_state = state.state_transition_with_validation(signed_block.clone(), true, false);
 
-    // Fix: Ensure the state's latest_block_header matches the block we just processed
-    // This is necessary because process_block_header sets state_root to zero,
-    // but we need it to match the actual block's state_root for proper parent lookups
     use containers::block::hash_tree_root as hash_root;
     let body_root = hash_root(&signed_block.message.body);
     new_state.latest_block_header = containers::block::BlockHeader {

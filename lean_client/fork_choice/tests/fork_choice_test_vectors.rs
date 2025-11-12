@@ -434,7 +434,6 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
 
                     on_block(&mut store, signed_block);
 
-                    // Assign label to the current head (not the block being processed)
                     if let Some(label) = &step.checks.head_root_label {
                         if !block_labels.contains_key(label) {
                             block_labels.insert(label.clone(), store.head);

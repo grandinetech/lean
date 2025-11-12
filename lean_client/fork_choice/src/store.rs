@@ -135,8 +135,8 @@ pub fn get_fork_choice_head(
                 let slot_a = store.blocks[&a].message.slot;
                 let slot_b = store.blocks[&b].message.slot;
                 wa.cmp(&wb)
-                    .then_with(|| slot_b.cmp(&slot_a)) // Reverse for lower slot
-                    .then_with(|| b.cmp(&a)) // Reverse for smaller root
+                    .then_with(|| slot_b.cmp(&slot_a))
+                    .then_with(|| b.cmp(&a))
             })
             .unwrap();
     }
@@ -166,7 +166,6 @@ pub fn update_head(store: &mut Store) {
 }
 
 pub fn update_safe_target(store: &mut Store) {
-    // Count validators from the head state
     let n_validators = if let Some(state) = store.states.get(&store.head) {
         let mut count: u64 = 0;
         let mut i: u64 = 0;
