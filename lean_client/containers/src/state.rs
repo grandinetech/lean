@@ -285,10 +285,6 @@ impl State {
         }
     }
 
-    pub fn process_operations(&self, body: &BlockBody) -> Self {
-        self.process_attestations(&body.attestations)
-    }
-
     pub fn process_attestations(&self, attestations: &Attestations) -> Self {
         let mut justifications = self.get_justifications();
         let mut latest_justified = self.latest_justified.clone();

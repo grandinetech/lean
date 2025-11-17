@@ -117,13 +117,13 @@ fn test_process_attestations_justification_and_finalization() {
     let block1 = create_block(1, &mut state_at_slot_1.latest_block_header, None);
     // Use process_block_header and process_operations separately to avoid state root validation
     let state_after_header1 = state_at_slot_1.process_block_header(&block1.message);
-    state = state_after_header1.process_operations(&block1.message.body);
+    state = state_after_header1.process_attestations(&block1.message.body.attestations);
 
     // Process slot 4 and block
     let mut state_at_slot_4 = state.process_slots(Slot(4));
     let block4 = create_block(4, &mut state_at_slot_4.latest_block_header, None);
     let state_after_header4 = state_at_slot_4.process_block_header(&block4.message);
-    state = state_after_header4.process_operations(&block4.message.body);
+    state = state_after_header4.process_attestations(&block4.message.body.attestations);
 
     // Advance to slot 5
     state = state.process_slots(Slot(5));
