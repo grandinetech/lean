@@ -30,16 +30,16 @@
             "validators": {
                 "data": [
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0x36432e4aee83480a11fe5c0676ae396f66e5365c269d595711e7755a3326dd5500ee650a84631c60357c0d179b47fa0eda40ba4a"
                     },
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0x51fa292bc2c0447b0c533c23198163045fc4180cc9a0cd791cd80c041ad45007646ddf1eb488663e97406467eaa15a0993f02040"
                     },
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0xd80c7c393ac79427fb6ec34be89c1f06433152648f511b4ee1ad4063ee342d61be725b02da07e73a87efa73e66475006b592e879"
                     },
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0xbd8f144d8a19131c16b4bc78c025963c925d7273d0e96f7470749254ffe9c505af9ab55c889c6f7938020907b46ae32641844d2c"
                     }
                 ]
             },
@@ -54,7 +54,7 @@
             "slot": 0,
             "proposerIndex": 0,
             "parentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "stateRoot": "0x259dd6c91f2bab3b338fd2b4d9a6d8f8e678bc7d75590f96f323c5e82843e913",
+            "stateRoot": "0xc1ad2e265ce0180473e18951ad104d17c7d7c3f2e356bb9c4b90f56949e5794b",
             "body": {
                 "attestations": {
                     "data": []
@@ -72,8 +72,8 @@
                 "block": {
                     "slot": 1,
                     "proposer_index": 1,
-                    "parent_root": "0xc0d44f989da630e63b222085a226fea923e2cc5321ba4c4aa4978b528949827e",
-                    "state_root": "0x57c159521023a7181e36310c0e30f3fa4b49449df06fbb40023ae6db29b9d200",
+                    "parent_root": "0x2959721c8bb1bf4ec382fe6fc1d7e2d827c1dd130b0b33290fd2a967e72bd2a9",
+                    "state_root": "0xd51e578f2f359cd1d1fec716b387a87e6e3b99e9891b70dc077d1ac670ac3fde",
                     "body": {
                         "attestations": {
                             "data": []
@@ -91,8 +91,8 @@
                 "block": {
                     "slot": 2,
                     "proposer_index": 2,
-                    "parent_root": "0xad26b6bd334c3210c3776ae2cb5ca6f27c89fdd7d1f9e9e08324f4c584b87134",
-                    "state_root": "0xb229cd5597a4c28c8895b60113d6a6b86602d19aa364f1bdeb6ecd5f51ae0756",
+                    "parent_root": "0x854c966b97a40050e1ca6c624fd945e19076d40d9b1f0dad6be207716a23aa9a",
+                    "state_root": "0x3a0c5989debb4a11ddbe26b81d2e0cf7e95e0b031ea5a197d4630c222d880489",
                     "body": {
                         "attestations": {
                             "data": []
@@ -110,8 +110,8 @@
                 "block": {
                     "slot": 3,
                     "proposer_index": 3,
-                    "parent_root": "0x60097245852f36359a7246aed4600ebbaf98fd62dc101cdc4a12f9089d858f05",
-                    "state_root": "0xa657eb75b0473cac0f4ae137861e9aedd9cdf80b16cade35deb10d61482b8244",
+                    "parent_root": "0xaa1f410905aa164b441d3fb84c3e11ad123da75568ad6bdd80f3a7475f673cf3",
+                    "state_root": "0x6695235b2931d2635907d68cbdea464fd68782faea30a9fd2bcdd66b269efa94",
                     "body": {
                         "attestations": {
                             "data": []
@@ -129,8 +129,8 @@
                 "block": {
                     "slot": 4,
                     "proposer_index": 0,
-                    "parent_root": "0x4776ddd2c9b9191fcbb5f7042d8d73044eddb03e33db46cc1ef7a5f815b533ef",
-                    "state_root": "0xdfebbe14c766c9647b24bb2028997238ea18a1e701dd3d84dc452bfb049cec50",
+                    "parent_root": "0x907830ce8a682f1ee7e96abd5966e89ec81e25abe2d29a415fc70b86e412b249",
+                    "state_root": "0x3b1c0dd3857b500f59c7c4188e620f7ee8aa818decb1503f43ef08e6b59f6dd5",
                     "body": {
                         "attestations": {
                             "data": []
@@ -148,8 +148,8 @@
                 "block": {
                     "slot": 5,
                     "proposer_index": 1,
-                    "parent_root": "0xc16a6e89f0234398fa0bf52b63987b4d634860682eeee798cee30bf2a29db7e2",
-                    "state_root": "0xd79d8dd84307c5b067caf06cd6630e7bb33aaf889a2e41084749e294c4f4afd8",
+                    "parent_root": "0xcd64611fe78b49a675ceaaa0a3a42a29b59f4cb9bf19ee400ee493b32cbd9d96",
+                    "state_root": "0x2b6627efb6c9f3bcf58e54f65ef7f1ce5a47d8cbf6673c64717b471781ca47ba",
                     "body": {
                         "attestations": {
                             "data": []
@@ -167,8 +167,8 @@
                 "block": {
                     "slot": 6,
                     "proposer_index": 2,
-                    "parent_root": "0x08b231ba8c1534412de21f4581a04e0871809a1f0c7f157fffb8174dc8d93ebc",
-                    "state_root": "0xe0b7d11db4383b06ccabc58b259ad388339b4729c685277caa85fadc84c71551",
+                    "parent_root": "0x7baa73d0b5f3dbb89a409f66fc834e45d920c324539b2316a8e8984cc12d2eb3",
+                    "state_root": "0x85214fe3b175405d0ff885bcd5914383b1d546d637aa6b300856714d5e7d0cff",
                     "body": {
                         "attestations": {
                             "data": []
@@ -186,8 +186,8 @@
                 "block": {
                     "slot": 7,
                     "proposer_index": 3,
-                    "parent_root": "0x1bf909687ad15e49c31371536ff0edde453991573c7ab4a74a7631f45a23e4ef",
-                    "state_root": "0xf6ac2dbe46a6a1d4a880a8557c30494221fbb99d216e114e37c2a874a34b5b45",
+                    "parent_root": "0xcaab4c3fe4cfd06420bb5fbb3cc95aa97ba9e459611238964a2c3e52f34a1f93",
+                    "state_root": "0x5d73d1f3187a74146c1b4e6294108f579c5d7cd2be1f9e06c5373aa4796cfbc9",
                     "body": {
                         "attestations": {
                             "data": []
@@ -205,8 +205,8 @@
                 "block": {
                     "slot": 8,
                     "proposer_index": 0,
-                    "parent_root": "0x84dc5ee330aabcf6516ea963c6789fa31f10f03c2557a0f8f10a18e6c4d3573e",
-                    "state_root": "0x36429cdfb5e4de10a73402c5a10a19245502db4be4a0f1a70beb9404cc4ee670",
+                    "parent_root": "0x23af111530f55ac264cb17c0270e3552d1fbd72aa037b7bd1d1bf11e7dae7d0b",
+                    "state_root": "0x29f41273ac374401365487ae29ec2ca689d52c375d9e7d7d5597dd85de7b979a",
                     "body": {
                         "attestations": {
                             "data": []
@@ -215,8 +215,9 @@
                 }
             }
         ],
+        "maxSlot": 8,
         "_info": {
-            "hash": "0xcb07e0380c27196b14f2f0ed49a2b47ad8d1a623ffbbf14dda6beb705f2685aa",
+            "hash": "0x31f31206a86f7e92633ea0195c93c6fce94e0aa130b34cb8bdcffa252443eb2e",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/fc/test_attestation_target_selection.py::test_attestation_target_with_extended_chain[fork_Devnet]",
             "description": "Attestation target advances progressively over extended chain.\n\nScenario\n--------\nBuild a longer chain (slots 1-8) observing target advancement pattern.\n\nExpected:\n    - Initial slots: target at genesis (conservative)\n    - Middle slots: target advances to slot 1\n    - Target advances gradually, not jumping to head\n\nWhy This Matters\n----------------\nOver extended chains, the target selection should show smooth,\ngradual advancement as attestation weight accumulates.\n\nThe target lags behind the head, providing a stable reference point that\nadvances only when sufficient consensus has formed. This prevents validators\nfrom attesting too far ahead without adequate safety guarantees.",

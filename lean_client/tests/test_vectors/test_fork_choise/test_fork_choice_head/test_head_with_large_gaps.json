@@ -30,16 +30,16 @@
             "validators": {
                 "data": [
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0x2ded386c32e2341f32b8cf1ec82e4377aec82c4c1477175f9181e15b5069424e20f5c5468c4b960a790c3427ea0de50a2a8ea021"
                     },
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0x21f2923561def37d9b4ceb78580c541cb04dd83069394d64426e5714692b752bf57b0c72ba2ed544ce499134dd61212b86fe0d50"
                     },
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0x981a0a22c8fcd61bd8f9c67a5c5d44365745a53af94ff246864c3145b6f9092ae63ef0404b8c6b6a267417141320ea4863e11233"
                     },
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0xea68251fc221d95c8a10096491357268586df16e63775a56a987052af14fbb496934c449412bb0503bdfa7207d11325c068ad148"
                     }
                 ]
             },
@@ -54,7 +54,7 @@
             "slot": 0,
             "proposerIndex": 0,
             "parentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "stateRoot": "0x259dd6c91f2bab3b338fd2b4d9a6d8f8e678bc7d75590f96f323c5e82843e913",
+            "stateRoot": "0x3706c23fea7192ba3dd223e996a020563a4bb6c4c77214dedfd8b6098463d068",
             "body": {
                 "attestations": {
                     "data": []
@@ -71,8 +71,8 @@
                 "block": {
                     "slot": 1,
                     "proposer_index": 1,
-                    "parent_root": "0xc0d44f989da630e63b222085a226fea923e2cc5321ba4c4aa4978b528949827e",
-                    "state_root": "0x57c159521023a7181e36310c0e30f3fa4b49449df06fbb40023ae6db29b9d200",
+                    "parent_root": "0xc5c0425ac2648188ad372a1f4bbd0bd29d84b3b6109106904dc48bdd3d2f4dd6",
+                    "state_root": "0x66097cab03b6eb5fe1521f9d9e0603dddb8f1ebf8a68e8343e96801773b3b717",
                     "body": {
                         "attestations": {
                             "data": []
@@ -89,8 +89,8 @@
                 "block": {
                     "slot": 10,
                     "proposer_index": 2,
-                    "parent_root": "0xad26b6bd334c3210c3776ae2cb5ca6f27c89fdd7d1f9e9e08324f4c584b87134",
-                    "state_root": "0x551a25d08a16b10b8c1e51869570290ca69a85273cafe50ad38ee81e789a9055",
+                    "parent_root": "0x12405072773e6af9e28e10bcf7491a5de619fac34457ead87af07c527635d1b1",
+                    "state_root": "0x22c186835e38ff52402374fcf3abffa9df6f692a2b90aa661d094dab92b27d16",
                     "body": {
                         "attestations": {
                             "data": []
@@ -107,8 +107,8 @@
                 "block": {
                     "slot": 20,
                     "proposer_index": 0,
-                    "parent_root": "0x73056f9abc71e94a4f018ae97aa5ac071c283e661f9b541346290829f5402527",
-                    "state_root": "0x55a0e9072ab6c5f12c80e189004ce003df3a508bd16c09b0984facd23559af86",
+                    "parent_root": "0xdebb7a54ade0a6d8ce225a6c29e7869d7a42c5515a3c55620ccca39d7110d9b1",
+                    "state_root": "0x168e7f7985c21b0411c1b812aed98dcfed829ba7814454895654ece22ba6145d",
                     "body": {
                         "attestations": {
                             "data": []
@@ -125,8 +125,8 @@
                 "block": {
                     "slot": 30,
                     "proposer_index": 2,
-                    "parent_root": "0x4b205bbd4982de3d1446c3e43a6b1fc598f37450c644a91ff58b64a6716569d9",
-                    "state_root": "0xda03010a9d1f536fa6279b2bd7dd4a860e77f017d3ac29801d0ad1bb49e565d9",
+                    "parent_root": "0xdad51bab84f229bb4441bfc1cc5fdbb9b175c500f384b8b4c4b9b830e712cd9d",
+                    "state_root": "0x361f0e01ee6586c9b2474e4647078feb80c22f63949c955955f2a1e6d8f55a83",
                     "body": {
                         "attestations": {
                             "data": []
@@ -135,8 +135,9 @@
                 }
             }
         ],
+        "maxSlot": 30,
         "_info": {
-            "hash": "0x4c1376387fcb10c8dcc4a30fbe9ca16a363fbb701dafbe97dfadbbb8bcad3cbf",
+            "hash": "0x807f4b466eda3657f22fd3f02eb028003a63a6ed94fbe55b13de68fd7c0226d1",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/fc/test_fork_choice_head.py::test_head_with_large_gaps[fork_Devnet]",
             "description": "Fork choice head handles large gaps between blocks.\n\nScenario\n--------\nBuild blocks at slots 1, 10, 20, 30 (gaps of 9-10 slots).\n\nExpected Behavior:\n    - Head advances despite large gaps\n    - Fork choice is gap-size independent\n    - Head reaches the furthest block\n\nWhy This Matters\n----------------\nLarge gaps can occur during:\n- Extended network partitions\n- Chain reorganizations\n- Periods of high validator downtime\n- Initial sync after being offline\n\nThe fork choice algorithm must remain correct regardless of gap size.\nDistance between blocks should not affect the correctness of head selection -\nonly the tree structure matters.\n\nThis test verifies that even with dramatic gaps (representing severe network\nconditions), fork choice still identifies the correct head.",

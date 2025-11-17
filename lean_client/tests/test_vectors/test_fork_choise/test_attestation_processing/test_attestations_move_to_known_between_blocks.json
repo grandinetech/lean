@@ -30,16 +30,16 @@
             "validators": {
                 "data": [
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0x36432e4aee83480a11fe5c0676ae396f66e5365c269d595711e7755a3326dd5500ee650a84631c60357c0d179b47fa0eda40ba4a"
                     },
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0x51fa292bc2c0447b0c533c23198163045fc4180cc9a0cd791cd80c041ad45007646ddf1eb488663e97406467eaa15a0993f02040"
                     },
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0xd80c7c393ac79427fb6ec34be89c1f06433152648f511b4ee1ad4063ee342d61be725b02da07e73a87efa73e66475006b592e879"
                     },
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0xbd8f144d8a19131c16b4bc78c025963c925d7273d0e96f7470749254ffe9c505af9ab55c889c6f7938020907b46ae32641844d2c"
                     }
                 ]
             },
@@ -54,7 +54,7 @@
             "slot": 0,
             "proposerIndex": 0,
             "parentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "stateRoot": "0x259dd6c91f2bab3b338fd2b4d9a6d8f8e678bc7d75590f96f323c5e82843e913",
+            "stateRoot": "0xc1ad2e265ce0180473e18951ad104d17c7d7c3f2e356bb9c4b90f56949e5794b",
             "body": {
                 "attestations": {
                     "data": []
@@ -81,8 +81,8 @@
                 "block": {
                     "slot": 1,
                     "proposer_index": 1,
-                    "parent_root": "0xc0d44f989da630e63b222085a226fea923e2cc5321ba4c4aa4978b528949827e",
-                    "state_root": "0x57c159521023a7181e36310c0e30f3fa4b49449df06fbb40023ae6db29b9d200",
+                    "parent_root": "0x2959721c8bb1bf4ec382fe6fc1d7e2d827c1dd130b0b33290fd2a967e72bd2a9",
+                    "state_root": "0xd51e578f2f359cd1d1fec716b387a87e6e3b99e9891b70dc077d1ac670ac3fde",
                     "body": {
                         "attestations": {
                             "data": []
@@ -117,8 +117,8 @@
                 "block": {
                     "slot": 2,
                     "proposer_index": 2,
-                    "parent_root": "0xad26b6bd334c3210c3776ae2cb5ca6f27c89fdd7d1f9e9e08324f4c584b87134",
-                    "state_root": "0xb229cd5597a4c28c8895b60113d6a6b86602d19aa364f1bdeb6ecd5f51ae0756",
+                    "parent_root": "0x854c966b97a40050e1ca6c624fd945e19076d40d9b1f0dad6be207716a23aa9a",
+                    "state_root": "0x3a0c5989debb4a11ddbe26b81d2e0cf7e95e0b031ea5a197d4630c222d880489",
                     "body": {
                         "attestations": {
                             "data": []
@@ -127,8 +127,9 @@
                 }
             }
         ],
+        "maxSlot": 2,
         "_info": {
-            "hash": "0xb7a08f50ecf1f91fd1ba7367eb0458bada889347392a4f9e11dd51e17a5620c9",
+            "hash": "0x913aec03a82b0af772338d859794ee4264f3df07acfcf9ffb1bae7b622a8073b",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/fc/test_attestation_processing.py::test_attestations_move_to_known_between_blocks[fork_Devnet]",
             "description": "Attestations move from latest_new to latest_known between blocks.\n\nScenario\n--------\nProcess blocks at slots 1 and 2 (different proposers: validators 1 and 2).\n\nExpected:\n    - After slot 1: new attestations = 1, known attestations = 0\n    - After slot 2: new attestations = 1, known attestations = 1\n    - Validator 1's attestation moved to known with correct checkpoints\n    - Validator 2's attestation in new with correct checkpoints\n\nWhy This Matters\n----------------\nThe interval tick system drives attestation migration between slots.\n\nBefore processing the next block, interval ticks move all attestations from\nnew \u2192 known and clear the new dictionary. Then the next block's proposer\nattestation enters the now-empty new dictionary.\n\nThis creates the attestation pipeline:\n- Enter via new (arrivals)\n- Graduate to known (accepted for fork choice)",

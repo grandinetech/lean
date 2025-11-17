@@ -30,16 +30,16 @@
             "validators": {
                 "data": [
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0x36432e4aee83480a11fe5c0676ae396f66e5365c269d595711e7755a3326dd5500ee650a84631c60357c0d179b47fa0eda40ba4a"
                     },
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0x51fa292bc2c0447b0c533c23198163045fc4180cc9a0cd791cd80c041ad45007646ddf1eb488663e97406467eaa15a0993f02040"
                     },
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0xd80c7c393ac79427fb6ec34be89c1f06433152648f511b4ee1ad4063ee342d61be725b02da07e73a87efa73e66475006b592e879"
                     },
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0xbd8f144d8a19131c16b4bc78c025963c925d7273d0e96f7470749254ffe9c505af9ab55c889c6f7938020907b46ae32641844d2c"
                     }
                 ]
             },
@@ -54,7 +54,7 @@
             "slot": 0,
             "proposerIndex": 0,
             "parentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "stateRoot": "0x259dd6c91f2bab3b338fd2b4d9a6d8f8e678bc7d75590f96f323c5e82843e913",
+            "stateRoot": "0xc1ad2e265ce0180473e18951ad104d17c7d7c3f2e356bb9c4b90f56949e5794b",
             "body": {
                 "attestations": {
                     "data": []
@@ -72,8 +72,8 @@
                 "block": {
                     "slot": 1,
                     "proposer_index": 1,
-                    "parent_root": "0xc0d44f989da630e63b222085a226fea923e2cc5321ba4c4aa4978b528949827e",
-                    "state_root": "0x57c159521023a7181e36310c0e30f3fa4b49449df06fbb40023ae6db29b9d200",
+                    "parent_root": "0x2959721c8bb1bf4ec382fe6fc1d7e2d827c1dd130b0b33290fd2a967e72bd2a9",
+                    "state_root": "0xd51e578f2f359cd1d1fec716b387a87e6e3b99e9891b70dc077d1ac670ac3fde",
                     "body": {
                         "attestations": {
                             "data": []
@@ -91,8 +91,8 @@
                 "block": {
                     "slot": 2,
                     "proposer_index": 2,
-                    "parent_root": "0xad26b6bd334c3210c3776ae2cb5ca6f27c89fdd7d1f9e9e08324f4c584b87134",
-                    "state_root": "0xb229cd5597a4c28c8895b60113d6a6b86602d19aa364f1bdeb6ecd5f51ae0756",
+                    "parent_root": "0x854c966b97a40050e1ca6c624fd945e19076d40d9b1f0dad6be207716a23aa9a",
+                    "state_root": "0x3a0c5989debb4a11ddbe26b81d2e0cf7e95e0b031ea5a197d4630c222d880489",
                     "body": {
                         "attestations": {
                             "data": []
@@ -110,8 +110,8 @@
                 "block": {
                     "slot": 2,
                     "proposer_index": 2,
-                    "parent_root": "0xad26b6bd334c3210c3776ae2cb5ca6f27c89fdd7d1f9e9e08324f4c584b87134",
-                    "state_root": "0xb229cd5597a4c28c8895b60113d6a6b86602d19aa364f1bdeb6ecd5f51ae0756",
+                    "parent_root": "0x854c966b97a40050e1ca6c624fd945e19076d40d9b1f0dad6be207716a23aa9a",
+                    "state_root": "0x3a0c5989debb4a11ddbe26b81d2e0cf7e95e0b031ea5a197d4630c222d880489",
                     "body": {
                         "attestations": {
                             "data": []
@@ -120,8 +120,9 @@
                 }
             }
         ],
+        "maxSlot": 2,
         "_info": {
-            "hash": "0xb119314b52b2e1ae309ef489cb1669fee2a4ce9ea25421e24e2d69c4f3d78b6a",
+            "hash": "0x7790b9c0c86403c5fe69186f31498f05a21378f025611592d1a0e25f74986853",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/fc/test_fork_choice_head.py::test_head_with_two_competing_forks[fork_Devnet]",
             "description": "Fork choice selects head when two forks compete at the same slot.\n\nScenario\n--------\nCreate two competing blocks at slot 2, both building on slot 1.\n\nExpected Behavior:\n    - After slot 1: head = slot 1 (common ancestor)\n    - After fork A (slot 2): head = slot 2 (fork A, first seen)\n    - After fork B (slot 2): head = slot 2 (still fork A)\n    - Both forks have equal weight (1 proposer attestation each)\n    - Head breaks tie lexicographically by block root\n\nWhy This Matters\n----------------\nThis is an important fork choice scenario: two blocks competing for the\nsame slot. Even with equal attestation weight, fork choice must deterministically\nselect a head.\n\nThe algorithm uses lexicographic order of block roots as a tie-breaker,\nensuring all nodes agree on the same head even when forks have equal weight.\n\nThis prevents network splits and ensures consensus converges.",

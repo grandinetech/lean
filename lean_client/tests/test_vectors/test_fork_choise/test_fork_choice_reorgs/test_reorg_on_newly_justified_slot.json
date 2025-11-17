@@ -1,5 +1,5 @@
 {
-    "tests/consensus/devnet/fc/test_fork_choice_reorgs.py::test_three_way_fork_competition[fork_Devnet][fork_devnet-fork_choice_test]": {
+    "tests/consensus/devnet/fc/test_fork_choice_reorgs.py::test_reorg_on_newly_justified_slot[fork_Devnet][fork_devnet-fork_choice_test]": {
         "network": "Devnet",
         "anchorState": {
             "config": {
@@ -104,26 +104,7 @@
                 "valid": true,
                 "checks": {
                     "headSlot": 2,
-                    "headRootLabel": "fork_a_2"
-                },
-                "stepType": "block",
-                "block": {
-                    "slot": 2,
-                    "proposer_index": 2,
-                    "parent_root": "0x854c966b97a40050e1ca6c624fd945e19076d40d9b1f0dad6be207716a23aa9a",
-                    "state_root": "0x3a0c5989debb4a11ddbe26b81d2e0cf7e95e0b031ea5a197d4630c222d880489",
-                    "body": {
-                        "attestations": {
-                            "data": []
-                        }
-                    }
-                }
-            },
-            {
-                "valid": true,
-                "checks": {
-                    "headSlot": 2,
-                    "headRootLabel": "fork_a_2"
+                    "headRootLabel": "fork_b_2"
                 },
                 "stepType": "block",
                 "block": {
@@ -142,26 +123,7 @@
                 "valid": true,
                 "checks": {
                     "headSlot": 3,
-                    "headRootLabel": "fork_c_3"
-                },
-                "stepType": "block",
-                "block": {
-                    "slot": 3,
-                    "proposer_index": 3,
-                    "parent_root": "0xaa1f410905aa164b441d3fb84c3e11ad123da75568ad6bdd80f3a7475f673cf3",
-                    "state_root": "0x6695235b2931d2635907d68cbdea464fd68782faea30a9fd2bcdd66b269efa94",
-                    "body": {
-                        "attestations": {
-                            "data": []
-                        }
-                    }
-                }
-            },
-            {
-                "valid": true,
-                "checks": {
-                    "headSlot": 3,
-                    "headRootLabel": "fork_c_3"
+                    "headRootLabel": "fork_a_3"
                 },
                 "stepType": "block",
                 "block": {
@@ -180,7 +142,7 @@
                 "valid": true,
                 "checks": {
                     "headSlot": 4,
-                    "headRootLabel": "fork_b_4"
+                    "headRootLabel": "fork_a_4"
                 },
                 "stepType": "block",
                 "block": {
@@ -194,14 +156,71 @@
                         }
                     }
                 }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 5,
+                    "headRootLabel": "fork_b_5",
+                    "latestJustifiedSlot": 2
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 5,
+                    "proposer_index": 1,
+                    "parent_root": "0xcd64611fe78b49a675ceaaa0a3a42a29b59f4cb9bf19ee400ee493b32cbd9d96",
+                    "state_root": "0x053e22371d137c0583b54996d0a5601da9029a29fbdf66d7526794d39f695970",
+                    "body": {
+                        "attestations": {
+                            "data": [
+                                {
+                                    "validator_id": 2,
+                                    "data": {
+                                        "slot": 4,
+                                        "head": {
+                                            "root": "0xaa1f410905aa164b441d3fb84c3e11ad123da75568ad6bdd80f3a7475f673cf3",
+                                            "slot": 2
+                                        },
+                                        "target": {
+                                            "root": "0xaa1f410905aa164b441d3fb84c3e11ad123da75568ad6bdd80f3a7475f673cf3",
+                                            "slot": 2
+                                        },
+                                        "source": {
+                                            "root": "0x2959721c8bb1bf4ec382fe6fc1d7e2d827c1dd130b0b33290fd2a967e72bd2a9",
+                                            "slot": 0
+                                        }
+                                    }
+                                },
+                                {
+                                    "validator_id": 3,
+                                    "data": {
+                                        "slot": 4,
+                                        "head": {
+                                            "root": "0xaa1f410905aa164b441d3fb84c3e11ad123da75568ad6bdd80f3a7475f673cf3",
+                                            "slot": 2
+                                        },
+                                        "target": {
+                                            "root": "0xaa1f410905aa164b441d3fb84c3e11ad123da75568ad6bdd80f3a7475f673cf3",
+                                            "slot": 2
+                                        },
+                                        "source": {
+                                            "root": "0x2959721c8bb1bf4ec382fe6fc1d7e2d827c1dd130b0b33290fd2a967e72bd2a9",
+                                            "slot": 0
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
             }
         ],
-        "maxSlot": 4,
+        "maxSlot": 5,
         "_info": {
-            "hash": "0x754d2d80cceacc90e279fae28a5415c232f656ef92e316ec107724d14d7b098d",
+            "hash": "0x1a4c1cd65668857ffb32e4826fd8c320f861579cbb138da1185a19fcd40efd8a",
             "comment": "`leanSpec` generated test",
-            "testId": "tests/consensus/devnet/fc/test_fork_choice_reorgs.py::test_three_way_fork_competition[fork_Devnet]",
-            "description": "Three competing forks with progressive elimination until one wins.\n\nScenario\n--------\nThree forks (A, B, C) compete simultaneously. Fork choice progressively\neliminates weaker forks as stronger ones extend.\n\nFork Topology:\n              base (slot 1)\n               /   |                       /    |                    fork_a  fork_b  fork_c  (slot 2)\n            |       |       |\n            |       |       +--- fork_c_3 (slot 3)\n            |       +--- fork_b_3 (slot 3)\n            |       +--- fork_b_4 (slot 4) \u2190 Winner\n            +--- abandoned\n\nExpected Behavior\n-----------------\n1. All three forks start at slot 2 (three-way tie)\n2. Fork C extends to slot 3 \u2192 becomes head\n3. Fork B extends to slot 3 \u2192 ties with fork C at depth 2\n4. Fork B extends to slot 4 \u2192 wins with depth 3\n5. Forks A and C become non-canonical\n\nReorg Sequence:\n    - Initial: fork_a (tie-breaker among three)\n    - After fork_c_3: fork_c (depth advantage)\n    - After fork_b_3: fork_c (tie, maintains head)\n    - After fork_b_4: fork_b (final winner)\n\nWhy This Matters\n----------------\nMulti-fork scenarios can occur during:\n- Network partitions splitting validators 3+ ways\n- Rapid block production creating multiple conflicting proposals\n- Byzantine validators intentionally creating competing forks\n\nProperties verified:\n- Fork choice handles 3+ simultaneous competing forks\n- Head selection remains consistent and deterministic\n- Progressive elimination works correctly\n- Final winner is objectively the heaviest fork",
+            "testId": "tests/consensus/devnet/fc/test_fork_choice_reorgs.py::test_reorg_on_newly_justified_slot[fork_Devnet]",
+            "description": "Reorg occurs correctly when forks cross justification boundaries.\n\nScenario\n--------\nTwo forks compete across multiple justifiable slots. Fork choice must\ncorrectly handle reorgs while respecting justification rules.\n\n- Slot 1: Base\n- Slot 2: Fork A (competing with B)\n- Slot 2: Fork B (competing with A)\n- Slot 3: Fork A (Fork A now has depth 2 - becomes head)\n- Slot 4: Fork A (Fork A now has depth 3 - still head)\n- Slot 5: Fork B with enough justifications for Slot 2 \u2192 triggers reorg \u2192 Fork B becomes head\n\nExpected Behavior\n-----------------\n1. Fork A and Fork B initially have equal weight at Slot 2\n2. Fork A takes lead at Slot 3 and Slot 4\n2. At Slot 5, enough attestations justified Fork B at Slot 2, Fork A permanently non-canonical\n3. Fork B becomes head at Slot 5 due to justification of Fork B at Slot 2\n\nWhy This Matters\n----------------\nJustification is a critical safety mechanism:\n- Limits which blocks can be attested to\n- Ensures fork choice respects finality constraints\n\nThis test ensures:\n- Reorgs respect justification boundaries\n- Fork choice works correctly across justifiable slots\n- Safety guarantees maintained during reorgs",
             "fixtureFormat": "fork_choice_test"
         }
     }

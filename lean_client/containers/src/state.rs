@@ -202,7 +202,15 @@ impl State {
 
     pub fn process_block(&self, block: &Block) -> Self {
         let state = self.process_block_header(block);
-        state.process_operations(&block.body)
+        let state_after_ops = state.process_attestations(&block.body.attestations);
+        
+        // Validate state root: the block's state_root must match the hash of the post-state
+        let computed_state_root = hash_tree_root(&state_after_ops);
+        if block.state_root != computed_state_root {
+            std::panic::panic_any(String::from("Invalid block state root"));
+        }
+        
+        state_after_ops
     }
 
     pub fn process_block_header(&self, block: &Block) -> Self {
@@ -211,7 +219,7 @@ impl State {
         if !self.is_proposer(block.proposer_index) { std::panic::panic_any(String::from("Incorrect block proposer")); }
 
         // Create a mutable clone for hash computation
-        let latest_header_for_hash = self.latest_block_header.clone();
+        let latest_header_for_hash  = self.latest_block_header.clone();
         let parent_root = hash_tree_root(&latest_header_for_hash);
         if block.parent_root != parent_root { std::panic::panic_any(String::from("Block parent root mismatch")); }
 
@@ -275,10 +283,6 @@ impl State {
             justifications_roots: self.justifications_roots.clone(),
             justifications_validators: self.justifications_validators.clone(),
         }
-    }
-
-    pub fn process_operations(&self, body: &BlockBody) -> Self {
-        self.process_attestations(&body.attestations)
     }
 
     pub fn process_attestations(&self, attestations: &Attestations) -> Self {

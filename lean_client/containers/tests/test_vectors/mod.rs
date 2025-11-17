@@ -1,8 +1,7 @@
+// Test vector modules
 pub mod runner;
-pub mod test_single_block_with_slot_gap;
-pub mod test_sequential_blocks;
-pub mod test_single_empty_block;
-pub mod test_invalid_proposer;
+pub mod block_processing;
+pub mod genesis;
 
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;

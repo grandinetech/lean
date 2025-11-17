@@ -30,16 +30,16 @@
             "validators": {
                 "data": [
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0x36432e4aee83480a11fe5c0676ae396f66e5365c269d595711e7755a3326dd5500ee650a84631c60357c0d179b47fa0eda40ba4a"
                     },
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0x51fa292bc2c0447b0c533c23198163045fc4180cc9a0cd791cd80c041ad45007646ddf1eb488663e97406467eaa15a0993f02040"
                     },
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0xd80c7c393ac79427fb6ec34be89c1f06433152648f511b4ee1ad4063ee342d61be725b02da07e73a87efa73e66475006b592e879"
                     },
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0xbd8f144d8a19131c16b4bc78c025963c925d7273d0e96f7470749254ffe9c505af9ab55c889c6f7938020907b46ae32641844d2c"
                     }
                 ]
             },
@@ -54,7 +54,7 @@
             "slot": 0,
             "proposerIndex": 0,
             "parentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "stateRoot": "0x259dd6c91f2bab3b338fd2b4d9a6d8f8e678bc7d75590f96f323c5e82843e913",
+            "stateRoot": "0xc1ad2e265ce0180473e18951ad104d17c7d7c3f2e356bb9c4b90f56949e5794b",
             "body": {
                 "attestations": {
                     "data": []
@@ -72,8 +72,8 @@
                 "block": {
                     "slot": 1,
                     "proposer_index": 1,
-                    "parent_root": "0xc0d44f989da630e63b222085a226fea923e2cc5321ba4c4aa4978b528949827e",
-                    "state_root": "0x57c159521023a7181e36310c0e30f3fa4b49449df06fbb40023ae6db29b9d200",
+                    "parent_root": "0x2959721c8bb1bf4ec382fe6fc1d7e2d827c1dd130b0b33290fd2a967e72bd2a9",
+                    "state_root": "0xd51e578f2f359cd1d1fec716b387a87e6e3b99e9891b70dc077d1ac670ac3fde",
                     "body": {
                         "attestations": {
                             "data": []
@@ -91,8 +91,8 @@
                 "block": {
                     "slot": 2,
                     "proposer_index": 2,
-                    "parent_root": "0xad26b6bd334c3210c3776ae2cb5ca6f27c89fdd7d1f9e9e08324f4c584b87134",
-                    "state_root": "0xb229cd5597a4c28c8895b60113d6a6b86602d19aa364f1bdeb6ecd5f51ae0756",
+                    "parent_root": "0x854c966b97a40050e1ca6c624fd945e19076d40d9b1f0dad6be207716a23aa9a",
+                    "state_root": "0x3a0c5989debb4a11ddbe26b81d2e0cf7e95e0b031ea5a197d4630c222d880489",
                     "body": {
                         "attestations": {
                             "data": []
@@ -110,8 +110,8 @@
                 "block": {
                     "slot": 2,
                     "proposer_index": 2,
-                    "parent_root": "0xad26b6bd334c3210c3776ae2cb5ca6f27c89fdd7d1f9e9e08324f4c584b87134",
-                    "state_root": "0xb229cd5597a4c28c8895b60113d6a6b86602d19aa364f1bdeb6ecd5f51ae0756",
+                    "parent_root": "0x854c966b97a40050e1ca6c624fd945e19076d40d9b1f0dad6be207716a23aa9a",
+                    "state_root": "0x3a0c5989debb4a11ddbe26b81d2e0cf7e95e0b031ea5a197d4630c222d880489",
                     "body": {
                         "attestations": {
                             "data": []
@@ -129,8 +129,8 @@
                 "block": {
                     "slot": 3,
                     "proposer_index": 3,
-                    "parent_root": "0x60097245852f36359a7246aed4600ebbaf98fd62dc101cdc4a12f9089d858f05",
-                    "state_root": "0xa657eb75b0473cac0f4ae137861e9aedd9cdf80b16cade35deb10d61482b8244",
+                    "parent_root": "0xaa1f410905aa164b441d3fb84c3e11ad123da75568ad6bdd80f3a7475f673cf3",
+                    "state_root": "0x6695235b2931d2635907d68cbdea464fd68782faea30a9fd2bcdd66b269efa94",
                     "body": {
                         "attestations": {
                             "data": []
@@ -148,8 +148,8 @@
                 "block": {
                     "slot": 3,
                     "proposer_index": 3,
-                    "parent_root": "0x60097245852f36359a7246aed4600ebbaf98fd62dc101cdc4a12f9089d858f05",
-                    "state_root": "0xa657eb75b0473cac0f4ae137861e9aedd9cdf80b16cade35deb10d61482b8244",
+                    "parent_root": "0xaa1f410905aa164b441d3fb84c3e11ad123da75568ad6bdd80f3a7475f673cf3",
+                    "state_root": "0x6695235b2931d2635907d68cbdea464fd68782faea30a9fd2bcdd66b269efa94",
                     "body": {
                         "attestations": {
                             "data": []
@@ -167,8 +167,8 @@
                 "block": {
                     "slot": 4,
                     "proposer_index": 0,
-                    "parent_root": "0x4776ddd2c9b9191fcbb5f7042d8d73044eddb03e33db46cc1ef7a5f815b533ef",
-                    "state_root": "0xdfebbe14c766c9647b24bb2028997238ea18a1e701dd3d84dc452bfb049cec50",
+                    "parent_root": "0x907830ce8a682f1ee7e96abd5966e89ec81e25abe2d29a415fc70b86e412b249",
+                    "state_root": "0x3b1c0dd3857b500f59c7c4188e620f7ee8aa818decb1503f43ef08e6b59f6dd5",
                     "body": {
                         "attestations": {
                             "data": []
@@ -186,8 +186,8 @@
                 "block": {
                     "slot": 4,
                     "proposer_index": 0,
-                    "parent_root": "0x4776ddd2c9b9191fcbb5f7042d8d73044eddb03e33db46cc1ef7a5f815b533ef",
-                    "state_root": "0xdfebbe14c766c9647b24bb2028997238ea18a1e701dd3d84dc452bfb049cec50",
+                    "parent_root": "0x907830ce8a682f1ee7e96abd5966e89ec81e25abe2d29a415fc70b86e412b249",
+                    "state_root": "0x3b1c0dd3857b500f59c7c4188e620f7ee8aa818decb1503f43ef08e6b59f6dd5",
                     "body": {
                         "attestations": {
                             "data": []
@@ -205,8 +205,8 @@
                 "block": {
                     "slot": 5,
                     "proposer_index": 1,
-                    "parent_root": "0xc16a6e89f0234398fa0bf52b63987b4d634860682eeee798cee30bf2a29db7e2",
-                    "state_root": "0xd79d8dd84307c5b067caf06cd6630e7bb33aaf889a2e41084749e294c4f4afd8",
+                    "parent_root": "0xcd64611fe78b49a675ceaaa0a3a42a29b59f4cb9bf19ee400ee493b32cbd9d96",
+                    "state_root": "0x2b6627efb6c9f3bcf58e54f65ef7f1ce5a47d8cbf6673c64717b471781ca47ba",
                     "body": {
                         "attestations": {
                             "data": []
@@ -215,8 +215,9 @@
                 }
             }
         ],
+        "maxSlot": 5,
         "_info": {
-            "hash": "0x3fda54e6d9bcf481e1e270d4fb4103d7a81778403dd6bd45719da51d0f61e193",
+            "hash": "0x6879aebbd5748fd212420249158fd5b1622b00557528802554c49c20f7897056",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/fc/test_fork_choice_reorgs.py::test_back_and_forth_reorg_oscillation[fork_Devnet]",
             "description": "Multiple reorgs as two forks alternately extend (pathological case).\n\nScenario\n--------\nTwo forks alternate extensions, causing head to oscillate back and forth.\nThis is a pathological case that shouldn't happen in healthy networks but\ntests fork choice correctness under extreme conditions.\n\nOscillation Pattern:\n    Slot 2: Fork A leads (1 block) \u2190 head\n    Slot 3: Fork B catches up (1 block each) \u2192 tie\n    Slot 4: Fork B extends (2 vs 1) \u2190 head switches to B\n    Slot 5: Fork A extends (2 vs 2) \u2192 tie\n    Slot 6: Fork A extends (3 vs 2) \u2190 head switches to A\n    Slot 7: Fork B extends (3 vs 3) \u2192 tie\n    Slot 8: Fork B extends (4 vs 3) \u2190 head switches to B\n\nExpected Behavior\n-----------------\n1. Head oscillates: A \u2192 B \u2192 A \u2192 B\n2. Each extension triggers reorg to that fork\n3. All reorgs are 1-2 blocks deep\n4. Fork choice remains consistent and correct throughout\n\nReorg Count: 3 reorgs in 6 slots (very high rate)\n\nWhy This Matters\n----------------\nWhile extremely rare, this scenario can theoretically occur:\n- Two validator groups in different network segments\n- Each group primarily seeing their own fork first\n- Alternating proposer selection between groups\n- High network latency preventing convergence\n\nProperties Tested:\n- Fork choice handles rapid reorg sequences\n- No state corruption despite frequent head changes\n- Tie-breaking remains consistent\n- Weight calculation correct after multiple reorgs\n- System eventually stabilizes to heaviest fork\n\nThis stress test verifies robustness under worst-case fork competition,\nensuring the protocol remains safe even in pathological network conditions.\nIn practice, networks self-heal from such scenarios through attestation\nconvergence.",

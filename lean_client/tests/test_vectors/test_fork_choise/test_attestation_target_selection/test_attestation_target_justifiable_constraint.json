@@ -30,16 +30,16 @@
             "validators": {
                 "data": [
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0x2ded386c32e2341f32b8cf1ec82e4377aec82c4c1477175f9181e15b5069424e20f5c5468c4b960a790c3427ea0de50a2a8ea021"
                     },
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0x21f2923561def37d9b4ceb78580c541cb04dd83069394d64426e5714692b752bf57b0c72ba2ed544ce499134dd61212b86fe0d50"
                     },
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0x981a0a22c8fcd61bd8f9c67a5c5d44365745a53af94ff246864c3145b6f9092ae63ef0404b8c6b6a267417141320ea4863e11233"
                     },
                     {
-                        "pubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        "pubkey": "0xea68251fc221d95c8a10096491357268586df16e63775a56a987052af14fbb496934c449412bb0503bdfa7207d11325c068ad148"
                     }
                 ]
             },
@@ -54,7 +54,7 @@
             "slot": 0,
             "proposerIndex": 0,
             "parentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "stateRoot": "0x259dd6c91f2bab3b338fd2b4d9a6d8f8e678bc7d75590f96f323c5e82843e913",
+            "stateRoot": "0x3706c23fea7192ba3dd223e996a020563a4bb6c4c77214dedfd8b6098463d068",
             "body": {
                 "attestations": {
                     "data": []
@@ -72,8 +72,8 @@
                 "block": {
                     "slot": 1,
                     "proposer_index": 1,
-                    "parent_root": "0xc0d44f989da630e63b222085a226fea923e2cc5321ba4c4aa4978b528949827e",
-                    "state_root": "0x57c159521023a7181e36310c0e30f3fa4b49449df06fbb40023ae6db29b9d200",
+                    "parent_root": "0xc5c0425ac2648188ad372a1f4bbd0bd29d84b3b6109106904dc48bdd3d2f4dd6",
+                    "state_root": "0x66097cab03b6eb5fe1521f9d9e0603dddb8f1ebf8a68e8343e96801773b3b717",
                     "body": {
                         "attestations": {
                             "data": []
@@ -91,8 +91,8 @@
                 "block": {
                     "slot": 2,
                     "proposer_index": 2,
-                    "parent_root": "0xad26b6bd334c3210c3776ae2cb5ca6f27c89fdd7d1f9e9e08324f4c584b87134",
-                    "state_root": "0xb229cd5597a4c28c8895b60113d6a6b86602d19aa364f1bdeb6ecd5f51ae0756",
+                    "parent_root": "0x12405072773e6af9e28e10bcf7491a5de619fac34457ead87af07c527635d1b1",
+                    "state_root": "0x70268de35a0191ddcb0e831233112b789048de7fda0fa54e7981a71825a6c628",
                     "body": {
                         "attestations": {
                             "data": []
@@ -110,8 +110,8 @@
                 "block": {
                     "slot": 3,
                     "proposer_index": 3,
-                    "parent_root": "0x60097245852f36359a7246aed4600ebbaf98fd62dc101cdc4a12f9089d858f05",
-                    "state_root": "0xa657eb75b0473cac0f4ae137861e9aedd9cdf80b16cade35deb10d61482b8244",
+                    "parent_root": "0xf369eaed94fd4817cb79adef243fd4a693d6e98b3acb92de777b36f47f6b0d92",
+                    "state_root": "0xf1ac0bb8fb9b3f165ba468972d50ab0724f826ceb2728a0dfda0fc1b1a9881db",
                     "body": {
                         "attestations": {
                             "data": []
@@ -129,8 +129,8 @@
                 "block": {
                     "slot": 4,
                     "proposer_index": 0,
-                    "parent_root": "0x4776ddd2c9b9191fcbb5f7042d8d73044eddb03e33db46cc1ef7a5f815b533ef",
-                    "state_root": "0xdfebbe14c766c9647b24bb2028997238ea18a1e701dd3d84dc452bfb049cec50",
+                    "parent_root": "0x063f85eab5ccffcc0c94ba1f25432d5bcea0a2dd8276b8ae3af31db9eb53a34a",
+                    "state_root": "0x7fd3d854a04ea3c411e04db8628abe972030e4ca847ae19348541b6539b49dd3",
                     "body": {
                         "attestations": {
                             "data": []
@@ -148,8 +148,8 @@
                 "block": {
                     "slot": 5,
                     "proposer_index": 1,
-                    "parent_root": "0xc16a6e89f0234398fa0bf52b63987b4d634860682eeee798cee30bf2a29db7e2",
-                    "state_root": "0xd79d8dd84307c5b067caf06cd6630e7bb33aaf889a2e41084749e294c4f4afd8",
+                    "parent_root": "0x0fd9ef506bdc89e70e51c7c5a67ec025da2090e2f28d99569945ba4d1883c8a6",
+                    "state_root": "0x50a0fd13e63795fef0d53deabe087c93096234abd7759c4268182c35d365f032",
                     "body": {
                         "attestations": {
                             "data": []
@@ -167,8 +167,8 @@
                 "block": {
                     "slot": 6,
                     "proposer_index": 2,
-                    "parent_root": "0x08b231ba8c1534412de21f4581a04e0871809a1f0c7f157fffb8174dc8d93ebc",
-                    "state_root": "0xe0b7d11db4383b06ccabc58b259ad388339b4729c685277caa85fadc84c71551",
+                    "parent_root": "0x8af3ec615ff669f59756c8672d8f394916fdd5292da362959fb3783033419e80",
+                    "state_root": "0x142160bd7d23db61a3f075b6a42f632fb9b015a56a1f1c6d5f216b1d0976901d",
                     "body": {
                         "attestations": {
                             "data": []
@@ -186,8 +186,8 @@
                 "block": {
                     "slot": 7,
                     "proposer_index": 3,
-                    "parent_root": "0x1bf909687ad15e49c31371536ff0edde453991573c7ab4a74a7631f45a23e4ef",
-                    "state_root": "0xf6ac2dbe46a6a1d4a880a8557c30494221fbb99d216e114e37c2a874a34b5b45",
+                    "parent_root": "0x64313459222e70b3094f81291875bc25841308a7e8d0d58c79901ba8a1d14d9f",
+                    "state_root": "0x390b1a98d3292f3644f40b5734d53aa0a2723d382eaabaf20e7d8c7e9bbb1318",
                     "body": {
                         "attestations": {
                             "data": []
@@ -205,8 +205,8 @@
                 "block": {
                     "slot": 8,
                     "proposer_index": 0,
-                    "parent_root": "0x84dc5ee330aabcf6516ea963c6789fa31f10f03c2557a0f8f10a18e6c4d3573e",
-                    "state_root": "0x36429cdfb5e4de10a73402c5a10a19245502db4be4a0f1a70beb9404cc4ee670",
+                    "parent_root": "0xad73211644c566df06da486594de89cf7a444745df55983a41cc86beca1354b8",
+                    "state_root": "0x2968c5d686c55729a384dd761f3a413df43a9e47ce5620927a08c20078c80b97",
                     "body": {
                         "attestations": {
                             "data": []
@@ -224,8 +224,8 @@
                 "block": {
                     "slot": 9,
                     "proposer_index": 1,
-                    "parent_root": "0xf0a87df88b14277cc20c24db0084c1a491653cc7033740ab3f464e1486466694",
-                    "state_root": "0x2990f3cf92e554df2ffbca0f4f6163b5b67bdb4261164e7055d6d9b6603b5d22",
+                    "parent_root": "0x1af5afa9d7320ff9090a83713e0caad902b171c1e120d435ede5946de62cb32d",
+                    "state_root": "0x453e3c1a23e66d1a6604c24477fd0a6d06671ad491dbd55f739345487e11386b",
                     "body": {
                         "attestations": {
                             "data": []
@@ -243,8 +243,388 @@
                 "block": {
                     "slot": 10,
                     "proposer_index": 2,
-                    "parent_root": "0x61c685c426cf3ac09374043fc0781a45c229ea51cffb1ccd5ceb1098c1186e11",
-                    "state_root": "0xb3da112887839e3b4a00110c2fa4dee1456b320a28465168cbb8399c22bf7172",
+                    "parent_root": "0x5f51ad91370a81992aed91b76716bc85dac49c8ef2d1345236bad63ddb8d1c97",
+                    "state_root": "0x7c25a55a07f697e32f8abe001d2e61f3a0a9f7a9c2149959d70093b2c942ac7a",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 11,
+                    "attestationTargetSlot": 6
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 11,
+                    "proposer_index": 3,
+                    "parent_root": "0x5e89c2f8dafcda26c57321840e5c06c6ad012fe00120f0384c7dc95298c34cd3",
+                    "state_root": "0x007ec05fa7c9d6fd5315eb312a027aa0eef7af9935cbcb74d5b0ac7110868898",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 12,
+                    "attestationTargetSlot": 9
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 12,
+                    "proposer_index": 0,
+                    "parent_root": "0xd58ab409c2bdfc2ee9bb1b7595326e9c89f655f7183ca78fd97cf213d6de33ae",
+                    "state_root": "0x8da6662bc012527ff61c526405795aa89276b214cf956ca86c386f8ebb866883",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 13,
+                    "attestationTargetSlot": 9
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 13,
+                    "proposer_index": 1,
+                    "parent_root": "0xbbd2c55cb1adc43fe073f73b36e3473e14f98d150f8f2e446dc0ab2adf783eca",
+                    "state_root": "0x34958662fca1b77fb4542eb42cb2b8d6439fd2ae87216d308bc4229993d688ac",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 14,
+                    "attestationTargetSlot": 9
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 14,
+                    "proposer_index": 2,
+                    "parent_root": "0xf71a464bb43fbdd7e5c562dfef27eea92cf6d4adab7dfe29c4e3d35cac4c49d0",
+                    "state_root": "0x907bd111cea12eb1d5c7ff8761f1df21c34fdccb5b2928898c1c70b30686daec",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 15,
+                    "attestationTargetSlot": 12
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 15,
+                    "proposer_index": 3,
+                    "parent_root": "0xba60fa756ab87482b4d30a3e0f5e1afbcb380e64bee7df17f04f85fdb55d9a50",
+                    "state_root": "0x548b09e65952a9f93e364bfea5191bb086b7b41d49381d90842fe0480819fa20",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 16,
+                    "attestationTargetSlot": 12
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 16,
+                    "proposer_index": 0,
+                    "parent_root": "0xcc9c61bb81290c466bd12e6774cde0f249922915092c622249172dfea5f37eaf",
+                    "state_root": "0xf972961f08eec4c1e146d7b5fca4db4787c392deeb7355bd572de25cf94c3f59",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 17,
+                    "attestationTargetSlot": 12
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 17,
+                    "proposer_index": 1,
+                    "parent_root": "0xa5ac7cd49c9154a0f479ab85b0cfc50096380c2b74a7e3b4ffa60ecefa819835",
+                    "state_root": "0xc6e82e114f4cc184947f56c3a4444559009c4f42d1d2ebf30f5263af03b8d30e",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 18,
+                    "attestationTargetSlot": 12
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 18,
+                    "proposer_index": 2,
+                    "parent_root": "0xf775288c8f077af3d9765321b131dda2be31feb9457c6983098241831649e59d",
+                    "state_root": "0xb3c6c6ad9e50de230e9a80bd7edd365778d3030146b0536e6e21a571f01d3c2e",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 19,
+                    "attestationTargetSlot": 16
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 19,
+                    "proposer_index": 3,
+                    "parent_root": "0xfac4ef606ef2e94bd604d1110905ba5051c7cfc0ee596c749d49bd5afcaa74e3",
+                    "state_root": "0x245c2f23cc6b2d7f106fda6d13ab12c08eabec3f8f9d7c4b8a6dc615c0478f81",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 20,
+                    "attestationTargetSlot": 16
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 20,
+                    "proposer_index": 0,
+                    "parent_root": "0x56d7900b10c34d3bb7fb1eadfd0e9476f4bbd32acc481d8376f26e95f61f0436",
+                    "state_root": "0xdf9a7f8f62feca25a8f9210db58da0ddcb0e87fadd843910070437c293719e40",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 21,
+                    "attestationTargetSlot": 16
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 21,
+                    "proposer_index": 1,
+                    "parent_root": "0xe6a4cfa053d42b0e4f38aca0f45aaf8e28f252bebacda50ac8e33a85cd5cc3df",
+                    "state_root": "0x1814b086d1ad5536bb5e0088aba03ee4dd017736f3853df2dc85e90ef67bbe66",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 22,
+                    "attestationTargetSlot": 16
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 22,
+                    "proposer_index": 2,
+                    "parent_root": "0x5b548eba533d0e29b3087019d02eb419ef4d5789d8e2752dbec7535f00934da6",
+                    "state_root": "0x448774ec88c6bb6696030d56d075423003b25323d47ca292d9ffe62e28658296",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 23,
+                    "attestationTargetSlot": 20
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 23,
+                    "proposer_index": 3,
+                    "parent_root": "0x9ab251fc1a6909edfada270ee5155e75372cc83f29decefa77b7a3991974455a",
+                    "state_root": "0x645f68ac563cecd786c35da3bb0edc9b6221eaf2e985ce1474d9d1007878dfd2",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 24,
+                    "attestationTargetSlot": 20
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 24,
+                    "proposer_index": 0,
+                    "parent_root": "0x94085d98ff11962e46e74d51a14199b17c4064938aee288103bf4dabf069aafa",
+                    "state_root": "0x52c9a2b648e7d7dbfa9395d26d020fb35257e5919b0e4b043c6cbcbc8c4fd508",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 25,
+                    "attestationTargetSlot": 20
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 25,
+                    "proposer_index": 1,
+                    "parent_root": "0xf0737e1a101470840ae1d7513cc0b1847c88d20a6e123d90a735c629a400ac7c",
+                    "state_root": "0x69939deb43e791267f264e4afea545e116ead9ef50e67c685d652dccba4ae5f6",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 26,
+                    "attestationTargetSlot": 20
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 26,
+                    "proposer_index": 2,
+                    "parent_root": "0x680f18ec4f7e21f3ede41b44363d513dff3d35ccba795e6553831a703a75877c",
+                    "state_root": "0x298ee7f5e294b840f50419f0efbfbe5c7c9fd2e5fb21d21cdefb17c4d23d188d",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 27,
+                    "attestationTargetSlot": 20
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 27,
+                    "proposer_index": 3,
+                    "parent_root": "0x9f876e9768fca5f94fe8dc15dfdf16c451d03ffcf5c825ff2a834bbdcf5f9cae",
+                    "state_root": "0x392dd15e590a18d294720604a8439aaf6194b126046bf473d2f13f6cc1bbc2fd",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 28,
+                    "attestationTargetSlot": 25
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 28,
+                    "proposer_index": 0,
+                    "parent_root": "0x517accc407b3e4308f8d91b823f64846cdae8c50c2bd791a06d7243354fbfaa7",
+                    "state_root": "0xeb1a4928d9cf3e603de8a05074a54ef89393de61058ff48db9fd5fa7f80039b6",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 29,
+                    "attestationTargetSlot": 25
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 29,
+                    "proposer_index": 1,
+                    "parent_root": "0xcb3138c038de7a7a58af9aa8972031cc62d358d73a50f78804f2e1f232d862fb",
+                    "state_root": "0x3fda904701ebb8a46f2822692f4594076f8838dfd99baf80d754bf6c224ce9fe",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 30,
+                    "attestationTargetSlot": 25
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 30,
+                    "proposer_index": 2,
+                    "parent_root": "0x5d14ad81d75cdb7f24d6afde65749604fe149c528e0c5cfc773e398a2b2a797d",
+                    "state_root": "0x58fd497890092cbc738ec0bfd082a796ebedc4147b216ab37ad843fd5105dd5a",
                     "body": {
                         "attestations": {
                             "data": []
@@ -253,11 +633,12 @@
                 }
             }
         ],
+        "maxSlot": 30,
         "_info": {
-            "hash": "0x6b11366c60f16f0fff0ec72fc5f235b3f406788b8a9dc8bb04067258e358118b",
+            "hash": "0x9d1b7310f995c5133f89361beb948173074d1d27d1c055f77676b62ea164a05d",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/fc/test_attestation_target_selection.py::test_attestation_target_justifiable_constraint[fork_Devnet]",
-            "description": "Attestation target advances while respecting justifiability rules.\n\nScenario\n--------\nBuild a 10-slot chain and observe how the attestation target advances\nover time while remaining justifiable relative to genesis (finalized at slot 0).\n\nJustifiability Rules (see Slot.is_justifiable_after)\n-----------------------------------------------------\nA slot is justifiable at distance delta from finalization if:\n1. delta \u2264 5 (first 5 slots always justifiable)\n2. delta is a perfect square (1, 4, 9, 16, 25, ...)\n3. delta is a pronic number (2, 6, 12, 20, 30, ...)\n\nExpected Target Advancement:\n    - Slots 1-3: Target = slot 0 (genesis)\n      Uses Rule 1: distance \u2264 5\n\n    - Slot 4: Target = slot 1\n      Uses Rule 2: distance 1 is a perfect square\n\n    - Slot 5: Target = slot 2\n      Uses Rule 3: distance 2 is pronic (1\u00d72)\n\n    - Slot 6: Target = slot 3\n      Uses Rule 1: distance 3 \u2264 5\n\n    - Slot 7: Target = slot 4\n      Uses Rule 2: distance 4 is a perfect square (2^2)\n\n    - Slot 8: Target = slot 5\n      Uses Rule 1: distance 5 \u2264 5\n\n    - Slot 9: Target = slot 6\n      Uses Rule 3: distance 6 is pronic (2\u00d73)\n\n    - Slot 10: Target = slot 6\n      Target can't advance: distance 7 fails all rules\n\nWhy This Matters\n----------------\nThe justifiability rules prevent long-range attacks by restricting which\ncheckpoints validators can attest to. The mathematical pattern (perfect squares\nand pronic numbers) creates increasingly sparse justifiable slots as the chain\ngrows beyond finalization, providing security guarantees.\n\nThe test verifies that the target selection algorithm respects these rules\nand never selects a non-justifiable target.",
+            "description": "Attestation target advances while respecting justifiability rules.\n\nScenario\n--------\nBuild a 10-slot chain and observe how the attestation target advances\nover time while remaining justifiable relative to genesis (finalized at slot 0).\n\nJustifiability Rules (see Slot.is_justifiable_after)\n-----------------------------------------------------\n\nThe target starts from current head and looks back at most 3 slots towards safe target.\n\nThen, a slot is deemed justifiable at distance delta from finalization if:\n1. delta \u2264 5\n2. delta is a perfect square (1, 4, 9, 16, 25, ...)\n3. delta is a pronic number (2, 6, 12, 20, 30, ...)\n\nWhy This Matters\n----------------\nThe justifiability rules prevent long-range attacks by restricting which\ncheckpoints validators can attest to. The mathematical pattern (perfect squares\nand pronic numbers) creates increasingly sparse justifiable slots as the chain\ngrows beyond finalization, providing security guarantees.\n\nThe test verifies that the target selection algorithm respects these rules\nand never selects a non-justifiable target.",
             "fixtureFormat": "fork_choice_test"
         }
     }
