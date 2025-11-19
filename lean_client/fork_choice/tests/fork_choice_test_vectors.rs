@@ -26,6 +26,7 @@ struct TestVectorFile {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct TestVector {
+    #[allow(dead_code)]
     network: String,
     anchor_state: TestAnchorState,
     anchor_block: TestAnchorBlock,
@@ -82,6 +83,7 @@ struct TestDataWrapper<T> {
 
 #[derive(Debug, Deserialize)]
 struct TestValidator {
+    #[allow(dead_code)]
     pubkey: String,
 }
 
@@ -150,6 +152,7 @@ struct TestChecks {
 #[serde(rename_all = "camelCase")]
 struct AttestationCheck {
     validator: u64,
+    #[allow(dead_code)]
     #[serde(rename = "attestationSlot")]
     attestation_slot: u64,
     #[serde(rename = "targetSlot")]
@@ -159,11 +162,15 @@ struct AttestationCheck {
 
 #[derive(Debug, Deserialize)]
 struct TestInfo {
+    #[allow(dead_code)]
     hash: String,
+    #[allow(dead_code)]
     comment: String,
     #[serde(rename = "testId")]
     test_id: String,
+    #[allow(dead_code)]
     description: String,
+    #[allow(dead_code)]
     #[serde(rename = "fixtureFormat")]
     fixture_format: String,
 }
@@ -430,7 +437,7 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
 
                 let result = std::panic::catch_unwind(AssertUnwindSafe(|| {
                     let signed_block = convert_test_block(test_block);
-                    let block_root = get_block_root(&signed_block);
+                    let _block_root = get_block_root(&signed_block);
 
                     on_block(&mut store, signed_block);
 
@@ -662,6 +669,49 @@ fn test_attestation_target_selection_vectors() {
     let mut fail_count = 0;
 
     println!("\n=== Attestation Target Selection Tests ===");
+
+    for entry in entries {
+        let path = entry.unwrap().path();
+        if path.extension().map_or(false, |ext| ext == "json") {
+            test_count += 1;
+            println!("\nTest file: {:?}", path.file_name().unwrap());
+
+            match run_test_vector_file(path.to_str().unwrap()) {
+                Ok(_) => {
+                    println!("  ✓ PASSED");
+                    pass_count += 1;
+                }
+                Err(e) => {
+                    println!("  ✗ FAILED: {}", e);
+                    fail_count += 1;
+                }
+            }
+        }
+    }
+
+    println!("\n=== Summary ===");
+    println!(
+        "Total: {}, Passed: {}, Failed: {}",
+        test_count, pass_count, fail_count
+    );
+
+    if fail_count > 0 {
+        panic!("{} test(s) failed", fail_count);
+    }
+}
+
+#[test]
+fn test_lexicographic_tiebreaker_vectors() {
+    let test_dir = "../tests/test_vectors/test_fork_choice/test_lexicographic_tiebreaker";
+
+    let entries =
+        std::fs::read_dir(test_dir).expect(&format!("Failed to read test directory: {}", test_dir));
+
+    let mut test_count = 0;
+    let mut pass_count = 0;
+    let mut fail_count = 0;
+
+    println!("\n=== Lexicographic Tiebreaker Tests ===");
 
     for entry in entries {
         let path = entry.unwrap().path();

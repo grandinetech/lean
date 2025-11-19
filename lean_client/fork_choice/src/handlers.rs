@@ -68,7 +68,7 @@ pub fn on_block(store: &mut Store, signed_block: SignedBlock) {
     let state = match store.states.get(&root) {
         Some(state) => state,
         None => {
-            panic!("Err: (Fork-choice::Handlers::OnBlock) No parent state present.");
+            panic!("Err: (Fork-choice::Handlers::OnBlock)no parent state.");
         }
     };
 
