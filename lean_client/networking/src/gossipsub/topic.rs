@@ -15,7 +15,7 @@ pub struct GossipsubTopic {
 
 #[derive(Debug, Hash, Clone, Copy, PartialEq, Eq)]
 pub enum GossipsubKind {
-    Block,
+    BlockWithAttestation,
     Attestation,
 }
 
@@ -23,7 +23,7 @@ pub fn get_topics(fork: String) -> Vec<GossipsubTopic> {
     vec![
         GossipsubTopic {
             fork: fork.clone(),
-            kind: GossipsubKind::Block,
+            kind: GossipsubKind::BlockWithAttestation,
         },
         GossipsubTopic {
             fork: fork.clone(),
@@ -67,7 +67,7 @@ impl GossipsubTopic {
 
     fn extract_kind(parts: &[&str]) -> Result<GossipsubKind, String> {
         match parts[2] {
-            BLOCK_TOPIC => Ok(GossipsubKind::Block),
+            BLOCK_TOPIC => Ok(GossipsubKind::BlockWithAttestation),
             ATTESTATION_TOPIC => Ok(GossipsubKind::Attestation),
             other => Err(format!("Invalid topic kind: {other:?}")),
         }
@@ -102,7 +102,7 @@ impl From<GossipsubTopic> for String {
 impl From<GossipsubTopic> for TopicHash {
     fn from(val: GossipsubTopic) -> Self {
         let kind_str = match &val.kind {
-            GossipsubKind::Block => BLOCK_TOPIC,
+            GossipsubKind::BlockWithAttestation => BLOCK_TOPIC,
             GossipsubKind::Attestation => ATTESTATION_TOPIC,
         };
         TopicHash::from_raw(format!(
@@ -118,7 +118,7 @@ impl From<GossipsubTopic> for TopicHash {
 impl std::fmt::Display for GossipsubKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            GossipsubKind::Block => write!(f, "{BLOCK_TOPIC}"),
+            GossipsubKind::BlockWithAttestation => write!(f, "{BLOCK_TOPIC}"),
             GossipsubKind::Attestation => write!(f, "{ATTESTATION_TOPIC}"),
         }
     }

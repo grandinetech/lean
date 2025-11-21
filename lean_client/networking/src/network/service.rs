@@ -227,18 +227,18 @@ where
 
             Event::Message { message, .. } => {
                 match GossipsubMessage::decode(&message.topic, &message.data) {
-                    Ok(GossipsubMessage::Block(signed_block)) => {
-                        let slot = signed_block.message.slot.0;
+                    Ok(GossipsubMessage::BlockWithAttestation(signed_block_with_attestation)) => {
+                        let slot = signed_block_with_attestation.message.block.slot.0;
 
                         if let Err(err) = self.chain_message_sink
-                            .send(ChainMessage::ProcessBlock {
-                                signed_block,
+                            .send(ChainMessage::ProcessBlockWithAttestation {
+                                signed_block_with_attestation,
                                 is_trusted: false,
                                 should_gossip: true,
                             })
                             .await
                         {
-                            warn!("failed to send block for slot {slot} to chain: {err:?}");
+                            warn!("failed to send block with attestation for slot {slot} to chain: {err:?}");
                         }
                     }
                     Ok(GossipsubMessage::Attestation(signed_attestation)) => {
@@ -255,7 +255,7 @@ where
                             warn!("failed to send vote for slot {slot} to chain: {err:?}");
                         }
                     }
-                    Err(err) => warn!(%err, "gossip decode failed"),
+                    Err(err) => warn!(%err, topic = %message.topic, "gossip decode failed"),
                 }
             }
             _ => {
@@ -327,18 +327,18 @@ where
 
     async fn dispatch_outbound_request(&mut self, request: OutboundP2pRequest) {
         match request {
-            OutboundP2pRequest::GossipBlock(signed_block) => {
-                let slot = signed_block.message.slot.0;
-                match signed_block.to_ssz() {
+            OutboundP2pRequest::GossipBlock(signed_block_with_attestation) => {
+                let slot = signed_block_with_attestation.message.block.slot.0;
+                match signed_block_with_attestation.to_ssz() {
                     Ok(bytes) => {
-                        if let Err(err) = self.publish_to_topic(GossipsubKind::Block, bytes) {
-                            warn!(slot = slot, ?err, "Publish block failed");
+                        if let Err(err) = self.publish_to_topic(GossipsubKind::BlockWithAttestation, bytes) {
+                            warn!(slot = slot, ?err, "Publish block with attestation failed");
                         } else {
-                            info!(slot = slot, "Broadcasted block");
+                            info!(slot = slot, "Broadcasted block with attestation");
                         }
                     }
                     Err(err) => {
-                        warn!(slot = slot, ?err, "Serialize block failed");
+                        warn!(slot = slot, ?err, "Serialize block with attestation failed");
                     }
                 }
             }
