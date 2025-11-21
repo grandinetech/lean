@@ -1,23 +1,26 @@
+use hex::FromHex;
+use serde::{Deserialize, Serialize};
 use ssz::H256;
 use ssz_derive::Ssz;
-use serde::{Deserialize, Serialize};
-use std::str::FromStr;
 use std::fmt;
-use hex::FromHex;
+use std::hash::Hash;
+use std::str::FromStr;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Ssz, Default, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Ssz, Default, Serialize, Deserialize,
+)]
 #[ssz(transparent)]
 pub struct Bytes32(pub H256);
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Ssz, Default, Serialize, Deserialize)]
+#[derive(
+    Clone, Hash, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Ssz, Default, Serialize, Deserialize,
+)]
 #[ssz(transparent)]
 pub struct Uint64(pub u64);
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
+#[derive(Clone, Hash, Copy, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
 #[ssz(transparent)]
 pub struct ValidatorIndex(pub u64);
-
-
 
 impl FromStr for Bytes32 {
     type Err = hex::FromHexError;
@@ -35,7 +38,7 @@ impl fmt::Display for Bytes32 {
 }
 
 // Type-level constants for SSZ collection limits
-use typenum::{U262144, U1073741824, U4, U1000, Prod}; // 2^18, 4096 * 262144
+use typenum::{Prod, U1000, U1073741824, U262144, U4}; // 2^18, 4096 * 262144
 
 /// Type-level number for 4000 bytes (signature size) = 4 * 1000
 pub type U4000 = Prod<U4, U1000>;
