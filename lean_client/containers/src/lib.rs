@@ -1,23 +1,29 @@
-pub mod types;
-pub mod config;
-pub mod slot;
-pub mod checkpoint;
 pub mod attestation;
 pub mod block;
-pub mod state;
-pub mod validator;
+pub mod checkpoint;
+pub mod config;
 pub mod serde_helpers;
+pub mod slot;
+pub mod state;
+pub mod types;
+pub mod validator;
 
 pub use attestation::{
-    Attestation, AttestationData, SignedAttestation,
-    AggregatedAttestations, SignedAggregatedAttestations,
-    AggregationBits, AggregatedSignatures, Signature,
-    Attestations, BlockSignatures,
+    AggregatedAttestations, AggregatedSignatures, AggregationBits, Attestation, AttestationData,
+    Attestations, BlockSignatures, Signature, SignedAggregatedAttestations, SignedAttestation,
 };
-pub use block::{Block, BlockBody, BlockHeader, SignedBlock, BlockWithAttestation, SignedBlockWithAttestation};
+pub use block::{
+    Block, BlockBody, BlockHeader, BlockWithAttestation, SignedBlock, SignedBlockWithAttestation,
+};
 pub use checkpoint::Checkpoint;
-pub use config::Config as ContainerConfig;
+pub use config::Config;
 pub use slot::Slot;
 pub use state::State;
-pub use types::{Bytes32, Uint64, ValidatorIndex, HistoricalBlockHashes, JustificationRoots, JustifiedSlots, JustificationsValidators};
+pub use types::{
+    Bytes32, HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots,
+    Uint64, ValidatorIndex,
+};
+
+pub use types::Bytes32 as Root;
+// Re-export grandine ssz so tests can reference it if needed
 pub use ssz;

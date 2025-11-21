@@ -1,6 +1,6 @@
-use crate::{Attestation, Attestations, BlockSignatures, Bytes32, Slot, ValidatorIndex, Signature};
-use ssz_derive::Ssz;
+use crate::{Attestation, Attestations, BlockSignatures, Bytes32, Signature, Slot, ValidatorIndex};
 use serde::{Deserialize, Serialize};
+use ssz_derive::Ssz;
 
 /// The body of a block, containing payload data.
 ///
@@ -63,4 +63,3 @@ pub fn hash_tree_root<T: ssz::SszHash>(value: &T) -> Bytes32 {
     let h = value.hash_tree_root();
     Bytes32(h)
 }
-
