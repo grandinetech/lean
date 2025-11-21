@@ -327,7 +327,7 @@ where
 
     async fn dispatch_outbound_request(&mut self, request: OutboundP2pRequest) {
         match request {
-            OutboundP2pRequest::GossipBlock(signed_block_with_attestation) => {
+            OutboundP2pRequest::GossipBlockWithAttestation(signed_block_with_attestation) => {
                 let slot = signed_block_with_attestation.message.block.slot.0;
                 match signed_block_with_attestation.to_ssz() {
                     Ok(bytes) => {
