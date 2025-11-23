@@ -19,7 +19,8 @@ use libp2p::{
 use libp2p_identity::{Keypair, PeerId};
 use parking_lot::Mutex;
 use tokio::select;
-use tracing::{info, warn};
+use tokio::time::{interval, Duration, MissedTickBehavior};
+use tracing::{info, trace, warn};
 
 use crate::{
     bootnodes::{BootnodeSource, StaticBootnodes},
@@ -128,9 +129,14 @@ where
 
     pub async fn start(&mut self) -> Result<()>
     {
-        self.connect_to_peers(self.network_config.bootnodes.to_multiaddrs()).await;
+        // Periodic reconnect attempts to bootnodes
+        let mut reconnect_interval = interval(Duration::from_secs(30));
+        reconnect_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
         loop {
             select! {
+                _ = reconnect_interval.tick() => {
+                    self.connect_to_peers(self.network_config.bootnodes.to_multiaddrs()).await;
+                }
                 request = self.outbound_p2p_requests.recv() => {
                     if let Some(request) = request {
                         self.dispatch_outbound_request(request).await;
@@ -172,11 +178,10 @@ where
                 None
             }
             SwarmEvent::ConnectionClosed { peer_id, .. } => {
+                info!(peer = %peer_id, "Disconnected from peer");
                 self.peer_table
                     .lock()
                     .insert(peer_id, ConnectionState::Disconnected);
-
-                info!(peer = %peer_id, "Disconnected from peer");
                 Some(NetworkEvent::PeerDisconnected(peer_id))
             }
             SwarmEvent::IncomingConnection { local_addr, .. } => {
@@ -313,6 +318,12 @@ where
                 .find(|protocol| matches!(protocol, Protocol::P2p(_)))
                 && peer_id != self.local_peer_id()
             {
+                let current_state = self.peer_table.lock().get(&peer_id).cloned();
+                if !matches!(current_state, Some(ConnectionState::Disconnected | ConnectionState::Connecting) | None) {
+                    trace!(?peer_id, "Already connected");
+                    continue;
+                }
+
                 if let Err(err) = self.swarm.dial(peer.clone()) {
                     warn!(?err, "Failed to dial peer");
                     continue;
