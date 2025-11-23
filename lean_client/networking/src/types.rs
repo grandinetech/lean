@@ -2,7 +2,7 @@ use std::{collections::HashMap, fmt::Display};
 
 use anyhow::{Result, anyhow};
 use async_trait::async_trait;
-use containers::{SignedBlock, SignedAttestation};
+use containers::{SignedAttestation, SignedBlockWithAttestation};
 use serde::Serialize;
 use tokio::sync::mpsc;
 
@@ -58,7 +58,7 @@ impl PeerCount {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ChainMessage {
     ProcessBlock {
-        signed_block: SignedBlock,
+        signed_block_with_attestation: SignedBlockWithAttestation,
         is_trusted: bool,
         should_gossip: bool,
     },
@@ -70,9 +70,9 @@ pub enum ChainMessage {
 }
 
 impl ChainMessage {
-    pub fn block(signed_block: SignedBlock) -> Self {
+    pub fn block_with_attestation(signed_block_with_attestation: SignedBlockWithAttestation) -> Self {
         ChainMessage::ProcessBlock {
-            signed_block,
+            signed_block_with_attestation,
             is_trusted: false,
             should_gossip: true,
         }
@@ -90,8 +90,8 @@ impl ChainMessage {
 impl Display for ChainMessage {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ChainMessage::ProcessBlock { signed_block, .. } => {
-                write!(f, "ProcessBlock(slot={})", signed_block.message.slot.0)
+            ChainMessage::ProcessBlock { signed_block_with_attestation, .. } => {
+                write!(f, "ProcessBlockWithAttestation(slot={})", signed_block_with_attestation.message.block.slot.0)
             }
             ChainMessage::ProcessAttestation { signed_attestation, .. } => {
                 write!(f, "ProcessAttestation(slot={})", signed_attestation.message.data.slot.0)
@@ -102,7 +102,7 @@ impl Display for ChainMessage {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum OutboundP2pRequest {
-    GossipBlock(SignedBlock),
+    GossipBlockWithAttestation(SignedBlockWithAttestation),
     GossipAttestation(SignedAttestation),
 }
 

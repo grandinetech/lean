@@ -2405,6 +2405,7 @@ dependencies = [
  "fork-choice",
  "networking",
  "tokio",
+ "tracing",
  "tracing-subscriber",
  "validator",
 ]

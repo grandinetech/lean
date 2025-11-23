@@ -60,6 +60,22 @@ impl<'de> Deserialize<'de> for BlsPublicKey {
     }
 }
 
+impl BlsPublicKey {
+    pub fn from_hex(s: &str) -> Result<Self, String> {
+        let s = s.strip_prefix("0x").unwrap_or(s);
+        let decoded = hex::decode(s).map_err(|e| e.to_string())?;
+        if decoded.len() != 52 {
+            return Err(format!("Expected 52 bytes, got {}", decoded.len()));
+        }
+        let mut byte_vec = ByteVector::default();
+        unsafe {
+            let dest = &mut byte_vec as *mut ByteVector<U52> as *mut u8;
+            std::ptr::copy_nonoverlapping(decoded.as_ptr(), dest, 52);
+        }
+        Ok(BlsPublicKey(byte_vec))
+    }
+}
+
 /// Validator record
 #[derive(Clone, Debug, PartialEq, Eq, Default, Ssz, Serialize, Deserialize)]
 pub struct Validator {

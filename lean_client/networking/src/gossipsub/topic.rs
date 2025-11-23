@@ -1,4 +1,3 @@
-use alloy_primitives::hex::ToHexExt;
 use libp2p::gossipsub::{IdentTopic, TopicHash};
 
 pub const TOPIC_PREFIX: &str = "leanconsensus";

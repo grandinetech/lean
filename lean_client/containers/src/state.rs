@@ -48,6 +48,48 @@ pub struct State {
 }
 
 impl State {
+        pub fn generate_genesis_with_validators(genesis_time: Uint64, validators: Vec<Validator>) -> Self {
+        let body_for_root = BlockBody {
+            attestations: Default::default(),
+        };
+        let genesis_header = BlockHeader {
+            slot: Slot(0),
+            proposer_index: ValidatorIndex(0),
+            parent_root: Bytes32(ssz::H256::zero()),
+            state_root: Bytes32(ssz::H256::zero()),
+            body_root: hash_tree_root(&body_for_root),
+        };
+
+        let validators = {
+            let mut list = List::<Validator, U4096>::default();
+            for v in validators {
+                list.push(v).expect("within limit");
+            }
+            list
+        };
+
+        Self {
+            config: Config {
+                genesis_time: genesis_time.0,
+            },
+            slot: Slot(0),
+            latest_block_header: genesis_header,
+            latest_justified: Checkpoint {
+                root: Bytes32(ssz::H256::zero()),
+                slot: Slot(0),
+            },
+            latest_finalized: Checkpoint {
+                root: Bytes32(ssz::H256::zero()),
+                slot: Slot(0),
+            },
+            historical_block_hashes: HistoricalBlockHashes::default(),
+            justified_slots: JustifiedSlots::default(),
+            validators,
+            justifications_roots: JustificationRoots::default(),
+            justifications_validators: JustificationsValidators::default(),
+        }
+    }
+
     pub fn generate_genesis(genesis_time: Uint64, num_validators: Uint64) -> Self {
         let body_for_root = BlockBody {
             attestations: Default::default(),

@@ -2,13 +2,16 @@ use crate::{Checkpoint, Slot, Uint64};
 use ssz::ByteVector;
 use ssz_derive::Ssz;
 use serde::{Deserialize, Serialize};
-use typenum::{Prod, U100, U31};
+use typenum::{Prod, Sum, U100, U31, U16};
 
 // Type-level number for 3100 bytes (signature size) = 31 * 100
 pub type U3100 = Prod<U31, U100>;
 
+// Type-level number for 3116 bytes
+pub type U3116 = Sum<U3100, U16>;
+
 // Type alias for Signature
-pub type Signature = ByteVector<U3100>;
+pub type Signature = ByteVector<U3116>;
 
 // Type-level number for 4096 (validator registry limit)
 use typenum::U4096;

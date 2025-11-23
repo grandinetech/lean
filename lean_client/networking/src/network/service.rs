@@ -2,7 +2,6 @@ use std::{
     collections::HashMap,
     net::IpAddr,
     num::{NonZeroU8, NonZeroUsize},
-    path::PathBuf,
     sync::Arc,
 };
 
@@ -20,7 +19,8 @@ use libp2p::{
 use libp2p_identity::{Keypair, PeerId};
 use parking_lot::Mutex;
 use tokio::select;
-use tracing::{info, warn};
+use tokio::time::{interval, Duration, MissedTickBehavior};
+use tracing::{info, trace, warn};
 
 use crate::{
     bootnodes::{BootnodeSource, StaticBootnodes},
@@ -75,23 +75,27 @@ pub enum NetworkEvent {
     DisconnectPeer(PeerId),
 }
 
-pub struct NetworkService<R>
+pub struct NetworkService<R, S>
 where
     R: P2pRequestSource<OutboundP2pRequest> + Send + 'static,
+    S: ChainMessageSink<ChainMessage> + Send + 'static,
 {
     network_config: Arc<NetworkServiceConfig>,
     swarm: Swarm<LeanNetworkBehaviour>,
     peer_table: Arc<Mutex<HashMap<PeerId, ConnectionState>>>,
     outbound_p2p_requests: R,
+    chain_message_sink: S,
 }
 
-impl<R> NetworkService<R>
+impl<R, S> NetworkService<R, S>
 where
     R: P2pRequestSource<OutboundP2pRequest> + Send + 'static,
+    S: ChainMessageSink<ChainMessage> + Send + 'static,
 {
     pub async fn new(
         network_config: Arc<NetworkServiceConfig>,
         outbound_p2p_requests: R,
+        chain_message_sink: S,
     ) -> Result<Self> {
         let local_key = Keypair::generate_secp256k1();
         let behaviour = Self::build_behaviour(&local_key, &network_config)?;
@@ -114,6 +118,7 @@ where
             swarm,
             peer_table: Arc::new(Mutex::new(HashMap::new())),
             outbound_p2p_requests,
+            chain_message_sink,
         };
 
         service.listen(&multiaddr)?;
@@ -124,9 +129,14 @@ where
 
     pub async fn start(&mut self) -> Result<()>
     {
-        self.connect_to_peers(self.network_config.bootnodes.to_multiaddrs()).await;
+        // Periodic reconnect attempts to bootnodes
+        let mut reconnect_interval = interval(Duration::from_secs(30));
+        reconnect_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
         loop {
             select! {
+                _ = reconnect_interval.tick() => {
+                    self.connect_to_peers(self.network_config.bootnodes.to_multiaddrs()).await;
+                }
                 request = self.outbound_p2p_requests.recv() => {
                     if let Some(request) = request {
                         self.dispatch_outbound_request(request).await;
@@ -168,11 +178,10 @@ where
                 None
             }
             SwarmEvent::ConnectionClosed { peer_id, .. } => {
+                info!(peer = %peer_id, "Disconnected from peer");
                 self.peer_table
                     .lock()
                     .insert(peer_id, ConnectionState::Disconnected);
-
-                info!(peer = %peer_id, "Disconnected from peer");
                 Some(NetworkEvent::PeerDisconnected(peer_id))
             }
             SwarmEvent::IncomingConnection { local_addr, .. } => {
@@ -223,13 +232,35 @@ where
 
             Event::Message { message, .. } => {
                 match GossipsubMessage::decode(&message.topic, &message.data) {
-                    Ok(GossipsubMessage::Block(_signed_block)) => {
-                        info!("block");
+                    Ok(GossipsubMessage::Block(signed_block_with_attestation)) => {
+                        let slot = signed_block_with_attestation.message.block.slot.0;
+
+                        if let Err(err) = self.chain_message_sink
+                            .send(ChainMessage::ProcessBlock {
+                                signed_block_with_attestation,
+                                is_trusted: false,
+                                should_gossip: true,
+                            })
+                            .await
+                        {
+                            warn!("failed to send block with attestation for slot {slot} to chain: {err:?}");
+                        }
                     }
-                    Ok(GossipsubMessage::Attestation(_signed_attestation)) => {
-                        info!("attestation");
+                    Ok(GossipsubMessage::Attestation(signed_attestation)) => {
+                        let slot = signed_attestation.message.data.slot.0;
+
+                        if let Err(err) = self.chain_message_sink
+                            .send(ChainMessage::ProcessAttestation {
+                                signed_attestation: signed_attestation,
+                                is_trusted: false,
+                                should_gossip: true,
+                            })
+                            .await
+                        {
+                            warn!("failed to send vote for slot {slot} to chain: {err:?}");
+                        }
                     }
-                    Err(err) => warn!(%err, "gossip decode failed"),
+                    Err(err) => warn!(%err, topic = %message.topic, "gossip decode failed"),
                 }
             }
             _ => {
@@ -243,6 +274,7 @@ where
         &mut self,
         _event: ReqRespMessage,
     ) -> Option<NetworkEvent> {
+        info!(?_event, "RequestResponse event");
         None
     }
 
@@ -286,6 +318,12 @@ where
                 .find(|protocol| matches!(protocol, Protocol::P2p(_)))
                 && peer_id != self.local_peer_id()
             {
+                let current_state = self.peer_table.lock().get(&peer_id).cloned();
+                if !matches!(current_state, Some(ConnectionState::Disconnected | ConnectionState::Connecting) | None) {
+                    trace!(?peer_id, "Already connected");
+                    continue;
+                }
+
                 if let Err(err) = self.swarm.dial(peer.clone()) {
                     warn!(?err, "Failed to dial peer");
                     continue;
@@ -301,18 +339,18 @@ where
 
     async fn dispatch_outbound_request(&mut self, request: OutboundP2pRequest) {
         match request {
-            OutboundP2pRequest::GossipBlock(signed_block) => {
-                let slot = signed_block.message.slot.0;
-                match signed_block.to_ssz() {
+            OutboundP2pRequest::GossipBlockWithAttestation(signed_block_with_attestation) => {
+                let slot = signed_block_with_attestation.message.block.slot.0;
+                match signed_block_with_attestation.to_ssz() {
                     Ok(bytes) => {
                         if let Err(err) = self.publish_to_topic(GossipsubKind::Block, bytes) {
-                            warn!(slot = slot, ?err, "Publish block failed");
+                            warn!(slot = slot, ?err, "Publish block with attestation failed");
                         } else {
-                            info!(slot = slot, "Broadcasted block");
+                            info!(slot = slot, "Broadcasted block with attestation");
                         }
                     }
                     Err(err) => {
-                        warn!(slot = slot, ?err, "Serialize block failed");
+                        warn!(slot = slot, ?err, "Serialize block with attestation failed");
                     }
                 }
             }
