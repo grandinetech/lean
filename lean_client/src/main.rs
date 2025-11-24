@@ -1,4 +1,12 @@
 use clap::Parser;
+use tokio::{
+    sync::{mpsc, Mutex},
+    task,
+};
+use networking::network::{NetworkService, NetworkServiceConfig};
+use networking::gossipsub::config::GossipsubConfig;
+use networking::gossipsub::topic::get_topics;
+use networking::types::{ChainMessage, OutboundP2pRequest};
 use containers::{
     attestation::{Attestation, AttestationData, BlockSignatures},
     block::{Block, BlockBody, BlockWithAttestation, SignedBlockWithAttestation},
@@ -11,7 +19,7 @@ use containers::{
 };
 use fork_choice::{
     handlers::{on_attestation, on_block},
-    store::get_forkchoice_store,
+    store::{get_block_root, get_forkchoice_store},
 };
 use networking::gossipsub::config::GossipsubConfig;
 use networking::gossipsub::topic::get_topics;
@@ -50,6 +58,7 @@ async fn main() {
     let (chain_message_sender, mut chain_message_receiver) =
         mpsc::unbounded_channel::<ChainMessage>();
 
+    // Initialize Fork Choice Store
     let (genesis_time, validators) = if let Some(genesis_path) = args.genesis {
         let genesis_config = containers::GenesisConfig::load_from_file(genesis_path)
             .expect("Failed to load genesis config");
@@ -112,7 +121,11 @@ async fn main() {
     };
 
     let config = Config { genesis_time };
-    let mut store = get_forkchoice_store(genesis_state, genesis_signed_block, config);
+    let genesis_signed_block = SignedBlock {
+        message: genesis_block,
+        signature: Signature::default(),
+    };
+    let store = Arc::new(Mutex::new(get_forkchoice_store(genesis_state, genesis_signed_block, config)));
 
     let fork = "devnet0".to_string();
     let gossipsub_topics = get_topics(fork);
@@ -139,33 +152,64 @@ async fn main() {
         }
     });
 
+    let chain_store = Arc::clone(&store);
     let chain_handle = task::spawn(async move {
-        while let Some(message) = chain_message_receiver.recv().await {
-            info!("Received chain message: {}", message);
+        let mut receiver = chain_message_receiver;
+        while let Some(message) = receiver.recv().await {
+            info!(message = %message, "Chain message received");
             match message {
-                ChainMessage::ProcessBlock {
-                    signed_block_with_attestation,
-                    ..
-                } => {
-                    if let Err(e) = on_block(&mut store, signed_block_with_attestation) {
-                        warn!("Error processing block: {}", e);
-                    }
-                    else {
-                        info!("Block processed successfully.");
-                    }
+                ChainMessage::ProcessBlock { signed_block_with_attestation, .. } => {
+                    let slot = signed_block_with_attestation.message.block.slot.0;
+                    let proposer_index = signed_block_with_attestation.message.block.proposer_index.0;
+                    let block = signed_block_with_attestation.message.block.clone();
+                    let proposer_attestation =
+                        signed_block_with_attestation.message.proposer_attestation.clone();
+                    let signed_block = SignedBlock {
+                        message: block,
+                        signature: Signature::default(),
+                    };
+                    let block_root = get_block_root(&signed_block);
+
+                    let mut store = chain_store.lock().await;
+                    info!(
+                        slot,
+                        proposer = proposer_index,
+                        root = %block_root,
+                        "Processing block from gossip"
+                    );
+                    on_block(&mut store, signed_block);
+                    on_attestation(&mut store, proposer_attestation, true);
+                    info!(
+                        slot,
+                        head = %store.head,
+                        finalized_slot = store.latest_finalized.slot.0,
+                        "Fork-choice head updated"
+                    );
                 }
-                ChainMessage::ProcessAttestation {
-                    signed_attestation, ..
-                } => {
-                    if let Err(e) = on_attestation(&mut store, signed_attestation.message, false) {
-                        warn!("Error processing attestation: {}", e);
-                    }
-                    else {
-                        info!("Attestation processed successfully.");
-                    }
+                ChainMessage::ProcessAttestation { signed_attestation, .. } => {
+                    let slot = signed_attestation.message.data.slot.0;
+                    let validator = signed_attestation.message.validator_id.0;
+                    let target_root = signed_attestation.message.data.target.root;
+                    let attestation = signed_attestation.message.clone();
+
+                    let mut store = chain_store.lock().await;
+                    info!(
+                        slot,
+                        validator,
+                        target = %target_root,
+                        "Processing attestation from gossip"
+                    );
+                    on_attestation(&mut store, attestation, false);
+                    info!(
+                        slot,
+                        validator,
+                        head = %store.head,
+                        "Fork-choice votes updated"
+                    );
                 }
             }
         }
+        info!("Chain message stream closed");
     });
 
     tokio::select! {
