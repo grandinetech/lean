@@ -492,20 +492,29 @@ impl TestRunner {
 
             let state = test_case.pre.clone();
             let mut error_occurred = false;
-            
+
             for (idx, block) in blocks.iter().enumerate() {
                 println!("  Block {}: slot {}", idx + 1, block.slot.0);
                 
                 // Advance state to the block's slot
                 let state_after_slots = state.process_slots(block.slot)?;
-                
+            
                 // Try to process the full block (header + body) - we expect this to fail
                 let result = state_after_slots.process_block(block);
 
                 match result {
-                    Ok(_) => {
-                        println!("    \x1b[31m✗ FAIL: Block processed successfully - but should have failed!\x1b[0m\n");
-                        return Err("Expected block processing to fail, but it succeeded".into());
+                    Ok(new_state) => {
+                        // Block processing succeeded, now validate state root
+                        let computed_state_root = hash_tree_root(&new_state);
+                        
+                        if block.state_root != computed_state_root {
+                            error_occurred = true;
+                            println!("    ✓ Correctly rejected: Invalid block state root");
+                            break; // Stop at first error
+                        } else {
+                            println!("    \x1b[31m✗ FAIL: Block processed successfully - but should have failed!\x1b[0m\n");
+                            return Err("Expected block processing to fail, but it succeeded".into());
+                        }
                     }
                     Err(e) => {
                         error_occurred = true;
