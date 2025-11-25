@@ -1,6 +1,6 @@
 use crate::validator::Validator;
 use crate::{
-    block::{hash_tree_root, Block, BlockBody, BlockHeader, SignedBlock},
+    block::{hash_tree_root, Block, BlockBody, BlockHeader, SignedBlockWithAttestation},
     Attestation, Attestations, Bytes32, Checkpoint, Config, Slot, Uint64, ValidatorIndex,
 };
 use crate::{HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots};
@@ -219,22 +219,22 @@ impl State {
     }
 
     // updated for fork choice tests
-    pub fn state_transition(&self, signed_block: SignedBlock, valid_signatures: bool) -> Self {
+    pub fn state_transition(&self, signed_block: SignedBlockWithAttestation, valid_signatures: bool) -> Self {
         self.state_transition_with_validation(signed_block, valid_signatures, true)
     }
 
     // updated for fork choice tests
     pub fn state_transition_with_validation(
         &self,
-        signed_block: SignedBlock,
+        signed_block: SignedBlockWithAttestation,
         valid_signatures: bool,
         validate_state_root: bool,
     ) -> Self {
         assert!(valid_signatures, "Block signatures must be valid");
 
-        let block = signed_block.message;
+        let block = &signed_block.message.block;
         let mut state = self.process_slots(block.slot);
-        state = state.process_block(&block);
+        state = state.process_block(block);
 
         if validate_state_root {
             let state_for_hash = state.clone();

@@ -1,20 +1,21 @@
 use std::collections::HashMap;
 
 use containers::{
-    block::{hash_tree_root, BlockHeader},
+    block::{hash_tree_root, BlockHeader, SignedBlockWithAttestation},
     checkpoint::Checkpoint,
     config::Config,
     state::State,
-    Root, SignedBlock, Slot, ValidatorIndex,
+    Root, Slot, ValidatorIndex,
 };
 
-pub fn get_block_root(signed_block: &SignedBlock) -> Root {
-    let body_root = hash_tree_root(&signed_block.message.body);
+pub fn get_block_root(signed_block: &SignedBlockWithAttestation) -> Root {
+    let block = &signed_block.message.block;
+    let body_root = hash_tree_root(&block.body);
     let header = BlockHeader {
-        slot: signed_block.message.slot,
-        proposer_index: signed_block.message.proposer_index,
-        parent_root: signed_block.message.parent_root,
-        state_root: signed_block.message.state_root,
+        slot: block.slot,
+        proposer_index: block.proposer_index,
+        parent_root: block.parent_root,
+        state_root: block.state_root,
         body_root,
     };
     hash_tree_root(&header)
@@ -34,7 +35,7 @@ pub struct Store {
     pub safe_target: Root,
     pub latest_justified: Checkpoint,
     pub latest_finalized: Checkpoint,
-    pub blocks: HashMap<Root, SignedBlock>,
+    pub blocks: HashMap<Root, SignedBlockWithAttestation>,
     pub states: HashMap<Root, State>,
     pub latest_known_votes: HashMap<ValidatorIndex, Checkpoint>,
     pub latest_new_votes: HashMap<ValidatorIndex, Checkpoint>,
@@ -42,13 +43,13 @@ pub struct Store {
 
 pub fn get_forkchoice_store(
     anchor_state: State,
-    anchor_block: SignedBlock,
+    anchor_block: SignedBlockWithAttestation,
     config: Config,
 ) -> Store {
     let block = get_block_root(&anchor_block);
 
     Store {
-        time: anchor_block.message.slot.0 * INTERVALS_PER_SLOT,
+        time: anchor_block.message.block.slot.0 * INTERVALS_PER_SLOT,
         config,
         head: block,
         safe_target: block,
@@ -72,30 +73,30 @@ pub fn get_fork_choice_head(
         root = store
             .blocks
             .iter()
-            .min_by_key(|(_, block)| block.message.slot)
+            .min_by_key(|(_, block)| block.message.block.slot)
             .map(|(r, _)| *r)
             .expect("Err:(ForkChoice::get_fork_choice_head) blocks can't be empty");
     }
     let mut vote_weights: HashMap<Root, usize> = HashMap::new();
-    let root_slot = store.blocks[&root].message.slot;
+    let root_slot = store.blocks[&root].message.block.slot;
 
     // stage 1
     for v in latest_votes.values() {
         if let Some(block) = store.blocks.get(&v.root) {
             let mut curr = v.root;
 
-            let mut curr_slot = block.message.slot; // mut nes borrowinam
+            let mut curr_slot = block.message.block.slot; // mut nes borrowinam
 
             while curr_slot > root_slot {
                 *vote_weights.entry(curr).or_insert(0) += 1;
 
                 if let Some(parent_block) = store.blocks.get(&curr) {
-                    curr = parent_block.message.parent_root;
+                    curr = parent_block.message.block.parent_root;
                     if curr.0.is_zero() {
                         break;
                     }
                     if let Some(next_block) = store.blocks.get(&curr) {
-                        curr_slot = next_block.message.slot;
+                        curr_slot = next_block.message.block.slot;
                     } else {
                         break;
                     }
@@ -109,10 +110,10 @@ pub fn get_fork_choice_head(
     // stage 2
     let mut child_map: HashMap<Root, Vec<Root>> = HashMap::new();
     for (block_hash, block) in &store.blocks {
-        if !block.message.parent_root.0.is_zero() {
+        if !block.message.block.parent_root.0.is_zero() {
             if vote_weights.get(block_hash).copied().unwrap_or(0) >= min_votes {
                 child_map
-                    .entry(block.message.parent_root)
+                    .entry(block.message.block.parent_root)
                     .or_default()
                     .push(*block_hash);
             }
@@ -132,8 +133,8 @@ pub fn get_fork_choice_head(
             .max_by(|&&a, &&b| {
                 let wa = vote_weights.get(&a).copied().unwrap_or(0);
                 let wb = vote_weights.get(&b).copied().unwrap_or(0);
-                let slot_a = store.blocks[&a].message.slot;
-                let slot_b = store.blocks[&b].message.slot;
+                let slot_a = store.blocks[&a].message.block.slot;
+                let slot_b = store.blocks[&b].message.block.slot;
                 wa.cmp(&wb)
                     .then_with(|| slot_b.cmp(&slot_a))
                     .then_with(|| a.cmp(&b))
@@ -185,10 +186,10 @@ fn is_descendant(store: &Store, ancestor: Root, descendant: Root) -> bool {
         if curr == ancestor {
             return true;
         }
-        if block.message.parent_root.0.is_zero() {
+        if block.message.block.parent_root.0.is_zero() {
             return false;
         }
-        curr = block.message.parent_root;
+        curr = block.message.block.parent_root;
     }
     false
 }
@@ -202,21 +203,21 @@ fn reorg_new_head(
     let mut current_chain = vec![current_head];
     let mut curr = current_head;
     while let Some(block) = store.blocks.get(&curr) {
-        if block.message.parent_root.0.is_zero() {
+        if block.message.block.parent_root.0.is_zero() {
             break;
         }
-        current_chain.push(block.message.parent_root);
-        curr = block.message.parent_root;
+        current_chain.push(block.message.block.parent_root);
+        curr = block.message.block.parent_root;
     }
 
     let mut new_chain = vec![new_head];
     let mut curr = new_head;
     while let Some(block) = store.blocks.get(&curr) {
-        if block.message.parent_root.0.is_zero() {
+        if block.message.block.parent_root.0.is_zero() {
             break;
         }
-        new_chain.push(block.message.parent_root);
-        curr = block.message.parent_root;
+        new_chain.push(block.message.block.parent_root);
+        curr = block.message.block.parent_root;
     }
 
     let mut current_votes = 0;
@@ -292,11 +293,11 @@ pub fn tick_interval(store: &mut Store, has_proposal: bool) {
 
 pub fn get_vote_target(store: &Store) -> Checkpoint {
     let mut target = store.head;
-    let safe_slot = store.blocks[&store.safe_target].message.slot;
+    let safe_slot = store.blocks[&store.safe_target].message.block.slot;
 
     for _ in 0..3 {
-        if store.blocks[&target].message.slot > safe_slot {
-            target = store.blocks[&target].message.parent_root;
+        if store.blocks[&target].message.block.slot > safe_slot {
+            target = store.blocks[&target].message.block.parent_root;
         } else {
             break;
         }
@@ -305,13 +306,14 @@ pub fn get_vote_target(store: &Store) -> Checkpoint {
     let final_slot = store.latest_finalized.slot;
     while !store.blocks[&target]
         .message
+        .block
         .slot
         .is_justifiable_after(final_slot)
     {
-        target = store.blocks[&target].message.parent_root;
+        target = store.blocks[&target].message.block.parent_root;
     }
 
-    let block_target = &store.blocks[&target].message;
+    let block_target = &store.blocks[&target].message.block;
     Checkpoint {
         root: target,
         slot: block_target.slot,

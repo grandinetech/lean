@@ -4,8 +4,8 @@ use fork_choice::{
 };
 
 use containers::{
-    attestation::{Attestation, AttestationData, Signature},
-    block::{hash_tree_root, Block, BlockBody, BlockHeader, SignedBlock},
+    attestation::{Attestation, AttestationData, BlockSignatures},
+    block::{hash_tree_root, Block, BlockBody, BlockHeader, BlockWithAttestation, SignedBlockWithAttestation},
     checkpoint::Checkpoint,
     config::Config,
     state::State,
@@ -242,7 +242,7 @@ fn convert_test_attestation(test_att: &TestAttestation) -> Attestation {
     }
 }
 
-fn convert_test_anchor_block(test_block: &TestAnchorBlock) -> SignedBlock {
+fn convert_test_anchor_block(test_block: &TestAnchorBlock) -> SignedBlockWithAttestation {
     let mut attestations = ssz::PersistentList::default();
 
     for (i, test_att) in test_block.body.attestations.data.iter().enumerate() {
@@ -252,19 +252,44 @@ fn convert_test_anchor_block(test_block: &TestAnchorBlock) -> SignedBlock {
             .expect(&format!("Failed to add attestation {}", i));
     }
 
-    SignedBlock {
-        message: Block {
+    let block = Block {
+        slot: Slot(test_block.slot),
+        proposer_index: ValidatorIndex(test_block.proposer_index),
+        parent_root: parse_root(&test_block.parent_root),
+        state_root: parse_root(&test_block.state_root),
+        body: BlockBody { attestations },
+    };
+
+    // Create proposer attestation
+    let proposer_attestation = Attestation {
+        validator_id: Uint64(test_block.proposer_index),
+        data: AttestationData {
             slot: Slot(test_block.slot),
-            proposer_index: ValidatorIndex(test_block.proposer_index),
-            parent_root: parse_root(&test_block.parent_root),
-            state_root: parse_root(&test_block.state_root),
-            body: BlockBody { attestations },
+            head: Checkpoint {
+                root: parse_root(&test_block.parent_root),
+                slot: Slot(test_block.slot),
+            },
+            target: Checkpoint {
+                root: parse_root(&test_block.parent_root),
+                slot: Slot(test_block.slot),
+            },
+            source: Checkpoint {
+                root: parse_root(&test_block.parent_root),
+                slot: Slot(0),
+            },
         },
-        signature: Signature::default(),
+    };
+
+    SignedBlockWithAttestation {
+        message: BlockWithAttestation {
+            block,
+            proposer_attestation,
+        },
+        signature: BlockSignatures::default(),
     }
 }
 
-fn convert_test_block(test_block: &TestBlock) -> SignedBlock {
+fn convert_test_block(test_block: &TestBlock) -> SignedBlockWithAttestation {
     let mut attestations = ssz::PersistentList::default();
 
     for (i, test_att) in test_block.body.attestations.data.iter().enumerate() {
@@ -274,15 +299,40 @@ fn convert_test_block(test_block: &TestBlock) -> SignedBlock {
             .expect(&format!("Failed to add attestation {}", i));
     }
 
-    SignedBlock {
-        message: Block {
+    let block = Block {
+        slot: Slot(test_block.slot),
+        proposer_index: ValidatorIndex(test_block.proposer_index),
+        parent_root: parse_root(&test_block.parent_root),
+        state_root: parse_root(&test_block.state_root),
+        body: BlockBody { attestations },
+    };
+
+    // Create proposer attestation
+    let proposer_attestation = Attestation {
+        validator_id: Uint64(test_block.proposer_index),
+        data: AttestationData {
             slot: Slot(test_block.slot),
-            proposer_index: ValidatorIndex(test_block.proposer_index),
-            parent_root: parse_root(&test_block.parent_root),
-            state_root: parse_root(&test_block.state_root),
-            body: BlockBody { attestations },
+            head: Checkpoint {
+                root: parse_root(&test_block.parent_root),
+                slot: Slot(test_block.slot),
+            },
+            target: Checkpoint {
+                root: parse_root(&test_block.parent_root),
+                slot: Slot(test_block.slot),
+            },
+            source: Checkpoint {
+                root: parse_root(&test_block.parent_root),
+                slot: Slot(0),
+            },
         },
-        signature: Signature::default(),
+    };
+
+    SignedBlockWithAttestation {
+        message: BlockWithAttestation {
+            block,
+            proposer_attestation,
+        },
+        signature: BlockSignatures::default(),
     }
 }
 
@@ -362,7 +412,7 @@ fn verify_checks(
     step_idx: usize,
 ) -> Result<(), String> {
     if let Some(expected_slot) = checks.head_slot {
-        let actual_slot = store.blocks[&store.head].message.slot.0;
+        let actual_slot = store.blocks[&store.head].message.block.slot.0;
         if actual_slot != expected_slot {
             return Err(format!(
                 "Step {}: Head slot mismatch - expected {}, got {}",
@@ -379,12 +429,12 @@ fn verify_checks(
             let actual_slot = store
                 .blocks
                 .get(&store.head)
-                .map(|b| b.message.slot.0)
+                .map(|b| b.message.block.slot.0)
                 .unwrap_or(0);
             let expected_slot = store
                 .blocks
                 .get(expected_root)
-                .map(|b| b.message.slot.0)
+                .map(|b| b.message.block.slot.0)
                 .unwrap_or(0);
             return Err(format!(
                 "Step {}: Head root mismatch for label '{}' - expected slot {}, got slot {} (known_votes: {}, new_votes: {})",
@@ -443,12 +493,12 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
     let mut anchor_state = initialize_state_from_test(&test.anchor_state);
     let anchor_block = convert_test_anchor_block(&test.anchor_block);
 
-    let body_root = hash_tree_root(&anchor_block.message.body);
+    let body_root = hash_tree_root(&anchor_block.message.block.body);
     anchor_state.latest_block_header = BlockHeader {
-        slot: anchor_block.message.slot,
-        proposer_index: anchor_block.message.proposer_index,
-        parent_root: anchor_block.message.parent_root,
-        state_root: anchor_block.message.state_root,
+        slot: anchor_block.message.block.slot,
+        proposer_index: anchor_block.message.block.proposer_index,
+        parent_root: anchor_block.message.block.parent_root,
+        state_root: anchor_block.message.block.state_root,
         body_root,
     };
 
