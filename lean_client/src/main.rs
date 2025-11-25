@@ -141,13 +141,12 @@ async fn main() {
 
     let chain_handle = task::spawn(async move {
         while let Some(message) = chain_message_receiver.recv().await {
-            println!("Received chain message: {}", message);
+            info!("Received chain message: {}", message);
             match message {
                 ChainMessage::ProcessBlock {
                     signed_block_with_attestation,
                     ..
                 } => {
-                    info!("process block");
                     if let Err(e) = on_block(&mut store, signed_block_with_attestation) {
                         warn!("Error processing block: {}", e);
                     }
@@ -158,7 +157,6 @@ async fn main() {
                 ChainMessage::ProcessAttestation {
                     signed_attestation, ..
                 } => {
-                    info!("process attestation");
                     if let Err(e) = on_attestation(&mut store, signed_attestation.message, false) {
                         warn!("Error processing attestation: {}", e);
                     }
