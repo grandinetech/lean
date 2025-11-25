@@ -2,7 +2,7 @@ use containers::{
     Attestations,
     block::{Block, BlockBody, BlockHeader, SignedBlock, hash_tree_root},
     checkpoint::Checkpoint,
-    ContainerConfig,
+    Config,
     slot::Slot,
     state::State,
     types::{Bytes32, ValidatorIndex},
@@ -58,7 +58,7 @@ pub fn sample_checkpoint() -> Checkpoint {
     }
 }
 
-pub fn base_state(config: ContainerConfig) -> State {
+pub fn base_state(config: Config) -> State {
     use containers::{HistoricalBlockHashes, JustificationRoots, JustifiedSlots, JustificationsValidators};
     State {
         config,
@@ -74,8 +74,8 @@ pub fn base_state(config: ContainerConfig) -> State {
     }
 }
 
-pub fn sample_config() -> ContainerConfig {
-    ContainerConfig {
+pub fn sample_config() -> Config {
+    Config {
         genesis_time: 0,
     }
 }

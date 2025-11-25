@@ -2,7 +2,7 @@
 use containers::{
     state::State,
     types::Bytes32,
-    Container
+    Config
 };
 use pretty_assertions::assert_eq;
 use rstest::{fixture, rstest};
@@ -15,12 +15,12 @@ use common::{
 };
 
 #[fixture]
-fn config() -> Container {
+fn config() -> Config {
     sample_config()
 }
 
 #[fixture]
-fn state(config: Container) -> State {
+fn state(config: Config) -> State {
     base_state(config)
 }
 
