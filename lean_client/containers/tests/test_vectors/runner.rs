@@ -8,29 +8,29 @@ pub struct TestRunner;
 impl TestRunner {
     pub fn run_sequential_block_processing_tests<P: AsRef<Path>>(path: P) -> Result<(), Box<dyn std::error::Error>> {
         let json_content = fs::read_to_string(path)?;
-        
+
         // Parse using the new TestVectorFile structure with camelCase
         let test_file: TestVectorFile = serde_json::from_str(&json_content)?;
-        
+
         // Get the first (and only) test case from the file
         let (test_name, test_case) = test_file.tests.into_iter().next()
             .ok_or("No test case found in JSON")?;
-        
+
         println!("Running test: {}", test_name);
         println!("Description: {}", test_case.info.description);
 
         if let Some(ref blocks) = test_case.blocks {
             let mut state = test_case.pre.clone();
-            
+
             for (idx, block) in blocks.iter().enumerate() {
                 println!("\nProcessing block {}: slot {:?}", idx + 1, block.slot);
-                
+
                 // Advance state to the block's slot
-                let state_after_slots = state.process_slots(block.slot);
-                
+                let state_after_slots = state.process_slots(block.slot)?;
+
                 // Compute the parent root from our current latest_block_header
                 let computed_parent_root = hash_tree_root(&state_after_slots.latest_block_header);
-                
+
                 // Verify the block's parent_root matches what we computed
                 if block.parent_root != computed_parent_root {
                     return Err(format!(
@@ -40,21 +40,19 @@ impl TestRunner {
                         computed_parent_root
                     ).into());
                 }
-                
+
                 println!("  ✓ Parent root matches: {:?}", computed_parent_root);
-                
+
                 // Process the block header
-                let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                    state_after_slots.process_block_header(block)
-                }));
+                let result = state_after_slots.process_block_header(block);
 
                 match result {
                     Ok(new_state) => {
                         state = new_state;
-                        
+
                         // Compute the state root after processing
                         let computed_state_root = hash_tree_root(&state);
-                        
+
                         // Verify the computed state_root matches the expected one from the vector
                         if block.state_root != computed_state_root {
                             return Err(format!(
@@ -64,7 +62,7 @@ impl TestRunner {
                                 computed_state_root
                             ).into());
                         }
-                        
+
                         println!("  ✓ State root matches: {:?}", computed_state_root);
                         println!("  ✓ Block {} processed successfully", idx + 1);
                     }
@@ -73,7 +71,7 @@ impl TestRunner {
                     }
                 }
             }
-            
+
             // Verify post-state conditions
             if let Some(post) = test_case.post {
                 if state.slot != post.slot {
@@ -82,7 +80,7 @@ impl TestRunner {
                         post.slot, state.slot
                     ).into());
                 }
-                
+
                 // Only check validator count if specified in post-state
                 if let Some(expected_count) = post.validator_count {
                     // Count validators
@@ -140,7 +138,7 @@ impl TestRunner {
                 println!("\nProcessing block {}: slot {:?} (gap from slot {:?})", idx + 1, block.slot, state.slot);
                 
                 // Advance state to the block's slot (this handles the slot gap)
-                let state_after_slots = state.process_slots(block.slot);
+                let state_after_slots = state.process_slots(block.slot)?;
                 
                 // Compute the parent root from our current latest_block_header
                 let computed_parent_root = hash_tree_root(&state_after_slots.latest_block_header);
@@ -158,9 +156,7 @@ impl TestRunner {
                 println!("  ✓ Parent root matches: {:?}", computed_parent_root);
                 
                 // Process the block header
-                let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                    state_after_slots.process_block_header(block)
-                }));
+                let result = state_after_slots.process_block_header(block);
 
                 match result {
                     Ok(new_state) => {
@@ -249,7 +245,7 @@ impl TestRunner {
             println!("  ✓ Confirmed: Block has no attestations (empty block)");
             
             // Advance state to the block's slot
-            let state_after_slots = state.process_slots(block.slot);
+            let state_after_slots = state.process_slots(block.slot)?;
             
             // Compute the parent root from our current latest_block_header
             let computed_parent_root = hash_tree_root(&state_after_slots.latest_block_header);
@@ -266,9 +262,7 @@ impl TestRunner {
             println!("  ✓ Parent root matches: {:?}", computed_parent_root);
             
             // Process the block header
-            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                state_after_slots.process_block_header(block)
-            }));
+            let result = state_after_slots.process_block_header(block);
 
             match result {
                 Ok(new_state) => {
@@ -360,7 +354,7 @@ impl TestRunner {
                 }
                 
                 // Advance state to the block's slot
-                let state_after_slots = state.process_slots(block.slot);
+                let state_after_slots = state.process_slots(block.slot)?;
                 
                 // Compute the parent root from our current latest_block_header
                 let computed_parent_root = hash_tree_root(&state_after_slots.latest_block_header);
@@ -386,9 +380,7 @@ impl TestRunner {
                 };
                 
                 // Process the full block (header + operations)
-                let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                    state_after_slots.process_block(block)
-                }));
+                let result = state_after_slots.process_block(block);
 
                 match result {
                     Ok(new_state) => {
@@ -505,12 +497,10 @@ impl TestRunner {
                 println!("  Block {}: slot {}", idx + 1, block.slot.0);
                 
                 // Advance state to the block's slot
-                let state_after_slots = state.process_slots(block.slot);
+                let state_after_slots = state.process_slots(block.slot)?;
                 
                 // Try to process the full block (header + body) - we expect this to fail
-                let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                    state_after_slots.process_block(block)
-                }));
+                let result = state_after_slots.process_block(block);
 
                 match result {
                     Ok(_) => {
@@ -519,14 +509,7 @@ impl TestRunner {
                     }
                     Err(e) => {
                         error_occurred = true;
-                        let error_message = if let Some(s) = e.downcast_ref::<&str>() {
-                            s.to_string()
-                        } else if let Some(s) = e.downcast_ref::<String>() {
-                            s.clone()
-                        } else {
-                            format!("{:?}", e)
-                        };
-                        println!("    ✓ Correctly rejected: {}", error_message);
+                        println!("    ✓ Correctly rejected: {}", e);
                         break; // Stop at first error
                     }
                 }

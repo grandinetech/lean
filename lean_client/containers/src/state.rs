@@ -219,7 +219,7 @@ impl State {
     }
 
     // updated for fork choice tests
-    pub fn state_transition(&self, signed_block: SignedBlockWithAttestation, valid_signatures: bool) -> Self {
+    pub fn state_transition(&self, signed_block: SignedBlockWithAttestation, valid_signatures: bool) -> Result<Self, String> {
         self.state_transition_with_validation(signed_block, valid_signatures, true)
     }
 
@@ -229,24 +229,30 @@ impl State {
         signed_block: SignedBlockWithAttestation,
         valid_signatures: bool,
         validate_state_root: bool,
-    ) -> Self {
-        assert!(valid_signatures, "Block signatures must be valid");
+    ) -> Result<Self, String> {
+        if !valid_signatures {
+            return Err("Block signatures must be valid".to_string());
+        }
 
         let block = &signed_block.message.block;
-        let mut state = self.process_slots(block.slot);
-        state = state.process_block(block);
+        let mut state = self.process_slots(block.slot)?;
+        state = state.process_block(block)?;
 
         if validate_state_root {
             let state_for_hash = state.clone();
             let state_root = hash_tree_root(&state_for_hash);
-            assert!(block.state_root == state_root, "Invalid block state root");
+            if block.state_root != state_root {
+                return Err("Invalid block state root".to_string());
+            }
         }
 
-        state
+        Ok(state)
     }
 
-    pub fn process_slots(&self, target_slot: Slot) -> Self {
-        assert!(self.slot < target_slot, "Target slot must be in the future");
+    pub fn process_slots(&self, target_slot: Slot) -> Result<Self, String> {
+        if self.slot >= target_slot {
+            return Err("Target slot must be in the future".to_string());
+        }
 
         let mut state = self.clone();
 
@@ -255,7 +261,7 @@ impl State {
             state.slot = Slot(state.slot.0 + 1);
         }
 
-        state
+        Ok(state)
     }
 
     pub fn process_slot(&self) -> Self {
@@ -274,31 +280,31 @@ impl State {
         self.clone()
     }
 
-    pub fn process_block(&self, block: &Block) -> Self {
-        let state = self.process_block_header(block);
+    pub fn process_block(&self, block: &Block) -> Result<Self, String> {
+        let state = self.process_block_header(block)?;
         let state_after_ops = state.process_attestations(&block.body.attestations);
 
         // State root validation is handled by state_transition_with_validation when needed
 
-        state_after_ops
+        Ok(state_after_ops)
     }
 
-    pub fn process_block_header(&self, block: &Block) -> Self {
+    pub fn process_block_header(&self, block: &Block) -> Result<Self, String> {
         if !(block.slot == self.slot) {
-            std::panic::panic_any(String::from("Block slot mismatch"));
+            return Err(String::from("Block slot mismatch"));
         }
         if !(block.slot > self.latest_block_header.slot) {
-            std::panic::panic_any(String::from("Block is older than latest header"));
+            return Err(String::from("Block is older than latest header"));
         }
         if !self.is_proposer(block.proposer_index) {
-            std::panic::panic_any(String::from("Incorrect block proposer"));
+            return Err(String::from("Incorrect block proposer"));
         }
 
         // Create a mutable clone for hash computation
         let latest_header_for_hash  = self.latest_block_header.clone();
         let parent_root = hash_tree_root(&latest_header_for_hash);
         if block.parent_root != parent_root {
-            std::panic::panic_any(String::from("Block parent root mismatch"));
+            return Err(String::from("Block parent root mismatch"));
         }
 
         // Build new PersistentList for historical hashes
@@ -356,7 +362,7 @@ impl State {
             new_latest_finalized.root = parent_root;
         }
 
-        Self {
+        Ok(Self {
             config: self.config.clone(),
             slot: self.slot,
             latest_block_header: new_latest_block_header,
@@ -367,7 +373,7 @@ impl State {
             validators: self.validators.clone(),
             justifications_roots: self.justifications_roots.clone(),
             justifications_validators: self.justifications_validators.clone(),
-        }
+        })
     }
 
     pub fn process_attestations(&self, attestations: &Attestations) -> Self {
@@ -554,7 +560,7 @@ mod tests {
         let genesis_state = State::generate_genesis(Uint64(0), Uint64(10));
         let target_slot = Slot(5);
 
-        let new_state = genesis_state.process_slots(target_slot);
+        let new_state = genesis_state.process_slots(target_slot).unwrap();
 
         assert_eq!(new_state.slot, target_slot);
         let genesis_state_for_hash = genesis_state.clone(); //this is sooooo bad

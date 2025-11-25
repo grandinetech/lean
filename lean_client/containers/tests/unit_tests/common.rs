@@ -1,18 +1,12 @@
 use containers::{
-    Attestations,
-    block::{Block, BlockBody, BlockHeader, SignedBlock, hash_tree_root},
-    checkpoint::Checkpoint,
-    Config,
-    slot::Slot,
-    state::State,
-    types::{Bytes32, ValidatorIndex},
+    Attestation, Attestations, BlockSignatures, BlockWithAttestation, Config, SignedBlockWithAttestation, block::{Block, BlockBody, BlockHeader, SignedBlock, hash_tree_root}, checkpoint::Checkpoint, slot::Slot, state::State, types::{Bytes32, ValidatorIndex}
 };
 use ssz::PersistentList as List;
 use typenum::U4096;
 
 pub const DEVNET_CONFIG_VALIDATOR_REGISTRY_LIMIT: usize = 1 << 12; // 4096
 
-pub fn create_block(slot: u64, parent_header: &mut BlockHeader, attestations: Option<Attestations>) -> SignedBlock {
+pub fn create_block(slot: u64, parent_header: &mut BlockHeader, attestations: Option<Attestations>) -> SignedBlockWithAttestation {
     let body = BlockBody {
         attestations: attestations.unwrap_or_else(List::default),
     };
@@ -22,12 +16,15 @@ pub fn create_block(slot: u64, parent_header: &mut BlockHeader, attestations: Op
         proposer_index: ValidatorIndex(slot % 10),
         parent_root: hash_tree_root(parent_header),
         state_root: Bytes32(ssz::H256::zero()),
-        body,
+        body: body,
     };
 
-    SignedBlock {
-        message: block_message,
-        signature: ssz::ByteVector::default(),
+    SignedBlockWithAttestation {
+        message: BlockWithAttestation {
+            block: block_message,
+            proposer_attestation: Attestation::default(),
+        },
+        signature: BlockSignatures::default(),
     }
 }
 

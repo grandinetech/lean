@@ -11,13 +11,16 @@ pub fn on_tick(store: &mut Store, time: u64, _has_proposal: bool) {
 }
 
 #[inline]
-pub fn on_attestation(store: &mut Store, attestation: Attestation, is_from_block: bool) {
+pub fn on_attestation(store: &mut Store, attestation: Attestation, is_from_block: bool) -> Result<(), String> {
     let key_vald = ValidatorIndex(attestation.validator_id.0);
     let vote = attestation.data.target;
 
     let curr_slot = store.time / INTERVALS_PER_SLOT;
     if vote.slot.0 > curr_slot {
-        return;
+        return Err(format!(
+            "Attestation slot {} is in the future (current slot {})",
+            vote.slot.0, curr_slot
+        ));
     }
 
     if is_from_block {
@@ -37,13 +40,14 @@ pub fn on_attestation(store: &mut Store, attestation: Attestation, is_from_block
             store.latest_new_votes.insert(key_vald, vote);
         }
     }
+    Ok(())
 }
 
 //update
-pub fn on_block(store: &mut Store, signed_block: SignedBlockWithAttestation) {
+pub fn on_block(store: &mut Store, signed_block: SignedBlockWithAttestation) -> Result<(), String> {
     let block_root = get_block_root(&signed_block);
     if store.blocks.contains_key(&block_root) {
-        return;
+        return Ok(());
     }
     let block = &signed_block.message.block;
     let root = block.parent_root;
@@ -59,7 +63,7 @@ pub fn on_block(store: &mut Store, signed_block: SignedBlockWithAttestation) {
     for i in 0.. {
         match attest.get(i) {
             Ok(attest) => {
-                on_attestation(store, attest.clone(), true);
+                on_attestation(store, attest.clone(), true)?;
             }
             Err(_) => break,
         }
@@ -69,17 +73,17 @@ pub fn on_block(store: &mut Store, signed_block: SignedBlockWithAttestation) {
         store,
         signed_block.message.proposer_attestation.clone(),
         true,
-    );
+    )?;
 
     // naujas
     let state = match store.states.get(&root) {
         Some(state) => state,
         None => {
-            panic!("Err: (Fork-choice::Handlers::OnBlock)no parent state.");
+            return Err("Err: (Fork-choice::Handlers::OnBlock)no parent state.".to_string());
         }
     };
 
-    let mut new_state = state.state_transition_with_validation(signed_block.clone(), true, false);
+    let mut new_state = state.state_transition_with_validation(signed_block.clone(), true, false)?;
 
     use containers::block::hash_tree_root as hash_root;
     let body_root = hash_root(&block.body);
@@ -110,4 +114,5 @@ pub fn on_block(store: &mut Store, signed_block: SignedBlockWithAttestation) {
     }
 
     update_head(store);
+    Ok(())
 }

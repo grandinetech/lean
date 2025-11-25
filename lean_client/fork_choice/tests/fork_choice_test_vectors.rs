@@ -521,14 +521,21 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
                     let signed_block = convert_test_block(test_block);
                     let _block_root = get_block_root(&signed_block);
 
-                    on_block(&mut store, signed_block);
+                    on_block(&mut store, signed_block)
+                }));
 
+                let result = match result {
+                    Ok(inner) => inner,
+                    Err(e) => Err(format!("Panic: {:?}", e)),
+                };
+
+                if result.is_ok() {
                     if let Some(label) = &step.checks.head_root_label {
                         if !block_labels.contains_key(label) {
                             block_labels.insert(label.clone(), store.head);
                         }
                     }
-                }));
+                }
 
                 if step.valid && result.is_err() {
                     return Err(format!(
@@ -565,13 +572,19 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
 
                 let result = std::panic::catch_unwind(AssertUnwindSafe(|| {
                     let signed_vote = convert_test_attestation(test_att);
-                    on_attestation(&mut store, signed_vote, false);
+                    on_attestation(&mut store, signed_vote, false)
                 }));
+
+                let result = match result {
+                    Ok(inner) => inner,
+                    Err(e) => Err(format!("Panic: {:?}", e)),
+                };
 
                 if step.valid && result.is_err() {
                     return Err(format!(
-                        "Step {}: Attestation should be valid but processing failed",
-                        step_idx
+                        "Step {}: Attestation should be valid but processing failed: {:?}",
+                        step_idx,
+                        result.err()
                     ));
                 } else if !step.valid && result.is_ok() {
                     return Err(format!(

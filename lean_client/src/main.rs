@@ -20,7 +20,7 @@ use networking::types::{ChainMessage, OutboundP2pRequest};
 use std::net::IpAddr;
 use std::sync::Arc;
 use tokio::{sync::mpsc, task};
-use tracing::info;
+use tracing::{info, warn};
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -148,13 +148,23 @@ async fn main() {
                     ..
                 } => {
                     info!("process block");
-                    on_block(&mut store, signed_block_with_attestation);
+                    if let Err(e) = on_block(&mut store, signed_block_with_attestation) {
+                        warn!("Error processing block: {}", e);
+                    }
+                    else {
+                        info!("Block processed successfully.");
+                    }
                 }
                 ChainMessage::ProcessAttestation {
                     signed_attestation, ..
                 } => {
                     info!("process attestation");
-                    on_attestation(&mut store, signed_attestation.message, false);
+                    if let Err(e) = on_attestation(&mut store, signed_attestation.message, false) {
+                        warn!("Error processing attestation: {}", e);
+                    }
+                    else {
+                        info!("Attestation processed successfully.");
+                    }
                 }
             }
         }
