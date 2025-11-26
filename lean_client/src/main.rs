@@ -21,6 +21,7 @@ use std::net::IpAddr;
 use std::sync::Arc;
 use tokio::{sync::mpsc, task};
 use tracing::{info, warn};
+use containers::ssz::SszHash;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -79,7 +80,7 @@ async fn main() {
         slot: Slot(0),
         proposer_index: ValidatorIndex(0),
         parent_root: Bytes32(ssz::H256::zero()),
-        state_root: Bytes32(ssz::H256::zero()),
+        state_root: Bytes32(genesis_state.hash_tree_root()),
         body: BlockBody {
             attestations: Default::default(),
         },

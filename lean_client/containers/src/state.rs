@@ -3,12 +3,11 @@ use crate::{
     block::{hash_tree_root, Block, BlockBody, BlockHeader, SignedBlockWithAttestation},
     Attestation, Attestations, Bytes32, Checkpoint, Config, Slot, Uint64, ValidatorIndex,
 };
-use crate::{HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots};
+use crate::{HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots, Validators};
 use serde::{Deserialize, Serialize};
-use ssz::PersistentList as List;
+use ssz::{PersistentList as List};
 use ssz_derive::Ssz;
 use std::collections::BTreeMap;
-use typenum::U4096;
 
 pub const VALIDATOR_REGISTRY_LIMIT: usize = 1 << 12; // 4096
 pub const JUSTIFICATION_ROOTS_LIMIT: usize = 1 << 18; // 262144
@@ -39,7 +38,7 @@ pub struct State {
 
     // Validators registry
     #[serde(with = "crate::serde_helpers")]
-    pub validators: List<Validator, U4096>,
+    pub validators: Validators,
 
     #[serde(with = "crate::serde_helpers")]
     pub justifications_roots: JustificationRoots,
@@ -60,13 +59,11 @@ impl State {
             body_root: hash_tree_root(&body_for_root),
         };
 
-        let validators = {
-            let mut list = List::<Validator, U4096>::default();
-            for v in validators {
-                list.push(v).expect("within limit");
-            }
-            list
-        };
+        let mut validator_list = List::default();
+        for v in validators {
+            validator_list.push(v).expect("Failed to add validator");
+        }
+
 
         Self {
             config: Config {
@@ -84,7 +81,7 @@ impl State {
             },
             historical_block_hashes: HistoricalBlockHashes::default(),
             justified_slots: JustifiedSlots::default(),
-            validators,
+            validators: validator_list,
             justifications_roots: JustificationRoots::default(),
             justifications_validators: JustificationsValidators::default(),
         }
