@@ -1,25 +1,14 @@
 use std::collections::HashMap;
 
 use containers::{
-    block::{hash_tree_root, BlockHeader, SignedBlockWithAttestation},
+    block::{SignedBlockWithAttestation},
     checkpoint::Checkpoint,
     config::Config,
     state::State,
-    Root, Slot, ValidatorIndex,
+    Root, Bytes32, Slot, ValidatorIndex,
 };
 
-pub fn get_block_root(signed_block: &SignedBlockWithAttestation) -> Root {
-    let block = &signed_block.message.block;
-    let body_root = hash_tree_root(&block.body);
-    let header = BlockHeader {
-        slot: block.slot,
-        proposer_index: block.proposer_index,
-        parent_root: block.parent_root,
-        state_root: block.state_root,
-        body_root,
-    };
-    hash_tree_root(&header)
-}
+use ssz::SszHash;
 
 // CONSTS
 pub type Interval = u64;
@@ -46,7 +35,7 @@ pub fn get_forkchoice_store(
     anchor_block: SignedBlockWithAttestation,
     config: Config,
 ) -> Store {
-    let block = get_block_root(&anchor_block);
+    let block = Bytes32(anchor_block.message.block.hash_tree_root());
 
     Store {
         time: anchor_block.message.block.slot.0 * INTERVALS_PER_SLOT,

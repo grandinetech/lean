@@ -20,7 +20,7 @@ pub use config::{Config, GenesisConfig};
 pub use slot::Slot;
 pub use state::State;
 pub use types::{
-    Bytes32, HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots,
+    Bytes32, HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots, Validators,
     Uint64, ValidatorIndex,
 };
 

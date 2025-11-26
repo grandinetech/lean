@@ -1,5 +1,6 @@
 use crate::store::*;
-use containers::{attestation::Attestation, block::SignedBlockWithAttestation, ValidatorIndex};
+use containers::{Bytes32, ValidatorIndex, attestation::Attestation, block::SignedBlockWithAttestation};
+use ssz::SszHash;
 
 #[inline]
 pub fn on_tick(store: &mut Store, time: u64, _has_proposal: bool) {
@@ -45,12 +46,12 @@ pub fn on_attestation(store: &mut Store, attestation: Attestation, is_from_block
 
 //update
 pub fn on_block(store: &mut Store, signed_block: SignedBlockWithAttestation) -> Result<(), String> {
-    let block_root = get_block_root(&signed_block);
+    let block_root = Bytes32(signed_block.message.block.hash_tree_root());
+
     if store.blocks.contains_key(&block_root) {
         return Ok(());
     }
     let block = &signed_block.message.block;
-    let root = block.parent_root;
 
     let block_time = block.slot.0 * INTERVALS_PER_SLOT;
     if store.time < block_time {
@@ -76,7 +77,7 @@ pub fn on_block(store: &mut Store, signed_block: SignedBlockWithAttestation) -> 
     )?;
 
     // naujas
-    let state = match store.states.get(&root) {
+    let state = match store.states.get(&block.parent_root) {
         Some(state) => state,
         None => {
             return Err("Err: (Fork-choice::Handlers::OnBlock)no parent state.".to_string());

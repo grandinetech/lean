@@ -1,6 +1,6 @@
 use fork_choice::{
     handlers::{on_attestation, on_block, on_tick},
-    store::{get_block_root, get_forkchoice_store, Store},
+    store::{get_forkchoice_store, Store},
 };
 
 use containers::{
@@ -519,7 +519,6 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
 
                 let result = std::panic::catch_unwind(AssertUnwindSafe(|| {
                     let signed_block = convert_test_block(test_block);
-                    let _block_root = get_block_root(&signed_block);
 
                     on_block(&mut store, signed_block)
                 }));

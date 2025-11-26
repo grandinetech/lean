@@ -38,13 +38,17 @@ impl fmt::Display for Bytes32 {
 }
 
 // Type-level constants for SSZ collection limits
-use typenum::{Prod, U1000, U1073741824, U262144, U4}; // 2^18, 4096 * 262144
+use typenum::{Prod, U1000, U1073741824, U262144, U4};
+use crate::validator::Validator;
+// 2^18, 4096 * 262144
 
 /// Type-level number for 4000 bytes (signature size) = 4 * 1000
 pub type U4000 = Prod<U4, U1000>;
 
 /// List of historical block root hashes (SSZList<Bytes32, historical_roots_limit>)
 pub type HistoricalBlockHashes = ssz::PersistentList<Bytes32, U262144>;
+
+pub type Validators = ssz::PersistentList<Validator, U262144>;
 
 /// List of justified block roots (SSZList<Bytes32, historical_roots_limit>)
 pub type JustificationRoots = ssz::PersistentList<Bytes32, U262144>;
