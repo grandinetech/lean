@@ -21,14 +21,9 @@ use fork_choice::{
     handlers::{on_attestation, on_block},
     store::{get_block_root, get_forkchoice_store},
 };
-use networking::gossipsub::config::GossipsubConfig;
-use networking::gossipsub::topic::get_topics;
-use networking::network::{NetworkService, NetworkServiceConfig};
-use networking::types::{ChainMessage, OutboundP2pRequest};
 use std::net::IpAddr;
 use std::sync::Arc;
-use tokio::{sync::mpsc, task};
-use tracing::{info, warn};
+use tracing::{info};
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -55,7 +50,7 @@ async fn main() {
 
     let (_outbound_p2p_sender, outbound_p2p_receiver) =
         mpsc::unbounded_channel::<OutboundP2pRequest>();
-    let (chain_message_sender, mut chain_message_receiver) =
+    let (chain_message_sender, chain_message_receiver) =
         mpsc::unbounded_channel::<ChainMessage>();
 
     // Initialize Fork Choice Store
@@ -121,10 +116,6 @@ async fn main() {
     };
 
     let config = Config { genesis_time };
-    let genesis_signed_block = SignedBlock {
-        message: genesis_block,
-        signature: Signature::default(),
-    };
     let store = Arc::new(Mutex::new(get_forkchoice_store(genesis_state, genesis_signed_block, config)));
 
     let fork = "devnet0".to_string();
@@ -164,11 +155,14 @@ async fn main() {
                     let block = signed_block_with_attestation.message.block.clone();
                     let proposer_attestation =
                         signed_block_with_attestation.message.proposer_attestation.clone();
-                    let signed_block = SignedBlock {
-                        message: block,
-                        signature: Signature::default(),
+                    let signed_block_with_attestation = SignedBlockWithAttestation {
+                        message: BlockWithAttestation {
+                            block,
+                            proposer_attestation,
+                        },
+                        signature: BlockSignatures::default(),
                     };
-                    let block_root = get_block_root(&signed_block);
+                    let block_root = get_block_root(&signed_block_with_attestation);
 
                     let mut store = chain_store.lock().await;
                     info!(
@@ -177,8 +171,7 @@ async fn main() {
                         root = %block_root,
                         "Processing block from gossip"
                     );
-                    on_block(&mut store, signed_block);
-                    on_attestation(&mut store, proposer_attestation, true);
+                    let _ = on_block(&mut store, signed_block_with_attestation);
                     info!(
                         slot,
                         head = %store.head,
@@ -199,7 +192,7 @@ async fn main() {
                         target = %target_root,
                         "Processing attestation from gossip"
                     );
-                    on_attestation(&mut store, attestation, false);
+                    let _ = on_attestation(&mut store, attestation, false);
                     info!(
                         slot,
                         validator,
