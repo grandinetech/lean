@@ -41,14 +41,14 @@ where
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TestVectorFile {
     #[serde(flatten)]
-    pub tests: HashMap<String, TestCase<State>>,
+    pub tests: HashMap<String, TestCase>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct TestCase<T> {
+pub struct TestCase {
     pub network: String,
-    pub pre: T,
+    pub pre: State,
     #[serde(deserialize_with = "deserialize_flexible", default)]
     pub blocks: Option<Vec<Block>>,
     pub post: Option<PostState>,
@@ -77,6 +77,6 @@ pub struct Info {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct TestVector<T> {
-    pub test_case: Vec<TestCase<T>>,
+pub struct TestVector {
+    pub test_case: Vec<TestCase>,
 }

@@ -483,7 +483,7 @@ impl TestRunner {
     }
 
     /// Helper: Run invalid block test (expecting exception)
-    fn run_invalid_block_test(test_case: TestCase<State>) -> Result<(), Box<dyn std::error::Error>> {
+    fn run_invalid_block_test(test_case: TestCase) -> Result<(), Box<dyn std::error::Error>> {
         if let Some(ref blocks) = test_case.blocks {
             if blocks.is_empty() {
                 println!("  WARNING: Empty blocks array - cannot test invalid block");
@@ -533,7 +533,7 @@ impl TestRunner {
     }
 
     /// Helper: Verify genesis state only (no blocks)
-    fn verify_genesis_state(test_case: TestCase<State>) -> Result<(), Box<dyn std::error::Error>> {
+    fn verify_genesis_state(test_case: TestCase) -> Result<(), Box<dyn std::error::Error>> {
         let state = &test_case.pre;
         
         // Verify post-state if present
@@ -543,7 +543,7 @@ impl TestRunner {
     }
 
     /// Helper: Verify post-state conditions
-    fn verify_post_state(state: &State, test_case: &TestCase<State>) -> Result<(), Box<dyn std::error::Error>> {
+    fn verify_post_state(state: &State, test_case: &TestCase) -> Result<(), Box<dyn std::error::Error>> {
         if let Some(ref post) = test_case.post {
             // Verify slot
             if state.slot != post.slot {
