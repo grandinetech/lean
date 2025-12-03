@@ -2,7 +2,8 @@ use crate::{Checkpoint, Slot, Uint64};
 use serde::{Deserialize, Serialize};
 use ssz::ByteVector;
 use ssz_derive::Ssz;
-use typenum::{Prod, Sum, U100, U12, U31};
+use serde::{Deserialize, Serialize};
+use typenum::{Prod, Sum, U100, U31, U12};
 
 pub type U3100 = Prod<U31, U100>;
 
