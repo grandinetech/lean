@@ -1,6 +1,6 @@
 use crate::store::*;
 use containers::{
-    Bytes32, ValidatorIndex, attestation::Attestation, block::SignedBlockWithAttestation,
+    attestation::Attestation, block::SignedBlockWithAttestation, Bytes32, ValidatorIndex,
 };
 use ssz::SszHash;
 
@@ -50,7 +50,6 @@ pub fn on_attestation(
     Ok(())
 }
 
-/// Process a block, queuing it if parent is missing
 pub fn on_block(store: &mut Store, signed_block: SignedBlockWithAttestation) -> Result<(), String> {
     let block_root = Bytes32(signed_block.message.block.hash_tree_root());
 
@@ -60,33 +59,25 @@ pub fn on_block(store: &mut Store, signed_block: SignedBlockWithAttestation) -> 
 
     let parent_root = signed_block.message.block.parent_root;
 
-    // If parent state doesn't exist, queue this block for later
     if !store.states.contains_key(&parent_root) && !parent_root.0.is_zero() {
         store
-            .pending_blocks
+            .blocks_queue
             .entry(parent_root)
             .or_insert_with(Vec::new)
             .push(signed_block);
         return Err(format!(
-            "Block queued: parent {:?} not yet available (pending: {} blocks)",
+            "Err: (Fork-choice::Handlers::OnBlock) Block queued: parent {:?} not yet available (pending: {} blocks)",
             &parent_root.0.as_bytes()[..4],
-            store
-                .pending_blocks
-                .values()
-                .map(|v| v.len())
-                .sum::<usize>()
+            store.blocks_queue.values().map(|v| v.len()).sum::<usize>()
         ));
     }
 
     process_block_internal(store, signed_block, block_root)?;
-
-    // Try to process any pending blocks that were waiting for this one
-    process_pending_blocks(store, block_root);
+    process_pending_blocks(store, vec![block_root]);
 
     Ok(())
 }
 
-/// Internal block processing (assumes parent exists)
 fn process_block_internal(
     store: &mut Store,
     signed_block: SignedBlockWithAttestation,
@@ -117,10 +108,14 @@ fn process_block_internal(
         true,
     )?;
 
-    let state = store
-        .states
-        .get(&block.parent_root)
-        .expect("Parent state must exist at this point");
+    let state = match store.states.get(&block.parent_root) {
+        Some(state) => state,
+        None => {
+            return Err(
+                "Err: (Fork-choice::Handlers::ProcesBlockInternal)No parent state.".to_string(),
+            );
+        }
+    };
 
     let mut new_state =
         state.state_transition_with_validation(signed_block.clone(), true, false)?;
@@ -157,13 +152,14 @@ fn process_block_internal(
     Ok(())
 }
 
-/// queue
-fn process_pending_blocks(store: &mut Store, parent_root: Bytes32) {
-    if let Some(pending) = store.pending_blocks.remove(&parent_root) {
-        for pending_block in pending {
-            let block_root = Bytes32(pending_block.message.block.hash_tree_root());
-            if let Ok(()) = process_block_internal(store, pending_block, block_root) {
-                process_pending_blocks(store, block_root);
+fn process_pending_blocks(store: &mut Store, mut roots: Vec<Bytes32>) {
+    while let Some(parent_root) = roots.pop() {
+        if let Some(purgatory) = store.blocks_queue.remove(&parent_root) {
+            for block in purgatory {
+                let block_origins = Bytes32(block.message.block.hash_tree_root());
+                if let Ok(()) = process_block_internal(store, block, block_origins) {
+                    roots.push(block_origins);
+                }
             }
         }
     }

@@ -1,7 +1,6 @@
 use clap::Parser;
 use containers::ssz::SszHash;
 use containers::{
-    Slot,
     attestation::{Attestation, AttestationData, BlockSignatures},
     block::{Block, BlockBody, BlockWithAttestation, SignedBlockWithAttestation},
     checkpoint::Checkpoint,
@@ -9,6 +8,7 @@ use containers::{
     ssz,
     state::State,
     types::{Bytes32, Uint64, ValidatorIndex},
+    Slot,
 };
 use fork_choice::{
     handlers::{on_attestation, on_block, on_tick},
@@ -24,7 +24,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::{
     sync::mpsc,
     task,
-    time::{Duration, interval},
+    time::{interval, Duration},
 };
 use tracing::{debug, info, warn};
 
@@ -151,6 +151,7 @@ async fn main() {
 
         loop {
             tokio::select! {
+                // New tick handling fork-choice
                 _ = tick_interval.tick() => {
                     let now = SystemTime::now()
                         .duration_since(UNIX_EPOCH)
@@ -158,12 +159,11 @@ async fn main() {
                         .as_secs();
                     on_tick(&mut store, now, false);
 
-
                     let current_slot = store.time / 8;
                     if current_slot != last_logged_slot && current_slot % 10 == 0 {
-                        debug!("Store time updated: slot {}, pending blocks: {}",
+                        debug!("(Okay)Store time updated : slot {}, pending blocks: {}",
                             current_slot,
-                            store.pending_blocks.values().map(|v| v.len()).sum::<usize>()
+                            store.blocks_queue.values().map(|v| v.len()).sum::<usize>()
                         );
                         last_logged_slot = current_slot;
                     }
@@ -176,12 +176,15 @@ async fn main() {
                             signed_block_with_attestation,
                             ..
                         } => {
+
+                            // Queue mechanism
                             match on_block(&mut store, signed_block_with_attestation) {
                                 Ok(()) => info!("Block processed successfully."),
-                                Err(e) if e.starts_with("Block queued") => {
+
+                                Err(e) if e.starts_with("Problem processing block. Block queued") => {
                                     info!("{}", e);
                                 }
-                                Err(e) => warn!("Error processing block: {}", e),
+                                Err(e) => warn!("Problem processing block: {}", e),
                             }
                         }
                         ChainMessage::ProcessAttestation {
