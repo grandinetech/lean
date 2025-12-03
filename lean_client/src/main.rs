@@ -1,5 +1,7 @@
 use clap::Parser;
+use containers::ssz::SszHash;
 use containers::{
+    Slot,
     attestation::{Attestation, AttestationData, BlockSignatures},
     block::{Block, BlockBody, BlockWithAttestation, SignedBlockWithAttestation},
     checkpoint::Checkpoint,
@@ -7,10 +9,9 @@ use containers::{
     ssz,
     state::State,
     types::{Bytes32, Uint64, ValidatorIndex},
-    Slot,
 };
 use fork_choice::{
-    handlers::{on_attestation, on_block},
+    handlers::{on_attestation, on_block, on_tick},
     store::get_forkchoice_store,
 };
 use networking::gossipsub::config::GossipsubConfig;
@@ -19,9 +20,13 @@ use networking::network::{NetworkService, NetworkServiceConfig};
 use networking::types::{ChainMessage, OutboundP2pRequest};
 use std::net::IpAddr;
 use std::sync::Arc;
-use tokio::{sync::mpsc, task};
-use tracing::{info, warn};
-use containers::ssz::SszHash;
+use std::time::{SystemTime, UNIX_EPOCH};
+use tokio::{
+    sync::mpsc,
+    task,
+    time::{Duration, interval},
+};
+use tracing::{debug, info, warn};
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -141,28 +146,54 @@ async fn main() {
     });
 
     let chain_handle = task::spawn(async move {
-        while let Some(message) = chain_message_receiver.recv().await {
-            info!("Received chain message: {}", message);
-            match message {
-                ChainMessage::ProcessBlock {
-                    signed_block_with_attestation,
-                    ..
-                } => {
-                    if let Err(e) = on_block(&mut store, signed_block_with_attestation) {
-                        warn!("Error processing block: {}", e);
-                    }
-                    else {
-                        info!("Block processed successfully.");
+        let mut tick_interval = interval(Duration::from_millis(1500));
+        let mut last_logged_slot = 0u64;
+
+        loop {
+            tokio::select! {
+                _ = tick_interval.tick() => {
+                    let now = SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap()
+                        .as_secs();
+                    on_tick(&mut store, now, false);
+
+
+                    let current_slot = store.time / 8;
+                    if current_slot != last_logged_slot && current_slot % 10 == 0 {
+                        debug!("Store time updated: slot {}, pending blocks: {}",
+                            current_slot,
+                            store.pending_blocks.values().map(|v| v.len()).sum::<usize>()
+                        );
+                        last_logged_slot = current_slot;
                     }
                 }
-                ChainMessage::ProcessAttestation {
-                    signed_attestation, ..
-                } => {
-                    if let Err(e) = on_attestation(&mut store, signed_attestation.message, false) {
-                        warn!("Error processing attestation: {}", e);
-                    }
-                    else {
-                        info!("Attestation processed successfully.");
+                message = chain_message_receiver.recv() => {
+                    let Some(message) = message else { break };
+                    info!("Received chain message: {}", message);
+                    match message {
+                        ChainMessage::ProcessBlock {
+                            signed_block_with_attestation,
+                            ..
+                        } => {
+                            match on_block(&mut store, signed_block_with_attestation) {
+                                Ok(()) => info!("Block processed successfully."),
+                                Err(e) if e.starts_with("Block queued") => {
+                                    info!("{}", e);
+                                }
+                                Err(e) => warn!("Error processing block: {}", e),
+                            }
+                        }
+                        ChainMessage::ProcessAttestation {
+                            signed_attestation, ..
+                        } => {
+                            if let Err(e) = on_attestation(&mut store, signed_attestation.message, false) {
+                                warn!("Error processing attestation: {}", e);
+                            }
+                            else {
+                                info!("Attestation processed successfully.");
+                            }
+                        }
                     }
                 }
             }

@@ -1,11 +1,8 @@
 use std::collections::HashMap;
 
 use containers::{
-    block::{SignedBlockWithAttestation},
-    checkpoint::Checkpoint,
-    config::Config,
-    state::State,
-    Root, Bytes32, Slot, ValidatorIndex,
+    Bytes32, Root, Slot, ValidatorIndex, block::SignedBlockWithAttestation, checkpoint::Checkpoint,
+    config::Config, state::State,
 };
 
 use ssz::SszHash;
@@ -28,6 +25,9 @@ pub struct Store {
     pub states: HashMap<Root, State>,
     pub latest_known_votes: HashMap<ValidatorIndex, Checkpoint>,
     pub latest_new_votes: HashMap<ValidatorIndex, Checkpoint>,
+
+    // queue fixas parent statui
+    pub pending_blocks: HashMap<Root, Vec<SignedBlockWithAttestation>>,
 }
 
 pub fn get_forkchoice_store(
@@ -48,6 +48,7 @@ pub fn get_forkchoice_store(
         states: [(block, anchor_state)].into(),
         latest_known_votes: HashMap::new(),
         latest_new_votes: HashMap::new(),
+        pending_blocks: HashMap::new(),
     }
 }
 
