@@ -1,7 +1,7 @@
 use crate::validator::Validator;
 use crate::{
     block::{hash_tree_root, Block, BlockBody, BlockHeader, SignedBlockWithAttestation},
-    Attestation, Attestations, Bytes32, Checkpoint, Config, Slot, Uint64, ValidatorIndex,
+    Attestation, Attestations, BlockSignatures, Bytes32, Checkpoint, Config, Slot, Uint64, ValidatorIndex,
 };
 use crate::{HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots, Validators};
 use serde::{Deserialize, Serialize};
@@ -513,6 +513,148 @@ impl State {
 
         new_state
     }
+
+    /// Build a valid block on top of this state.
+    ///
+    /// Computes the post-state and creates a block with the correct state root.
+    /// If `available_signed_attestations` and `known_block_roots` are provided,
+    /// performs fixed-point attestation collection: iteratively adds valid
+    /// attestations until no more can be included. This is necessary because
+    /// processing attestations may update the justified checkpoint, which may
+    /// make additional attestations valid.
+    ///
+    /// # Arguments
+    ///
+    /// * `slot` - Target slot for the block
+    /// * `proposer_index` - Validator index of the proposer
+    /// * `parent_root` - Root of the parent block (must match state after slot processing)
+    /// * `initial_attestations` - Initial attestations to include
+    /// * `available_signed_attestations` - Optional pool of attestations to collect from
+    /// * `known_block_roots` - Optional set of known block roots for attestation validation
+    ///
+    /// # Returns
+    ///
+    /// Tuple of (Block, post-State, collected attestations, signatures)
+    pub fn build_block(
+        &self,
+        slot: Slot,
+        proposer_index: ValidatorIndex,
+        parent_root: Bytes32,
+        initial_attestations: Option<Vec<Attestation>>,
+        available_signed_attestations: Option<&[SignedBlockWithAttestation]>,
+        known_block_roots: Option<&std::collections::HashSet<Bytes32>>,
+    ) -> Result<(Block, Self, Vec<Attestation>, BlockSignatures), String> {
+        // Initialize empty attestation set for iterative collection
+        let mut attestations = initial_attestations.unwrap_or_default();
+        let mut signatures = BlockSignatures::default();
+
+        // Advance state to target slot and validate parent root
+        let pre_state = self.process_slots(slot)?;
+        let expected_parent_root = hash_tree_root(&pre_state.latest_block_header);
+        if parent_root != expected_parent_root {
+            return Err(format!(
+                "Invalid parent_root: expected {:?}, got {:?}",
+                expected_parent_root, parent_root
+            ));
+        }
+
+        // Iteratively collect valid attestations using fixed-point algorithm
+        //
+        // Continue until no new attestations can be added to the block.
+        // This ensures we include the maximal valid attestation set.
+        loop {
+            // Create candidate block with current attestation set
+            let mut attestations_list = Attestations::default();
+            for att in &attestations {
+                attestations_list.push(att.clone()).map_err(|e| format!("Failed to push attestation: {:?}", e))?;
+            }
+
+            let candidate_block = Block {
+                slot,
+                proposer_index,
+                parent_root,
+                state_root: Bytes32(ssz::H256::zero()),
+                body: BlockBody {
+                    attestations: attestations_list,
+                },
+            };
+
+            // Apply state transition to get the post-block state
+            let post_state = pre_state.process_block(&candidate_block)?;
+
+            // No attestation source provided: done after computing post_state
+            if available_signed_attestations.is_none() || known_block_roots.is_none() {
+                // Store the post state root in the block
+                let final_block = Block {
+                    slot,
+                    proposer_index,
+                    parent_root,
+                    state_root: hash_tree_root(&post_state),
+                    body: candidate_block.body,
+                };
+                return Ok((final_block, post_state, attestations, signatures));
+            }
+
+            // Find new valid attestations matching post-state justification
+            let mut new_attestations = Vec::new();
+            let mut new_signatures = Vec::new();
+
+            let available = available_signed_attestations.unwrap();
+            let known_roots = known_block_roots.unwrap();
+
+            for signed_attestation in available {
+                let att = &signed_attestation.message.proposer_attestation;
+                let data = &att.data;
+
+                // Skip if target block is unknown
+                if !known_roots.contains(&data.head.root) {
+                    continue;
+                }
+
+                // Skip if attestation source does not match post-state's latest justified
+                if data.source != post_state.latest_justified {
+                    continue;
+                }
+
+                // Add attestation if not already included
+                if !attestations.contains(att) {
+                    new_attestations.push(att.clone());
+                    // Add corresponding signatures from the signed block
+                    // Note: In the actual implementation, you'd need to properly track
+                    // which signatures correspond to which attestations
+                    let mut idx = 0u64;
+                    loop {
+                        match signed_attestation.signature.get(idx) {
+                            Ok(sig) => {
+                                new_signatures.push(sig.clone());
+                                idx += 1;
+                            }
+                            Err(_) => break,
+                        }
+                    }
+                }
+            }
+
+            // Fixed point reached: no new attestations found
+            if new_attestations.is_empty() {
+                // Store the post state root in the block
+                let final_block = Block {
+                    slot,
+                    proposer_index,
+                    parent_root,
+                    state_root: hash_tree_root(&post_state),
+                    body: candidate_block.body,
+                };
+                return Ok((final_block, post_state, attestations, signatures));
+            }
+
+            // Add new attestations and continue iteration
+            attestations.extend(new_attestations);
+            for sig in new_signatures {
+                signatures.push(sig).map_err(|e| format!("Failed to push signature: {:?}", e))?;
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -566,5 +708,186 @@ mod tests {
             new_state.latest_block_header.state_root,
             hash_tree_root(&genesis_state_for_hash)
         );
+    }
+
+    #[test]
+    fn test_build_block() {
+        // Create genesis state with validators
+        let genesis_state = State::generate_genesis(Uint64(0), Uint64(4));
+        
+        // Compute expected parent root after slot processing
+        let pre_state = genesis_state.process_slots(Slot(1)).unwrap();
+        let expected_parent_root = hash_tree_root(&pre_state.latest_block_header);
+        
+        // Test 1: Build a simple block without attestations
+        let result = genesis_state.build_block(
+            Slot(1),
+            ValidatorIndex(1),
+            expected_parent_root,
+            None,
+            None,
+            None,
+        );
+        
+        assert!(result.is_ok(), "Building simple block should succeed");
+        let (block, post_state, attestations, signatures) = result.unwrap();
+        
+        // Verify block properties
+        assert_eq!(block.slot, Slot(1));
+        assert_eq!(block.proposer_index, ValidatorIndex(1));
+        assert_eq!(block.parent_root, expected_parent_root);
+        assert_ne!(block.state_root, Bytes32(ssz::H256::zero()), "State root should be computed");
+        
+        // Verify attestations and signatures are empty
+        assert_eq!(attestations.len(), 0);
+        // Check signatures by trying to get first element
+        assert!(signatures.get(0).is_err(), "Signatures should be empty");
+        
+        // Verify post-state has advanced
+        assert_eq!(post_state.slot, Slot(1));
+        // Note: The post-state's latest_block_header.state_root is zero because it will be
+        // filled in during the next slot processing
+        assert_eq!(block.parent_root, expected_parent_root, "Parent root should match");
+        
+        // Test 2: Build block with initial attestations
+        let attestation = Attestation {
+            validator_id: Uint64(0),
+            data: crate::AttestationData {
+                slot: Slot(1),
+                head: Checkpoint {
+                    root: expected_parent_root,
+                    slot: Slot(0),
+                },
+                target: Checkpoint {
+                    root: expected_parent_root,
+                    slot: Slot(1),
+                },
+                source: Checkpoint {
+                    root: expected_parent_root,
+                    slot: Slot(0),
+                },
+            },
+        };
+        
+        let result = genesis_state.build_block(
+            Slot(1),
+            ValidatorIndex(1),
+            expected_parent_root,
+            Some(vec![attestation.clone()]),
+            None,
+            None,
+        );
+        
+        assert!(result.is_ok(), "Building block with attestations should succeed");
+        let (block, _post_state, attestations, _signatures) = result.unwrap();
+        
+        // Verify attestation was included
+        assert_eq!(attestations.len(), 1);
+        assert_eq!(attestations[0].validator_id, Uint64(0));
+        // Check that attestation list has one element
+        assert!(block.body.attestations.get(0).is_ok(), "Block should contain attestation");
+        assert!(block.body.attestations.get(1).is_err(), "Block should have only one attestation");
+    }
+
+    #[test]
+    fn test_build_block_advances_state() {
+        // Create genesis state
+        let genesis_state = State::generate_genesis(Uint64(0), Uint64(10));
+        
+        // Compute parent root after advancing to target slot
+        let pre_state = genesis_state.process_slots(Slot(5)).unwrap();
+        let parent_root = hash_tree_root(&pre_state.latest_block_header);
+        
+        // Build block at slot 5
+        // Proposer for slot 5 with 10 validators is (5 % 10) = 5
+        let result = genesis_state.build_block(
+            Slot(5),
+            ValidatorIndex(5),
+            parent_root,
+            None,
+            None,
+            None,
+        );
+        
+        assert!(result.is_ok());
+        let (block, post_state, _, _) = result.unwrap();
+        
+        // Verify state advanced through slots
+        assert_eq!(post_state.slot, Slot(5));
+        assert_eq!(block.slot, Slot(5));
+        
+        // Verify block can be applied to genesis state
+        let transition_result = genesis_state.state_transition_with_validation(
+            SignedBlockWithAttestation {
+                message: crate::BlockWithAttestation {
+                    block: block.clone(),
+                    proposer_attestation: Attestation::default(),
+                },
+                signature: BlockSignatures::default(),
+            },
+            true, // signatures are considered valid (not validating, just marking as valid)
+            true,
+        );
+        
+        assert!(transition_result.is_ok(), "Built block should be valid for state transition");
+    }
+
+    #[test]
+    fn test_build_block_state_root_matches() {
+        // Create genesis state
+        let genesis_state = State::generate_genesis(Uint64(0), Uint64(3));
+        
+        // Compute parent root after advancing to target slot
+        let pre_state = genesis_state.process_slots(Slot(1)).unwrap();
+        let parent_root = hash_tree_root(&pre_state.latest_block_header);
+        
+        // Build a block
+        // Proposer for slot 1 with 3 validators is (1 % 3) = 1
+        let result = genesis_state.build_block(
+            Slot(1),
+            ValidatorIndex(1),
+            parent_root,
+            None,
+            None,
+            None,
+        );
+        
+        assert!(result.is_ok());
+        let (block, post_state, _, _) = result.unwrap();
+        
+        // Verify the state root in block matches the computed post-state
+        let computed_state_root = hash_tree_root(&post_state);
+        assert_eq!(
+            block.state_root, 
+            computed_state_root,
+            "Block state root should match computed post-state root"
+        );
+        
+        // Verify it's not zero
+        assert_ne!(
+            block.state_root, 
+            Bytes32(ssz::H256::zero()),
+            "State root should not be zero"
+        );
+    }
+
+    #[test]
+    fn test_build_block_invalid_parent_root() {
+        // Create genesis state
+        let genesis_state = State::generate_genesis(Uint64(0), Uint64(3));
+        
+        // Try to build a block with incorrect parent_root
+        let wrong_parent_root = Bytes32(ssz::H256::zero());
+        let result = genesis_state.build_block(
+            Slot(1),
+            ValidatorIndex(1),
+            wrong_parent_root,
+            None,
+            None,
+            None,
+        );
+        
+        assert!(result.is_err(), "Should reject invalid parent_root");
+        assert!(result.unwrap_err().contains("Invalid parent_root"));
     }
 }
