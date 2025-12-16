@@ -22,6 +22,9 @@ pub struct Uint64(pub u64);
 #[ssz(transparent)]
 pub struct ValidatorIndex(pub u64);
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+pub struct Fp(pub u32);
+
 impl FromStr for Bytes32 {
     type Err = hex::FromHexError;
 
@@ -58,3 +61,9 @@ pub type JustifiedSlots = ssz::BitList<U262144>; // 2^18
 
 /// Bitlist for tracking validator justifications (BitList<validator_registry_limit * historical_roots_limit>)
 pub type JustificationsValidators = ssz::BitList<U1073741824>; // 4096 * 262144
+
+/// Vector of 8 Fp elements (used in signature path siblings, rho, hashes)
+pub type FpVector8 = ssz::PersistentVector<Fp, typenum::U8>;
+
+/// List of Fp elements (for variable-length Fp collections)
+pub type FpList8 = ssz::PersistentList<Fp, typenum:: U8>;

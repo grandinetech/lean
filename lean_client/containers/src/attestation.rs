@@ -33,6 +33,7 @@ pub type AggregatedSignatures = ssz::PersistentList<Signature, U4096>;
 
 /// Attestation content describing the validator's observed chain view.
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AttestationData {
     /// The slot for which the attestation is made.
     pub slot: Slot,
@@ -46,6 +47,7 @@ pub struct AttestationData {
 
 /// Validator specific attestation wrapping shared attestation data.
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Attestation {
     /// The index of the validator making the attestation.
     pub validator_id: Uint64,
@@ -55,6 +57,7 @@ pub struct Attestation {
 
 /// Validator attestation bundled with its signature.
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SignedAttestation {
     /// The attestation message signed by the validator.
     pub message: Attestation,
@@ -64,6 +67,7 @@ pub struct SignedAttestation {
 
 /// Aggregated attestation consisting of participation bits and message.
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AggregatedAttestations {
     /// Bitfield indicating which validators participated in the aggregation.
     pub aggregation_bits: AggregationBits,
@@ -76,6 +80,7 @@ pub struct AggregatedAttestations {
 
 /// Aggregated attestation bundled with aggregated signatures.
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SignedAggregatedAttestations {
     /// Aggregated attestation data.
     pub message: AggregatedAttestations,
@@ -87,3 +92,4 @@ pub struct SignedAggregatedAttestations {
     /// TODO: this will be replaced by a SNARK in future devnets.
     pub signature: AggregatedSignatures,
 }
+pub type AggregatedAttestationsList = ssz::PersistentList<AggregatedAttestations, U4096>;

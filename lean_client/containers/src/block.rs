@@ -11,7 +11,7 @@ use leansig::signature::generalized_xmss::instantiations_poseidon::lifetime_2_to
 /// separately in BlockSignatures to match the spec architecture.
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
 pub struct BlockBody {
-    #[serde(with = "crate::serde_helpers")]
+    #[serde(with = "crate::serde_helpers::attestations")]
     pub attestations: Attestations,
 }
 
@@ -37,6 +37,7 @@ pub struct Block {
 
 /// Bundle containing a block and the proposer's attestation.
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BlockWithAttestation {
     /// The proposed block message.
     pub block: Block,
@@ -52,6 +53,7 @@ pub struct SignedBlockWithAttestation {
     /// Aggregated signature payload for the block.
     ///
     /// Signatures remain in attestation order followed by the proposer signature.
+    #[serde(with = "crate:: serde_helpers:: xmss_signature")]
     pub signature: BlockSignatures,
 }
 
@@ -190,25 +192,27 @@ impl SignedBlockWithAttestation {
             // - The validator possesses the secret key for their public key
             // - The attestation has not been tampered with
             // - The signature was created at the correct epoch (slot)
-            
+
             #[cfg(feature = "xmss-verify")]
             {
                 use leansig::signature::SignatureScheme;
-                use leansig::serialization::Serializable;
-                
+                use leansig::serialization:: Serializable;
+
                 // Compute the message hash from the attestation
                 let message_bytes: [u8; 32] = hash_tree_root(attestation).0.into();
-                let epoch = attestation.data.slot.0 as u32;
-                
-                // Get public key bytes - use as_bytes() method
-                let pubkey_bytes = validator.pubkey.0.as_bytes();
-                
+                let epoch = attestation.data. slot.0 as u32;
+
+                // Get public key bytes - extract first 48 bytes (leansig format)
+                // BlsPublicKey is 52 bytes but leansig expects 48 bytes
+                let pubkey_full = validator.pubkey.0.as_bytes();
+                let pubkey_bytes = &pubkey_full[.. 48];
+
                 // Deserialize the public key using Serializable trait
                 type PubKey = <SIGTargetSumLifetime20W2NoOff as SignatureScheme>::PublicKey;
                 let pubkey = match PubKey::from_bytes(pubkey_bytes) {
                     Ok(pk) => pk,
                     Err(e) => {
-                        eprintln!("Failed to deserialize public key at slot {:?}: {:?}", attestation.data.slot, e);
+                        eprintln!("Failed to deserialize public key at slot {:?}: {:? }", attestation.data.slot, e);
                         return false;
                     }
                 };

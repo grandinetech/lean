@@ -495,10 +495,10 @@ impl TestRunner {
 
             for (idx, block) in blocks.iter().enumerate() {
                 println!("  Block {}: slot {}", idx + 1, block.slot.0);
-                
+
                 // Advance state to the block's slot
                 let state_after_slots = state.process_slots(block.slot)?;
-            
+
                 // Try to process the full block (header + body) - we expect this to fail
                 let result = state_after_slots.process_block(block);
 
@@ -506,7 +506,7 @@ impl TestRunner {
                     Ok(new_state) => {
                         // Block processing succeeded, now validate state root
                         let computed_state_root = hash_tree_root(&new_state);
-                        
+
                         if block.state_root != computed_state_root {
                             error_occurred = true;
                             println!("    ✓ Correctly rejected: Invalid block state root");
@@ -523,12 +523,12 @@ impl TestRunner {
                     }
                 }
             }
-            
+
             if !error_occurred {
                 return Err("Expected an exception but all blocks processed successfully".into());
             }
         }
-        
+
         Ok(())
     }
 
@@ -580,6 +580,99 @@ impl TestRunner {
         }
         
         Ok(())
+    }
+
+    pub fn run_signature_verification_test<P: AsRef<Path>>(path: P) -> Result<(), Box<dyn std::error:: Error>> {
+        let json_content = fs::read_to_string(path)?;
+
+        // Parse using the SignatureTestVectorFile structure
+        let test_file: SignatureTestVectorFile = serde_json::from_str(&json_content)?;
+
+        // Get the first (and only) test case from the file
+        let (test_name, test_case) = test_file.tests. into_iter().next()
+            .ok_or("No test case found in JSON")?;
+
+        println!("\n{}:  {}", test_name, test_case. info.description);
+
+        let anchor_state = test_case.anchor_state;
+        let signed_block = test_case.signed_block_with_attestation;
+
+        // Log block details
+        println!("  Block slot: {:?}", signed_block.message.block.slot);
+        println!("  Proposer index: {:?}", signed_block.message. block.proposer_index);
+
+        // Count attestations in block body
+        let body_attestation_count = {
+            let mut count = 0u64;
+            loop {
+                match signed_block.message. block.body.attestations.get(count) {
+                    Ok(_) => count += 1,
+                    Err(_) => break,
+                }
+            }
+            count
+        };
+        println!("  Body attestations: {}", body_attestation_count);
+
+        // Count signatures
+        let signature_count = {
+            let mut count = 0u64;
+            loop {
+                match signed_block.signature.get(count) {
+                    Ok(_) => count += 1,
+                    Err(_) => break,
+                }
+            }
+            count
+        };
+        println!("  Signatures: {} (expected: {} body + 1 proposer)",
+                 signature_count, body_attestation_count);
+
+        // Check if this is an invalid/exception test
+        if let Some(ref expected_exception) = test_case.expect_exception {
+            println!("  Expecting exception: {}", expected_exception);
+
+            // Use std::panic::catch_unwind to catch panics from verify_signatures
+            let anchor_state_clone = anchor_state.clone();
+            let result = std::panic:: catch_unwind(std::panic::AssertUnwindSafe(|| {
+                signed_block.verify_signatures(anchor_state_clone)
+            }));
+
+            match result {
+                Ok(true) => {
+                    // Verification succeeded but we expected failure
+                    println! ("    \x1b[31m✗ FAIL: Signature verification succeeded but should have failed!\x1b[0m\n");
+                    return Err(format!(
+                        "Expected signature verification to fail with '{}', but it succeeded",
+                        expected_exception
+                    ).into());
+                }
+                Ok(false) => {
+                    // Verification returned false
+                    println!("    ✓ Correctly rejected: signature verification returned false");
+                    println!("\n\x1b[32m✓ PASS\x1b[0m\n");
+                    return Ok(());
+                }
+                Err(_) => {
+                    // Verification panicked (e.g., assertion failed)
+                    println!("    ✓ Correctly rejected: signature verification panicked as expected");
+                    println!("\n\x1b[32m✓ PASS\x1b[0m\n");
+                    return Ok(());
+                }
+            }
+        }
+
+        // Valid test case - signatures should verify successfully
+        let result = signed_block. verify_signatures(anchor_state);
+
+        if result {
+            println!("    ✓ All signatures verified successfully");
+            println!("\n\x1b[32m✓ PASS\x1b[0m\n");
+            Ok(())
+        } else {
+            println!("    \x1b[31m✗ FAIL:  Signature verification failed\x1b[0m\n");
+            Err("Signature verification failed for valid test case".into())
+        }
     }
 
 }

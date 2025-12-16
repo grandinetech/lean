@@ -10,7 +10,7 @@ pub mod types;
 pub mod validator;
 
 pub use attestation::{
-    AggregatedAttestations, AggregatedSignatures, AggregationBits, Attestation, AttestationData,
+    AggregatedAttestations, AggregatedAttestationsList, AggregatedSignatures, AggregationBits, Attestation, AttestationData,
     Attestations, BlockSignatures, Signature, SignedAggregatedAttestations, SignedAttestation,
 };
 pub use block::{
@@ -22,7 +22,7 @@ pub use slot::Slot;
 pub use state::State;
 pub use status::Status;
 pub use types::{
-    Bytes32, HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots, Validators,
+    Bytes32, Fp, FpVector8, FpList8, HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots, Validators,
     Uint64, ValidatorIndex,
 };
 

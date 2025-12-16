@@ -40,7 +40,7 @@ impl<'de> Deserialize<'de> for BlsPublicKey {
     {
         let s = String::deserialize(deserializer)?;
         let s = s.strip_prefix("0x").unwrap_or(&s);
-        
+
         let decoded = hex::decode(s).map_err(serde::de::Error::custom)?;
         if decoded.len() != 52 {
             return Err(serde::de::Error::custom(format!(
@@ -48,14 +48,14 @@ impl<'de> Deserialize<'de> for BlsPublicKey {
                 decoded.len()
             )));
         }
-        
+
         // Create ByteVector from decoded bytes using unsafe
         let mut byte_vec = ByteVector::default();
         unsafe {
             let dest = &mut byte_vec as *mut ByteVector<U52> as *mut u8;
             std::ptr::copy_nonoverlapping(decoded.as_ptr(), dest, 52);
         }
-        
+
         Ok(BlsPublicKey(byte_vec))
     }
 }
