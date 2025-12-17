@@ -269,8 +269,8 @@ impl ValidatorService {
             Some(b) => b,
             None => {
                 // Pasileiskit, su DEBUG. Kitaip galima pakeist i tiesiog
-                // println!("WARNNING: Attestation skipped. (Reason: HEAD BLOCK NOT FOUND)\n");
-                warn!("WARNNING: Attestation skipped. (Reason: HEAD BLOCK NOT FOUND)");
+                // println!("WARNING: Attestation skipped. (Reason: HEAD BLOCK NOT FOUND)\n");
+                warn!("WARNING: Attestation skipped. (Reason: HEAD BLOCK NOT FOUND)");
                 return vec![];
             }
         };
