@@ -169,7 +169,7 @@ checksum = "a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61"
 [[package]]
 name = "arithmetic"
 version = "0.0.0"
-source = "git+https://github.com/grandinetech/grandine?branch=develop#ca3faea41172cc3487133a770763ab871df3dfcd"
+source = "git+https://github.com/grandinetech/grandine?branch=develop#5bdc78763c8959ad689c79d51d7d59978460bb1e"
 dependencies = [
  "easy-ext",
  "typenum",
@@ -1412,7 +1412,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.61.1",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -1871,12 +1871,12 @@ dependencies = [
 [[package]]
 name = "hashing"
 version = "0.0.0"
-source = "git+https://github.com/grandinetech/grandine?branch=develop#ca3faea41172cc3487133a770763ab871df3dfcd"
+source = "git+https://github.com/grandinetech/grandine?branch=develop#5bdc78763c8959ad689c79d51d7d59978460bb1e"
 dependencies = [
  "ethereum-types",
  "generic-array",
  "hex-literal",
- "sha2 0.10.9 (git+https://github.com/grandinetech/universal-precompiles.git?tag=sha2-v0.10.9-up.0)",
+ "sha2 0.10.9 (git+https://github.com/grandinetech/universal-precompiles.git?tag=sha2-v0.10.9-up.1)",
 ]
 
 [[package]]
@@ -2311,7 +2311,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4b0f83760fb341a774ed326568e19f5a863af4a952def8c39f9ab92fd95b88e5"
 dependencies = [
  "equivalent",
- "hashbrown 0.16.0",
+ "hashbrown 0.15.5",
  "serde",
  "serde_core",
 ]
@@ -3264,7 +3264,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.61.1",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -4267,7 +4267,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.61.1",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -4480,7 +4480,7 @@ dependencies = [
 [[package]]
 name = "serde_utils"
 version = "0.0.0"
-source = "git+https://github.com/grandinetech/grandine?branch=develop#ca3faea41172cc3487133a770763ab871df3dfcd"
+source = "git+https://github.com/grandinetech/grandine?branch=develop#5bdc78763c8959ad689c79d51d7d59978460bb1e"
 dependencies = [
  "const-hex",
  "generic-array",
@@ -4565,7 +4565,7 @@ dependencies = [
 [[package]]
 name = "sha2"
 version = "0.10.9"
-source = "git+https://github.com/grandinetech/universal-precompiles.git?tag=sha2-v0.10.9-up.0#bd34a0d4d68c814f060946cbb801eba1f4be3598"
+source = "git+https://github.com/grandinetech/universal-precompiles.git?tag=sha2-v0.10.9-up.1#dab12204de2e6a40f7a4c93b59347f60174c6953"
 dependencies = [
  "cfg-if",
  "cpufeatures",
@@ -4723,7 +4723,7 @@ dependencies = [
 [[package]]
 name = "ssz"
 version = "0.0.0"
-source = "git+https://github.com/grandinetech/grandine?branch=develop#ca3faea41172cc3487133a770763ab871df3dfcd"
+source = "git+https://github.com/grandinetech/grandine?branch=develop#5bdc78763c8959ad689c79d51d7d59978460bb1e"
 dependencies = [
  "arithmetic",
  "bit_field",
@@ -4755,7 +4755,7 @@ dependencies = [
 [[package]]
 name = "ssz_derive"
 version = "0.0.0"
-source = "git+https://github.com/grandinetech/grandine?branch=develop#ca3faea41172cc3487133a770763ab871df3dfcd"
+source = "git+https://github.com/grandinetech/grandine?branch=develop#5bdc78763c8959ad689c79d51d7d59978460bb1e"
 dependencies = [
  "darling",
  "easy-ext",
@@ -4806,7 +4806,7 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 [[package]]
 name = "std_ext"
 version = "0.0.0"
-source = "git+https://github.com/grandinetech/grandine?branch=develop#ca3faea41172cc3487133a770763ab871df3dfcd"
+source = "git+https://github.com/grandinetech/grandine?branch=develop#5bdc78763c8959ad689c79d51d7d59978460bb1e"
 dependencies = [
  "easy-ext",
  "triomphe",
@@ -4918,7 +4918,7 @@ dependencies = [
  "getrandom 0.3.3",
  "once_cell",
  "rustix",
- "windows-sys 0.61.1",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -5211,7 +5211,7 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 [[package]]
 name = "try_from_iterator"
 version = "0.0.0"
-source = "git+https://github.com/grandinetech/grandine?branch=develop#ca3faea41172cc3487133a770763ab871df3dfcd"
+source = "git+https://github.com/grandinetech/grandine?branch=develop#5bdc78763c8959ad689c79d51d7d59978460bb1e"
 
 [[package]]
 name = "typenum"
