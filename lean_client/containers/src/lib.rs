@@ -10,8 +10,8 @@ pub mod types;
 pub mod validator;
 
 pub use attestation::{
-    AggregatedAttestations, AggregatedSignatures, AggregationBits, Attestation, AttestationData,
-    Attestations, BlockSignatures, Signature, SignedAggregatedAttestations, SignedAttestation,
+    AggregatedAttestation, AggregatedSignatures, AggregationBits, Attestation, AttestationData,
+    Attestations, Signature, SignedAggregatedAttestation, SignedAttestation,
 };
 pub use block::{
     Block, BlockBody, BlockHeader, BlockWithAttestation, SignedBlock, SignedBlockWithAttestation,

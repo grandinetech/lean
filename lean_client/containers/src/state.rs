@@ -1,16 +1,17 @@
 use crate::validator::Validator;
 use crate::{
     block::{hash_tree_root, Block, BlockBody, BlockHeader, SignedBlockWithAttestation},
-    Attestation, Attestations, BlockSignatures, Bytes32, Checkpoint, Config, Slot, Uint64,
+    Attestation, Attestations, Bytes32, Checkpoint, Config, Signature, Slot, Uint64,
     ValidatorIndex,
 };
 use crate::{
     HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots, Validators,
 };
 use serde::{Deserialize, Serialize};
-use ssz::PersistentList as List;
+use ssz::{PersistentList as List, PersistentList};
 use ssz_derive::Ssz;
 use std::collections::BTreeMap;
+use typenum::U4096;
 
 pub const VALIDATOR_REGISTRY_LIMIT: usize = 1 << 12; // 4096
 pub const JUSTIFICATION_ROOTS_LIMIT: usize = 1 << 18; // 262144
@@ -529,6 +530,7 @@ impl State {
     /// # Returns
     ///
     /// Tuple of (Block, post-State, collected attestations, signatures)
+    #[cfg(feature = "devnet1")]
     pub fn build_block(
         &self,
         slot: Slot,
@@ -537,10 +539,18 @@ impl State {
         initial_attestations: Option<Vec<Attestation>>,
         available_signed_attestations: Option<&[SignedBlockWithAttestation]>,
         known_block_roots: Option<&std::collections::HashSet<Bytes32>>,
-    ) -> Result<(Block, Self, Vec<Attestation>, BlockSignatures), String> {
+    ) -> Result<
+        (
+            Block,
+            Self,
+            Vec<Attestation>,
+            PersistentList<Signature, U4096>,
+        ),
+        String,
+    > {
         // Initialize empty attestation set for iterative collection
         let mut attestations = initial_attestations.unwrap_or_default();
-        let mut signatures = BlockSignatures::default();
+        let mut signatures = PersistentList::default();
 
         // Advance state to target slot
         // Note: parent_root comes from fork choice and is already validated.
@@ -649,6 +659,19 @@ impl State {
             }
         }
     }
+
+    #[cfg(feature = "devnet2")]
+    pub fn build_block(
+        &self,
+        _slot: Slot,
+        _proposer_index: ValidatorIndex,
+        _parent_root: Bytes32,
+        _initial_attestations: Option<Vec<Attestation>>,
+        _available_signed_attestations: Option<&[SignedBlockWithAttestation]>,
+        _known_block_roots: Option<&std::collections::HashSet<Bytes32>>,
+    ) -> Result<(Block, Self, Vec<Attestation>, BlockSignatures), String> {
+        Err("build_block is not implemented for devnet2".to_string())
+    }
 }
 
 #[cfg(test)]
@@ -705,6 +728,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "devnet1")]
     fn test_build_block() {
         // Create genesis state with validators
         let genesis_state = State::generate_genesis(Uint64(0), Uint64(4));
@@ -827,7 +851,7 @@ mod tests {
                     block: block.clone(),
                     proposer_attestation: Attestation::default(),
                 },
-                signature: BlockSignatures::default(),
+                signature: PersistentList::default(),
             },
             true, // signatures are considered valid (not validating, just marking as valid)
             true,
