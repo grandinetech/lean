@@ -5,6 +5,9 @@ edition = "2021"
 
 [features]
 xmss-verify = ["leansig"]
+default = ["devnet1"]
+devnet1 = []
+devnet2 = []
 
 [lib]
 name = "containers"

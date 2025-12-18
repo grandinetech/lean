@@ -19,9 +19,9 @@ use typenum::U4096;
 /// Limit is VALIDATOR_REGISTRY_LIMIT (4096).
 pub type Attestations = ssz::PersistentList<Attestation, U4096>;
 
-/// List of signatures corresponding to attestations in a block.
-/// Limit is VALIDATOR_REGISTRY_LIMIT (4096).
-pub type BlockSignatures = ssz::PersistentList<Signature, U4096>;
+pub type AggregatedAttestations = ssz::PersistentList<AggregatedAttestation, U4096>;
+
+pub type AttestationSignatures = ssz::PersistentList<SignedAttestation, U4096>;
 
 /// Bitlist representing validator participation in an attestation.
 /// Limit is VALIDATOR_REGISTRY_LIMIT (4096).
@@ -57,15 +57,19 @@ pub struct Attestation {
 /// Validator attestation bundled with its signature.
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
 pub struct SignedAttestation {
-    /// The attestation message signed by the validator.
+    #[cfg(feature = "devnet2")]
+    pub validator_id: u64,
+    #[cfg(feature = "devnet2")]
+    pub message: AttestationData,
+    #[cfg(feature = "devnet1")]
     pub message: Attestation,
-    /// Signature aggregation produced by the leanVM (SNARKs in the future).
+    /// signature over attestaion message only as it would be aggregated later in attestation
     pub signature: Signature,
 }
 
 /// Aggregated attestation consisting of participation bits and message.
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
-pub struct AggregatedAttestations {
+pub struct AggregatedAttestation {
     /// Bitfield indicating which validators participated in the aggregation.
     pub aggregation_bits: AggregationBits,
     /// Combined attestation data similar to the beacon chain format.
@@ -77,9 +81,9 @@ pub struct AggregatedAttestations {
 
 /// Aggregated attestation bundled with aggregated signatures.
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
-pub struct SignedAggregatedAttestations {
+pub struct SignedAggregatedAttestation {
     /// Aggregated attestation data.
-    pub message: AggregatedAttestations,
+    pub message: AggregatedAttestation,
     /// Aggregated attestation plus its combined signature.
     ///
     /// Stores a naive list of validator signatures that mirrors the attestation
