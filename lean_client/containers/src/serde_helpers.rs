@@ -187,9 +187,10 @@ pub mod signature {
 /// where each signature can be either hex string or structured XMSS format
 pub mod block_signatures {
     use super::*;
-    use crate::{BlockSignatures, Signature};
+    use crate::Signature;
     use serde_json::Value;
     use ssz::PersistentList;
+    use typenum::U4096;
 
     /// Structured XMSS signature format from test vectors
     #[derive(Deserialize, Clone)]
@@ -247,7 +248,10 @@ pub mod block_signatures {
         Signature::try_from(bytes.as_slice()).map_err(|_| "Failed to create signature".to_string())
     }
 
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<BlockSignatures, D::Error>
+    #[cfg(feature = "devnet1")]
+    pub fn deserialize<'de, D>(
+        deserializer: D,
+    ) -> Result<PersistentList<Signature, U4096>, D::Error>
     where
         D: Deserializer<'de>,
     {
@@ -269,7 +273,21 @@ pub mod block_signatures {
         Ok(signatures)
     }
 
-    pub fn serialize<S>(value: &BlockSignatures, serializer: S) -> Result<S::Ok, S::Error>
+    #[cfg(feature = "devnet2")]
+    pub fn deserialize<'de, D>(_: D) -> Result<BlockSignatures, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Err(serde::de::Error::custom(
+            "BlockSignatures deserialization not implemented for devnet2",
+        ))
+    }
+
+    #[cfg(feature = "devnet1")]
+    pub fn serialize<S>(
+        value: &PersistentList<Signature, U4096>,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
@@ -288,5 +306,15 @@ pub mod block_signatures {
 
         let wrapper = DataWrapper { data: sigs };
         wrapper.serialize(serializer)
+    }
+
+    #[cfg(feature = "devnet2")]
+    pub fn serialize<S>(value: &BlockSignatures, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        Err(serde::de::Error::custom(
+            "BlockSignatures serialization not implemented for devnet2",
+        ))
     }
 }

@@ -1,7 +1,7 @@
 use clap::Parser;
-use containers::ssz::SszHash;
+use containers::ssz::{PersistentList, SszHash};
 use containers::{
-    attestation::{Attestation, AttestationData, BlockSignatures},
+    attestation::{Attestation, AttestationData},
     block::{Block, BlockBody, BlockWithAttestation, SignedBlockWithAttestation},
     checkpoint::Checkpoint,
     config::Config,
@@ -208,7 +208,7 @@ async fn main() {
             block: genesis_block,
             proposer_attestation: genesis_proposer_attestation,
         },
-        signature: BlockSignatures::default(),
+        signature: PersistentList::default(),
     };
 
     let config = Config { genesis_time };

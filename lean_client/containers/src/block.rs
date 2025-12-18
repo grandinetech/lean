@@ -1,11 +1,12 @@
-use crate::{
-    Attestation, Attestations, BlockSignatures, Bytes32, Signature, Slot, State, ValidatorIndex,
-};
+use crate::{Attestation, Attestations, Bytes32, Signature, Slot, State, ValidatorIndex};
 use serde::{Deserialize, Serialize};
 use ssz_derive::Ssz;
 
 #[cfg(feature = "xmss-verify")]
 use leansig::signature::generalized_xmss::instantiations_poseidon::lifetime_2_to_the_20::target_sum::SIGTargetSumLifetime20W2NoOff;
+use ssz::PersistentList;
+use typenum::U4096;
+use crate::attestation::AttestationSignatures;
 
 /// The body of a block, containing payload data.
 ///
@@ -13,6 +14,9 @@ use leansig::signature::generalized_xmss::instantiations_poseidon::lifetime_2_to
 /// separately in BlockSignatures to match the spec architecture.
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
 pub struct BlockBody {
+    #[cfg(feature = "devnet2")]
+    pub attestations: VariableList<AggregatedAttestations, U4096>,
+    #[cfg(feature = "devnet1")]
     #[serde(with = "crate::serde_helpers")]
     pub attestations: Attestations,
 }
@@ -47,6 +51,12 @@ pub struct BlockWithAttestation {
     pub proposer_attestation: Attestation,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize, Default)]
+pub struct BlockSignatures {
+    pub attestation_signatures: AttestationSignatures,
+    pub proposer_signature: Signature,
+}
+
 /// Envelope carrying a block, an attestation from proposer, and aggregated signatures.
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -56,7 +66,10 @@ pub struct SignedBlockWithAttestation {
     /// Aggregated signature payload for the block.
     ///
     /// Signatures remain in attestation order followed by the proposer signature.
+    #[cfg(feature = "devnet1")]
     #[serde(with = "crate::serde_helpers::block_signatures")]
+    pub signature: PersistentList<Signature, U4096>,
+    #[cfg(feature = "devnet2")]
     pub signature: BlockSignatures,
 }
 
