@@ -83,18 +83,7 @@ impl TestRunner {
 
                 // Only check validator count if specified in post-state
                 if let Some(expected_count) = post.validator_count {
-                    // Count validators
-                    let mut num_validators: u64 = 0;
-                    let mut i: u64 = 0;
-                    loop {
-                        match state.validators.get(i) {
-                            Ok(_) => {
-                                num_validators += 1;
-                                i += 1;
-                            }
-                            Err(_) => break,
-                        }
-                    }
+                    let num_validators = state.validators.len_u64();
                     
                     if num_validators as usize != expected_count {
                         return Err(format!(
@@ -436,18 +425,7 @@ impl TestRunner {
 
         let state = &test_case.pre;
         
-        // Count validators
-        let mut num_validators: u64 = 0;
-        let mut i: u64 = 0;
-        loop {
-            match state.validators.get(i) {
-                Ok(_) => {
-                    num_validators += 1;
-                    i += 1;
-                }
-                Err(_) => break,
-            }
-        }
+        let num_validators = state.validators.len_u64();
         println!("  Genesis time: {}, slot: {}, validators: {}", state.config.genesis_time, state.slot.0, num_validators);
         
         // Verify it's at genesis (slot 0)
@@ -555,17 +533,7 @@ impl TestRunner {
             
             // Verify validator count if specified
             if let Some(expected_count) = post.validator_count {
-                let mut num_validators: u64 = 0;
-                let mut i: u64 = 0;
-                loop {
-                    match state.validators.get(i) {
-                        Ok(_) => {
-                            num_validators += 1;
-                            i += 1;
-                        }
-                        Err(_) => break,
-                    }
-                }
+                let num_validators = state.validators.len_u64();
                 
                 if num_validators as usize != expected_count {
                     return Err(format!(

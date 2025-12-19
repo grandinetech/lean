@@ -135,18 +135,7 @@ impl State {
 
     /// Simple RR proposer rule (round-robin).
     pub fn is_proposer(&self, index: ValidatorIndex) -> bool {
-        // Count validators by iterating (since PersistentList doesn't have len())
-        let mut num_validators: u64 = 0;
-        let mut i: u64 = 0;
-        loop {
-            match self.validators.get(i) {
-                Ok(_) => {
-                    num_validators += 1;
-                    i += 1;
-                }
-                Err(_) => break,
-            }
-        }
+        let num_validators = self.validators.len_u64();
 
         if num_validators == 0 {
             return false; // No validators
@@ -486,18 +475,7 @@ impl State {
                 if validator_id < votes.len() && !votes[validator_id] {
                     votes[validator_id] = true;
 
-                    // Count validators
-                    let mut num_validators: u64 = 0;
-                    let mut i: u64 = 0;
-                    loop {
-                        match self.validators.get(i) {
-                            Ok(_) => {
-                                num_validators += 1;
-                                i += 1;
-                            }
-                            Err(_) => break,
-                        }
-                    }
+                    let num_validators = self.validators.len_u64();
 
                     let count = votes.iter().filter(|&&v| v).count();
                     if 3 * count >= 2 * num_validators as usize {

@@ -4,7 +4,7 @@ use fork_choice::{
 };
 
 use containers::{
-    attestation::{Attestation, AttestationData, BlockSignatures, SignedAttestation, Signature},
+    attestation::{Attestation, AttestationData, SignedAttestation, Signature},
     block::{hash_tree_root, Block, BlockBody, BlockHeader, BlockWithAttestation, SignedBlockWithAttestation},
     checkpoint::Checkpoint,
     config::Config,
@@ -13,7 +13,7 @@ use containers::{
 };
 
 use serde::Deserialize;
-use ssz::SszHash;
+use ssz::{PersistentList, SszHash};
 use std::collections::HashMap;
 use std::panic::AssertUnwindSafe;
 
@@ -299,7 +299,7 @@ fn convert_test_anchor_block(test_block: &TestAnchorBlock) -> SignedBlockWithAtt
             block,
             proposer_attestation,
         },
-        signature: BlockSignatures::default(),
+        signature: PersistentList::default(),
     }
 }
 
@@ -329,7 +329,7 @@ fn convert_test_block(test_block_with_att: &TestBlockWithAttestation) -> SignedB
             block,
             proposer_attestation,
         },
-        signature: BlockSignatures::default(),
+        signature: PersistentList::default(),
     }
 }
 

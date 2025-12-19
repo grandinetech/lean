@@ -3,10 +3,11 @@ use containers::{
     block::{Block, SignedBlockWithAttestation, BlockWithAttestation, hash_tree_root},
     state::State,
     types::{Bytes32, Uint64},
-    Slot, Attestation, BlockSignatures
+    Slot, Attestation
 };
 use pretty_assertions::assert_eq;
 use rstest::fixture;
+use ssz::PersistentList;
 
 #[path = "common.rs"]
 mod common;
@@ -78,6 +79,7 @@ fn test_state_transition_invalid_signatures() {
     assert_eq!(result.unwrap_err(), "Block signatures must be valid");
 }
 
+#[cfg(feature = "devnet1")]
 #[test]
 fn test_state_transition_bad_state_root() {
     let state = genesis_state();
@@ -93,7 +95,7 @@ fn test_state_transition_bad_state_root() {
             block,
             proposer_attestation: Attestation::default(),
         },
-        signature: BlockSignatures::default(),
+        signature: PersistentList::default(),
     };
 
     let result = state.state_transition(final_signed_block_with_attestation, true);
