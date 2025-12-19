@@ -4,10 +4,10 @@ use containers::{
     slot::Slot,
     state::State,
     types::{Bytes32, ValidatorIndex},
-    Attestation, Attestations, BlockSignatures, BlockWithAttestation, Config,
-    SignedBlockWithAttestation, Validators,
+    Attestation, Attestations, BlockWithAttestation, Config, SignedBlockWithAttestation,
+    Validators,
 };
-use ssz::PersistentList as List;
+use ssz::PersistentList;
 
 pub const DEVNET_CONFIG_VALIDATOR_REGISTRY_LIMIT: usize = 1 << 12; // 4096
 pub const TEST_VALIDATOR_COUNT: usize = 4; // Actual validator count used in tests
@@ -22,7 +22,7 @@ pub fn create_block(
     attestations: Option<Attestations>,
 ) -> SignedBlockWithAttestation {
     let body = BlockBody {
-        attestations: attestations.unwrap_or_else(List::default),
+        attestations: attestations.unwrap_or_else(PersistentList::default),
     };
 
     let block_message = Block {
@@ -38,7 +38,7 @@ pub fn create_block(
             block: block_message,
             proposer_attestation: Attestation::default(),
         },
-        signature: BlockSignatures::default(),
+        signature: PersistentList::default(),
     }
 }
 

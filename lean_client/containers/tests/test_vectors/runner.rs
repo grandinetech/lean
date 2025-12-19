@@ -89,7 +89,7 @@ impl TestRunner {
 
                 // Only check validator count if specified in post-state
                 if let Some(expected_count) = post.validator_count {
-                    let mut num_validators: u64 = state.validators.len_u64();
+                    let num_validators = state.validators.len_u64();
 
                     if num_validators as usize != expected_count {
                         return Err(format!(
@@ -450,7 +450,7 @@ impl TestRunner {
 
         let state = &test_case.pre;
 
-        let num_validators: u64 = state.validators.len_u64();
+        let num_validators = state.validators.len_u64();
         println!(
             "  Genesis time: {}, slot: {}, validators: {}",
             state.config.genesis_time, state.slot.0, num_validators
@@ -575,7 +575,7 @@ impl TestRunner {
 
             // Verify validator count if specified
             if let Some(expected_count) = post.validator_count {
-                let num_validators: u64 = state.validators.len_u64();
+                let num_validators = state.validators.len_u64();
 
                 if num_validators as usize != expected_count {
                     return Err(format!(

@@ -139,7 +139,11 @@ impl State {
 
     /// Simple RR proposer rule (round-robin).
     pub fn is_proposer(&self, index: ValidatorIndex) -> bool {
-        let num_validators: u64 = self.validators.len_u64();
+        let num_validators = self.validators.len_u64();
+
+        if num_validators == 0 {
+            return false; // No validators
+        }
         (self.slot.0 % num_validators) == (index.0 % num_validators)
     }
 
@@ -463,7 +467,7 @@ impl State {
                 if validator_id < votes.len() && !votes[validator_id] {
                     votes[validator_id] = true;
 
-                    let num_validators: u64 = self.validators.len_u64();
+                    let num_validators = self.validators.len_u64();
 
                     let count = votes.iter().filter(|&&v| v).count();
                     if 3 * count >= 2 * num_validators as usize {

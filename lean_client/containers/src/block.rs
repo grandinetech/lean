@@ -170,13 +170,14 @@ impl SignedBlockWithAttestation {
         // The ordering must be preserved:
         // 1. Block body attestations,
         // 2. The proposer attestation.
-        assert!(
-            signatures_vec.len() == all_attestations.len(),
+        assert_eq!(
+            signatures_vec.len(),
+            all_attestations.len(),
             "Number of signatures does not match number of attestations"
         );
 
         let validators = &parent_state.validators;
-        let num_validators: u64 = validators.len_u64();
+        let num_validators = validators.len_u64();
 
         // Verify each attestation signature
         for (attestation, signature) in all_attestations.iter().zip(signatures_vec.iter()) {
