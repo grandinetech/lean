@@ -130,6 +130,7 @@ fn test_process_block_header_invalid(
 }
 
 // This test verifies that attestations correctly justify and finalize slots
+#[cfg(feature = "devnet1")]
 #[test]
 fn test_process_attestations_justification_and_finalization() {
     let mut state = genesis_state();

@@ -1,5 +1,6 @@
 use crate::{Checkpoint, Slot, Uint64};
 use serde::{Deserialize, Serialize};
+use ssz::BitList;
 use ssz::ByteVector;
 use ssz_derive::Ssz;
 use typenum::{Prod, Sum, U100, U12, U31};
@@ -21,11 +22,64 @@ pub type Attestations = ssz::PersistentList<Attestation, U4096>;
 
 pub type AggregatedAttestations = ssz::PersistentList<AggregatedAttestation, U4096>;
 
+#[cfg(feature = "devnet1")]
 pub type AttestationSignatures = ssz::PersistentList<SignedAttestation, U4096>;
+
+#[cfg(feature = "devnet2")]
+pub type AttestationSignatures = ssz::PersistentList<NaiveAggregatedSignature, U4096>;
+
+#[cfg(feature = "devnet2")]
+pub type NaiveAggregatedSignature = ssz::PersistentList<Signature, U4096>;
 
 /// Bitlist representing validator participation in an attestation.
 /// Limit is VALIDATOR_REGISTRY_LIMIT (4096).
-pub type AggregationBits = ssz::BitList<U4096>;
+#[derive(Clone, Debug, PartialEq, Eq, Default, Ssz, Serialize, Deserialize)]
+pub struct AggregationBits(pub BitList<U4096>);
+
+impl AggregationBits {
+    pub const LIMIT: u64 = 4096;
+
+    pub fn from_validator_indices(indices: &[u64]) -> Self {
+        assert!(
+            !indices.is_empty(),
+            "Aggregated attestation must reference at least one validator"
+        );
+
+        let max_id = *indices.iter().max().unwrap();
+        assert!(
+            max_id < Self::LIMIT,
+            "Validator index out of range for aggregation bits"
+        );
+
+        let mut bits = BitList::<U4096>::with_length((max_id + 1) as usize);
+
+        for i in 0..=max_id {
+            bits.set(i as usize, false);
+        }
+
+        for &i in indices {
+            bits.set(i as usize, true);
+        }
+
+        AggregationBits(bits)
+    }
+
+    pub fn to_validator_indices(&self) -> Vec<u64> {
+        let indices: Vec<u64> = self
+            .0
+            .iter()
+            .enumerate()
+            .filter_map(|(i, bit)| if *bit { Some(i as u64) } else { None })
+            .collect();
+
+        assert!(
+            !indices.is_empty(),
+            "Aggregated attestation must reference at least one validator"
+        );
+
+        indices
+    }
+}
 
 /// Naive list of validator signatures used for aggregation placeholders.
 /// Limit is VALIDATOR_REGISTRY_LIMIT (4096).
@@ -57,13 +111,8 @@ pub struct Attestation {
 /// Validator attestation bundled with its signature.
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
 pub struct SignedAttestation {
-    #[cfg(feature = "devnet2")]
-    pub validator_id: u64,
-    #[cfg(feature = "devnet2")]
-    pub message: AttestationData,
-    #[cfg(feature = "devnet1")]
     pub message: Attestation,
-    /// signature over attestaion message only as it would be aggregated later in attestation
+    /// Signature aggregation produced by the leanVM (SNARKs in the future).
     pub signature: Signature,
 }
 
@@ -73,10 +122,49 @@ pub struct AggregatedAttestation {
     /// Bitfield indicating which validators participated in the aggregation.
     pub aggregation_bits: AggregationBits,
     /// Combined attestation data similar to the beacon chain format.
-    ///
+    /// 
     /// Multiple validator attestations are aggregated here without the complexity of
     /// committee assignments.
     pub data: AttestationData,
+}
+
+impl AggregatedAttestation {
+    pub fn aggregate_by_data(attestations: &[Attestation]) -> Vec<AggregatedAttestation> {
+        let mut groups: Vec<(AttestationData, Vec<u64>)> = Vec::new();
+
+        for attestation in attestations {
+            // Try to find an existing group with the same data
+            if let Some((_, validator_ids)) = groups
+                .iter_mut()
+                .find(|(data, _)| *data == attestation.data)
+            {
+                validator_ids.push(attestation.validator_id.0);
+            } else {
+                // Create a new group
+                groups.push((attestation.data.clone(), vec![attestation.validator_id.0]));
+            }
+        }
+
+        groups
+            .into_iter()
+            .map(|(data, validator_ids)| AggregatedAttestation {
+                aggregation_bits: AggregationBits::from_validator_indices(&validator_ids),
+                data,
+            })
+            .collect()
+    }
+
+    pub fn to_plain(&self) -> Vec<Attestation> {
+        let validator_indices = self.aggregation_bits.to_validator_indices();
+
+        validator_indices
+            .into_iter()
+            .map(|validator_id| Attestation {
+                validator_id: Uint64(validator_id),
+                data: self.data.clone(),
+            })
+            .collect()
+    }
 }
 
 /// Aggregated attestation bundled with aggregated signatures.

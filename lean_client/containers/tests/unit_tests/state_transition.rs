@@ -3,7 +3,7 @@ use containers::{
     block::{hash_tree_root, Block, BlockWithAttestation, SignedBlockWithAttestation},
     state::State,
     types::{Bytes32, Uint64},
-    Attestation, Slot,
+    Attestation, Attestations, Slot,
 };
 use pretty_assertions::assert_eq;
 use rstest::fixture;
@@ -30,7 +30,22 @@ fn test_state_transition_full() {
 
     // Use process_block_header + process_operations to avoid state root validation during setup
     let state_after_header = state_at_slot_1.process_block_header(&block).unwrap();
+
+    #[cfg(feature = "devnet1")]
     let expected_state = state_after_header.process_attestations(&block.body.attestations);
+
+    #[cfg(feature = "devnet2")]
+    let expected_state = {
+        let mut unaggregated_attestations = Attestations::default();
+        for aggregated_attestation in &block.body.attestations {
+            let plain_attestations = aggregated_attestation.to_plain();
+            // For each attestatio in the vector, push to the list
+            for attestation in plain_attestations {
+                unaggregated_attestations.push(attestation);
+            }
+        }
+        state_after_header.process_attestations(&unaggregated_attestations)
+    };
 
     let block_with_correct_root = Block {
         state_root: hash_tree_root(&expected_state),
@@ -63,7 +78,22 @@ fn test_state_transition_invalid_signatures() {
 
     // Use process_block_header + process_operations to avoid state root validation during setup
     let state_after_header = state_at_slot_1.process_block_header(&block).unwrap();
+
+    #[cfg(feature = "devnet1")]
     let expected_state = state_after_header.process_attestations(&block.body.attestations);
+
+    #[cfg(feature = "devnet2")]
+    let expected_state = {
+        let mut list = Attestations::default();
+        for aggregated_attestation in &block.body.attestations {
+            let plain_attestations = aggregated_attestation.to_plain();
+            // For each attestatio in the vector, push to the list
+            for attestation in plain_attestations {
+                list.push(attestation);
+            }
+        }
+        list
+    };
 
     let block_with_correct_root = Block {
         state_root: hash_tree_root(&expected_state),
@@ -106,4 +136,56 @@ fn test_state_transition_bad_state_root() {
     let result = state.state_transition(final_signed_block_with_attestation, true);
     assert!(result.is_err());
     assert_eq!(result.unwrap_err(), "Invalid block state root");
+}
+
+#[cfg(feature = "devnet2")]
+#[test]
+fn test_state_transition_devnet2() {
+    let state = genesis_state();
+    let mut state_at_slot_1 = state.process_slots(Slot(1)).unwrap();
+
+    // Create a block with attestations for devnet2
+    let signed_block_with_attestation =
+        create_block(1, &mut state_at_slot_1.latest_block_header, None);
+    let block = signed_block_with_attestation.message.block.clone();
+
+    // Process the block header and attestations
+    let state_after_header = state_at_slot_1.process_block_header(&block).unwrap();
+
+    #[cfg(feature = "devnet1")]
+    let expected_state = state_after_header.process_attestations(&block.body.attestations);
+
+    #[cfg(feature = "devnet2")]
+    let expected_state = {
+        let mut unaggregated_attestations = Attestations::default();
+        for aggregated_attestation in &block.body.attestations {
+            let plain_attestations = aggregated_attestation.to_plain();
+            // For each attestatio in the vector, push to the list
+            for attestation in plain_attestations {
+                unaggregated_attestations.push(attestation);
+            }
+        }
+        state_after_header.process_attestations(&unaggregated_attestations)
+    };
+
+    // Ensure the state root matches the expected state
+    let block_with_correct_root = Block {
+        state_root: hash_tree_root(&expected_state),
+        ..block
+    };
+
+    let final_signed_block_with_attestation = SignedBlockWithAttestation {
+        message: BlockWithAttestation {
+            block: block_with_correct_root,
+            proposer_attestation: signed_block_with_attestation.message.proposer_attestation,
+        },
+        signature: signed_block_with_attestation.signature,
+    };
+
+    // Perform the state transition and validate the result
+    let final_state = state
+        .state_transition(final_signed_block_with_attestation, true)
+        .unwrap();
+
+    assert_eq!(final_state, expected_state);
 }

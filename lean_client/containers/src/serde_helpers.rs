@@ -187,6 +187,7 @@ pub mod signature {
 /// where each signature can be either hex string or structured XMSS format
 pub mod block_signatures {
     use super::*;
+    use crate::block::BlockSignatures;
     use crate::Signature;
     use serde_json::Value;
     use ssz::PersistentList;
@@ -309,11 +310,11 @@ pub mod block_signatures {
     }
 
     #[cfg(feature = "devnet2")]
-    pub fn serialize<S>(value: &BlockSignatures, serializer: S) -> Result<S::Ok, S::Error>
+    pub fn serialize<S>(_value: &BlockSignatures, _serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        Err(serde::de::Error::custom(
+        Err(serde::ser::Error::custom(
             "BlockSignatures serialization not implemented for devnet2",
         ))
     }

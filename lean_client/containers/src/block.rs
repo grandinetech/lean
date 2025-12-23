@@ -4,9 +4,10 @@ use ssz_derive::Ssz;
 
 #[cfg(feature = "xmss-verify")]
 use leansig::signature::generalized_xmss::instantiations_poseidon::lifetime_2_to_the_20::target_sum::SIGTargetSumLifetime20W2NoOff;
-use ssz::PersistentList;
+use ssz::{PersistentList, SszHash};
 use typenum::U4096;
-use crate::attestation::AttestationSignatures;
+use crate::attestation::{AggregatedAttestations, AttestationSignatures};
+use crate::validator::BlsPublicKey;
 
 /// The body of a block, containing payload data.
 ///
@@ -15,7 +16,7 @@ use crate::attestation::AttestationSignatures;
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
 pub struct BlockBody {
     #[cfg(feature = "devnet2")]
-    pub attestations: VariableList<AggregatedAttestations, U4096>,
+    pub attestations: AggregatedAttestations,
     #[cfg(feature = "devnet1")]
     #[serde(with = "crate::serde_helpers")]
     pub attestations: Attestations,
@@ -51,7 +52,7 @@ pub struct BlockWithAttestation {
     pub proposer_attestation: Attestation,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Ssz, Deserialize, Default)]
 pub struct BlockSignatures {
     pub attestation_signatures: AttestationSignatures,
     pub proposer_signature: Signature,
@@ -127,6 +128,7 @@ impl SignedBlockWithAttestation {
     ///
     /// - Spec: <https://github.com/leanEthereum/leanSpec/blob/main/src/lean_spec/subspecs/containers/block/block.py#L35>
     /// - XMSS Library: <https://github.com/leanEthereum/leanSig>
+    #[cfg(feature = "devnet1")]
     pub fn verify_signatures(&self, parent_state: State) -> bool {
         // Unpack the signed block components
         let block = &self.message.block;
@@ -198,68 +200,148 @@ impl SignedBlockWithAttestation {
             // - The attestation has not been tampered with
             // - The signature was created at the correct epoch (slot)
 
-            #[cfg(feature = "xmss-verify")]
-            {
-                use leansig::serialization::Serializable;
-                use leansig::signature::SignatureScheme;
+            let message_bytes: [u8; 32] = hash_tree_root(attestation).0.into();
 
-                // Compute the message hash from the attestation
-                let message_bytes: [u8; 32] = hash_tree_root(attestation).0.into();
-                let epoch = attestation.data.slot.0 as u32;
-
-                // Get public key bytes - use as_bytes() method
-                let pubkey_bytes = validator.pubkey.0.as_bytes();
-
-                // Deserialize the public key using Serializable trait
-                type PubKey = <SIGTargetSumLifetime20W2NoOff as SignatureScheme>::PublicKey;
-                let pubkey = match PubKey::from_bytes(pubkey_bytes) {
-                    Ok(pk) => pk,
-                    Err(e) => {
-                        eprintln!(
-                            "Failed to deserialize public key at slot {:?}: {:?}",
-                            attestation.data.slot, e
-                        );
-                        return false;
-                    }
-                };
-
-                // Get signature bytes - use as_bytes() method
-                let sig_bytes = signature.as_bytes();
-
-                // Deserialize the signature using Serializable trait
-                type Sig = <SIGTargetSumLifetime20W2NoOff as SignatureScheme>::Signature;
-                let sig = match Sig::from_bytes(sig_bytes) {
-                    Ok(s) => s,
-                    Err(e) => {
-                        eprintln!(
-                            "Failed to deserialize signature at slot {:?}: {:?}",
-                            attestation.data.slot, e
-                        );
-                        return false;
-                    }
-                };
-
-                // Verify the signature
-                if !SIGTargetSumLifetime20W2NoOff::verify(&pubkey, epoch, &message_bytes, &sig) {
-                    eprintln!(
-                        "XMSS signature verification failed at slot {:?}",
-                        attestation.data.slot
-                    );
-                    return false;
-                }
-            }
-
-            #[cfg(not(feature = "xmss-verify"))]
-            {
-                // Placeholder: XMSS verification disabled
-                // To enable, compile with --features xmss-verify
-                let _pubkey = &validator.pubkey;
-                let _slot = attestation.data.slot;
-                let _message = hash_tree_root(attestation);
-                let _sig = signature;
-            }
+            assert!(
+                verify_xmss_signature(
+                    validator.pubkey.0.as_bytes(),
+                    attestation.data.slot,
+                    &message_bytes,
+                    &signature,
+                ),
+                "Attestation signature verification failed"
+            );
         }
 
         true
     }
+
+    #[cfg(feature = "devnet2")]
+    pub fn verify_signatures(&self, parent_state: State) -> bool {
+        // Unpack the signed block components
+        let block = &self.message.block;
+        let signatures = &self.signature;
+        let aggregated_attestations = block.body.attestations.clone();
+        let attestation_signatures = signatures.attestation_signatures.clone();
+
+        // Verify signature count matches aggregated attestation count
+        assert_eq!(
+            aggregated_attestations.len_u64(),
+            attestation_signatures.len_u64(),
+            "Number of signatures does not match number of attestations"
+        );
+
+        let validators = &parent_state.validators;
+        let num_validators = validators.len_u64();
+
+        // Verify each attestation signature
+        for (aggregated_attestation, aggregated_signature) in (&aggregated_attestations)
+            .into_iter()
+            .zip((&attestation_signatures).into_iter())
+        {
+            let validator_ids = aggregated_attestation
+                .aggregation_bits
+                .to_validator_indices();
+
+            assert_eq!(
+                aggregated_signature.len_u64(),
+                validator_ids.len() as u64,
+                "Aggregated attestation signature count mismatch"
+            );
+
+            let attestation_root = aggregated_attestation.data.hash_tree_root();
+
+            // Loop through zipped validator IDs and their corresponding signatures
+            // Verify each individual signature within the aggregated attestation
+            for (validator_id, signature) in
+                validator_ids.iter().zip(aggregated_signature.into_iter())
+            {
+                // Ensure validator exists in the active set
+                assert!(
+                    *validator_id < num_validators,
+                    "Validator index out of range"
+                );
+
+                let validator = validators.get(*validator_id).expect("validator must exist");
+
+                // Get the actual payload root for the attestation data
+                let attestation_root: [u8; 32] =
+                    hash_tree_root(&aggregated_attestation.data).0.into();
+
+                // Verify the XMSS signature
+                assert!(
+                    verify_xmss_signature(
+                        validator.pubkey.0.as_bytes(),
+                        aggregated_attestation.data.slot,
+                        &attestation_root,
+                        signature,
+                    ),
+                    "Attestation signature verification failed"
+                );
+            }
+
+            // Verify the proposer attestation signature
+            let proposer_attestation = self.message.proposer_attestation.clone();
+            let proposer_signature = signatures.proposer_signature;
+
+            assert!(
+                proposer_attestation.validator_id.0 < num_validators,
+                "Proposer index out of range"
+            );
+
+            let proposer = validators
+                .get(proposer_attestation.validator_id.0)
+                .expect("proposer must exist");
+
+            let proposer_root: [u8; 32] = hash_tree_root(&proposer_attestation).0.into();
+            assert!(
+                verify_xmss_signature(
+                    proposer.pubkey.0.as_bytes(),
+                    proposer_attestation.data.slot,
+                    &proposer_root,
+                    &proposer_signature,
+                ),
+                "Proposer attestation signature verification failed"
+            );
+        }
+
+        true
+    }
+}
+
+#[cfg(feature = "xmss-verify")]
+pub fn verify_xmss_signature(
+    pubkey_bytes: &[u8],
+    slot: Slot,
+    message_bytes: &[u8; 32],
+    signature: &Signature,
+) -> bool {
+    use leansig::serialization::Serializable;
+    use leansig::signature::SignatureScheme;
+
+    let epoch = slot.0 as u32;
+
+    type PubKey = <SIGTargetSumLifetime20W2NoOff as SignatureScheme>::PublicKey;
+    let pubkey = match PubKey::from_bytes(pubkey_bytes) {
+        Ok(pk) => pk,
+        Err(_) => return false,
+    };
+
+    type Sig = <SIGTargetSumLifetime20W2NoOff as SignatureScheme>::Signature;
+    let sig = match Sig::from_bytes(signature.as_bytes()) {
+        Ok(s) => s,
+        Err(_) => return false,
+    };
+
+    SIGTargetSumLifetime20W2NoOff::verify(&pubkey, epoch, message_bytes, &sig)
+}
+
+#[cfg(not(feature = "xmss-verify"))]
+pub fn verify_xmss_signature(
+    _pubkey_bytes: &[u8],
+    _slot: Slot,
+    _message_bytes: &[u8; 32],
+    _signature: &Signature,
+) -> bool {
+    true
 }

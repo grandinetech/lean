@@ -12,6 +12,8 @@ use ssz::{PersistentList as List, PersistentList};
 use ssz_derive::Ssz;
 use std::collections::BTreeMap;
 use typenum::U4096;
+use crate::attestation::AggregatedAttestations;
+use crate::block::BlockSignatures;
 
 pub const VALIDATOR_REGISTRY_LIMIT: usize = 1 << 12; // 4096
 pub const JUSTIFICATION_ROOTS_LIMIT: usize = 1 << 18; // 262144
@@ -286,7 +288,20 @@ impl State {
 
     pub fn process_block(&self, block: &Block) -> Result<Self, String> {
         let state = self.process_block_header(block)?;
+        #[cfg(feature = "devnet1")]
         let state_after_ops = state.process_attestations(&block.body.attestations);
+        #[cfg(feature = "devnet2")]
+        let state_after_ops = {
+            let mut unaggregated_attestations = Attestations::default();
+            for aggregated_attestation in &block.body.attestations {
+                let plain_attestations = aggregated_attestation.to_plain();
+                // For each attestatio in the vector, push to the list
+                for attestation in plain_attestations {
+                    unaggregated_attestations.push(attestation).map_err(|e| format!("Failed to push attestation: {:?}", e))?;
+                }
+            }
+            state.process_attestations(&unaggregated_attestations)
+        };
 
         // State root validation is handled by state_transition_with_validation when needed
 
@@ -688,7 +703,7 @@ mod tests {
             config: st.config.clone(),
             ..st.clone()
         }
-        .is_proposer(ValidatorIndex(0)));
+            .is_proposer(ValidatorIndex(0)));
     }
 
     #[test]
@@ -828,6 +843,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "devnet1")]
     fn test_build_block_advances_state() {
         // Create genesis state
         let genesis_state = State::generate_genesis(Uint64(0), Uint64(10));
@@ -868,6 +884,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "devnet1")]
     fn test_build_block_state_root_matches() {
         // Create genesis state
         let genesis_state = State::generate_genesis(Uint64(0), Uint64(3));

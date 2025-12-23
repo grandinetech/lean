@@ -1,13 +1,15 @@
+use containers::block::BlockSignatures;
 use containers::{
     block::{hash_tree_root, Block, BlockBody, BlockHeader},
     checkpoint::Checkpoint,
     slot::Slot,
     state::State,
     types::{Bytes32, ValidatorIndex},
-    Attestation, Attestations, BlockWithAttestation, Config, SignedBlockWithAttestation,
-    Validators,
+    AggregatedAttestation, Attestation, Attestations, BlockWithAttestation, Config, Signature,
+    SignedBlockWithAttestation, Validators,
 };
 use ssz::PersistentList;
+use typenum::U4096;
 
 pub const DEVNET_CONFIG_VALIDATOR_REGISTRY_LIMIT: usize = 1 << 12; // 4096
 pub const TEST_VALIDATOR_COUNT: usize = 4; // Actual validator count used in tests
@@ -21,8 +23,39 @@ pub fn create_block(
     parent_header: &mut BlockHeader,
     attestations: Option<Attestations>,
 ) -> SignedBlockWithAttestation {
+    #[cfg(feature = "devnet1")]
     let body = BlockBody {
         attestations: attestations.unwrap_or_else(PersistentList::default),
+    };
+    #[cfg(feature = "devnet2")]
+    let body = BlockBody {
+        attestations: {
+            let attestations_vec = attestations.unwrap_or_default();
+
+            // Convert PersistentList into a Vec
+            let attestations_vec: Vec<Attestation> =
+                attestations_vec.into_iter().cloned().collect();
+
+            let aggregated: Vec<AggregatedAttestation> =
+                AggregatedAttestation::aggregate_by_data(&attestations_vec);
+
+            let aggregated: Vec<AggregatedAttestation> =
+                AggregatedAttestation::aggregate_by_data(&attestations_vec);
+
+            // Create a new empty PersistentList
+            let mut persistent_list: PersistentList<AggregatedAttestation, U4096> =
+                PersistentList::default();
+
+            // Push each aggregated attestation
+            for agg in aggregated {
+                persistent_list
+                    .push(agg)
+                    .expect("PersistentList capacity exceeded");
+            }
+
+            persistent_list
+        },
+        // other BlockBody fields...
     };
 
     let block_message = Block {
@@ -33,13 +66,28 @@ pub fn create_block(
         body: body,
     };
 
-    SignedBlockWithAttestation {
+    #[cfg(feature = "devnet1")]
+    let return_value = SignedBlockWithAttestation {
         message: BlockWithAttestation {
             block: block_message,
             proposer_attestation: Attestation::default(),
         },
         signature: PersistentList::default(),
-    }
+    };
+
+    #[cfg(feature = "devnet2")]
+    let return_value = SignedBlockWithAttestation {
+        message: BlockWithAttestation {
+            block: block_message,
+            proposer_attestation: Attestation::default(),
+        },
+        signature: BlockSignatures {
+            attestation_signatures: PersistentList::default(),
+            proposer_signature: Signature::default(),
+        },
+    };
+
+    return_value
 }
 
 pub fn create_attestations(indices: &[usize]) -> Vec<bool> {
