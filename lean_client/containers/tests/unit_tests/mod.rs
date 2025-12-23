@@ -10,3 +10,4 @@ mod state_justifications;
 mod common;
 mod state_process;
 mod state_transition;
+mod attestation_aggregation;
