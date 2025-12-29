@@ -598,6 +598,7 @@ impl TestRunner {
 
     /// Test runner for verify_signatures test vectors
     /// Tests XMSS signature verification on SignedBlockWithAttestation
+    #[cfg(feature = "devnet1")]
     pub fn run_verify_signatures_test<P: AsRef<Path>>(
         path: P,
     ) -> Result<(), Box<dyn std::error::Error>> {
@@ -626,7 +627,6 @@ impl TestRunner {
         );
 
         let attestation_count = signed_block.message.block.body.attestations.len_u64();
-
         println!("  Attestations in block: {}", attestation_count);
         println!(
             "  Proposer attestation validator: {}",

@@ -847,6 +847,7 @@ dependencies = [
 name = "containers"
 version = "0.1.0"
 dependencies = [
+ "env-config",
  "hex",
  "leansig",
  "pretty_assertions",
@@ -1377,6 +1378,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "env-config"
+version = "0.1.0"
+
+[[package]]
 name = "equivalent"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1553,6 +1558,7 @@ name = "fork-choice"
 version = "0.1.0"
 dependencies = [
  "containers",
+ "env-config",
  "serde",
  "serde_json",
  "ssz",
@@ -3168,6 +3174,7 @@ dependencies = [
  "containers",
  "derive_more",
  "discv5",
+ "env-config",
  "futures",
  "hex",
  "libp2p",
@@ -5253,6 +5260,7 @@ name = "validator"
 version = "0.1.0"
 dependencies = [
  "containers",
+ "env-config",
  "fork-choice",
  "leansig",
  "serde",

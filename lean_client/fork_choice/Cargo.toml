@@ -3,8 +3,14 @@ name = "fork-choice"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = []
+devnet1 = ["containers/devnet1", "env-config/devnet1"]
+devnet2 = ["containers/devnet2", "env-config/devnet1"]
+
 [dependencies]
-containers = { path = "../containers" }
+env-config = { path = "../env-config", default-features = false }
+containers = { path = "../containers", default-features = false }
 ssz = { git = "https://github.com/grandinetech/grandine", package = "ssz", branch = "develop"}
 ssz_derive = { git = "https://github.com/grandinetech/grandine", package = "ssz_derive", branch = "develop" }
 typenum = "1.17.0"

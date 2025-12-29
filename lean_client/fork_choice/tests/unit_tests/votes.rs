@@ -7,6 +7,7 @@ use containers::{
 use fork_choice::handlers::on_attestation;
 use fork_choice::store::{accept_new_attestations, INTERVALS_PER_SLOT};
 
+#[cfg(feature = "devnet1")]
 fn create_signed_attestation(
     validator_id: u64,
     slot: Slot,
@@ -36,6 +37,7 @@ fn create_signed_attestation(
 }
 
 #[test]
+#[cfg(feature = "devnet1")]
 fn test_accept_new_attestations() {
     let mut store = create_test_store();
 
@@ -81,6 +83,7 @@ fn test_accept_new_attestations() {
 }
 
 #[test]
+#[cfg(feature = "devnet1")]
 fn test_accept_new_attestations_multiple() {
     let mut store = create_test_store();
 
@@ -112,6 +115,7 @@ fn test_accept_new_attestations_empty() {
 }
 
 #[test]
+#[cfg(feature = "devnet1")]
 fn test_on_attestation_lifecycle() {
     let mut store = create_test_store();
     let validator_idx = ValidatorIndex(1);
@@ -173,6 +177,7 @@ fn test_on_attestation_lifecycle() {
 }
 
 #[test]
+#[cfg(feature = "devnet1")]
 fn test_on_attestation_future_slot() {
     let mut store = create_test_store();
     let future_slot = Slot(100); // Far in the future
@@ -184,6 +189,7 @@ fn test_on_attestation_future_slot() {
 }
 
 #[test]
+#[cfg(feature = "devnet1")]
 fn test_on_attestation_update_vote() {
     let mut store = create_test_store();
     let validator_idx = ValidatorIndex(1);
@@ -217,6 +223,7 @@ fn test_on_attestation_update_vote() {
 }
 
 #[test]
+#[cfg(feature = "devnet1")]
 fn test_on_attestation_ignore_old_vote() {
     let mut store = create_test_store();
     let validator_idx = ValidatorIndex(1);
@@ -252,6 +259,7 @@ fn test_on_attestation_ignore_old_vote() {
 }
 
 #[test]
+#[cfg(feature = "devnet1")]
 fn test_on_attestation_from_block_supersedes_new() {
     let mut store = create_test_store();
     let validator_idx = ValidatorIndex(1);
@@ -273,6 +281,7 @@ fn test_on_attestation_from_block_supersedes_new() {
 }
 
 #[test]
+#[cfg(feature = "devnet1")]
 fn test_on_attestation_newer_from_block_removes_older_new() {
     let mut store = create_test_store();
     let validator_idx = ValidatorIndex(1);

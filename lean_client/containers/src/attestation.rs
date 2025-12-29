@@ -111,8 +111,12 @@ pub struct Attestation {
 /// Validator attestation bundled with its signature.
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
 pub struct SignedAttestation {
+    #[cfg(feature = "devnet2")]
+    pub validator_id: u64,
+    #[cfg(feature = "devnet2")]
+    pub message: AttestationData,
+    #[cfg(feature = "devnet1")]
     pub message: Attestation,
-    /// Signature aggregation produced by the leanVM (SNARKs in the future).
     pub signature: Signature,
 }
 

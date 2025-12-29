@@ -3,7 +3,13 @@ name = "networking"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = []
+devnet1 = ["containers/devnet1", "env-config/devnet1"]
+devnet2 = ["containers/devnet2", "env-config/devnet1"]
+
 [dependencies]
+env-config = { path = "../env-config", default-features = false }
 containers = {workspace = true}
 alloy-primitives = { workspace = true}
 libp2p = {workspace = true}

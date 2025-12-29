@@ -25,10 +25,23 @@ pub fn on_attestation(
     signed_attestation: SignedAttestation,
     is_from_block: bool,
 ) -> Result<(), String> {
+    #[cfg(feature = "devnet1")]
     let validator_id = ValidatorIndex(signed_attestation.message.validator_id.0);
+    #[cfg(feature = "devnet1")]
     let attestation_slot = signed_attestation.message.data.slot;
+    #[cfg(feature = "devnet1")]
     let source_slot = signed_attestation.message.data.source.slot;
+    #[cfg(feature = "devnet1")]
     let target_slot = signed_attestation.message.data.target.slot;
+
+    #[cfg(feature = "devnet2")]
+    let validator_id = ValidatorIndex(signed_attestation.validator_id);
+    #[cfg(feature = "devnet2")]
+    let attestation_slot = signed_attestation.message.slot;
+    #[cfg(feature = "devnet2")]
+    let source_slot = signed_attestation.message.source.slot;
+    #[cfg(feature = "devnet2")]
+    let target_slot = signed_attestation.message.target.slot;
 
     // Validate attestation is not from future
     let curr_slot = store.time / INTERVALS_PER_SLOT;
@@ -49,6 +62,7 @@ pub fn on_attestation(
 
     if is_from_block {
         // On-chain attestation processing - immediately becomes "known"
+        #[cfg(feature = "devnet1")]
         if store
             .latest_known_attestations
             .get(&validator_id)
@@ -61,20 +75,48 @@ pub fn on_attestation(
                 .insert(validator_id, signed_attestation.clone());
         }
 
+        #[cfg(feature = "devnet2")]
+        if store
+            .latest_known_attestations
+            .get(&validator_id)
+            .map_or(true, |existing| existing.message.slot < attestation_slot)
+        {
+            store
+                .latest_known_attestations
+                .insert(validator_id, signed_attestation.clone());
+        }
+
         // Remove from new attestations if superseded
         if let Some(existing_new) = store.latest_new_attestations.get(&validator_id) {
+            #[cfg(feature = "devnet1")]
             if existing_new.message.data.slot <= attestation_slot {
+                store.latest_new_attestations.remove(&validator_id);
+            }
+            #[cfg(feature = "devnet2")]
+            if existing_new.message.slot <= attestation_slot {
                 store.latest_new_attestations.remove(&validator_id);
             }
         }
     } else {
         // Network gossip attestation processing - goes to "new" stage
+        #[cfg(feature = "devnet1")]
         if store
             .latest_new_attestations
             .get(&validator_id)
             .map_or(true, |existing| {
                 existing.message.data.slot < attestation_slot
             })
+        {
+            store
+                .latest_new_attestations
+                .insert(validator_id, signed_attestation);
+        }
+
+        #[cfg(feature = "devnet2")]
+        if store
+            .latest_new_attestations
+            .get(&validator_id)
+            .map_or(true, |existing| existing.message.slot < attestation_slot)
         {
             store
                 .latest_new_attestations
@@ -147,43 +189,94 @@ fn process_block_internal(
     let attestations = &signed_block.message.block.body.attestations;
     let signatures = &signed_block.signature;
 
-    for i in 0.. {
-        match (attestations.get(i), signatures.get(i)) {
-            (Ok(attestation), Ok(signature)) => {
-                let signed_attestation = SignedAttestation {
-                    message: attestation.clone(),
-                    signature: signature.clone(),
-                };
-                on_attestation(store, signed_attestation, true)?;
+    #[cfg(feature = "devnet1")]
+    {
+        for i in 0.. {
+            match (attestations.get(i), signatures.get(i)) {
+                (Ok(attestation), Ok(signature)) => {
+                    let signed_attestation = SignedAttestation {
+                        message: attestation.clone(),
+                        signature: signature.clone(),
+                    };
+                    on_attestation(store, signed_attestation, true)?;
+                }
+                _ => break,
             }
-            _ => break,
         }
+
+        // Update head BEFORE processing proposer attestation
+        update_head(store);
+
+        // Process proposer attestation as gossip (is_from_block=false)
+        // This ensures it goes to "new" attestations and doesn't immediately affect fork choice
+        let num_body_attestations = attestations.len_u64();
+
+        // Get proposer signature or use default if not present (for tests)
+        use containers::attestation::Signature;
+        let proposer_signature = signatures
+            .get(num_body_attestations)
+            .map(|sig| sig.clone())
+            .unwrap_or_else(|_| Signature::default());
+
+        let proposer_signed_attestation = SignedAttestation {
+            message: signed_block.message.proposer_attestation.clone(),
+            signature: proposer_signature,
+        };
+
+        // Process proposer attestation as if received via gossip (is_from_block=false)
+        // This ensures it goes to "new" attestations and doesn't immediately affect fork choice
+        on_attestation(store, proposer_signed_attestation, false)?;
+
+        Ok(())
     }
 
-    // Update head BEFORE processing proposer attestation
-    update_head(store);
+    #[cfg(feature = "devnet2")]
+    {
+        let aggregated_attestations = &signed_block.message.block.body.attestations;
+        let attestation_signatures = &signed_block.signature.attestation_signatures;
+        let proposer_attestation = &signed_block.message.proposer_attestation;
 
-    // Process proposer attestation as gossip (is_from_block=false)
-    // This ensures it goes to "new" attestations and doesn't immediately affect fork choice
-    let num_body_attestations = attestations.len_u64();
+        for (aggregated_attestation, aggregated_signature) in aggregated_attestations
+            .into_iter()
+            .zip(attestation_signatures)
+        {
+            let validator_ids: Vec<u64> = aggregated_attestation
+                .aggregation_bits
+                .0
+                .iter()
+                .enumerate()
+                .filter(|(_, bit)| **bit)
+                .map(|(index, _)| index as u64)
+                .collect();
 
-    // Get proposer signature or use default if not present (for tests)
-    use containers::attestation::Signature;
-    let proposer_signature = signatures
-        .get(num_body_attestations)
-        .map(|sig| sig.clone())
-        .unwrap_or_else(|_| Signature::default());
+            for (validator_id, signature) in validator_ids.into_iter().zip(aggregated_signature) {
+                on_attestation(
+                    store,
+                    SignedAttestation {
+                        validator_id,
+                        message: aggregated_attestation.data.clone(),
+                        signature: *signature,
+                    },
+                    true,
+                )?;
+            }
+        }
 
-    let proposer_signed_attestation = SignedAttestation {
-        message: signed_block.message.proposer_attestation.clone(),
-        signature: proposer_signature,
-    };
+        // Update head BEFORE processing proposer attestation
+        update_head(store);
 
-    // Process proposer attestation as if received via gossip (is_from_block=false)
-    // This ensures it goes to "new" attestations and doesn't immediately affect fork choice
-    on_attestation(store, proposer_signed_attestation, false)?;
+        let proposer_signed_attestation = SignedAttestation {
+            validator_id: proposer_attestation.validator_id.0,
+            message: proposer_attestation.data.clone(),
+            signature: signed_block.signature.proposer_signature,
+        };
 
-    Ok(())
+        // Process proposer attestation as if received via gossip (is_from_block=false)
+        // This ensures it goes to "new" attestations and doesn't immediately affect fork choice
+        on_attestation(store, proposer_signed_attestation, false)?;
+
+        Ok(())
+    }
 }
 
 fn process_pending_blocks(store: &mut Store, mut roots: Vec<Bytes32>) {
