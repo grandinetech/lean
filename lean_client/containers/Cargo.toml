@@ -5,17 +5,18 @@ edition = "2021"
 
 [features]
 xmss-verify = ["leansig"]
-default = ["devnet1"]
-devnet1 = []
-devnet2 = []
+default = []
+devnet1 = ["env-config/devnet1"]
+devnet2 = ["env-config/devnet2"]
 
 [lib]
 name = "containers"
 path = "src/lib.rs"
 
 [dependencies]
-ssz = { git = "https://github.com/grandinetech/grandine", package = "ssz", branch = "develop" }
-ssz_derive = { git = "https://github.com/grandinetech/grandine", package = "ssz_derive", branch = "develop" }
+env-config = { path = "../env-config", default-features = false }
+ssz = { git = "https://github.com/grandinetech/grandine", package = "ssz", branch = "develop", submodules = true }
+ssz_derive = { git = "https://github.com/grandinetech/grandine", package = "ssz_derive", branch = "develop", submodules = false }
 typenum = "1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

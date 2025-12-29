@@ -2,12 +2,16 @@
 use std::collections::HashMap;
 use std::path::Path;
 
+use containers::attestation::AggregatedAttestations;
+#[cfg(feature = "devnet2")]
+use containers::attestation::NaiveAggregatedSignature;
+use containers::block::BlockSignatures;
 use containers::{
     attestation::{Attestation, AttestationData, Signature, SignedAttestation},
     block::{hash_tree_root, BlockWithAttestation, SignedBlockWithAttestation},
     checkpoint::Checkpoint,
     types::{Uint64, ValidatorIndex},
-    Slot,
+    AggregatedAttestation, Slot,
 };
 use fork_choice::store::{get_proposal_head, get_vote_target, Store};
 use tracing::{info, warn};
@@ -172,7 +176,10 @@ impl ValidatorService {
             .latest_new_attestations
             .values()
             .filter(|att| {
+                #[cfg(feature = "devnet1")]
                 let data = &att.message.data;
+                #[cfg(feature = "devnet2")]
+                let data = &att.message;
                 // Source must match the parent state's justified checkpoint (not store's!)
                 let source_matches = data.source == parent_state.latest_justified;
                 // Target must be strictly after source
@@ -184,7 +191,14 @@ impl ValidatorService {
             })
             .collect();
 
+        #[cfg(feature = "devnet1")]
         let valid_attestations: Vec<Attestation> = valid_signed_attestations
+            .iter()
+            .map(|att| att.message.clone())
+            .collect();
+
+        #[cfg(feature = "devnet2")]
+        let valid_attestations: Vec<AttestationData> = valid_signed_attestations
             .iter()
             .map(|att| att.message.clone())
             .collect();
@@ -197,6 +211,7 @@ impl ValidatorService {
         );
 
         // Build block with collected attestations (empty body - attestations go to state)
+        #[cfg(feature = "devnet1")]
         let (block, _post_state, _collected_atts, sigs) = parent_state.build_block(
             slot,
             proposer_index,
@@ -205,13 +220,43 @@ impl ValidatorService {
             None,
             None,
         )?;
+        #[cfg(feature = "devnet2")]
+        let (block, _post_state, _collected_atts, sigs) = {
+            let valid_attestations: Vec<Attestation> = valid_attestations
+                .iter()
+                .map(|data| Attestation {
+                    validator_id: Uint64(0), // Placeholder, real validator IDs should be used
+                    data: data.clone(),
+                })
+                .collect();
+            parent_state.build_block(
+                slot,
+                proposer_index,
+                parent_root,
+                Some(valid_attestations),
+                None,
+                None,
+            )?
+        };
 
         // Collect signatures from the attestations we included
+        #[cfg(feature = "devnet1")]
         let mut signatures = sigs;
+        #[cfg(feature = "devnet2")]
+        let mut signatures = sigs.attestation_signatures;
         for signed_att in &valid_signed_attestations {
+            #[cfg(feature = "devnet1")]
             signatures
                 .push(signed_att.signature.clone())
                 .map_err(|e| format!("Failed to add attestation signature: {:?}", e))?;
+            #[cfg(feature = "devnet2")]
+            {
+                // TODO: Use real aggregation instead of naive placeholder when spec is more up to date
+                let aggregated_sig: NaiveAggregatedSignature = NaiveAggregatedSignature::default();
+                signatures
+                    .push(aggregated_sig)
+                    .map_err(|e| format!("Failed to add attestation signature: {:?}", e))?;
+            }
         }
 
         info!(
@@ -231,9 +276,19 @@ impl ValidatorService {
 
             match key_manager.sign(proposer_index.0, epoch, &message.0.into()) {
                 Ok(sig) => {
+                    #[cfg(feature = "devnet1")]
                     signatures
                         .push(sig)
                         .map_err(|e| format!("Failed to add proposer signature: {:?}", e))?;
+                    #[cfg(feature = "devnet2")]
+                    {
+                        // TODO: Use real aggregation instead of naive placeholder when spec is more up to date
+                        let aggregated_sig: NaiveAggregatedSignature =
+                            NaiveAggregatedSignature::default();
+                        signatures
+                            .push(aggregated_sig)
+                            .map_err(|e| format!("Failed to add proposer signature: {:?}", e))?;
+                    }
                     info!(proposer = proposer_index.0, "Signed proposer attestation");
                 }
                 Err(e) => {
@@ -250,7 +305,13 @@ impl ValidatorService {
                 block,
                 proposer_attestation,
             },
+            #[cfg(feature = "devnet1")]
             signature: signatures,
+            #[cfg(feature = "devnet2")]
+            signature: BlockSignatures {
+                attestation_signatures: signatures,
+                proposer_signature: Signature::default(),
+            },
         };
 
         Ok(signed_block)
@@ -290,6 +351,7 @@ impl ValidatorService {
             .validator_indices
             .iter()
             .filter_map(|&idx| {
+                #[cfg(feature = "devnet1")]
                 let attestation = Attestation {
                     validator_id: Uint64(idx),
                     data: AttestationData {
@@ -298,6 +360,14 @@ impl ValidatorService {
                         target: vote_target.clone(),
                         source: store.latest_justified.clone(),
                     },
+                };
+
+                #[cfg(feature = "devnet2")]
+                let attestation = AttestationData {
+                    slot,
+                    head: head_checkpoint.clone(),
+                    target: vote_target.clone(),
+                    source: store.latest_justified.clone(),
                 };
 
                 let signature = if let Some(ref key_manager) = self.key_manager {
@@ -337,10 +407,24 @@ impl ValidatorService {
                     Signature::default()
                 };
 
-                Some(SignedAttestation {
-                    message: attestation,
-                    signature,
-                })
+                {
+                    #[cfg(feature = "devnet1")]
+                    {
+                        Some(SignedAttestation {
+                            message: attestation,
+                            signature,
+                        })
+                    }
+
+                    #[cfg(feature = "devnet2")]
+                    {
+                        Some(SignedAttestation {
+                            validator_id: idx,
+                            message: attestation,
+                            signature,
+                        })
+                    }
+                }
             })
             .collect()
     }

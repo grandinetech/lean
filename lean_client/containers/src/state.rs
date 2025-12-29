@@ -1,8 +1,10 @@
+use crate::attestation::AggregatedAttestations;
+use crate::block::BlockSignatures;
 use crate::validator::Validator;
 use crate::{
     block::{hash_tree_root, Block, BlockBody, BlockHeader, SignedBlockWithAttestation},
-    Attestation, Attestations, Bytes32, Checkpoint, Config, Signature, Slot, Uint64,
-    ValidatorIndex,
+    Attestation, Attestations, Bytes32, Checkpoint, Config, Signature, SignedAttestation, Slot,
+    Uint64, ValidatorIndex,
 };
 use crate::{
     HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots, Validators,
@@ -12,8 +14,6 @@ use ssz::{PersistentList as List, PersistentList};
 use ssz_derive::Ssz;
 use std::collections::BTreeMap;
 use typenum::U4096;
-use crate::attestation::AggregatedAttestations;
-use crate::block::BlockSignatures;
 
 pub const VALIDATOR_REGISTRY_LIMIT: usize = 1 << 12; // 4096
 pub const JUSTIFICATION_ROOTS_LIMIT: usize = 1 << 18; // 262144
@@ -297,7 +297,9 @@ impl State {
                 let plain_attestations = aggregated_attestation.to_plain();
                 // For each attestatio in the vector, push to the list
                 for attestation in plain_attestations {
-                    unaggregated_attestations.push(attestation).map_err(|e| format!("Failed to push attestation: {:?}", e))?;
+                    unaggregated_attestations
+                        .push(attestation)
+                        .map_err(|e| format!("Failed to push attestation: {:?}", e))?;
                 }
             }
             state.process_attestations(&unaggregated_attestations)
@@ -686,7 +688,7 @@ impl State {
         _proposer_index: ValidatorIndex,
         _parent_root: Bytes32,
         _initial_attestations: Option<Vec<Attestation>>,
-        _available_signed_attestations: Option<&[SignedBlockWithAttestation]>,
+        _available_signed_attestations: Option<&[SignedAttestation]>,
         _known_block_roots: Option<&std::collections::HashSet<Bytes32>>,
     ) -> Result<(Block, Self, Vec<Attestation>, BlockSignatures), String> {
         Err("build_block is not implemented for devnet2".to_string())
@@ -703,7 +705,7 @@ mod tests {
             config: st.config.clone(),
             ..st.clone()
         }
-            .is_proposer(ValidatorIndex(0)));
+        .is_proposer(ValidatorIndex(0)));
     }
 
     #[test]
