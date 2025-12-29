@@ -552,6 +552,7 @@ impl TestRunner {
 
     /// Test runner for verify_signatures test vectors
     /// Tests XMSS signature verification on SignedBlockWithAttestation
+    #[cfg(feature = "devnet1")]
     pub fn run_verify_signatures_test<P: AsRef<Path>>(path: P) -> Result<(), Box<dyn std::error::Error>> {
         let json_content = fs::read_to_string(path.as_ref())?;
         
@@ -571,25 +572,11 @@ impl TestRunner {
         println!("  Block slot: {}", signed_block.message.block.slot.0);
         println!("  Proposer index: {}", signed_block.message.block.proposer_index.0);
         
-        // Count attestations
-        let mut attestation_count = 0u64;
-        loop {
-            match signed_block.message.block.body.attestations.get(attestation_count) {
-                Ok(_) => attestation_count += 1,
-                Err(_) => break,
-            }
-        }
+        let attestation_count = signed_block.message.block.body.attestations.len_u64();
         println!("  Attestations in block: {}", attestation_count);
         println!("  Proposer attestation validator: {}", signed_block.message.proposer_attestation.validator_id.0);
         
-        // Count signatures
-        let mut signature_count = 0u64;
-        loop {
-            match signed_block.signature.get(signature_count) {
-                Ok(_) => signature_count += 1,
-                Err(_) => break,
-            }
-        }
+        let signature_count = signed_block.signature.len_u64();
         println!("  Signatures: {}", signature_count);
         
         // Check if we expect this test to fail

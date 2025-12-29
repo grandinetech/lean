@@ -1,5 +1,5 @@
 use crate::validator::Validator;
-use crate::{block::{hash_tree_root, Block, BlockBody, BlockHeader, SignedBlockWithAttestation}, Attestation, Attestations, Bytes32, Checkpoint, Config, Signature, Slot, Uint64, ValidatorIndex};
+use crate::{block::{hash_tree_root, Block, BlockBody, BlockHeader, SignedBlockWithAttestation}, Attestation, Attestations, Bytes32, Checkpoint, Config, Signature, SignedAttestation, Slot, Uint64, ValidatorIndex};
 use crate::{
     HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots, Validators,
 };
@@ -686,7 +686,7 @@ impl State {
         _proposer_index: ValidatorIndex,
         _parent_root: Bytes32,
         _initial_attestations: Option<Vec<Attestation>>,
-        _available_signed_attestations: Option<&[SignedBlockWithAttestation]>,
+        _available_signed_attestations: Option<&[SignedAttestation]>,
         _known_block_roots: Option<&std::collections::HashSet<Bytes32>>,
     ) -> Result<(Block, Self, Vec<Attestation>, BlockSignatures), String> {
         Err("build_block is not implemented for devnet2".to_string())
