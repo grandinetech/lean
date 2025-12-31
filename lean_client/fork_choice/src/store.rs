@@ -1,7 +1,6 @@
 use containers::{
-    attestation::SignedAttestation,
-    block::SignedBlockWithAttestation, checkpoint::Checkpoint, config::Config, state::State,
-    Bytes32, Root, Slot, ValidatorIndex,
+    attestation::SignedAttestation, block::SignedBlockWithAttestation, checkpoint::Checkpoint,
+    config::Config, state::State, Bytes32, Root, Slot, ValidatorIndex,
 };
 use ssz::SszHash;
 use std::collections::HashMap;
@@ -182,7 +181,8 @@ pub fn update_safe_target(store: &mut Store) {
 
     let min_score = (n_validators * 2 + 2) / 3;
     let root = store.latest_justified.root;
-    store.safe_target = get_fork_choice_head(store, root, &store.latest_new_attestations, min_score);
+    store.safe_target =
+        get_fork_choice_head(store, root, &store.latest_new_attestations, min_score);
 }
 
 pub fn accept_new_attestations(store: &mut Store) {

@@ -1,5 +1,7 @@
 use crate::gossipsub::config::compute_message_id;
-use crate::gossipsub::topic::{ATTESTATION_TOPIC, BLOCK_TOPIC, SSZ_SNAPPY_ENCODING_POSTFIX, TOPIC_PREFIX};
+use crate::gossipsub::topic::{
+    ATTESTATION_TOPIC, BLOCK_TOPIC, SSZ_SNAPPY_ENCODING_POSTFIX, TOPIC_PREFIX,
+};
 use crate::types::MESSAGE_DOMAIN_VALID_SNAPPY;
 use libp2p::gossipsub::{Message, TopicHash};
 use sha2::{Digest, Sha256};
@@ -134,7 +136,7 @@ fn test_message_id_uses_valid_snappy_domain() {
 
     let topic_bytes = topic.as_bytes();
     let topic_len = topic_bytes.len() as u64;
-    
+
     let mut digest_input = Vec::new();
 
     digest_input.extend_from_slice(MESSAGE_DOMAIN_VALID_SNAPPY);

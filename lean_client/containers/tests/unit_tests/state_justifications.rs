@@ -1,18 +1,12 @@
 // tests/state_justifications.rs
-use containers::{
-    state::State,
-    types::Bytes32,
-    Config
-};
+use containers::{state::State, types::Bytes32, Config};
 use pretty_assertions::assert_eq;
 use rstest::{fixture, rstest};
 use ssz::PersistentList as List;
 
 #[path = "common.rs"]
 mod common;
-use common::{
-    base_state, create_attestations, sample_config, TEST_VALIDATOR_COUNT,
-};
+use common::{base_state, create_attestations, sample_config, TEST_VALIDATOR_COUNT};
 
 #[fixture]
 fn config() -> Config {
@@ -49,7 +43,7 @@ fn test_get_justifications_single_root() {
     let mut roots_list = List::default();
     roots_list.push(root1).unwrap();
     state.justifications_roots = roots_list;
-    
+
     // Convert Vec<bool> to BitList
     let mut bitlist = ssz::BitList::with_length(TEST_VALIDATOR_COUNT);
     for (i, &val) in votes1.iter().enumerate() {
@@ -88,7 +82,7 @@ fn test_get_justifications_multiple_roots() {
     roots_list.push(root2).unwrap();
     roots_list.push(root3).unwrap();
     state.justifications_roots = roots_list;
-    
+
     // Convert Vec<bool> to BitList
     let mut bitlist = ssz::BitList::with_length(all_votes.len());
     for (i, &val) in all_votes.iter().enumerate() {
@@ -113,16 +107,20 @@ fn test_with_justifications_empty() {
     let mut initial_state = base_state(config.clone());
 
     let mut roots_list = List::default();
-    roots_list.push(Bytes32(ssz::H256::from_slice(&[1u8;32]))).unwrap();
+    roots_list
+        .push(Bytes32(ssz::H256::from_slice(&[1u8; 32])))
+        .unwrap();
     initial_state.justifications_roots = roots_list;
-    
+
     let mut bitlist = ssz::BitList::with_length(TEST_VALIDATOR_COUNT);
     for i in 0..TEST_VALIDATOR_COUNT {
         bitlist.set(i, true);
     }
     initial_state.justifications_validators = bitlist;
 
-    let new_state = initial_state.clone().with_justifications(std::collections::BTreeMap::new());
+    let new_state = initial_state
+        .clone()
+        .with_justifications(std::collections::BTreeMap::new());
 
     assert!(new_state.justifications_roots.get(0).is_err());
     assert!(new_state.justifications_validators.get(0).is_none());
@@ -149,11 +147,15 @@ fn test_with_justifications_deterministic_order() {
     // Expected roots in sorted order (root1 < root2)
     assert_eq!(new_state.justifications_roots.get(0).ok(), Some(&root1));
     assert_eq!(new_state.justifications_roots.get(1).ok(), Some(&root2));
-    
+
     // Verify the bitlist contains the concatenated votes
     let expected_validators = [votes1, votes2].concat();
     for (i, &expected_val) in expected_validators.iter().enumerate() {
-        let actual_val = new_state.justifications_validators.get(i).map(|b| *b).unwrap_or(false);
+        let actual_val = new_state
+            .justifications_validators
+            .get(i)
+            .map(|b| *b)
+            .unwrap_or(false);
         assert_eq!(actual_val, expected_val);
     }
 }

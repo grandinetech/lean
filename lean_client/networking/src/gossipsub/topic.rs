@@ -45,9 +45,7 @@ impl GossipsubTopic {
         let parts: Vec<&str> = topic.as_str().trim_start_matches('/').split('/').collect();
 
         if parts.len() != 4 {
-            return Err(format!(
-                "Invalid topic part count: {topic:?}"
-            ));
+            return Err(format!("Invalid topic part count: {topic:?}"));
         }
 
         Ok(parts)
@@ -78,10 +76,7 @@ impl std::fmt::Display for GossipsubTopic {
         write!(
             f,
             "/{}/{}/{}/{}",
-            TOPIC_PREFIX,
-            self.fork,
-            self.kind,
-            SSZ_SNAPPY_ENCODING_POSTFIX
+            TOPIC_PREFIX, self.fork, self.kind, SSZ_SNAPPY_ENCODING_POSTFIX
         )
     }
 }
@@ -106,10 +101,7 @@ impl From<GossipsubTopic> for TopicHash {
         };
         TopicHash::from_raw(format!(
             "/{}/{}/{}/{}",
-            TOPIC_PREFIX,
-            val.fork,
-            kind_str,
-            SSZ_SNAPPY_ENCODING_POSTFIX
+            TOPIC_PREFIX, val.fork, kind_str, SSZ_SNAPPY_ENCODING_POSTFIX
         ))
     }
 }

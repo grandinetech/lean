@@ -1,7 +1,7 @@
 use super::common::create_test_store;
+use containers::{Slot, Uint64};
 use fork_choice::handlers::on_tick;
 use fork_choice::store::{tick_interval, INTERVALS_PER_SLOT, SECONDS_PER_SLOT};
-use containers::{Slot, Uint64};
 
 #[test]
 fn test_on_tick_basic() {
@@ -31,7 +31,7 @@ fn test_on_tick_already_current() {
     let initial_time = store.time;
     let current_target = store.config.genesis_time + initial_time;
 
-    // Try to advance to current time 
+    // Try to advance to current time
     on_tick(&mut store, current_target, true);
 
     // Should not change significantly
@@ -86,7 +86,7 @@ fn test_tick_interval_sequence() {
 #[test]
 fn test_tick_interval_actions_by_phase() {
     let mut store = create_test_store();
-    
+
     // Reset store time to 0 relative to genesis for clean testing
     store.time = 0;
 
@@ -101,11 +101,10 @@ fn test_tick_interval_actions_by_phase() {
     }
 }
 
-
 #[test]
 fn test_slot_time_calculations() {
     let genesis_time = 1000;
-    
+
     // Slot 0
     let slot_0_time = genesis_time + (0 * SECONDS_PER_SLOT);
     assert_eq!(slot_0_time, genesis_time);

@@ -1,5 +1,5 @@
-use ssz_derive::Ssz;
 use serde::{Deserialize, Serialize};
+use ssz_derive::Ssz;
 use std::cmp::Ordering;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
@@ -37,15 +37,18 @@ impl Slot {
     ///
     /// Panics if this slot is earlier than the finalized slot.
     pub fn is_justifiable_after(self, finalized: Slot) -> bool {
-        assert!(self >= finalized, "Candidate slot must not be before finalized slot");
+        assert!(
+            self >= finalized,
+            "Candidate slot must not be before finalized slot"
+        );
         let delta = self.0 - finalized.0;
-        
+
         // Rule 1: The first 5 slots after finalization are always justifiable.
         // Examples: delta = 0, 1, 2, 3, 4, 5
         if delta <= 5 {
             return true;
         }
-        
+
         // Rule 2: Slots at perfect square distances are justifiable.
         // Examples: delta = 1, 4, 9, 16, 25, 36, 49, 64, ...
         // Check: integer square root squared equals delta
@@ -53,7 +56,7 @@ impl Slot {
         if sqrt * sqrt == delta {
             return true;
         }
-        
+
         // Rule 3: Slots at pronic number distances are justifiable.
         // Pronic numbers have the form n(n+1): 2, 6, 12, 20, 30, 42, 56, ...
         // Mathematical insight: For pronic delta = n(n+1), we have:
@@ -64,7 +67,7 @@ impl Slot {
         if test_sqrt * test_sqrt == test && test_sqrt % 2 == 1 {
             return true;
         }
-        
+
         false
     }
 }
@@ -89,32 +92,32 @@ mod tests {
     fn test_is_justifiable_perfect_squares() {
         let finalized = Slot(0);
         // Rule 2: Perfect square distances
-        assert!(Slot(1).is_justifiable_after(finalized));   // delta = 1 = 1^2
-        assert!(Slot(4).is_justifiable_after(finalized));   // delta = 4 = 2^2
-        assert!(Slot(9).is_justifiable_after(finalized));   // delta = 9 = 3^2
-        assert!(Slot(16).is_justifiable_after(finalized));  // delta = 16 = 4^2
-        assert!(Slot(25).is_justifiable_after(finalized));  // delta = 25 = 5^2
-        assert!(Slot(36).is_justifiable_after(finalized));  // delta = 36 = 6^2
+        assert!(Slot(1).is_justifiable_after(finalized)); // delta = 1 = 1^2
+        assert!(Slot(4).is_justifiable_after(finalized)); // delta = 4 = 2^2
+        assert!(Slot(9).is_justifiable_after(finalized)); // delta = 9 = 3^2
+        assert!(Slot(16).is_justifiable_after(finalized)); // delta = 16 = 4^2
+        assert!(Slot(25).is_justifiable_after(finalized)); // delta = 25 = 5^2
+        assert!(Slot(36).is_justifiable_after(finalized)); // delta = 36 = 6^2
     }
 
     #[test]
     fn test_is_justifiable_pronic() {
         let finalized = Slot(0);
         // Rule 3: Pronic numbers (n(n+1))
-        assert!(Slot(2).is_justifiable_after(finalized));   // delta = 2 = 1*2
-        assert!(Slot(6).is_justifiable_after(finalized));   // delta = 6 = 2*3
-        assert!(Slot(12).is_justifiable_after(finalized));  // delta = 12 = 3*4
-        assert!(Slot(20).is_justifiable_after(finalized));  // delta = 20 = 4*5
-        assert!(Slot(30).is_justifiable_after(finalized));  // delta = 30 = 5*6
-        assert!(Slot(42).is_justifiable_after(finalized));  // delta = 42 = 6*7
+        assert!(Slot(2).is_justifiable_after(finalized)); // delta = 2 = 1*2
+        assert!(Slot(6).is_justifiable_after(finalized)); // delta = 6 = 2*3
+        assert!(Slot(12).is_justifiable_after(finalized)); // delta = 12 = 3*4
+        assert!(Slot(20).is_justifiable_after(finalized)); // delta = 20 = 4*5
+        assert!(Slot(30).is_justifiable_after(finalized)); // delta = 30 = 5*6
+        assert!(Slot(42).is_justifiable_after(finalized)); // delta = 42 = 6*7
     }
 
     #[test]
     fn test_is_not_justifiable() {
         let finalized = Slot(0);
         // Not justifiable: not in first 5, not perfect square, not pronic
-        assert!(!Slot(7).is_justifiable_after(finalized));  // delta = 7
-        assert!(!Slot(8).is_justifiable_after(finalized));  // delta = 8
+        assert!(!Slot(7).is_justifiable_after(finalized)); // delta = 7
+        assert!(!Slot(8).is_justifiable_after(finalized)); // delta = 8
         assert!(!Slot(10).is_justifiable_after(finalized)); // delta = 10
         assert!(!Slot(11).is_justifiable_after(finalized)); // delta = 11
     }

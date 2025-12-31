@@ -1,12 +1,12 @@
 use super::common::create_test_store;
-use fork_choice::store::{get_proposal_head, get_vote_target};
 use containers::Slot;
+use fork_choice::store::{get_proposal_head, get_vote_target};
 
 #[test]
 fn test_get_proposal_head_basic() {
     let mut store = create_test_store();
     let head = get_proposal_head(&mut store, Slot(0));
-    
+
     assert_eq!(head, store.head);
 }
 
@@ -14,9 +14,9 @@ fn test_get_proposal_head_basic() {
 fn test_get_proposal_head_advances_time() {
     let mut store = create_test_store();
     let initial_time = store.time;
-    
+
     get_proposal_head(&mut store, Slot(5));
-    
+
     assert!(store.time >= initial_time);
 }
 

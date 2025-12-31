@@ -1,5 +1,11 @@
 use containers::{
-    Attestation, Attestations, BlockSignatures, BlockWithAttestation, Config, SignedBlockWithAttestation, block::{Block, BlockBody, BlockHeader, hash_tree_root}, checkpoint::Checkpoint, slot::Slot, state::State, types::{Bytes32, ValidatorIndex}, Validators
+    block::{hash_tree_root, Block, BlockBody, BlockHeader},
+    checkpoint::Checkpoint,
+    slot::Slot,
+    state::State,
+    types::{Bytes32, ValidatorIndex},
+    Attestation, Attestations, BlockSignatures, BlockWithAttestation, Config,
+    SignedBlockWithAttestation, Validators,
 };
 use ssz::PersistentList as List;
 
@@ -10,7 +16,11 @@ pub const TEST_VALIDATOR_COUNT: usize = 4; // Actual validator count used in tes
 const _: [(); DEVNET_CONFIG_VALIDATOR_REGISTRY_LIMIT - TEST_VALIDATOR_COUNT] =
     [(); DEVNET_CONFIG_VALIDATOR_REGISTRY_LIMIT - TEST_VALIDATOR_COUNT];
 
-pub fn create_block(slot: u64, parent_header: &mut BlockHeader, attestations: Option<Attestations>) -> SignedBlockWithAttestation {
+pub fn create_block(
+    slot: u64,
+    parent_header: &mut BlockHeader,
+    attestations: Option<Attestations>,
+) -> SignedBlockWithAttestation {
     let body = BlockBody {
         attestations: attestations.unwrap_or_else(List::default),
     };
@@ -64,8 +74,11 @@ pub fn base_state(config: Config) -> State {
 }
 
 pub fn base_state_with_validators(config: Config, num_validators: usize) -> State {
-    use containers::{HistoricalBlockHashes, JustificationRoots, JustifiedSlots, JustificationsValidators, validator::Validator, Uint64};
-    
+    use containers::{
+        validator::Validator, HistoricalBlockHashes, JustificationRoots, JustificationsValidators,
+        JustifiedSlots, Uint64,
+    };
+
     // Create validators list with the specified number of validators
     let mut validators = Validators::default();
     for i in 0..num_validators {
@@ -75,7 +88,7 @@ pub fn base_state_with_validators(config: Config, num_validators: usize) -> Stat
         };
         validators.push(validator).expect("within limit");
     }
-    
+
     State {
         config,
         slot: Slot(0),
@@ -91,7 +104,5 @@ pub fn base_state_with_validators(config: Config, num_validators: usize) -> Stat
 }
 
 pub fn sample_config() -> Config {
-    Config {
-        genesis_time: 0,
-    }
+    Config { genesis_time: 0 }
 }
