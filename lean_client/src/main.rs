@@ -95,7 +95,10 @@ fn print_chain_status(store: &Store, connected_peers: u64) {
     println!("  Head Block Root:    0x{:x}", head_root.0);
     println!("  Parent Block Root:  0x{:x}", parent_root.0);
     println!("  State Root:         0x{:x}", state_root.0);
-    println!("  Timely:             {}", if timely { "YES" } else { "NO" });
+    println!(
+        "  Timely:             {}",
+        if timely { "YES" } else { "NO" }
+    );
     println!("+---------------------------------------------------------------+");
     println!(
         "  Latest Justified:   Slot {:>5} | Root: 0x{:x}",
@@ -234,7 +237,11 @@ async fn main() {
                 if let Some(ref keys_dir) = args.hash_sig_key_dir {
                     let keys_path = std::path::Path::new(keys_dir);
                     if keys_path.exists() {
-                        match ValidatorService::new_with_keys(config.clone(), num_validators, keys_path) {
+                        match ValidatorService::new_with_keys(
+                            config.clone(),
+                            num_validators,
+                            keys_path,
+                        ) {
                             Ok(service) => {
                                 info!(
                                     node_id = %node_id,
@@ -245,7 +252,10 @@ async fn main() {
                                 Some(service)
                             }
                             Err(e) => {
-                                warn!("Failed to load XMSS keys: {}, falling back to zero signatures", e);
+                                warn!(
+                                    "Failed to load XMSS keys: {}, falling back to zero signatures",
+                                    e
+                                );
                                 Some(ValidatorService::new(config, num_validators))
                             }
                         }

@@ -4,8 +4,11 @@ use fork_choice::{
 };
 
 use containers::{
-    attestation::{Attestation, AttestationData, BlockSignatures, SignedAttestation, Signature},
-    block::{hash_tree_root, Block, BlockBody, BlockHeader, BlockWithAttestation, SignedBlockWithAttestation},
+    attestation::{Attestation, AttestationData, BlockSignatures, Signature, SignedAttestation},
+    block::{
+        hash_tree_root, Block, BlockBody, BlockHeader, BlockWithAttestation,
+        SignedBlockWithAttestation,
+    },
     checkpoint::Checkpoint,
     config::Config,
     state::State,
@@ -303,7 +306,9 @@ fn convert_test_anchor_block(test_block: &TestAnchorBlock) -> SignedBlockWithAtt
     }
 }
 
-fn convert_test_block(test_block_with_att: &TestBlockWithAttestation) -> SignedBlockWithAttestation {
+fn convert_test_block(
+    test_block_with_att: &TestBlockWithAttestation,
+) -> SignedBlockWithAttestation {
     let test_block = &test_block_with_att.block;
     let mut attestations = ssz::PersistentList::default();
 
@@ -416,7 +421,7 @@ fn verify_checks(
         Some(c) => c,
         None => return Ok(()),
     };
-    
+
     if let Some(expected_slot) = checks.head_slot {
         let actual_slot = store.blocks[&store.head].message.block.slot.0;
         if actual_slot != expected_slot {
@@ -529,7 +534,8 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
 
                     // Advance time to the block's slot to ensure attestations are processable
                     // SECONDS_PER_SLOT is 4 (not 12)
-                    let block_time = store.config.genesis_time + (signed_block.message.block.slot.0 * 4);
+                    let block_time =
+                        store.config.genesis_time + (signed_block.message.block.slot.0 * 4);
                     on_tick(&mut store, block_time, false);
 
                     on_block(&mut store, signed_block)?;

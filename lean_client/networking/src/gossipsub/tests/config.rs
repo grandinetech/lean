@@ -1,5 +1,5 @@
 use crate::gossipsub::config::GossipsubConfig;
-use crate::gossipsub::topic::{get_topics, GossipsubKind};
+use crate::gossipsub::topic::{GossipsubKind, get_topics};
 
 #[test]
 fn test_default_parameters() {
@@ -24,8 +24,14 @@ fn test_default_parameters() {
     assert_eq!(config.config.gossip_lazy(), 6); // d_lazy = 6
     assert_eq!(config.config.history_length(), 6); // mcache_len = 6
     assert_eq!(config.config.history_gossip(), 3); // mcache_gossip = 3
-    assert_eq!(config.config.fanout_ttl(), std::time::Duration::from_secs(60)); // fanout_ttl_secs = 60
-    assert_eq!(config.config.heartbeat_interval(), std::time::Duration::from_millis(700)); // heartbeat_interval_secs = 0.7
+    assert_eq!(
+        config.config.fanout_ttl(),
+        std::time::Duration::from_secs(60)
+    ); // fanout_ttl_secs = 60
+    assert_eq!(
+        config.config.heartbeat_interval(),
+        std::time::Duration::from_millis(700)
+    ); // heartbeat_interval_secs = 0.7
 
     assert!(config.topics.is_empty());
 }

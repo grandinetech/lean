@@ -4,7 +4,7 @@ use std::path::Path;
 
 use containers::{
     attestation::{Attestation, AttestationData, Signature, SignedAttestation},
-    block::{BlockWithAttestation, SignedBlockWithAttestation, hash_tree_root},
+    block::{hash_tree_root, BlockWithAttestation, SignedBlockWithAttestation},
     checkpoint::Checkpoint,
     types::{Uint64, ValidatorIndex},
     Slot,
@@ -179,7 +179,7 @@ impl ValidatorService {
                 let target_after_source = data.target.slot > data.source.slot;
                 // Target block must be known
                 let target_known = store.blocks.contains_key(&data.target.root);
-                
+
                 source_matches && target_after_source && target_known
             })
             .collect();
@@ -197,13 +197,20 @@ impl ValidatorService {
         );
 
         // Build block with collected attestations (empty body - attestations go to state)
-        let (block, _post_state, _collected_atts, sigs) =
-            parent_state.build_block(slot, proposer_index, parent_root, Some(valid_attestations), None, None)?;
+        let (block, _post_state, _collected_atts, sigs) = parent_state.build_block(
+            slot,
+            proposer_index,
+            parent_root,
+            Some(valid_attestations),
+            None,
+            None,
+        )?;
 
         // Collect signatures from the attestations we included
         let mut signatures = sigs;
         for signed_att in &valid_signed_attestations {
-            signatures.push(signed_att.signature.clone())
+            signatures
+                .push(signed_att.signature.clone())
                 .map_err(|e| format!("Failed to add attestation signature: {:?}", e))?;
         }
 
@@ -224,11 +231,10 @@ impl ValidatorService {
 
             match key_manager.sign(proposer_index.0, epoch, &message.0.into()) {
                 Ok(sig) => {
-                    signatures.push(sig).map_err(|e| format!("Failed to add proposer signature: {:?}", e))?;
-                    info!(
-                        proposer = proposer_index.0,
-                        "Signed proposer attestation"
-                    );
+                    signatures
+                        .push(sig)
+                        .map_err(|e| format!("Failed to add proposer signature: {:?}", e))?;
+                    info!(proposer = proposer_index.0, "Signed proposer attestation");
                 }
                 Err(e) => {
                     return Err(format!("Failed to sign proposer attestation: {}", e));

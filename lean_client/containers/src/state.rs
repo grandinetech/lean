@@ -1,11 +1,14 @@
 use crate::validator::Validator;
 use crate::{
     block::{hash_tree_root, Block, BlockBody, BlockHeader, SignedBlockWithAttestation},
-    Attestation, Attestations, BlockSignatures, Bytes32, Checkpoint, Config, Slot, Uint64, ValidatorIndex,
+    Attestation, Attestations, BlockSignatures, Bytes32, Checkpoint, Config, Slot, Uint64,
+    ValidatorIndex,
 };
-use crate::{HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots, Validators};
+use crate::{
+    HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots, Validators,
+};
 use serde::{Deserialize, Serialize};
-use ssz::{PersistentList as List};
+use ssz::PersistentList as List;
 use ssz_derive::Ssz;
 use std::collections::BTreeMap;
 
@@ -47,7 +50,10 @@ pub struct State {
 }
 
 impl State {
-        pub fn generate_genesis_with_validators(genesis_time: Uint64, validators: Vec<Validator>) -> Self {
+    pub fn generate_genesis_with_validators(
+        genesis_time: Uint64,
+        validators: Vec<Validator>,
+    ) -> Self {
         let body_for_root = BlockBody {
             attestations: Default::default(),
         };
@@ -63,7 +69,6 @@ impl State {
         for v in validators {
             validator_list.push(v).expect("Failed to add validator");
         }
-
 
         Self {
             config: Config {
@@ -206,7 +211,11 @@ impl State {
 
         for (i, r) in roots.iter().enumerate() {
             let v = map.get(r).expect("root present");
-            assert_eq!(v.len(), num_validators, "vote vector must match validator count");
+            assert_eq!(
+                v.len(),
+                num_validators,
+                "vote vector must match validator count"
+            );
             let base = i * num_validators;
             for (j, &bit) in v.iter().enumerate() {
                 if bit {
@@ -230,7 +239,11 @@ impl State {
     }
 
     // updated for fork choice tests
-    pub fn state_transition(&self, signed_block: SignedBlockWithAttestation, valid_signatures: bool) -> Result<Self, String> {
+    pub fn state_transition(
+        &self,
+        signed_block: SignedBlockWithAttestation,
+        valid_signatures: bool,
+    ) -> Result<Self, String> {
         self.state_transition_with_validation(signed_block, valid_signatures, true)
     }
 
@@ -314,7 +327,7 @@ impl State {
         }
 
         // Create a mutable clone for hash computation
-        let latest_header_for_hash  = self.latest_block_header.clone();
+        let latest_header_for_hash = self.latest_block_header.clone();
         let parent_root = hash_tree_root(&latest_header_for_hash);
         if block.parent_root != parent_root {
             return Err(String::from("Block parent root mismatch"));
@@ -581,7 +594,9 @@ impl State {
             // Create candidate block with current attestation set
             let mut attestations_list = Attestations::default();
             for att in &attestations {
-                attestations_list.push(att.clone()).map_err(|e| format!("Failed to push attestation: {:?}", e))?;
+                attestations_list
+                    .push(att.clone())
+                    .map_err(|e| format!("Failed to push attestation: {:?}", e))?;
             }
 
             let candidate_block = Block {
@@ -666,7 +681,9 @@ impl State {
             // Add new attestations and continue iteration
             attestations.extend(new_attestations);
             for sig in new_signatures {
-                signatures.push(sig).map_err(|e| format!("Failed to push signature: {:?}", e))?;
+                signatures
+                    .push(sig)
+                    .map_err(|e| format!("Failed to push signature: {:?}", e))?;
             }
         }
     }
@@ -729,11 +746,11 @@ mod tests {
     fn test_build_block() {
         // Create genesis state with validators
         let genesis_state = State::generate_genesis(Uint64(0), Uint64(4));
-        
+
         // Compute expected parent root after slot processing
         let pre_state = genesis_state.process_slots(Slot(1)).unwrap();
         let expected_parent_root = hash_tree_root(&pre_state.latest_block_header);
-        
+
         // Test 1: Build a simple block without attestations
         let result = genesis_state.build_block(
             Slot(1),
@@ -743,27 +760,34 @@ mod tests {
             None,
             None,
         );
-        
+
         assert!(result.is_ok(), "Building simple block should succeed");
         let (block, post_state, attestations, signatures) = result.unwrap();
-        
+
         // Verify block properties
         assert_eq!(block.slot, Slot(1));
         assert_eq!(block.proposer_index, ValidatorIndex(1));
         assert_eq!(block.parent_root, expected_parent_root);
-        assert_ne!(block.state_root, Bytes32(ssz::H256::zero()), "State root should be computed");
-        
+        assert_ne!(
+            block.state_root,
+            Bytes32(ssz::H256::zero()),
+            "State root should be computed"
+        );
+
         // Verify attestations and signatures are empty
         assert_eq!(attestations.len(), 0);
         // Check signatures by trying to get first element
         assert!(signatures.get(0).is_err(), "Signatures should be empty");
-        
+
         // Verify post-state has advanced
         assert_eq!(post_state.slot, Slot(1));
         // Note: The post-state's latest_block_header.state_root is zero because it will be
         // filled in during the next slot processing
-        assert_eq!(block.parent_root, expected_parent_root, "Parent root should match");
-        
+        assert_eq!(
+            block.parent_root, expected_parent_root,
+            "Parent root should match"
+        );
+
         // Test 2: Build block with initial attestations
         let attestation = Attestation {
             validator_id: Uint64(0),
@@ -783,7 +807,7 @@ mod tests {
                 },
             },
         };
-        
+
         let result = genesis_state.build_block(
             Slot(1),
             ValidatorIndex(1),
@@ -792,45 +816,48 @@ mod tests {
             None,
             None,
         );
-        
-        assert!(result.is_ok(), "Building block with attestations should succeed");
+
+        assert!(
+            result.is_ok(),
+            "Building block with attestations should succeed"
+        );
         let (block, _post_state, attestations, _signatures) = result.unwrap();
-        
+
         // Verify attestation was included
         assert_eq!(attestations.len(), 1);
         assert_eq!(attestations[0].validator_id, Uint64(0));
         // Check that attestation list has one element
-        assert!(block.body.attestations.get(0).is_ok(), "Block should contain attestation");
-        assert!(block.body.attestations.get(1).is_err(), "Block should have only one attestation");
+        assert!(
+            block.body.attestations.get(0).is_ok(),
+            "Block should contain attestation"
+        );
+        assert!(
+            block.body.attestations.get(1).is_err(),
+            "Block should have only one attestation"
+        );
     }
 
     #[test]
     fn test_build_block_advances_state() {
         // Create genesis state
         let genesis_state = State::generate_genesis(Uint64(0), Uint64(10));
-        
+
         // Compute parent root after advancing to target slot
         let pre_state = genesis_state.process_slots(Slot(5)).unwrap();
         let parent_root = hash_tree_root(&pre_state.latest_block_header);
-        
+
         // Build block at slot 5
         // Proposer for slot 5 with 10 validators is (5 % 10) = 5
-        let result = genesis_state.build_block(
-            Slot(5),
-            ValidatorIndex(5),
-            parent_root,
-            None,
-            None,
-            None,
-        );
-        
+        let result =
+            genesis_state.build_block(Slot(5), ValidatorIndex(5), parent_root, None, None, None);
+
         assert!(result.is_ok());
         let (block, post_state, _, _) = result.unwrap();
-        
+
         // Verify state advanced through slots
         assert_eq!(post_state.slot, Slot(5));
         assert_eq!(block.slot, Slot(5));
-        
+
         // Verify block can be applied to genesis state
         let transition_result = genesis_state.state_transition_with_validation(
             SignedBlockWithAttestation {
@@ -843,44 +870,40 @@ mod tests {
             true, // signatures are considered valid (not validating, just marking as valid)
             true,
         );
-        
-        assert!(transition_result.is_ok(), "Built block should be valid for state transition");
+
+        assert!(
+            transition_result.is_ok(),
+            "Built block should be valid for state transition"
+        );
     }
 
     #[test]
     fn test_build_block_state_root_matches() {
         // Create genesis state
         let genesis_state = State::generate_genesis(Uint64(0), Uint64(3));
-        
+
         // Compute parent root after advancing to target slot
         let pre_state = genesis_state.process_slots(Slot(1)).unwrap();
         let parent_root = hash_tree_root(&pre_state.latest_block_header);
-        
+
         // Build a block
         // Proposer for slot 1 with 3 validators is (1 % 3) = 1
-        let result = genesis_state.build_block(
-            Slot(1),
-            ValidatorIndex(1),
-            parent_root,
-            None,
-            None,
-            None,
-        );
-        
+        let result =
+            genesis_state.build_block(Slot(1), ValidatorIndex(1), parent_root, None, None, None);
+
         assert!(result.is_ok());
         let (block, post_state, _, _) = result.unwrap();
-        
+
         // Verify the state root in block matches the computed post-state
         let computed_state_root = hash_tree_root(&post_state);
         assert_eq!(
-            block.state_root, 
-            computed_state_root,
+            block.state_root, computed_state_root,
             "Block state root should match computed post-state root"
         );
-        
+
         // Verify it's not zero
         assert_ne!(
-            block.state_root, 
+            block.state_root,
             Bytes32(ssz::H256::zero()),
             "State root should not be zero"
         );

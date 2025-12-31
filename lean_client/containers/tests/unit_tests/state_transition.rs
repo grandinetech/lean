@@ -1,9 +1,9 @@
 // tests/state_transition.rs
 use containers::{
-    block::{Block, SignedBlockWithAttestation, BlockWithAttestation, hash_tree_root},
+    block::{hash_tree_root, Block, BlockWithAttestation, SignedBlockWithAttestation},
     state::State,
     types::{Bytes32, Uint64},
-    Slot, Attestation, BlockSignatures
+    Attestation, BlockSignatures, Slot,
 };
 use pretty_assertions::assert_eq;
 use rstest::fixture;
@@ -23,7 +23,8 @@ fn test_state_transition_full() {
     let state = genesis_state();
     let mut state_at_slot_1 = state.process_slots(Slot(1)).unwrap();
 
-    let signed_block_with_attestation = create_block(1, &mut state_at_slot_1.latest_block_header, None);
+    let signed_block_with_attestation =
+        create_block(1, &mut state_at_slot_1.latest_block_header, None);
     let block = signed_block_with_attestation.message.block.clone();
 
     // Use process_block_header + process_operations to avoid state root validation during setup
@@ -43,7 +44,9 @@ fn test_state_transition_full() {
         signature: signed_block_with_attestation.signature,
     };
 
-    let final_state = state.state_transition(final_signed_block_with_attestation, true).unwrap();
+    let final_state = state
+        .state_transition(final_signed_block_with_attestation, true)
+        .unwrap();
 
     assert_eq!(final_state, expected_state);
 }
@@ -53,7 +56,8 @@ fn test_state_transition_invalid_signatures() {
     let state = genesis_state();
     let mut state_at_slot_1 = state.process_slots(Slot(1)).unwrap();
 
-    let signed_block_with_attestation = create_block(1, &mut state_at_slot_1.latest_block_header, None);
+    let signed_block_with_attestation =
+        create_block(1, &mut state_at_slot_1.latest_block_header, None);
     let block = signed_block_with_attestation.message.block.clone();
 
     // Use process_block_header + process_operations to avoid state root validation during setup
@@ -83,7 +87,8 @@ fn test_state_transition_bad_state_root() {
     let state = genesis_state();
     let mut state_at_slot_1 = state.process_slots(Slot(1)).unwrap();
 
-    let signed_block_with_attestation = create_block(1, &mut state_at_slot_1.latest_block_header, None);
+    let signed_block_with_attestation =
+        create_block(1, &mut state_at_slot_1.latest_block_header, None);
     let mut block = signed_block_with_attestation.message.block.clone();
 
     block.state_root = Bytes32(ssz::H256::zero());

@@ -1,4 +1,6 @@
-use crate::{Attestation, Attestations, BlockSignatures, Bytes32, Signature, Slot, State, ValidatorIndex};
+use crate::{
+    Attestation, Attestations, BlockSignatures, Bytes32, Signature, Slot, State, ValidatorIndex,
+};
 use serde::{Deserialize, Serialize};
 use ssz_derive::Ssz;
 
@@ -123,7 +125,7 @@ impl SignedBlockWithAttestation {
         // 1. Block body attestations (from other validators)
         // 2. Proposer attestation (from the block producer)
         let mut all_attestations: Vec<Attestation> = Vec::new();
-        
+
         // Collect block body attestations
         let mut i: u64 = 0;
         loop {
@@ -133,7 +135,7 @@ impl SignedBlockWithAttestation {
             }
             i += 1;
         }
-        
+
         // Append proposer attestation
         all_attestations.push(self.message.proposer_attestation.clone());
 
@@ -193,49 +195,58 @@ impl SignedBlockWithAttestation {
             // - The validator possesses the secret key for their public key
             // - The attestation has not been tampered with
             // - The signature was created at the correct epoch (slot)
-            
+
             #[cfg(feature = "xmss-verify")]
             {
-                use leansig::signature::SignatureScheme;
                 use leansig::serialization::Serializable;
-                
+                use leansig::signature::SignatureScheme;
+
                 // Compute the message hash from the attestation
                 let message_bytes: [u8; 32] = hash_tree_root(attestation).0.into();
                 let epoch = attestation.data.slot.0 as u32;
-                
+
                 // Get public key bytes - use as_bytes() method
                 let pubkey_bytes = validator.pubkey.0.as_bytes();
-                
+
                 // Deserialize the public key using Serializable trait
                 type PubKey = <SIGTargetSumLifetime20W2NoOff as SignatureScheme>::PublicKey;
                 let pubkey = match PubKey::from_bytes(pubkey_bytes) {
                     Ok(pk) => pk,
                     Err(e) => {
-                        eprintln!("Failed to deserialize public key at slot {:?}: {:?}", attestation.data.slot, e);
+                        eprintln!(
+                            "Failed to deserialize public key at slot {:?}: {:?}",
+                            attestation.data.slot, e
+                        );
                         return false;
                     }
                 };
-                
+
                 // Get signature bytes - use as_bytes() method
                 let sig_bytes = signature.as_bytes();
-                
+
                 // Deserialize the signature using Serializable trait
                 type Sig = <SIGTargetSumLifetime20W2NoOff as SignatureScheme>::Signature;
                 let sig = match Sig::from_bytes(sig_bytes) {
                     Ok(s) => s,
                     Err(e) => {
-                        eprintln!("Failed to deserialize signature at slot {:?}: {:?}", attestation.data.slot, e);
+                        eprintln!(
+                            "Failed to deserialize signature at slot {:?}: {:?}",
+                            attestation.data.slot, e
+                        );
                         return false;
                     }
                 };
-                
+
                 // Verify the signature
                 if !SIGTargetSumLifetime20W2NoOff::verify(&pubkey, epoch, &message_bytes, &sig) {
-                    eprintln!("XMSS signature verification failed at slot {:?}", attestation.data.slot);
+                    eprintln!(
+                        "XMSS signature verification failed at slot {:?}",
+                        attestation.data.slot
+                    );
                     return false;
                 }
             }
-            
+
             #[cfg(not(feature = "xmss-verify"))]
             {
                 // Placeholder: XMSS verification disabled

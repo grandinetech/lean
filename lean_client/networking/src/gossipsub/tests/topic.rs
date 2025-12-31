@@ -1,6 +1,6 @@
 use crate::gossipsub::topic::{
-    get_topics, GossipsubKind, GossipsubTopic, ATTESTATION_TOPIC, BLOCK_TOPIC,
-    SSZ_SNAPPY_ENCODING_POSTFIX, TOPIC_PREFIX,
+    ATTESTATION_TOPIC, BLOCK_TOPIC, GossipsubKind, GossipsubTopic, SSZ_SNAPPY_ENCODING_POSTFIX,
+    TOPIC_PREFIX, get_topics,
 };
 use libp2p::gossipsub::TopicHash;
 

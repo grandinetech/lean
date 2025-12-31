@@ -4,9 +4,16 @@ pub struct BasisPoint(pub u64);
 impl BasisPoint {
     pub const MAX: u64 = 10_000;
     pub const fn new(value: u64) -> Option<Self> {
-        if value <= Self::MAX { Some(BasisPoint(value)) } else { None }
+        if value <= Self::MAX {
+            Some(BasisPoint(value))
+        } else {
+            None
+        }
     }
-    #[inline] pub fn get(&self) -> u64 { self.0 }
+    #[inline]
+    pub fn get(&self) -> u64 {
+        self.0
+    }
 }
 
 pub const INTERVALS_PER_SLOT: u64 = 4;
@@ -15,12 +22,24 @@ pub const SECONDS_PER_SLOT: u64 = SLOT_DURATION_MS / 1_000;
 pub const SECONDS_PER_INTERVAL: u64 = SECONDS_PER_SLOT / INTERVALS_PER_SLOT;
 pub const JUSTIFICATION_LOOKBACK_SLOTS: u64 = 3;
 
-pub const PROPOSER_REORG_CUTOFF_BPS: BasisPoint = match BasisPoint::new(2_500) { Some(x) => x, None => panic!() };
-pub const VOTE_DUE_BPS: BasisPoint          = match BasisPoint::new(5_000) { Some(x) => x, None => panic!() };
-pub const FAST_CONFIRM_DUE_BPS: BasisPoint  = match BasisPoint::new(7_500) { Some(x) => x, None => panic!() };
-pub const VIEW_FREEZE_CUTOFF_BPS: BasisPoint= match BasisPoint::new(7_500) { Some(x) => x, None => panic!() };
+pub const PROPOSER_REORG_CUTOFF_BPS: BasisPoint = match BasisPoint::new(2_500) {
+    Some(x) => x,
+    None => panic!(),
+};
+pub const VOTE_DUE_BPS: BasisPoint = match BasisPoint::new(5_000) {
+    Some(x) => x,
+    None => panic!(),
+};
+pub const FAST_CONFIRM_DUE_BPS: BasisPoint = match BasisPoint::new(7_500) {
+    Some(x) => x,
+    None => panic!(),
+};
+pub const VIEW_FREEZE_CUTOFF_BPS: BasisPoint = match BasisPoint::new(7_500) {
+    Some(x) => x,
+    None => panic!(),
+};
 
-pub const HISTORICAL_ROOTS_LIMIT: u64   = 1u64 << 18;
+pub const HISTORICAL_ROOTS_LIMIT: u64 = 1u64 << 18;
 pub const VALIDATOR_REGISTRY_LIMIT: u64 = 1u64 << 12;
 
 #[derive(Clone, Debug)]
@@ -51,7 +70,8 @@ pub const DEVNET_CONFIG: ChainConfig = ChainConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[test] fn time_math_is_consistent() {
+    #[test]
+    fn time_math_is_consistent() {
         assert_eq!(SLOT_DURATION_MS, 4_000);
         assert_eq!(SECONDS_PER_SLOT, 4);
         assert_eq!(SECONDS_PER_INTERVAL, 1);

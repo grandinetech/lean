@@ -1,16 +1,13 @@
 use crate::store::*;
 use containers::{
-    attestation::SignedAttestation,
-    block::SignedBlockWithAttestation,
-    Bytes32, ValidatorIndex,
+    attestation::SignedAttestation, block::SignedBlockWithAttestation, Bytes32, ValidatorIndex,
 };
 use ssz::SszHash;
 
 #[inline]
 pub fn on_tick(store: &mut Store, time: u64, has_proposal: bool) {
     // Calculate target time in intervals
-    let tick_interval_time =
-        time.saturating_sub(store.config.genesis_time) / SECONDS_PER_INTERVAL;
+    let tick_interval_time = time.saturating_sub(store.config.genesis_time) / SECONDS_PER_INTERVAL;
 
     // Tick forward one interval at a time
     while store.time < tick_interval_time {
@@ -55,9 +52,13 @@ pub fn on_attestation(
         if store
             .latest_known_attestations
             .get(&validator_id)
-            .map_or(true, |existing| existing.message.data.slot < attestation_slot)
+            .map_or(true, |existing| {
+                existing.message.data.slot < attestation_slot
+            })
         {
-            store.latest_known_attestations.insert(validator_id, signed_attestation.clone());
+            store
+                .latest_known_attestations
+                .insert(validator_id, signed_attestation.clone());
         }
 
         // Remove from new attestations if superseded
@@ -71,9 +72,13 @@ pub fn on_attestation(
         if store
             .latest_new_attestations
             .get(&validator_id)
-            .map_or(true, |existing| existing.message.data.slot < attestation_slot)
+            .map_or(true, |existing| {
+                existing.message.data.slot < attestation_slot
+            })
         {
-            store.latest_new_attestations.insert(validator_id, signed_attestation);
+            store
+                .latest_new_attestations
+                .insert(validator_id, signed_attestation);
         }
     }
     Ok(())
@@ -125,8 +130,7 @@ fn process_block_internal(
     };
 
     // Execute state transition to get post-state
-    let new_state =
-        state.state_transition_with_validation(signed_block.clone(), true, true)?;
+    let new_state = state.state_transition_with_validation(signed_block.clone(), true, true)?;
 
     // Store block and state
     store.blocks.insert(block_root, signed_block.clone());
