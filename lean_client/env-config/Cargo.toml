@@ -1,0 +1,12 @@
+[package]
+name = "env-config"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[features]
+devnet1 = []
+devnet2 = []
+
+[dependencies]

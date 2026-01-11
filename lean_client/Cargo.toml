@@ -1,5 +1,5 @@
 [workspace]
-members = ["chain", "containers", "fork_choice", "networking", "validator"]
+members = ["chain", "containers", "env-config", "fork_choice", "networking", "validator"]
 resolver = "2"
 
 [workspace.package]
@@ -14,7 +14,7 @@ containers = { path = "./containers" }
 fork_choice = { path = "./fork_choice" }
 networking = { path = "./networking" }
 validator = { path = "./validator" }
-libp2p = {version =  "0.56.0", default-features = false, features = [
+libp2p = { version = "0.56.0", default-features = false, features = [
     'dns',
     'gossipsub',
     'identify',
@@ -52,8 +52,10 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["xmss-signing"]
+default = ["devnet2", "xmss-signing"]
 xmss-signing = ["validator/xmss-signing"]
+devnet1 = ["containers/devnet1", "fork-choice/devnet1", "networking/devnet1", "validator/devnet1"]
+devnet2 = ["containers/devnet2", "fork-choice/devnet2", "networking/devnet2", "validator/devnet2"]
 
 [dependencies]
 chain = { path = "./chain" }
