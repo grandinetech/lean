@@ -157,17 +157,26 @@ impl AggregatedAttestation {
             })
             .collect()
     }
+}
 
-    pub fn to_plain(&self) -> Vec<Attestation> {
-        let validator_indices = self.aggregation_bits.to_validator_indices();
+/// Trait for checking duplicate attestation data.
+pub trait HasDuplicateData {
+    /// Returns true if the list contains duplicate AttestationData.
+    fn has_duplicate_data(&self) -> bool;
+}
 
-        validator_indices
-            .into_iter()
-            .map(|validator_id| Attestation {
-                validator_id: Uint64(validator_id),
-                data: self.data.clone(),
-            })
-            .collect()
+impl HasDuplicateData for AggregatedAttestations {
+    fn has_duplicate_data(&self) -> bool {
+        use ssz::SszHash;
+        use std::collections::HashSet;
+        let mut seen: HashSet<ssz::H256> = HashSet::new();
+        for attestation in self {
+            let root = attestation.data.hash_tree_root();
+            if !seen.insert(root) {
+                return true;
+            }
+        }
+        false
     }
 }
 

@@ -3,7 +3,7 @@ use containers::{
     block::{hash_tree_root, Block, BlockWithAttestation, SignedBlockWithAttestation},
     state::State,
     types::{Bytes32, Uint64},
-    Attestation, Attestations, Slot,
+    Attestation, Slot,
 };
 use pretty_assertions::assert_eq;
 use rstest::fixture;
@@ -31,21 +31,7 @@ fn test_state_transition_full() {
     // Use process_block_header + process_operations to avoid state root validation during setup
     let state_after_header = state_at_slot_1.process_block_header(&block).unwrap();
 
-    #[cfg(feature = "devnet1")]
     let expected_state = state_after_header.process_attestations(&block.body.attestations);
-
-    #[cfg(feature = "devnet2")]
-    let expected_state = {
-        let mut unaggregated_attestations = Attestations::default();
-        for aggregated_attestation in &block.body.attestations {
-            let plain_attestations = aggregated_attestation.to_plain();
-            // For each attestatio in the vector, push to the list
-            for attestation in plain_attestations {
-                unaggregated_attestations.push(attestation);
-            }
-        }
-        state_after_header.process_attestations(&unaggregated_attestations)
-    };
 
     let block_with_correct_root = Block {
         state_root: hash_tree_root(&expected_state),
@@ -79,21 +65,7 @@ fn test_state_transition_invalid_signatures() {
     // Use process_block_header + process_operations to avoid state root validation during setup
     let state_after_header = state_at_slot_1.process_block_header(&block).unwrap();
 
-    #[cfg(feature = "devnet1")]
     let expected_state = state_after_header.process_attestations(&block.body.attestations);
-
-    #[cfg(feature = "devnet2")]
-    let expected_state = {
-        let mut list = Attestations::default();
-        for aggregated_attestation in &block.body.attestations {
-            let plain_attestations = aggregated_attestation.to_plain();
-            // For each attestatio in the vector, push to the list
-            for attestation in plain_attestations {
-                list.push(attestation);
-            }
-        }
-        list
-    };
 
     let block_with_correct_root = Block {
         state_root: hash_tree_root(&expected_state),
@@ -152,21 +124,7 @@ fn test_state_transition_devnet2() {
     // Process the block header and attestations
     let state_after_header = state_at_slot_1.process_block_header(&block).unwrap();
 
-    #[cfg(feature = "devnet1")]
     let expected_state = state_after_header.process_attestations(&block.body.attestations);
-
-    #[cfg(feature = "devnet2")]
-    let expected_state = {
-        let mut unaggregated_attestations = Attestations::default();
-        for aggregated_attestation in &block.body.attestations {
-            let plain_attestations = aggregated_attestation.to_plain();
-            // For each attestatio in the vector, push to the list
-            for attestation in plain_attestations {
-                unaggregated_attestations.push(attestation);
-            }
-        }
-        state_after_header.process_attestations(&unaggregated_attestations)
-    };
     
     // Ensure the state root matches the expected state
     let block_with_correct_root = Block {
