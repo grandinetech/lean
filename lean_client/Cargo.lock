@@ -859,6 +859,7 @@ dependencies = [
 name = "containers"
 version = "0.1.0"
 dependencies = [
+ "env-config",
  "hex",
  "leansig",
  "pretty_assertions",
@@ -1400,6 +1401,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "env-config"
+version = "0.1.0"
+
+[[package]]
 name = "equivalent"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1412,7 +1417,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.1",
 ]
 
 [[package]]
@@ -1586,6 +1591,7 @@ name = "fork-choice"
 version = "0.1.0"
 dependencies = [
  "containers",
+ "env-config",
  "serde",
  "serde_json",
  "ssz",
@@ -2311,7 +2317,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4b0f83760fb341a774ed326568e19f5a863af4a952def8c39f9ab92fd95b88e5"
 dependencies = [
  "equivalent",
- "hashbrown 0.15.5",
+ "hashbrown 0.16.0",
  "serde",
  "serde_core",
 ]
@@ -3217,6 +3223,7 @@ dependencies = [
  "async-trait",
  "containers",
  "enr",
+ "env-config",
  "futures",
  "libp2p",
  "libp2p-identity 0.2.12",
@@ -3265,7 +3272,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.60.2",
+ "windows-sys 0.61.1",
 ]
 
 [[package]]
@@ -4268,7 +4275,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.1",
 ]
 
 [[package]]
@@ -4919,7 +4926,7 @@ dependencies = [
  "getrandom 0.3.3",
  "once_cell",
  "rustix",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.1",
 ]
 
 [[package]]
@@ -5340,6 +5347,7 @@ name = "validator"
 version = "0.1.0"
 dependencies = [
  "containers",
+ "env-config",
  "fork-choice",
  "leansig",
  "serde",

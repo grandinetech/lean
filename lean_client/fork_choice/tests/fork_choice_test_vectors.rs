@@ -4,7 +4,7 @@ use fork_choice::{
 };
 
 use containers::{
-    attestation::{Attestation, AttestationData, BlockSignatures, SignedAttestation, Signature},
+    attestation::{Attestation, AttestationData, SignedAttestation, Signature},
     block::{hash_tree_root, Block, BlockBody, BlockHeader, BlockWithAttestation, SignedBlockWithAttestation},
     checkpoint::Checkpoint,
     config::Config,
@@ -13,7 +13,7 @@ use containers::{
 };
 
 use serde::Deserialize;
-use ssz::SszHash;
+use ssz::{PersistentList, SszHash};
 use std::collections::HashMap;
 use std::panic::AssertUnwindSafe;
 
@@ -256,6 +256,7 @@ fn convert_test_attestation(test_att: &TestAttestation) -> Attestation {
     }
 }
 
+#[cfg(feature = "devnet1")]
 fn convert_test_anchor_block(test_block: &TestAnchorBlock) -> SignedBlockWithAttestation {
     let mut attestations = ssz::PersistentList::default();
 
@@ -299,10 +300,11 @@ fn convert_test_anchor_block(test_block: &TestAnchorBlock) -> SignedBlockWithAtt
             block,
             proposer_attestation,
         },
-        signature: BlockSignatures::default(),
+        signature: PersistentList::default(),
     }
 }
 
+#[cfg(feature = "devnet1")]
 fn convert_test_block(test_block_with_att: &TestBlockWithAttestation) -> SignedBlockWithAttestation {
     let test_block = &test_block_with_att.block;
     let mut attestations = ssz::PersistentList::default();
@@ -329,7 +331,7 @@ fn convert_test_block(test_block_with_att: &TestBlockWithAttestation) -> SignedB
             block,
             proposer_attestation,
         },
-        signature: BlockSignatures::default(),
+        signature: PersistentList::default(),
     }
 }
 
@@ -405,6 +407,7 @@ fn initialize_state_from_test(test_state: &TestAnchorState) -> State {
     }
 }
 
+#[cfg(feature = "devnet1")]
 fn verify_checks(
     store: &Store,
     checks: &Option<TestChecks>,
@@ -493,6 +496,7 @@ fn verify_checks(
     Ok(())
 }
 
+#[cfg(feature = "devnet1")]
 fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
     println!("  Running: {}", test.info.test_id);
 
@@ -624,6 +628,7 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
     Ok(())
 }
 
+#[cfg(feature = "devnet1")]
 fn run_test_vector_file(test_path: &str) -> Result<(), String> {
     let json_str = std::fs::read_to_string(test_path)
         .map_err(|e| format!("Failed to read file {}: {}", test_path, e))?;
@@ -639,6 +644,7 @@ fn run_test_vector_file(test_path: &str) -> Result<(), String> {
 }
 
 #[test]
+#[cfg(feature = "devnet1")]
 fn test_fork_choice_head_vectors() {
     let test_dir = "../tests/test_vectors/test_fork_choice/test_fork_choice_head";
 
@@ -682,6 +688,7 @@ fn test_fork_choice_head_vectors() {
 }
 
 #[test]
+#[cfg(feature = "devnet1")]
 fn test_attestation_processing_vectors() {
     let test_dir = "../tests/test_vectors/test_fork_choice/test_attestation_processing";
 
@@ -725,6 +732,7 @@ fn test_attestation_processing_vectors() {
 }
 
 #[test]
+#[cfg(feature = "devnet1")]
 fn test_fork_choice_reorgs_vectors() {
     let test_dir = "../tests/test_vectors/test_fork_choice/test_fork_choice_reorgs";
 
@@ -768,6 +776,7 @@ fn test_fork_choice_reorgs_vectors() {
 }
 
 #[test]
+#[cfg(feature = "devnet1")]
 fn test_attestation_target_selection_vectors() {
     let test_dir = "../tests/test_vectors/test_fork_choice/test_attestation_target_selection";
 
@@ -811,6 +820,7 @@ fn test_attestation_target_selection_vectors() {
 }
 
 #[test]
+#[cfg(feature = "devnet1")]
 fn test_lexicographic_tiebreaker_vectors() {
     let test_dir = "../tests/test_vectors/test_fork_choice/test_lexicographic_tiebreaker";
 
