@@ -56,6 +56,38 @@ impl MultisigAggregatedSignature {
     pub fn is_empty(&self) -> bool {
         self.proof.is_empty()
     }
+
+    /// Verify the aggregated signature proof against the given public keys and message.
+    /// This uses the lean-multisig zkVM to verify that the aggregated proof is valid
+    /// for all the given public keys signing the same message at the given epoch.
+    ///
+    /// `Ok(())` if the proof is valid, `Err` with the proof error otherwise.
+    #[cfg(feature = "xmss-verify")]
+    pub fn verify_aggregated_payload(
+        &self,
+        public_keys: &[lean_multisig::XmssPublicKey],
+        message: [lean_multisig::F; 8],
+        epoch: u64,
+    ) -> Result<(), lean_multisig::ProofError> {
+        lean_multisig::xmss_verify_aggregated_signatures(
+            public_keys,
+            message,
+            &self.proof,
+            epoch,
+        )
+    }
+
+    /// Stub verification when xmss-verify feature is disabled.
+    /// Always returns Ok(()) for testing without cryptographic verification.
+    #[cfg(not(feature = "xmss-verify"))]
+    pub fn verify_aggregated_payload<P, M>(
+        &self,
+        _public_keys: &[P],
+        _message: M,
+        _epoch: u64,
+    ) -> Result<(), ()> {
+        Ok(())
+    }
 }
 
 /// Bitlist representing validator participation in an attestation.
