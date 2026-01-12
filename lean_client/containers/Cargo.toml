@@ -5,10 +5,9 @@ edition = "2021"
 
 [features]
 xmss-verify = ["leansig"]
-multisig = ["dep:lean-multisig"]
 default = []
 devnet1 = ["env-config/devnet1"]
-devnet2 = ["env-config/devnet2"]
+devnet2 = ["env-config/devnet2", "dep:lean-multisig"]
 
 [lib]
 name = "containers"

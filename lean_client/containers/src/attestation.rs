@@ -31,6 +31,33 @@ pub type AttestationSignatures = ssz::PersistentList<NaiveAggregatedSignature, U
 #[cfg(feature = "devnet2")]
 pub type NaiveAggregatedSignature = ssz::PersistentList<Signature, U4096>;
 
+/// Aggregated signature proof from lean-multisig zkVM.
+/// This wraps the serialized proof bytes from `xmss_aggregate_signatures()`.
+#[cfg(feature = "devnet2")]
+#[derive(Clone, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct MultisigAggregatedSignature {
+    /// The serialized zkVM proof bytes from lean-multisig aggregation.
+    pub proof: Vec<u8>,
+}
+
+#[cfg(feature = "devnet2")]
+impl MultisigAggregatedSignature {
+    /// Create a new MultisigAggregatedSignature from proof bytes.
+    pub fn new(proof: Vec<u8>) -> Self {
+        Self { proof }
+    }
+
+    /// Get the proof bytes.
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.proof
+    }
+
+    /// Check if the signature is empty (no proof).
+    pub fn is_empty(&self) -> bool {
+        self.proof.is_empty()
+    }
+}
+
 /// Bitlist representing validator participation in an attestation.
 /// Limit is VALIDATOR_REGISTRY_LIMIT (4096).
 #[derive(Clone, Debug, PartialEq, Eq, Default, Ssz, Serialize, Deserialize)]
