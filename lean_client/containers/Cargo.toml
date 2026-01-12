@@ -5,6 +5,7 @@ edition = "2021"
 
 [features]
 xmss-verify = ["leansig"]
+multisig = ["dep:lean-multisig"]
 default = []
 devnet1 = ["env-config/devnet1"]
 devnet2 = ["env-config/devnet2"]
@@ -24,6 +25,7 @@ serde_yaml = "0.9"
 hex = "0.4.3"
 sha2 = "0.10"
 leansig = { git = "https://github.com/leanEthereum/leanSig", branch = "main", optional = true }
+lean-multisig = { git = "https://github.com/leanEthereum/leanMultisig", branch = "main", optional = true }
 
 [dev-dependencies]
 rstest = "0.18"
