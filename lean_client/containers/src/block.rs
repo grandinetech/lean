@@ -216,6 +216,9 @@ impl SignedBlockWithAttestation {
         true
     }
 
+
+    /// Currently uses naive per-signature verification. In a future update,
+    /// this will use `MultisigAggregatedSignature::verify_aggregated_payload()`
     #[cfg(feature = "devnet2")]
     pub fn verify_signatures(&self, parent_state: State) -> bool {
         // Unpack the signed block components
@@ -228,13 +231,16 @@ impl SignedBlockWithAttestation {
         assert_eq!(
             aggregated_attestations.len_u64(),
             attestation_signatures.len_u64(),
-            "Number of signatures does not match number of attestations"
+            "Attestation signature groups must align with block body attestations"
         );
 
         let validators = &parent_state.validators;
         let num_validators = validators.len_u64();
 
-        // Verify each attestation signature
+        // Verify each aggregated attestation's signatures
+        //
+        // TODO: Replace with MultisigAggregatedSignature::verify_aggregated_payload()
+        // once AttestationSignatures type is updated to use zkVM proofs.
         for (aggregated_attestation, aggregated_signature) in (&aggregated_attestations)
             .into_iter()
             .zip((&attestation_signatures).into_iter())
@@ -249,24 +255,22 @@ impl SignedBlockWithAttestation {
                 "Aggregated attestation signature count mismatch"
             );
 
-            let attestation_root = aggregated_attestation.data.hash_tree_root();
-
-            // Loop through zipped validator IDs and their corresponding signatures
-            // Verify each individual signature within the aggregated attestation
-            for (validator_id, signature) in
-                validator_ids.iter().zip(aggregated_signature.into_iter())
-            {
-                // Ensure validator exists in the active set
+            // Ensure all validators exist in the active set
+            for validator_id in &validator_ids {
                 assert!(
                     *validator_id < num_validators,
                     "Validator index out of range"
                 );
+            }
 
+            let attestation_root: [u8; 32] =
+                hash_tree_root(&aggregated_attestation.data).0.into();
+
+            // Verify each individual signature within the aggregated attestation
+            for (validator_id, signature) in
+                validator_ids.iter().zip(aggregated_signature.into_iter())
+            {
                 let validator = validators.get(*validator_id).expect("validator must exist");
-
-                // Get the actual payload root for the attestation data
-                let attestation_root: [u8; 32] =
-                    hash_tree_root(&aggregated_attestation.data).0.into();
 
                 // Verify the XMSS signature
                 assert!(
@@ -279,31 +283,31 @@ impl SignedBlockWithAttestation {
                     "Attestation signature verification failed"
                 );
             }
-
-            // Verify the proposer attestation signature
-            let proposer_attestation = self.message.proposer_attestation.clone();
-            let proposer_signature = signatures.proposer_signature;
-
-            assert!(
-                proposer_attestation.validator_id.0 < num_validators,
-                "Proposer index out of range"
-            );
-
-            let proposer = validators
-                .get(proposer_attestation.validator_id.0)
-                .expect("proposer must exist");
-
-            let proposer_root: [u8; 32] = hash_tree_root(&proposer_attestation).0.into();
-            assert!(
-                verify_xmss_signature(
-                    proposer.pubkey.0.as_bytes(),
-                    proposer_attestation.data.slot,
-                    &proposer_root,
-                    &proposer_signature,
-                ),
-                "Proposer attestation signature verification failed"
-            );
         }
+
+        // Verify the proposer attestation signature (outside the attestation loop)
+        let proposer_attestation = &self.message.proposer_attestation;
+        let proposer_signature = &signatures.proposer_signature;
+
+        assert!(
+            proposer_attestation.validator_id.0 < num_validators,
+            "Proposer index out of range"
+        );
+
+        let proposer = validators
+            .get(proposer_attestation.validator_id.0)
+            .expect("proposer must exist");
+
+        let proposer_root: [u8; 32] = hash_tree_root(proposer_attestation).0.into();
+        assert!(
+            verify_xmss_signature(
+                proposer.pubkey.0.as_bytes(),
+                proposer_attestation.data.slot,
+                &proposer_root,
+                proposer_signature,
+            ),
+            "Proposer attestation signature verification failed"
+        );
 
         true
     }
