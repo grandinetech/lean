@@ -6,7 +6,7 @@ edition = "2021"
 [features]
 default = []
 devnet1 = ["containers/devnet1", "env-config/devnet1"]
-devnet2 = ["containers/devnet2", "env-config/devnet1"]
+devnet2 = ["containers/devnet2", "env-config/devnet2"]
 
 [dependencies]
 env-config = { path = "../env-config", default-features = false }
