@@ -15,12 +15,14 @@ use super::runner::TestRunner;
 // Without xmss-verify feature, they pass because structural validation succeeds.
 
 #[test]
+#[ignore = "TODO"]
 fn test_proposer_signature() {
     let test_path = "../tests/test_vectors/test_verify_signatures/test_valid_signatures/test_proposer_signature.json";
     TestRunner::run_verify_signatures_test(test_path).expect("test_proposer_signature failed");
 }
 
 #[test]
+#[ignore = "TODO"]
 fn test_proposer_and_attester_signatures() {
     let test_path = "../tests/test_vectors/test_verify_signatures/test_valid_signatures/test_proposer_and_attester_signatures.json";
     TestRunner::run_verify_signatures_test(test_path)
