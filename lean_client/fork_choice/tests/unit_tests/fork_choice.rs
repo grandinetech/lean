@@ -1,12 +1,13 @@
 use super::common::create_test_store;
 use fork_choice::store::{get_proposal_head, get_vote_target};
 use containers::Slot;
+use containers::types::Uint64; 
+use containers::ssz::SszHash;
 
 #[test]
 fn test_get_proposal_head_basic() {
     let mut store = create_test_store();
     let head = get_proposal_head(&mut store, Slot(0));
-    
     assert_eq!(head, store.head);
 }
 
@@ -14,34 +15,27 @@ fn test_get_proposal_head_basic() {
 fn test_get_proposal_head_advances_time() {
     let mut store = create_test_store();
     let initial_time = store.time;
-    
     get_proposal_head(&mut store, Slot(5));
-    
     assert!(store.time >= initial_time);
 }
 
 #[test]
 fn test_get_vote_target_chain() {
-    use containers::{
-        block::{Block, BlockBody, BlockWithAttestation, SignedBlockWithAttestation},
-        Bytes32, ValidatorIndex,
-    };
-    use ssz::SszHash;
+    use containers::block::{Block, BlockBody, BlockWithAttestation, SignedBlockWithAttestation};
 
     let mut store = create_test_store();
     let mut parent_root = store.head;
 
-    // Create a chain of 10 blocks
     for i in 1..=10 {
         let block = Block {
             slot: Slot(i),
-            proposer_index: ValidatorIndex(0),
+            proposer_index: 0, 
             parent_root,
-            state_root: Bytes32::default(),
+            state_root: containers::ssz::H256::zero(), 
             body: BlockBody::default(),
         };
 
-        let block_root = Bytes32(block.hash_tree_root());
+        let block_root = block.hash_tree_root(); 
 
         let signed_block = SignedBlockWithAttestation {
             message: BlockWithAttestation {
@@ -56,11 +50,6 @@ fn test_get_vote_target_chain() {
     }
 
     store.head = parent_root;
-
-    // With head at 10 and safe_target at 0:
-    // 1. Walk back 3 slots from head -> 7
-    // 2. Walk back until justifiable from finalized (0) -> 6
     let target = get_vote_target(&store);
-
     assert_eq!(target.slot, Slot(6));
 }

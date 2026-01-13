@@ -1,5 +1,5 @@
 use super::*;
-use containers::block::hash_tree_root;
+use containers::ssz::SszHash;
 use std::fs;
 use std::path::Path;
 
@@ -29,7 +29,7 @@ impl TestRunner {
                 let state_after_slots = state.process_slots(block.slot)?;
 
                 // Compute the parent root from our current latest_block_header
-                let computed_parent_root = hash_tree_root(&state_after_slots.latest_block_header);
+                let computed_parent_root = state_after_slots.latest_block_header.hash_tree_root().into();
 
                 // Verify the block's parent_root matches what we computed
                 if block.parent_root != computed_parent_root {
@@ -51,7 +51,7 @@ impl TestRunner {
                         state = new_state;
 
                         // Compute the state root after processing
-                        let computed_state_root = hash_tree_root(&state);
+                        let computed_state_root = state.hash_tree_root().into();
 
                         // Verify the computed state_root matches the expected one from the vector
                         if block.state_root != computed_state_root {
@@ -130,7 +130,7 @@ impl TestRunner {
                 let state_after_slots = state.process_slots(block.slot)?;
                 
                 // Compute the parent root from our current latest_block_header
-                let computed_parent_root = hash_tree_root(&state_after_slots.latest_block_header);
+                let computed_parent_root = state_after_slots.latest_block_header.hash_tree_root().into();
                 
                 // Verify the block's parent_root matches what we computed
                 if block.parent_root != computed_parent_root {
@@ -152,7 +152,7 @@ impl TestRunner {
                         state = new_state;
                         
                         // Compute the state root after processing
-                        let computed_state_root = hash_tree_root(&state);
+                        let computed_state_root = state.hash_tree_root().into();
                         
                         // Verify the computed state_root matches the expected one from the vector
                         if block.state_root != computed_state_root {
@@ -237,7 +237,7 @@ impl TestRunner {
             let state_after_slots = state.process_slots(block.slot)?;
             
             // Compute the parent root from our current latest_block_header
-            let computed_parent_root = hash_tree_root(&state_after_slots.latest_block_header);
+            let computed_parent_root = state_after_slots.latest_block_header.hash_tree_root().into();
             
             // Verify the block's parent_root matches what we computed
             if block.parent_root != computed_parent_root {
@@ -258,7 +258,7 @@ impl TestRunner {
                     state = new_state;
                     
                     // Compute the state root after processing
-                    let computed_state_root = hash_tree_root(&state);
+                    let computed_state_root = state.hash_tree_root().into();
                     
                     // Verify the computed state_root matches the expected one from the vector
                     if block.state_root != computed_state_root {
@@ -346,7 +346,7 @@ impl TestRunner {
                 let state_after_slots = state.process_slots(block.slot)?;
                 
                 // Compute the parent root from our current latest_block_header
-                let computed_parent_root = hash_tree_root(&state_after_slots.latest_block_header);
+                let computed_parent_root = state_after_slots.latest_block_header.hash_tree_root().into();
                 
                 // Verify the block's parent_root matches what we computed
                 if block.parent_root != computed_parent_root {
@@ -376,7 +376,7 @@ impl TestRunner {
                         state = new_state;
                         
                         // Compute the state root after processing
-                        let computed_state_root = hash_tree_root(&state);
+                        let computed_state_root = state.hash_tree_root().into();
                         
                         // Verify the computed state_root matches the expected one from the block
                         if block.state_root != computed_state_root {
@@ -483,7 +483,7 @@ impl TestRunner {
                 match result {
                     Ok(new_state) => {
                         // Block processing succeeded, now validate state root
-                        let computed_state_root = hash_tree_root(&new_state);
+                        let computed_state_root = new_state.hash_tree_root().into();
                         
                         if block.state_root != computed_state_root {
                             error_occurred = true;

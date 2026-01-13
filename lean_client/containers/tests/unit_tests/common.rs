@@ -1,10 +1,18 @@
-use containers::{Attestation, Attestations, BlockWithAttestation, Config, SignedBlockWithAttestation, block::{Block, BlockBody, BlockHeader, hash_tree_root}, checkpoint::Checkpoint, slot::Slot, state::State, types::{Bytes32, ValidatorIndex}, Validators, AggregatedAttestation, Signature};
-use ssz::{PersistentList};
+use containers::{
+    Attestation, Attestations, BlockWithAttestation, Config, SignedBlockWithAttestation, 
+    block::{Block, BlockBody, BlockHeader, BlockSignatures}, 
+    checkpoint::Checkpoint, 
+    slot::Slot, 
+    state::State, 
+    types::{Uint64, ValidatorIndex, Bytes32}, 
+    Validators, AggregatedAttestation, Signature,
+    ssz::SszHash
+};
+use ssz::PersistentList;
 use typenum::U4096;
-use containers::block::BlockSignatures;
 
 pub const DEVNET_CONFIG_VALIDATOR_REGISTRY_LIMIT: usize = 1 << 12; // 4096
-pub const TEST_VALIDATOR_COUNT: usize = 4; // Actual validator count used in tests
+pub const TEST_VALIDATOR_COUNT: usize = 4; 
 
 // Compile-time assertion: ensure test validator count does not exceed the registry limit.
 const _: [(); DEVNET_CONFIG_VALIDATOR_REGISTRY_LIMIT - TEST_VALIDATOR_COUNT] =
@@ -46,9 +54,9 @@ pub fn create_block(slot: u64, parent_header: &mut BlockHeader, attestations: Op
 
     let block_message = Block {
         slot: Slot(slot),
-        proposer_index: ValidatorIndex(slot % 10),
-        parent_root: hash_tree_root(parent_header),
-        state_root: Bytes32(ssz::H256::zero()),
+        proposer_index: slot % 10,
+        parent_root: parent_header.hash_tree_root(),
+        state_root: ssz::H256::zero(),
         body: body,
     };
 
@@ -90,16 +98,16 @@ pub fn create_attestations(indices: &[usize]) -> Vec<bool> {
 pub fn sample_block_header() -> BlockHeader {
     BlockHeader {
         slot: Slot(0),
-        proposer_index: ValidatorIndex(0),
-        parent_root: Bytes32(ssz::H256::zero()),
-        state_root: Bytes32(ssz::H256::zero()),
-        body_root: Bytes32(ssz::H256::zero()),
+        proposer_index: 0,
+        parent_root: ssz::H256::zero(),
+        state_root: ssz::H256::zero(),
+        body_root: ssz::H256::zero(),
     }
 }
 
 pub fn sample_checkpoint() -> Checkpoint {
     Checkpoint {
-        root: Bytes32(ssz::H256::zero()),
+        root: ssz::H256::zero(),
         slot: Slot(0),
     }
 }
@@ -109,14 +117,13 @@ pub fn base_state(config: Config) -> State {
 }
 
 pub fn base_state_with_validators(config: Config, num_validators: usize) -> State {
-    use containers::{HistoricalBlockHashes, JustificationRoots, JustifiedSlots, JustificationsValidators, validator::Validator, Uint64};
+    use containers::{HistoricalBlockHashes, JustificationRoots, JustifiedSlots, JustificationsValidators, validator::Validator};
     
-    // Create validators list with the specified number of validators
     let mut validators = Validators::default();
     for i in 0..num_validators {
         let validator = Validator {
             pubkey: Default::default(),
-            index: Uint64(i as u64),
+            index: i as u64, 
         };
         validators.push(validator).expect("within limit");
     }

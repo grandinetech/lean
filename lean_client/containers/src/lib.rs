@@ -23,7 +23,7 @@ pub use state::State;
 pub use status::Status;
 pub use types::{
     Bytes32, HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots, Validators,
-    Uint64, ValidatorIndex,
+    ValidatorIndex,
 };
 
 pub use types::Bytes32 as Root;

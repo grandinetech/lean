@@ -65,7 +65,7 @@ impl LeanCodec {
             LeanRequest::BlocksByRoot(roots) => {
                 let mut bytes = Vec::new();
                 for root in roots {
-                    bytes.extend_from_slice(root.0.as_bytes());
+                    bytes.extend_from_slice(root.as_bytes());
                 }
                 bytes
             }
@@ -90,7 +90,7 @@ impl LeanCodec {
                 if chunk.len() == 32 {
                     let mut root = [0u8; 32];
                     root.copy_from_slice(chunk);
-                    roots.push(Bytes32(containers::ssz::H256::from(root)));
+                    roots.push(containers::ssz::H256::from(root));
                 }
             }
             if roots.len() > MAX_REQUEST_BLOCKS {

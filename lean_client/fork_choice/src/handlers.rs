@@ -1,6 +1,6 @@
 use crate::store::*;
 use containers::{
-    attestation::SignedAttestation, block::SignedBlockWithAttestation, Bytes32, ValidatorIndex,
+    attestation::SignedAttestation, block::SignedBlockWithAttestation, Bytes32,
 };
 use ssz::SszHash;
 
@@ -26,7 +26,7 @@ pub fn on_attestation(
     is_from_block: bool,
 ) -> Result<(), String> {
     #[cfg(feature = "devnet1")]
-    let validator_id = ValidatorIndex(signed_attestation.message.validator_id.0);
+    let validator_id = signed_attestation.message.validator_id.0;
     #[cfg(feature = "devnet1")]
     let attestation_slot = signed_attestation.message.data.slot;
     #[cfg(feature = "devnet1")]
@@ -36,7 +36,7 @@ pub fn on_attestation(
 
 
     #[cfg(feature = "devnet2")]
-    let validator_id = ValidatorIndex(signed_attestation.validator_id);
+    let validator_id = signed_attestation.validator_id;
     #[cfg(feature = "devnet2")]
     let attestation_slot = signed_attestation.message.slot;
     #[cfg(feature = "devnet2")]
@@ -132,7 +132,7 @@ pub fn on_attestation(
 }
 
 pub fn on_block(store: &mut Store, signed_block: SignedBlockWithAttestation) -> Result<(), String> {
-    let block_root = Bytes32(signed_block.message.block.hash_tree_root());
+    let block_root = signed_block.message.block.hash_tree_root();
 
     if store.blocks.contains_key(&block_root) {
         return Ok(());
@@ -140,7 +140,7 @@ pub fn on_block(store: &mut Store, signed_block: SignedBlockWithAttestation) -> 
 
     let parent_root = signed_block.message.block.parent_root;
 
-    if !store.states.contains_key(&parent_root) && !parent_root.0.is_zero() {
+    if !store.states.contains_key(&parent_root) && !parent_root.is_zero() {
         store
             .blocks_queue
             .entry(parent_root)
@@ -148,7 +148,7 @@ pub fn on_block(store: &mut Store, signed_block: SignedBlockWithAttestation) -> 
             .push(signed_block);
         return Err(format!(
             "Err: (Fork-choice::Handlers::OnBlock) Block queued: parent {:?} not yet available (pending: {} blocks)",
-            &parent_root.0.as_bytes()[..4],
+            &parent_root[..4],
             store.blocks_queue.values().map(|v| v.len()).sum::<usize>()
         ));
     }
@@ -259,7 +259,7 @@ fn process_block_internal(
                     SignedAttestation {
                         validator_id,
                         message: aggregated_attestation.data.clone(),
-                        signature: *signature,
+                        signature: signature.clone(),
                     },
                     true,
                 )?;
@@ -270,7 +270,7 @@ fn process_block_internal(
         update_head(store);
 
         let proposer_signed_attestation = SignedAttestation {
-            validator_id: proposer_attestation.validator_id.0,
+            validator_id: proposer_attestation.validator_id,
             message: proposer_attestation.data.clone(),
             signature: signed_block.signature.proposer_signature,
         };
@@ -287,7 +287,7 @@ fn process_pending_blocks(store: &mut Store, mut roots: Vec<Bytes32>) {
     while let Some(parent_root) = roots.pop() {
         if let Some(purgatory) = store.blocks_queue.remove(&parent_root) {
             for block in purgatory {
-                let block_origins = Bytes32(block.message.block.hash_tree_root());
+                let block_origins = block.message.block.hash_tree_root();
                 if let Ok(()) = process_block_internal(store, block, block_origins) {
                     roots.push(block_origins);
                 }

@@ -1,13 +1,11 @@
-use crate::{Attestation, Attestations, Bytes32, Signature, Slot, State, ValidatorIndex};
+use crate::{Attestation, Bytes32, Signature, Slot, State, ValidatorIndex};
 use serde::{Deserialize, Serialize};
 use ssz_derive::Ssz;
 
 #[cfg(feature = "xmss-verify")]
 use leansig::signature::generalized_xmss::instantiations_poseidon::lifetime_2_to_the_20::target_sum::SIGTargetSumLifetime20W2NoOff;
-use ssz::{PersistentList, SszHash};
-use typenum::U4096;
+use ssz::SszHash;
 use crate::attestation::{AggregatedAttestations, AttestationSignatures};
-use crate::validator::BlsPublicKey;
 
 /// The body of a block, containing payload data.
 ///
@@ -79,12 +77,6 @@ pub struct SignedBlockWithAttestation {
 pub struct SignedBlock {
     pub message: Block,
     pub signature: Signature,
-}
-
-/// Compute the SSZ hash tree root for any type implementing `SszHash`.
-pub fn hash_tree_root<T: ssz::SszHash>(value: &T) -> Bytes32 {
-    let h = value.hash_tree_root();
-    Bytes32(h)
 }
 
 impl SignedBlockWithAttestation {
@@ -185,12 +177,12 @@ impl SignedBlockWithAttestation {
         for (attestation, signature) in all_attestations.iter().zip(signatures_vec.iter()) {
             // Ensure validator exists in the active set
             assert!(
-                attestation.validator_id.0 < num_validators,
+                attestation.validator_id < num_validators,
                 "Validator index out of range"
             );
 
             let validator = validators
-                .get(attestation.validator_id.0)
+                .get(attestation.validator_id)
                 .expect("validator must exist");
 
             // Verify the XMSS signature
@@ -200,7 +192,7 @@ impl SignedBlockWithAttestation {
             // - The attestation has not been tampered with
             // - The signature was created at the correct epoch (slot)
 
-            let message_bytes: [u8; 32] = hash_tree_root(attestation).0.into();
+            let message_bytes: [u8; 32] = attestation.hash_tree_root().into();
 
             assert!(
                 verify_xmss_signature(
@@ -249,8 +241,6 @@ impl SignedBlockWithAttestation {
                 "Aggregated attestation signature count mismatch"
             );
 
-            let attestation_root = aggregated_attestation.data.hash_tree_root();
-
             // Loop through zipped validator IDs and their corresponding signatures
             // Verify each individual signature within the aggregated attestation
             for (validator_id, signature) in
@@ -266,7 +256,7 @@ impl SignedBlockWithAttestation {
 
                 // Get the actual payload root for the attestation data
                 let attestation_root: [u8; 32] =
-                    hash_tree_root(&aggregated_attestation.data).0.into();
+                    aggregated_attestation.data.hash_tree_root().into();
 
                 // Verify the XMSS signature
                 assert!(
@@ -282,18 +272,18 @@ impl SignedBlockWithAttestation {
 
             // Verify the proposer attestation signature
             let proposer_attestation = self.message.proposer_attestation.clone();
-            let proposer_signature = signatures.proposer_signature;
+            let proposer_signature = signatures.proposer_signature.clone();
 
             assert!(
-                proposer_attestation.validator_id.0 < num_validators,
+                proposer_attestation.validator_id < num_validators,
                 "Proposer index out of range"
             );
 
             let proposer = validators
-                .get(proposer_attestation.validator_id.0)
+                .get(proposer_attestation.validator_id)
                 .expect("proposer must exist");
 
-            let proposer_root: [u8; 32] = hash_tree_root(&proposer_attestation).0.into();
+            let proposer_root: [u8; 32] = proposer_attestation.hash_tree_root().into();
             assert!(
                 verify_xmss_signature(
                     proposer.pubkey.0.as_bytes(),
@@ -328,7 +318,7 @@ pub fn verify_xmss_signature(
     };
 
     type Sig = <SIGTargetSumLifetime20W2NoOff as SignatureScheme>::Signature;
-    let sig = match Sig::from_bytes(signature.as_bytes()) {
+    let sig = match Sig::from_bytes(signature.0.as_bytes()) {
         Ok(s) => s,
         Err(_) => return false,
     };

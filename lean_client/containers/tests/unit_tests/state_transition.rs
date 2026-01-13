@@ -1,6 +1,6 @@
 // tests/state_transition.rs
 use containers::{
-    block::{hash_tree_root, Block, BlockWithAttestation, SignedBlockWithAttestation},
+    block::{Block, BlockWithAttestation, SignedBlockWithAttestation},
     state::State,
     types::{Bytes32, Uint64},
     Attestation, Attestations, Slot,
@@ -8,6 +8,7 @@ use containers::{
 use pretty_assertions::assert_eq;
 use rstest::fixture;
 use ssz::PersistentList;
+use containers::ssz::SszHash;
 
 #[path = "common.rs"]
 mod common;
@@ -16,7 +17,7 @@ use common::{create_block, sample_config};
 #[fixture]
 fn genesis_state() -> State {
     let config = sample_config();
-    State::generate_genesis(Uint64(config.genesis_time), Uint64(4))
+    State::generate_genesis(config.genesis_time, 4)
 }
 
 #[test]
@@ -48,7 +49,7 @@ fn test_state_transition_full() {
     };
 
     let block_with_correct_root = Block {
-        state_root: hash_tree_root(&expected_state),
+        state_root: expected_state.hash_tree_root(),
         ..block
     };
 
@@ -96,7 +97,7 @@ fn test_state_transition_invalid_signatures() {
     };
 
     let block_with_correct_root = Block {
-        state_root: hash_tree_root(&expected_state),
+        state_root: expected_state.hash_tree_root(),
         ..block
     };
 
@@ -123,7 +124,7 @@ fn test_state_transition_bad_state_root() {
         create_block(1, &mut state_at_slot_1.latest_block_header, None);
     let mut block = signed_block_with_attestation.message.block.clone();
 
-    block.state_root = Bytes32(ssz::H256::zero());
+    block.state_root = ssz::H256::zero();
 
     let final_signed_block_with_attestation = SignedBlockWithAttestation {
         message: BlockWithAttestation {
@@ -170,7 +171,7 @@ fn test_state_transition_devnet2() {
     
     // Ensure the state root matches the expected state
     let block_with_correct_root = Block {
-        state_root: hash_tree_root(&expected_state),
+        state_root: expected_state.hash_tree_root(),
         ..block
     };
 

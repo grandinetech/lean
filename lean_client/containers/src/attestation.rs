@@ -1,20 +1,37 @@
-use crate::{Checkpoint, Slot, Uint64};
+use crate::{Checkpoint, Slot};
 use serde::{Deserialize, Serialize};
 use ssz::BitList;
 use ssz::ByteVector;
 use ssz_derive::Ssz;
-use typenum::{Prod, Sum, U100, U12, U31};
-
-pub type U3100 = Prod<U31, U100>;
+use typenum::{Prod, Sum, U100, U12, U31, U4096};
 
 // Type-level number for 3112 bytes
-pub type U3112 = Sum<U3100, U12>;
+pub type U3112 = Sum<Prod<U31, U100>, U12>;
 
 // Type alias for Signature
-pub type Signature = ByteVector<U3112>;
+#[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
+pub struct Signature(pub ByteVector<U3112>);
+
+impl Signature {
+    pub fn verify(&self) -> bool {
+        true
+    }
+
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
+}
+
+impl TryFrom<&[u8]> for Signature {
+    type Error = String;
+    fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
+        ByteVector::<U3112>::try_from(bytes)
+            .map(Signature)
+            .map_err(|e| format!("{:?}", e))
+    }
+}
 
 // Type-level number for 4096 (validator registry limit)
-use typenum::U4096;
 
 /// List of validator attestations included in a block (without signatures).
 /// Limit is VALIDATOR_REGISTRY_LIMIT (4096).
@@ -103,7 +120,7 @@ pub struct AttestationData {
 #[serde(rename_all = "camelCase")]
 pub struct Attestation {
     /// The index of the validator making the attestation.
-    pub validator_id: Uint64,
+    pub validator_id: u64,
     /// The attestation data produced by the validator.
     pub data: AttestationData,
 }
@@ -142,10 +159,10 @@ impl AggregatedAttestation {
                 .iter_mut()
                 .find(|(data, _)| *data == attestation.data)
             {
-                validator_ids.push(attestation.validator_id.0);
+                validator_ids.push(attestation.validator_id);
             } else {
                 // Create a new group
-                groups.push((attestation.data.clone(), vec![attestation.validator_id.0]));
+                groups.push((attestation.data.clone(), vec![attestation.validator_id]));
             }
         }
 
@@ -164,7 +181,7 @@ impl AggregatedAttestation {
         validator_indices
             .into_iter()
             .map(|validator_id| Attestation {
-                validator_id: Uint64(validator_id),
+                validator_id,
                 data: self.data.clone(),
             })
             .collect()

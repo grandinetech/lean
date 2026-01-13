@@ -1,41 +1,8 @@
-use hex::FromHex;
-use serde::{Deserialize, Serialize};
 use ssz::H256;
-use ssz_derive::Ssz;
-use std::fmt;
-use std::hash::Hash;
-use std::str::FromStr;
 
-#[derive(
-    Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Ssz, Default, Serialize, Deserialize,
-)]
-#[ssz(transparent)]
-pub struct Bytes32(pub H256);
-
-#[derive(
-    Clone, Hash, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Ssz, Default, Serialize, Deserialize,
-)]
-#[ssz(transparent)]
-pub struct Uint64(pub u64);
-
-#[derive(Clone, Hash, Copy, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
-#[ssz(transparent)]
-pub struct ValidatorIndex(pub u64);
-
-impl FromStr for Bytes32 {
-    type Err = hex::FromHexError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bytes: [u8; 32] = <[u8; 32]>::from_hex(s)?;
-        Ok(Bytes32(H256::from(bytes)))
-    }
-}
-
-impl fmt::Display for Bytes32 {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", hex::encode(self.0.as_bytes()))
-    }
-}
+pub type Bytes32 = H256;
+pub type Uint64 = u64;
+pub type ValidatorIndex = u64;
 
 // Type-level constants for SSZ collection limits
 use typenum::{Prod, U4, U1000, U4096, U262144, U1073741824};

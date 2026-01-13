@@ -8,7 +8,6 @@ use containers::{
     config::Config,
     ssz,
     state::State,
-    types::{Bytes32, Uint64, ValidatorIndex},
     Signature, Slot,
 };
 use fork_choice::{
@@ -73,9 +72,9 @@ fn print_chain_status(store: &Store, connected_peers: u64) {
         (head_root, parent_root, state_root)
     } else {
         (
-            Bytes32(ssz::H256::zero()),
-            Bytes32(ssz::H256::zero()),
-            Bytes32(ssz::H256::zero()),
+            ssz::H256::zero(),
+            ssz::H256::zero(),
+            ssz::H256::zero(),
         )
     };
 
@@ -93,9 +92,9 @@ fn print_chain_status(store: &Store, connected_peers: u64) {
     println!("+---------------------------------------------------------------+");
     println!("  Connected Peers:    {}", connected_peers);
     println!("+---------------------------------------------------------------+");
-    println!("  Head Block Root:    0x{:x}", head_root.0);
-    println!("  Parent Block Root:  0x{:x}", parent_root.0);
-    println!("  State Root:         0x{:x}", state_root.0);
+    println!("  Head Block Root:    0x{}", hex::encode(head_root));
+    println!("  Parent Block Root:  0x{:x}", parent_root);
+    println!("  State Root:         0x{}", hex::encode(state_root));
     println!(
         "  Timely:             {}",
         if timely { "YES" } else { "NO" }
@@ -103,11 +102,11 @@ fn print_chain_status(store: &Store, connected_peers: u64) {
     println!("+---------------------------------------------------------------+");
     println!(
         "  Latest Justified:   Slot {:>5} | Root: 0x{:x}",
-        justified.slot.0, justified.root.0
+        justified.slot.0, justified.root
     );
     println!(
-        "  Latest Finalized:   Slot {:>5} | Root: 0x{:x}",
-        finalized.slot.0, finalized.root.0
+        "  Latest Finalized:   Slot {:>5} | Root: 0x{}",
+        finalized.slot.0, hex::encode(finalized.root)
     );
     println!("+===============================================================+\n");
 }
@@ -168,7 +167,7 @@ async fn main() {
                     .expect("Invalid genesis validator pubkey");
                 containers::validator::Validator {
                     pubkey,
-                    index: Uint64(i as u64),
+                    index: i as u64,
                 }
             })
             .collect();
@@ -179,38 +178,38 @@ async fn main() {
         let validators = (0..num_validators)
             .map(|i| containers::validator::Validator {
                 pubkey: containers::validator::BlsPublicKey::default(),
-                index: Uint64(i as u64),
+                index: i as u64,
             })
             .collect();
         (1763757427, validators)
     };
 
-    let genesis_state = State::generate_genesis_with_validators(Uint64(genesis_time), validators);
+    let genesis_state = State::generate_genesis_with_validators(genesis_time, validators);
 
     let genesis_block = Block {
         slot: Slot(0),
-        proposer_index: ValidatorIndex(0),
-        parent_root: Bytes32(ssz::H256::zero()),
-        state_root: Bytes32(genesis_state.hash_tree_root()),
+        proposer_index: 0,
+        parent_root: ssz::H256::zero(),
+        state_root: genesis_state.hash_tree_root(),
         body: BlockBody {
             attestations: Default::default(),
         },
     };
 
     let genesis_proposer_attestation = Attestation {
-        validator_id: Uint64(0),
+        validator_id: 0,
         data: AttestationData {
             slot: Slot(0),
             head: Checkpoint {
-                root: Bytes32(ssz::H256::zero()),
+                root: ssz::H256::zero(),
                 slot: Slot(0),
             },
             target: Checkpoint {
-                root: Bytes32(ssz::H256::zero()),
+                root: ssz::H256::zero(),
                 slot: Slot(0),
             },
             source: Checkpoint {
-                root: Bytes32(ssz::H256::zero()),
+                root: ssz::H256::zero(),
                 slot: Slot(0),
             },
         },
@@ -389,16 +388,16 @@ async fn main() {
                                     if let Some(proposer_idx) = vs.get_proposer_for_slot(Slot(current_slot)) {
                                         info!(
                                             slot = current_slot,
-                                            proposer = proposer_idx.0,
+                                            proposer = proposer_idx,
                                             "Our turn to propose block!"
                                         );
 
                                         match vs.build_block_proposal(&mut store, Slot(current_slot), proposer_idx) {
                                             Ok(signed_block) => {
-                                                let block_root = Bytes32(signed_block.message.block.hash_tree_root());
+                                                let block_root = signed_block.message.block.hash_tree_root();
                                                 info!(
                                                     slot = current_slot,
-                                                    block_root = %format!("0x{:x}", block_root.0),
+                                                    block_root = %format!("0x{}", hex::encode(block_root)),
                                                     "Built block, processing and gossiping"
                                                 );
 
@@ -498,13 +497,13 @@ async fn main() {
                             ..
                         } => {
                             let block_slot = signed_block_with_attestation.message.block.slot.0;
-                            let proposer = signed_block_with_attestation.message.block.proposer_index.0;
-                            let block_root = Bytes32(signed_block_with_attestation.message.block.hash_tree_root());
+                            let proposer = signed_block_with_attestation.message.block.proposer_index;
+                            let block_root = signed_block_with_attestation.message.block.hash_tree_root();
                             let parent_root = signed_block_with_attestation.message.block.parent_root;
 
                             info!(
                                 slot = block_slot,
-                                block_root = %format!("0x{:x}", block_root.0),
+                                block_root = %format!("0x{}", hex::encode(block_root)),
                                 "Processing block built by Validator {}",
                                 proposer
                             );
@@ -534,13 +533,13 @@ async fn main() {
                                     debug!("Block queued, requesting missing parent: {}", e);
 
                                     // Request missing parent block from peers
-                                    if !parent_root.0.is_zero() {
+                                    if !parent_root.is_zero() {
                                         if let Err(req_err) = outbound_p2p_sender.send(
                                             OutboundP2pRequest::RequestBlocksByRoot(vec![parent_root])
                                         ) {
                                             warn!("Failed to request missing parent block: {}", req_err);
                                         } else {
-                                            debug!("Requested missing parent block: 0x{:x}", parent_root.0);
+                                            debug!("Requested missing parent block: 0x{:x}", parent_root);
                                         }
                                     }
                                 }

@@ -1,15 +1,19 @@
 use crate::validator::Validator;
-use crate::{block::{hash_tree_root, Block, BlockBody, BlockHeader, SignedBlockWithAttestation}, Attestation, Attestations, Bytes32, Checkpoint, Config, Signature, SignedAttestation, Slot, Uint64, ValidatorIndex};
+use crate::{
+    block::{Block, BlockBody, BlockHeader, SignedBlockWithAttestation}, 
+    Attestation, Attestations, Bytes32, Checkpoint, Config, 
+    SignedAttestation, Slot, ValidatorIndex
+};
+use crate::types::Uint64;
 use crate::{
     HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots, Validators,
 };
 use serde::{Deserialize, Serialize};
-use ssz::{PersistentList as List, PersistentList};
+use ssz::PersistentList as List;
 use ssz_derive::Ssz;
 use std::collections::BTreeMap;
-use typenum::U4096;
-use crate::attestation::AggregatedAttestations;
 use crate::block::BlockSignatures;
+use crate::ssz::SszHash;
 
 pub const VALIDATOR_REGISTRY_LIMIT: usize = 1 << 12; // 4096
 pub const JUSTIFICATION_ROOTS_LIMIT: usize = 1 << 18; // 262144
@@ -58,10 +62,10 @@ impl State {
         };
         let genesis_header = BlockHeader {
             slot: Slot(0),
-            proposer_index: ValidatorIndex(0),
-            parent_root: Bytes32(ssz::H256::zero()),
-            state_root: Bytes32(ssz::H256::zero()),
-            body_root: hash_tree_root(&body_for_root),
+            proposer_index: 0,
+            parent_root: ssz::H256::zero(),
+            state_root: ssz::H256::zero(),
+            body_root: body_for_root.hash_tree_root(),
         };
 
         let mut validator_list = List::default();
@@ -71,16 +75,16 @@ impl State {
 
         Self {
             config: Config {
-                genesis_time: genesis_time.0,
+                genesis_time,
             },
             slot: Slot(0),
             latest_block_header: genesis_header,
             latest_justified: Checkpoint {
-                root: Bytes32(ssz::H256::zero()),
+                root: ssz::H256::zero(),
                 slot: Slot(0),
             },
             latest_finalized: Checkpoint {
-                root: Bytes32(ssz::H256::zero()),
+                root: ssz::H256::zero(),
                 slot: Slot(0),
             },
             historical_block_hashes: HistoricalBlockHashes::default(),
@@ -97,34 +101,34 @@ impl State {
         };
         let header = BlockHeader {
             slot: Slot(0),
-            proposer_index: ValidatorIndex(0),
-            parent_root: Bytes32(ssz::H256::zero()),
-            state_root: Bytes32(ssz::H256::zero()),
-            body_root: hash_tree_root(&body_for_root),
+            proposer_index: 0,
+            parent_root: ssz::H256::zero(),
+            state_root: ssz::H256::zero(),
+            body_root: body_for_root.hash_tree_root(),
         };
 
         //TEMP: Create validators list with dummy validators
         let mut validators = List::default();
-        for i in 0..num_validators.0 {
-            let validator = Validator {
-                pubkey: crate::validator::BlsPublicKey::default(),
-                index: Uint64(i),
-            };
+        for i in 0..num_validators {
+        let validator = Validator {
+            pubkey: crate::validator::BlsPublicKey::default(),
+            index: i,
+        };
             validators.push(validator).expect("Failed to add validator");
         }
 
         Self {
             config: Config {
-                genesis_time: genesis_time.0,
+                genesis_time,
             },
             slot: Slot(0),
             latest_block_header: header,
             latest_justified: Checkpoint {
-                root: Bytes32(ssz::H256::zero()),
+                root: ssz::H256::zero(),
                 slot: Slot(0),
             },
             latest_finalized: Checkpoint {
-                root: Bytes32(ssz::H256::zero()),
+                root: ssz::H256::zero(),
                 slot: Slot(0),
             },
             historical_block_hashes: HistoricalBlockHashes::default(),
@@ -142,7 +146,7 @@ impl State {
         if num_validators == 0 {
             return false; // No validators
         }
-        (self.slot.0 % num_validators) == (index.0 % num_validators)
+        (self.slot.0 % num_validators) == (index % num_validators)
     }
 
     /// Get the number of validators (since PersistentList doesn't have len())
@@ -252,7 +256,7 @@ impl State {
 
         if validate_state_root {
             let state_for_hash = state.clone();
-            let state_root = hash_tree_root(&state_for_hash);
+            let state_root = state_for_hash.hash_tree_root();
             if block.state_root != state_root {
                 return Err("Invalid block state root".to_string());
             }
@@ -279,9 +283,9 @@ impl State {
     pub fn process_slot(&self) -> Self {
         // Cache the state root in the header if not already set (matches leanSpec)
         // Per spec: leanSpec/src/lean_spec/subspecs/containers/state/state.py lines 173-176
-        if self.latest_block_header.state_root == Bytes32(ssz::H256::zero()) {
+        if self.latest_block_header.state_root == ssz::H256::zero() {
             let state_for_hash = self.clone();
-            let previous_state_root = hash_tree_root(&state_for_hash);
+            let previous_state_root = self.hash_tree_root();
 
             let mut new_header = self.latest_block_header.clone();
             new_header.state_root = previous_state_root;
@@ -329,7 +333,7 @@ impl State {
 
         // Create a mutable clone for hash computation
         let latest_header_for_hash = self.latest_block_header.clone();
-        let parent_root = hash_tree_root(&latest_header_for_hash);
+        let parent_root = latest_header_for_hash.hash_tree_root();
         if block.parent_root != parent_root {
             return Err(String::from("Block parent root mismatch"));
         }
@@ -366,19 +370,19 @@ impl State {
         // Add empty slots to historical hashes
         for _ in 0..num_empty_slots {
             new_historical_hashes
-                .push(Bytes32(ssz::H256::zero()))
+                .push(ssz::H256::zero())
                 .expect("within limit");
         }
 
         let body_for_hash = block.body.clone();
-        let body_root = hash_tree_root(&body_for_hash);
+        let body_root = body_for_hash.hash_tree_root();
 
         let new_latest_block_header = BlockHeader {
             slot: block.slot,
             proposer_index: block.proposer_index,
             parent_root: block.parent_root,
             body_root,
-            state_root: Bytes32(ssz::H256::zero()),
+            state_root: ssz::H256::zero(),
         };
 
         let mut new_latest_justified = self.latest_justified.clone();
@@ -485,7 +489,7 @@ impl State {
                 justifications.insert(target_root, vec![false; num_validators]);
             }
 
-            let validator_id = attestation.validator_id.0 as usize;
+            let validator_id = attestation.validator_id as usize;
             if let Some(votes) = justifications.get_mut(&target_root) {
                 if validator_id < votes.len() && !votes[validator_id] {
                     votes[validator_id] = true;
@@ -594,7 +598,7 @@ impl State {
                 slot,
                 proposer_index,
                 parent_root,
-                state_root: Bytes32(ssz::H256::zero()),
+                state_root: ssz::H256::zero(),
                 body: BlockBody {
                     attestations: attestations_list,
                 },
@@ -610,7 +614,7 @@ impl State {
                     slot,
                     proposer_index,
                     parent_root,
-                    state_root: hash_tree_root(&post_state),
+                    state_root: post_state.hash_tree_root(),
                     body: candidate_block.body,
                 };
                 return Ok((final_block, post_state, attestations, signatures));
@@ -663,7 +667,7 @@ impl State {
                     slot,
                     proposer_index,
                     parent_root,
-                    state_root: hash_tree_root(&post_state),
+                    state_root: post_state.hash_tree_root(),
                     body: candidate_block.body,
                 };
                 return Ok((final_block, post_state, attestations, signatures));
@@ -698,12 +702,12 @@ mod tests {
     use super::*;
     #[test]
     fn proposer_round_robin() {
-        let st = State::generate_genesis(Uint64(0), Uint64(4));
+        let st = State::generate_genesis(0, 4);
         assert!(State {
             config: st.config.clone(),
             ..st.clone()
         }
-            .is_proposer(ValidatorIndex(0)));
+        .is_proposer(0));
     }
 
     #[test]
@@ -721,19 +725,19 @@ mod tests {
         };
         let block = Block {
             slot: Slot(1),
-            proposer_index: ValidatorIndex(0),
-            parent_root: Bytes32(ssz::H256::zero()),
-            state_root: Bytes32(ssz::H256::zero()),
+            proposer_index: 0,
+            parent_root: ssz::H256::zero(),
+            state_root: ssz::H256::zero(),
             body,
         };
 
-        let root = hash_tree_root(&block);
-        assert_ne!(root, Bytes32(ssz::H256::zero()));
+        let root = block.hash_tree_root();
+        assert_ne!(root, ssz::H256::zero());
     }
 
     #[test]
     fn test_process_slots() {
-        let genesis_state = State::generate_genesis(Uint64(0), Uint64(10));
+        let genesis_state = State::generate_genesis(0, 10);
         let target_slot = Slot(5);
 
         let new_state = genesis_state.process_slots(target_slot).unwrap();
@@ -742,7 +746,7 @@ mod tests {
         let genesis_state_for_hash = genesis_state.clone(); //this is sooooo bad
         assert_eq!(
             new_state.latest_block_header.state_root,
-            hash_tree_root(&genesis_state_for_hash)
+            genesis_state_for_hash.hash_tree_root()
         );
     }
 
@@ -750,16 +754,16 @@ mod tests {
     #[cfg(feature = "devnet1")]
     fn test_build_block() {
         // Create genesis state with validators
-        let genesis_state = State::generate_genesis(Uint64(0), Uint64(4));
+        let genesis_state = State::generate_genesis(0, 4);
 
         // Compute expected parent root after slot processing
         let pre_state = genesis_state.process_slots(Slot(1)).unwrap();
-        let expected_parent_root = hash_tree_root(&pre_state.latest_block_header);
+        let expected_parent_root = pre_state.latest_block_header.hash_tree_root();
 
         // Test 1: Build a simple block without attestations
         let result = genesis_state.build_block(
             Slot(1),
-            ValidatorIndex(1),
+            1,
             expected_parent_root,
             None,
             None,
@@ -771,11 +775,11 @@ mod tests {
 
         // Verify block properties
         assert_eq!(block.slot, Slot(1));
-        assert_eq!(block.proposer_index, ValidatorIndex(1));
+        assert_eq!(block.proposer_index, 1);
         assert_eq!(block.parent_root, expected_parent_root);
         assert_ne!(
             block.state_root,
-            Bytes32(ssz::H256::zero()),
+            ssz::H256::zero(),
             "State root should be computed"
         );
 
@@ -795,7 +799,7 @@ mod tests {
 
         // Test 2: Build block with initial attestations
         let attestation = Attestation {
-            validator_id: Uint64(0),
+            validator_id: 0,
             data: crate::AttestationData {
                 slot: Slot(1),
                 head: Checkpoint {
@@ -815,7 +819,7 @@ mod tests {
 
         let result = genesis_state.build_block(
             Slot(1),
-            ValidatorIndex(1),
+            1,
             expected_parent_root,
             Some(vec![attestation.clone()]),
             None,
@@ -830,7 +834,7 @@ mod tests {
 
         // Verify attestation was included
         assert_eq!(attestations.len(), 1);
-        assert_eq!(attestations[0].validator_id, Uint64(0));
+        assert_eq!(attestations[0].validator_id, 0);
         // Check that attestation list has one element
         assert!(
             block.body.attestations.get(0).is_ok(),
@@ -846,16 +850,16 @@ mod tests {
     #[cfg(feature = "devnet1")]
     fn test_build_block_advances_state() {
         // Create genesis state
-        let genesis_state = State::generate_genesis(Uint64(0), Uint64(10));
+        let genesis_state = State::generate_genesis(0, 10);
 
         // Compute parent root after advancing to target slot
         let pre_state = genesis_state.process_slots(Slot(5)).unwrap();
-        let parent_root = hash_tree_root(&pre_state.latest_block_header);
+        let parent_root = pre_state.latest_block_header.hash_tree_root();
 
         // Build block at slot 5
         // Proposer for slot 5 with 10 validators is (5 % 10) = 5
         let result =
-            genesis_state.build_block(Slot(5), ValidatorIndex(5), parent_root, None, None, None);
+            genesis_state.build_block(Slot(5), 5, parent_root, None, None, None);
 
         assert!(result.is_ok());
         let (block, post_state, _, _) = result.unwrap();
@@ -887,22 +891,22 @@ mod tests {
     #[cfg(feature = "devnet1")]
     fn test_build_block_state_root_matches() {
         // Create genesis state
-        let genesis_state = State::generate_genesis(Uint64(0), Uint64(3));
+        let genesis_state = State::generate_genesis(0, 3);
 
         // Compute parent root after advancing to target slot
         let pre_state = genesis_state.process_slots(Slot(1)).unwrap();
-        let parent_root = hash_tree_root(&pre_state.latest_block_header);
+        let parent_root = pre_state.latest_block_header.hash_tree_root();
 
         // Build a block
         // Proposer for slot 1 with 3 validators is (1 % 3) = 1
         let result =
-            genesis_state.build_block(Slot(1), ValidatorIndex(1), parent_root, None, None, None);
+            genesis_state.build_block(Slot(1), 1, parent_root, None, None, None);
 
         assert!(result.is_ok());
         let (block, post_state, _, _) = result.unwrap();
 
         // Verify the state root in block matches the computed post-state
-        let computed_state_root = hash_tree_root(&post_state);
+        let computed_state_root = post_state.hash_tree_root();
         assert_eq!(
             block.state_root, computed_state_root,
             "Block state root should match computed post-state root"
@@ -911,7 +915,7 @@ mod tests {
         // Verify it's not zero
         assert_ne!(
             block.state_root,
-            Bytes32(ssz::H256::zero()),
+            ssz::H256::zero(),
             "State root should not be zero"
         );
     }

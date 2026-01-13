@@ -80,5 +80,5 @@ impl BlsPublicKey {
 pub struct Validator {
     pub pubkey: BlsPublicKey,
     #[serde(default)]
-    pub index: crate::Uint64,
+    pub index: u64,
 }

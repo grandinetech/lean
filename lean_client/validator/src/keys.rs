@@ -100,7 +100,7 @@ impl KeyManager {
                 std::ptr::copy_nonoverlapping(sig_bytes.as_ptr(), dest, 3112);
             }
 
-            Ok(byte_vec)
+            Ok(Signature(byte_vec))
         }
 
         #[cfg(not(feature = "xmss-signing"))]
