@@ -311,7 +311,7 @@ where
                         }
                     }
                     Ok(GossipsubMessage::Attestation(signed_attestation)) => {
-                        #[cfg(feature = "devnet1")]
+                        #[cfg(not(feature = "devnet2"))]
                         let slot = signed_attestation.message.data.slot.0;
                         #[cfg(feature = "devnet2")]
                         let slot = signed_attestation.message.slot.0;
@@ -524,7 +524,7 @@ where
                 }
             }
             OutboundP2pRequest::GossipAttestation(signed_attestation) => {
-                #[cfg(feature = "devnet1")]
+                #[cfg(not(feature = "devnet2"))]
                 let slot = signed_attestation.message.data.slot.0;
                 #[cfg(feature = "devnet2")]
                 let slot = signed_attestation.message.slot.0;

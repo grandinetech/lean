@@ -17,7 +17,7 @@ use crate::validator::BlsPublicKey;
 pub struct BlockBody {
     #[cfg(feature = "devnet2")]
     pub attestations: AggregatedAttestations,
-    #[cfg(feature = "devnet1")]
+    #[cfg(not(feature = "devnet2"))]
     #[serde(with = "crate::serde_helpers")]
     pub attestations: Attestations,
 }
@@ -67,7 +67,7 @@ pub struct SignedBlockWithAttestation {
     /// Aggregated signature payload for the block.
     ///
     /// Signatures remain in attestation order followed by the proposer signature.
-    #[cfg(feature = "devnet1")]
+    #[cfg(not(feature = "devnet2"))]
     #[serde(with = "crate::serde_helpers::block_signatures")]
     pub signature: PersistentList<Signature, U4096>,
     #[cfg(feature = "devnet2")]
@@ -128,7 +128,7 @@ impl SignedBlockWithAttestation {
     ///
     /// - Spec: <https://github.com/leanEthereum/leanSpec/blob/main/src/lean_spec/subspecs/containers/block/block.py#L35>
     /// - XMSS Library: <https://github.com/leanEthereum/leanSig>
-    #[cfg(feature = "devnet1")]
+    #[cfg(not(feature = "devnet2"))]
     pub fn verify_signatures(&self, parent_state: State) -> bool {
         // Unpack the signed block components
         let block = &self.message.block;
@@ -217,8 +217,9 @@ impl SignedBlockWithAttestation {
     }
 
 
-    /// Currently uses naive per-signature verification. In a future update,
-    /// this will use `MultisigAggregatedSignature::verify_aggregated_payload()`
+    /// Verifies all attestation signatures using lean-multisig aggregated proofs.
+    /// Each attestation has a single `MultisigAggregatedSignature` proof that covers
+    /// all participating validators.
     #[cfg(feature = "devnet2")]
     pub fn verify_signatures(&self, parent_state: State) -> bool {
         // Unpack the signed block components
@@ -237,10 +238,7 @@ impl SignedBlockWithAttestation {
         let validators = &parent_state.validators;
         let num_validators = validators.len_u64();
 
-        // Verify each aggregated attestation's signatures
-        //
-        // TODO: Replace with MultisigAggregatedSignature::verify_aggregated_payload()
-        // once AttestationSignatures type is updated to use zkVM proofs.
+        // Verify each aggregated attestation's zkVM proof
         for (aggregated_attestation, aggregated_signature) in (&aggregated_attestations)
             .into_iter()
             .zip((&attestation_signatures).into_iter())
@@ -248,12 +246,6 @@ impl SignedBlockWithAttestation {
             let validator_ids = aggregated_attestation
                 .aggregation_bits
                 .to_validator_indices();
-
-            assert_eq!(
-                aggregated_signature.len_u64(),
-                validator_ids.len() as u64,
-                "Aggregated attestation signature count mismatch"
-            );
 
             // Ensure all validators exist in the active set
             for validator_id in &validator_ids {
@@ -263,26 +255,23 @@ impl SignedBlockWithAttestation {
                 );
             }
 
-            let attestation_root: [u8; 32] =
+            let attestation_data_root: [u8; 32] =
                 hash_tree_root(&aggregated_attestation.data).0.into();
 
-            // Verify each individual signature within the aggregated attestation
-            for (validator_id, signature) in
-                validator_ids.iter().zip(aggregated_signature.into_iter())
-            {
-                let validator = validators.get(*validator_id).expect("validator must exist");
-
-                // Verify the XMSS signature
-                assert!(
-                    verify_xmss_signature(
-                        validator.pubkey.0.as_bytes(),
-                        aggregated_attestation.data.slot,
-                        &attestation_root,
-                        signature,
-                    ),
-                    "Attestation signature verification failed"
-                );
-            }
+            // Verify the lean-multisig aggregated proof for this attestation
+            //
+            // The proof verifies that all validators in aggregation_bits signed
+            // the same attestation_data_root at the given epoch (slot).
+            aggregated_signature
+                .verify_aggregated_payload(
+                    &validator_ids
+                        .iter()
+                        .map(|vid| validators.get(*vid).expect("validator must exist"))
+                        .collect::<Vec<_>>(),
+                    &attestation_data_root,
+                    aggregated_attestation.data.slot.0,
+                )
+                .expect("Attestation aggregated signature verification failed");
         }
 
         // Verify the proposer attestation signature (outside the attestation loop)

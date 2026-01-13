@@ -25,13 +25,13 @@ pub fn on_attestation(
     signed_attestation: SignedAttestation,
     is_from_block: bool,
 ) -> Result<(), String> {
-    #[cfg(feature = "devnet1")]
+    #[cfg(not(feature = "devnet2"))]
     let validator_id = ValidatorIndex(signed_attestation.message.validator_id.0);
-    #[cfg(feature = "devnet1")]
+    #[cfg(not(feature = "devnet2"))]
     let attestation_slot = signed_attestation.message.data.slot;
-    #[cfg(feature = "devnet1")]
+    #[cfg(not(feature = "devnet2"))]
     let source_slot = signed_attestation.message.data.source.slot;
-    #[cfg(feature = "devnet1")]
+    #[cfg(not(feature = "devnet2"))]
     let target_slot = signed_attestation.message.data.target.slot;
 
 
@@ -63,7 +63,7 @@ pub fn on_attestation(
 
     if is_from_block {
         // On-chain attestation processing - immediately becomes "known"
-        #[cfg(feature = "devnet1")]
+        #[cfg(not(feature = "devnet2"))]
         if store
             .latest_known_attestations
             .get(&validator_id)
@@ -91,7 +91,7 @@ pub fn on_attestation(
 
         // Remove from new attestations if superseded
         if let Some(existing_new) = store.latest_new_attestations.get(&validator_id) {
-            #[cfg(feature = "devnet1")]
+            #[cfg(not(feature = "devnet2"))]
             if existing_new.message.data.slot <= attestation_slot {
                 store.latest_new_attestations.remove(&validator_id);
             }
@@ -102,7 +102,7 @@ pub fn on_attestation(
         }
     } else {
         // Network gossip attestation processing - goes to "new" stage
-        #[cfg(feature = "devnet1")]
+        #[cfg(not(feature = "devnet2"))]
         if store
             .latest_new_attestations
             .get(&validator_id)
@@ -194,7 +194,7 @@ fn process_block_internal(
     let attestations = &signed_block.message.block.body.attestations;
     let signatures = &signed_block.signature;
 
-    #[cfg(feature = "devnet1")]
+    #[cfg(not(feature = "devnet2"))]
     {
         for i in 0.. {
             match (attestations.get(i), signatures.get(i)) {
@@ -238,13 +238,11 @@ fn process_block_internal(
     #[cfg(feature = "devnet2")]
     {
         let aggregated_attestations = &signed_block.message.block.body.attestations;
-        let attestation_signatures = &signed_block.signature.attestation_signatures;
         let proposer_attestation = &signed_block.message.proposer_attestation;
 
-        for (aggregated_attestation, aggregated_signature) in aggregated_attestations
-            .into_iter()
-            .zip(attestation_signatures)
-        {
+        // Process each aggregated attestation's validators for fork choice
+        // Note: Signature verification is done in verify_signatures() before on_block()
+        for aggregated_attestation in aggregated_attestations.into_iter() {
             let validator_ids: Vec<u64> = aggregated_attestation
                 .aggregation_bits.0
                 .iter()
@@ -253,13 +251,15 @@ fn process_block_internal(
                 .map(|(index, _)| index as u64)
                 .collect();
 
-            for (validator_id, signature) in validator_ids.into_iter().zip(aggregated_signature) {
+            // Each validator in the aggregation votes for this attestation data
+            for validator_id in validator_ids {
                 on_attestation(
                     store,
                     SignedAttestation {
                         validator_id,
                         message: aggregated_attestation.data.clone(),
-                        signature: *signature,
+                        // Use a default signature since verification already happened
+                        signature: containers::Signature::default(),
                     },
                     true,
                 )?;

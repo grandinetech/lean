@@ -3,7 +3,10 @@ use serde::{Deserialize, Serialize};
 use ssz::BitList;
 use ssz::ByteVector;
 use ssz_derive::Ssz;
-use typenum::{Prod, Sum, U100, U12, U31};
+use typenum::{Prod, Sum, U100, U12, U31, U1024};
+
+// Type-level number for 1 MiB (1048576 = 1024 * 1024)
+pub type U1048576 = Prod<U1024, U1024>;
 
 pub type U3100 = Prod<U31, U100>;
 
@@ -22,39 +25,46 @@ pub type Attestations = ssz::PersistentList<Attestation, U4096>;
 
 pub type AggregatedAttestations = ssz::PersistentList<AggregatedAttestation, U4096>;
 
-#[cfg(feature = "devnet1")]
+#[cfg(not(feature = "devnet2"))]
 pub type AttestationSignatures = ssz::PersistentList<SignedAttestation, U4096>;
 
 #[cfg(feature = "devnet2")]
-pub type AttestationSignatures = ssz::PersistentList<NaiveAggregatedSignature, U4096>;
+pub type AttestationSignatures = ssz::PersistentList<MultisigAggregatedSignature, U4096>;
 
+/// Legacy naive aggregated signature type (list of individual XMSS signatures).
+/// Kept for backwards compatibility but no longer used in wire format.
 #[cfg(feature = "devnet2")]
 pub type NaiveAggregatedSignature = ssz::PersistentList<Signature, U4096>;
 
 /// Aggregated signature proof from lean-multisig zkVM.
-/// This wraps the serialized proof bytes from `xmss_aggregate_signatures()`.
+/// 
+/// This is a variable-length byte list (up to 1 MiB) containing the serialized
+/// proof bytes from `xmss_aggregate_signatures()`. The `#[ssz(transparent)]`
+/// attribute makes this type serialize directly as a ByteList for SSZ wire format.
 #[cfg(feature = "devnet2")]
-#[derive(Clone, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
-pub struct MultisigAggregatedSignature {
+#[derive(Clone, Debug, PartialEq, Eq, Default, Ssz, Serialize, Deserialize)]
+#[ssz(transparent)]
+pub struct MultisigAggregatedSignature(
     /// The serialized zkVM proof bytes from lean-multisig aggregation.
-    pub proof: Vec<u8>,
-}
+    #[serde(with = "crate::serde_helpers::byte_list")]
+    pub ssz::ByteList<U1048576>,
+);
 
 #[cfg(feature = "devnet2")]
 impl MultisigAggregatedSignature {
     /// Create a new MultisigAggregatedSignature from proof bytes.
     pub fn new(proof: Vec<u8>) -> Self {
-        Self { proof }
+        Self(ssz::ByteList::try_from(proof).expect("proof exceeds 1 MiB limit"))
     }
 
     /// Get the proof bytes.
     pub fn as_bytes(&self) -> &[u8] {
-        &self.proof
+        self.0.as_bytes()
     }
 
     /// Check if the signature is empty (no proof).
     pub fn is_empty(&self) -> bool {
-        self.proof.is_empty()
+        self.0.as_bytes().is_empty()
     }
 
     /// Verify the aggregated signature proof against the given public keys and message.
@@ -72,7 +82,7 @@ impl MultisigAggregatedSignature {
         lean_multisig::xmss_verify_aggregated_signatures(
             public_keys,
             message,
-            &self.proof,
+            self.0.as_bytes(),
             epoch,
         )
     }
@@ -174,7 +184,7 @@ pub struct SignedAttestation {
     pub validator_id: u64,
     #[cfg(feature = "devnet2")]
     pub message: AttestationData,
-    #[cfg(feature = "devnet1")]
+    #[cfg(not(feature = "devnet2"))]
     pub message: Attestation,
     pub signature: Signature,
 }

@@ -392,7 +392,7 @@ impl State {
         })
     }
 
-    #[cfg(feature = "devnet1")]
+    #[cfg(not(feature = "devnet2"))]
     pub fn process_attestations(&self, attestations: &Attestations) -> Self {
         let mut justifications = self.get_justifications();
         let mut latest_justified = self.latest_justified.clone();
@@ -570,7 +570,7 @@ impl State {
     /// # Returns
     ///
     /// Tuple of (Block, post-State, collected attestations, signatures)
-    #[cfg(feature = "devnet1")]
+    #[cfg(not(feature = "devnet2"))]
     pub fn build_block(
         &self,
         slot: Slot,

@@ -85,7 +85,7 @@ pub fn get_fork_choice_head(
 
     // stage 1: accumulate weights by walking up from each attestation's head
     for attestation in latest_attestations.values() {
-        #[cfg(feature = "devnet1")]
+        #[cfg(not(feature = "devnet2"))]
         let mut curr = attestation.message.data.head.root;
         #[cfg(feature = "devnet2")]
         let mut curr = attestation.message.head.root;

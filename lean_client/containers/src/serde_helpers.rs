@@ -249,7 +249,7 @@ pub mod block_signatures {
         Signature::try_from(bytes.as_slice()).map_err(|_| "Failed to create signature".to_string())
     }
 
-    #[cfg(feature = "devnet1")]
+    #[cfg(not(feature = "devnet2"))]
     pub fn deserialize<'de, D>(
         deserializer: D,
     ) -> Result<PersistentList<Signature, U4096>, D::Error>
@@ -284,7 +284,7 @@ pub mod block_signatures {
         ))
     }
 
-    #[cfg(feature = "devnet1")]
+    #[cfg(not(feature = "devnet2"))]
     pub fn serialize<S>(
         value: &PersistentList<Signature, U4096>,
         serializer: S,
@@ -317,5 +317,42 @@ pub mod block_signatures {
         Err(serde::ser::Error::custom(
             "BlockSignatures serialization not implemented for devnet2",
         ))
+    }
+}
+
+/// Serde helper for ssz::ByteList - serializes as hex string
+pub mod byte_list {
+    use super::*;
+    use ssz::ByteList;
+    use typenum::Unsigned;
+
+    pub fn deserialize<'de, D, N>(deserializer: D) -> Result<ByteList<N>, D::Error>
+    where
+        D: Deserializer<'de>,
+        N: Unsigned,
+    {
+        use serde::de::Error;
+
+        let hex_str = String::deserialize(deserializer)?;
+        let hex_str = hex_str.trim_start_matches("0x");
+
+        if hex_str.is_empty() {
+            return Ok(ByteList::default());
+        }
+
+        let bytes = hex::decode(hex_str)
+            .map_err(|e| D::Error::custom(format!("Invalid hex string: {}", e)))?;
+
+        ByteList::try_from(bytes)
+            .map_err(|_| D::Error::custom("ByteList exceeds maximum length"))
+    }
+
+    pub fn serialize<S, N>(value: &ByteList<N>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+        N: Unsigned,
+    {
+        let hex_str = format!("0x{}", hex::encode(value.as_bytes()));
+        hex_str.serialize(serializer)
     }
 }
