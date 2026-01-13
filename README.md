@@ -1,11 +1,6 @@
-# LeanEtheriumReengeneer
-Block Chain technology university course
+# leanEthereum Consensus Client
 
-Initial 2
-
-tests run by executing in lean_client folder following command:  cargo test --workspace
-
-
+leanEthereum Consensus Client written in Rust using Grandine's libraries.
 
 ## Testing against other implementations
 
