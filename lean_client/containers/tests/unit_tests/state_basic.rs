@@ -1,3 +1,6 @@
+//! State basic tests for devnet1 format
+#![cfg(not(feature = "devnet2"))]
+
 // tests/state_basic.rs
 use containers::{block::{BlockBody, hash_tree_root}, state::State, types::Uint64, ValidatorIndex};
 use pretty_assertions::assert_eq;

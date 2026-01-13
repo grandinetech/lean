@@ -11,7 +11,7 @@ pub mod validator;
 
 pub use attestation::{
     AggregatedAttestation, AggregatedSignatures, AggregationBits, Attestation, AttestationData,
-    Attestations, Signature, SignedAggregatedAttestation, SignedAttestation,
+    Attestations, Signature, SignatureKey, SignedAggregatedAttestation, SignedAttestation,
 };
 
 #[cfg(feature = "devnet2")]

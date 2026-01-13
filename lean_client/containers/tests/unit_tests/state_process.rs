@@ -1,3 +1,6 @@
+//! State process tests for devnet1 format
+#![cfg(not(feature = "devnet2"))]
+
 // tests/state_process.rs
 use containers::{
     block::{Block, BlockBody, hash_tree_root},

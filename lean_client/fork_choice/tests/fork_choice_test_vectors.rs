@@ -1,3 +1,6 @@
+
+#![cfg(not(feature = "devnet2"))]
+
 use fork_choice::{
     handlers::{on_attestation, on_block, on_tick},
     store::{get_forkchoice_store, Store},

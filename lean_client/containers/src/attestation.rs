@@ -167,6 +167,31 @@ pub struct AttestationData {
     pub source: Checkpoint,
 }
 
+impl AttestationData {
+    /// Compute the data root bytes for signature lookup.
+    /// This is the hash tree root of the attestation data.
+    pub fn data_root_bytes(&self) -> crate::Bytes32 {
+        crate::Bytes32(ssz::SszHash::hash_tree_root(self))
+    }
+}
+
+/// Key for looking up individual validator signatures.
+/// Used to index signature caches by (validator, attestation_data_root) pairs.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct SignatureKey {
+    /// The validator who produced the signature.
+    pub validator_id: u64,
+    /// The hash of the signed attestation data.
+    pub data_root: crate::Bytes32,
+}
+
+impl SignatureKey {
+    /// Create a new signature key.
+    pub fn new(validator_id: u64, data_root: crate::Bytes32) -> Self {
+        Self { validator_id, data_root }
+    }
+}
+
 /// Validator specific attestation wrapping shared attestation data.
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

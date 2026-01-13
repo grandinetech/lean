@@ -3,6 +3,8 @@ use containers::{
     block::SignedBlockWithAttestation, checkpoint::Checkpoint, config::Config, state::State,
     Bytes32, Root, Slot, ValidatorIndex,
 };
+#[cfg(feature = "devnet2")]
+use containers::{MultisigAggregatedSignature, Signature, SignatureKey};
 use ssz::SszHash;
 use std::collections::HashMap;
 pub type Interval = u64;
@@ -23,6 +25,12 @@ pub struct Store {
     pub latest_known_attestations: HashMap<ValidatorIndex, SignedAttestation>,
     pub latest_new_attestations: HashMap<ValidatorIndex, SignedAttestation>,
     pub blocks_queue: HashMap<Root, Vec<SignedBlockWithAttestation>>,
+
+    #[cfg(feature = "devnet2")]
+    pub gossip_signatures: HashMap<SignatureKey, Signature>,
+
+    #[cfg(feature = "devnet2")]
+    pub aggregated_payloads: HashMap<SignatureKey, Vec<MultisigAggregatedSignature>>,
 }
 
 pub fn get_forkchoice_store(
@@ -63,6 +71,10 @@ pub fn get_forkchoice_store(
         latest_known_attestations: HashMap::new(),
         latest_new_attestations: HashMap::new(),
         blocks_queue: HashMap::new(),
+        #[cfg(feature = "devnet2")]
+        gossip_signatures: HashMap::new(),
+        #[cfg(feature = "devnet2")]
+        aggregated_payloads: HashMap::new(),
     }
 }
 

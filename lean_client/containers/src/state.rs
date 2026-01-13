@@ -706,7 +706,7 @@ impl State {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(feature = "devnet2")))]
 mod tests {
     use super::*;
     #[test]

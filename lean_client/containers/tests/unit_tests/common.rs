@@ -1,3 +1,6 @@
+//! Common test utilities for devnet1 format
+#![cfg(not(feature = "devnet2"))]
+
 use containers::{Attestation, Attestations, BlockWithAttestation, Config, SignedBlockWithAttestation, block::{Block, BlockBody, BlockHeader, hash_tree_root}, checkpoint::Checkpoint, slot::Slot, state::State, types::{Bytes32, ValidatorIndex}, Validators, AggregatedAttestation, Signature};
 use ssz::{PersistentList};
 use typenum::U4096;

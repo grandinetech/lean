@@ -1,3 +1,6 @@
+//! State transition tests for devnet1 format
+#![cfg(not(feature = "devnet2"))]
+
 // tests/state_transition.rs
 use containers::{
     block::{hash_tree_root, Block, BlockWithAttestation, SignedBlockWithAttestation},

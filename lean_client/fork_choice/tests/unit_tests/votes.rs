@@ -1,3 +1,6 @@
+
+#![cfg(not(feature = "devnet2"))]
+
 use super::common::create_test_store;
 use fork_choice::handlers::on_attestation;
 use fork_choice::store::{accept_new_attestations, INTERVALS_PER_SLOT};

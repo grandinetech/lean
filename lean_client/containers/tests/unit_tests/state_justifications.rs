@@ -1,3 +1,6 @@
+//! State justifications tests for devnet1 format
+#![cfg(not(feature = "devnet2"))]
+
 // tests/state_justifications.rs
 use containers::{
     state::State,

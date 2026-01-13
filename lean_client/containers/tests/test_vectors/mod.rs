@@ -1,3 +1,6 @@
+//! Test vector modules for devnet1 format
+#![cfg(not(feature = "devnet2"))]
+
 // Test vector modules
 pub mod runner;
 pub mod block_processing;
