@@ -11,7 +11,6 @@ snap = {workspace = true}
 sha2 = { workspace = true }
 anyhow = { workspace = true }
 async-trait = "0.1"
-enr = "0.7"
 futures = "0.3"
 libp2p-identity = { version = "0.2", features = ["secp256k1"] }
 libp2p-mplex = "0.39"
@@ -22,3 +21,8 @@ tracing = "0.1"
 yamux = "0.12"
 ssz = { workspace = true }
 serde = { workspace = true }
+serde_yaml = { workspace = true }
+discv5 = "0.10.2"
+hex = "0.4.3"
+tiny-keccak = "2.0.2"
+derive_more = "2.1.1"
