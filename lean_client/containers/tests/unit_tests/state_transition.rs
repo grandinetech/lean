@@ -167,7 +167,7 @@ fn test_state_transition_devnet2() {
         }
         state_after_header.process_attestations(&unaggregated_attestations)
     };
-    
+
     // Ensure the state root matches the expected state
     let block_with_correct_root = Block {
         state_root: hash_tree_root(&expected_state),

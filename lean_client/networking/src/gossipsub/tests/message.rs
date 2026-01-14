@@ -1,5 +1,7 @@
 use crate::gossipsub::message::GossipsubMessage;
-use crate::gossipsub::topic::{ATTESTATION_TOPIC, BLOCK_TOPIC, SSZ_SNAPPY_ENCODING_POSTFIX, TOPIC_PREFIX};
+use crate::gossipsub::topic::{
+    ATTESTATION_TOPIC, BLOCK_TOPIC, SSZ_SNAPPY_ENCODING_POSTFIX, TOPIC_PREFIX,
+};
 use libp2p::gossipsub::TopicHash;
 
 #[test]

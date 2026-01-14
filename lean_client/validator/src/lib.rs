@@ -2,9 +2,9 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use containers::attestation::{AggregatedAttestations};
+use containers::attestation::AggregatedAttestations;
 #[cfg(feature = "devnet2")]
-use containers::attestation::{NaiveAggregatedSignature};
+use containers::attestation::NaiveAggregatedSignature;
 use containers::block::BlockSignatures;
 use containers::{
     attestation::{Attestation, AttestationData, Signature, SignedAttestation},

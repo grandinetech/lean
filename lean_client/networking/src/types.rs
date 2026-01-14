@@ -70,7 +70,9 @@ pub enum ChainMessage {
 }
 
 impl ChainMessage {
-    pub fn block_with_attestation(signed_block_with_attestation: SignedBlockWithAttestation) -> Self {
+    pub fn block_with_attestation(
+        signed_block_with_attestation: SignedBlockWithAttestation,
+    ) -> Self {
         ChainMessage::ProcessBlock {
             signed_block_with_attestation,
             is_trusted: false,
@@ -90,16 +92,35 @@ impl ChainMessage {
 impl Display for ChainMessage {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ChainMessage::ProcessBlock { signed_block_with_attestation, .. } => {
-                write!(f, "ProcessBlockWithAttestation(slot={})", signed_block_with_attestation.message.block.slot.0)
+            ChainMessage::ProcessBlock {
+                signed_block_with_attestation,
+                ..
+            } => {
+                write!(
+                    f,
+                    "ProcessBlockWithAttestation(slot={})",
+                    signed_block_with_attestation.message.block.slot.0
+                )
             }
             #[cfg(feature = "devnet1")]
-            ChainMessage::ProcessAttestation { signed_attestation, .. } => {
-                write!(f, "ProcessAttestation(slot={})", signed_attestation.message.data.slot.0)
+            ChainMessage::ProcessAttestation {
+                signed_attestation, ..
+            } => {
+                write!(
+                    f,
+                    "ProcessAttestation(slot={})",
+                    signed_attestation.message.data.slot.0
+                )
             }
             #[cfg(feature = "devnet2")]
-            ChainMessage::ProcessAttestation { signed_attestation, .. } => {
-                write!(f, "ProcessAttestation(slot={})", signed_attestation.message.slot.0)
+            ChainMessage::ProcessAttestation {
+                signed_attestation, ..
+            } => {
+                write!(
+                    f,
+                    "ProcessAttestation(slot={})",
+                    signed_attestation.message.slot.0
+                )
             }
         }
     }

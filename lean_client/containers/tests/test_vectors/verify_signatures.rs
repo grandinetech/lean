@@ -18,8 +18,7 @@ use super::runner::TestRunner;
 #[cfg(feature = "devnet1")]
 fn test_proposer_signature() {
     let test_path = "../tests/test_vectors/test_verify_signatures/test_valid_signatures/test_proposer_signature.json";
-    TestRunner::run_verify_signatures_test(test_path)
-        .expect("test_proposer_signature failed");
+    TestRunner::run_verify_signatures_test(test_path).expect("test_proposer_signature failed");
 }
 
 #[test]
@@ -40,8 +39,7 @@ fn test_proposer_and_attester_signatures() {
 #[ignore = "Requires xmss-verify feature for actual signature validation. Run with: cargo test --features xmss-verify"]
 fn test_invalid_signature() {
     let test_path = "../tests/test_vectors/test_verify_signatures/test_invalid_signatures/test_invalid_signature.json";
-    TestRunner::run_verify_signatures_test(test_path)
-        .expect("test_invalid_signature failed");
+    TestRunner::run_verify_signatures_test(test_path).expect("test_invalid_signature failed");
 }
 
 #[test]

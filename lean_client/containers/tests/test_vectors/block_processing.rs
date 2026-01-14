@@ -13,8 +13,7 @@ fn test_process_first_block_after_genesis() {
 #[cfg(feature = "devnet1")]
 fn test_blocks_with_gaps() {
     let test_path = "../tests/test_vectors/test_blocks/test_blocks_with_gaps.json";
-    TestRunner::run_block_processing_test(test_path)
-        .expect("test_blocks_with_gaps failed");
+    TestRunner::run_block_processing_test(test_path).expect("test_blocks_with_gaps failed");
 }
 
 #[test]
@@ -29,16 +28,14 @@ fn test_linear_chain_multiple_blocks() {
 #[cfg(feature = "devnet1")]
 fn test_block_extends_deep_chain() {
     let test_path = "../tests/test_vectors/test_blocks/test_block_extends_deep_chain.json";
-    TestRunner::run_block_processing_test(test_path)
-        .expect("test_block_extends_deep_chain failed");
+    TestRunner::run_block_processing_test(test_path).expect("test_block_extends_deep_chain failed");
 }
 
 #[test]
 #[cfg(feature = "devnet1")]
 fn test_empty_blocks() {
     let test_path = "../tests/test_vectors/test_blocks/test_empty_blocks.json";
-    TestRunner::run_block_processing_test(test_path)
-        .expect("test_empty_blocks failed");
+    TestRunner::run_block_processing_test(test_path).expect("test_empty_blocks failed");
 }
 
 #[test]

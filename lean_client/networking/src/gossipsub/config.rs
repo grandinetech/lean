@@ -15,9 +15,9 @@ impl GossipsubConfig {
     pub fn new() -> Self {
         let justification_lookback_slots: u64 = 3;
         let seconds_per_slot: u64 = 12;
-        
+
         let seen_ttl_secs = seconds_per_slot * justification_lookback_slots * 2;
-        
+
         let config = ConfigBuilder::default()
             // leanSpec: heartbeat_interval_secs = 0.7
             .heartbeat_interval(Duration::from_millis(700))

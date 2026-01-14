@@ -34,7 +34,6 @@ pub fn on_attestation(
     #[cfg(feature = "devnet1")]
     let target_slot = signed_attestation.message.data.target.slot;
 
-
     #[cfg(feature = "devnet2")]
     let validator_id = ValidatorIndex(signed_attestation.validator_id);
     #[cfg(feature = "devnet2")]
@@ -80,9 +79,7 @@ pub fn on_attestation(
         if store
             .latest_known_attestations
             .get(&validator_id)
-            .map_or(true, |existing| {
-                existing.message.slot < attestation_slot
-            })
+            .map_or(true, |existing| existing.message.slot < attestation_slot)
         {
             store
                 .latest_known_attestations
@@ -114,14 +111,12 @@ pub fn on_attestation(
                 .latest_new_attestations
                 .insert(validator_id, signed_attestation);
         }
-        
+
         #[cfg(feature = "devnet2")]
         if store
             .latest_new_attestations
             .get(&validator_id)
-            .map_or(true, |existing| {
-                existing.message.slot < attestation_slot
-            })
+            .map_or(true, |existing| existing.message.slot < attestation_slot)
         {
             store
                 .latest_new_attestations
@@ -246,7 +241,8 @@ fn process_block_internal(
             .zip(attestation_signatures)
         {
             let validator_ids: Vec<u64> = aggregated_attestation
-                .aggregation_bits.0
+                .aggregation_bits
+                .0
                 .iter()
                 .enumerate()
                 .filter(|(_, bit)| **bit)

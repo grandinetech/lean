@@ -3,13 +3,19 @@ pub struct BasisPoint(pub u64);
 
 impl BasisPoint {
     pub const MAX: u64 = 10_000;
-    
+
     pub const fn new(value: u64) -> Option<Self> {
-        if value <= Self::MAX { Some(BasisPoint(value)) } else { None }
+        if value <= Self::MAX {
+            Some(BasisPoint(value))
+        } else {
+            None
+        }
     }
-    
-    #[inline] 
-    pub fn get(&self) -> u64 { self.0 }
+
+    #[inline]
+    pub fn get(&self) -> u64 {
+        self.0
+    }
 }
 
 #[derive(Clone, Debug)]

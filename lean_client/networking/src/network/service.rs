@@ -341,8 +341,8 @@ where
     }
 
     fn handle_request_response_event(&mut self, event: ReqRespMessage) -> Option<NetworkEvent> {
-        use libp2p::request_response::{Event, Message};
         use crate::req_resp::LeanResponse;
+        use libp2p::request_response::{Event, Message};
 
         match event {
             Event::Message { peer, message, .. } => match message {
@@ -360,16 +360,24 @@ where
                             tokio::spawn(async move {
                                 for block in blocks {
                                     let slot = block.message.block.slot.0;
-                                    if let Err(e) = chain_sink.send(
-                                        ChainMessage::ProcessBlock {
+                                    if let Err(e) = chain_sink
+                                        .send(ChainMessage::ProcessBlock {
                                             signed_block_with_attestation: block,
                                             is_trusted: false,
                                             should_gossip: false, // Don't re-gossip requested blocks
-                                        }
-                                    ).await {
-                                        warn!(slot = slot, ?e, "Failed to send requested block to chain");
+                                        })
+                                        .await
+                                    {
+                                        warn!(
+                                            slot = slot,
+                                            ?e,
+                                            "Failed to send requested block to chain"
+                                        );
                                     } else {
-                                        debug!(slot = slot, "Queued requested block for processing");
+                                        debug!(
+                                            slot = slot,
+                                            "Queued requested block for processing"
+                                        );
                                     }
                                 }
                             });
@@ -382,7 +390,9 @@ where
                         }
                     }
                 }
-                Message::Request { request, channel, .. } => {
+                Message::Request {
+                    request, channel, ..
+                } => {
                     use crate::req_resp::{LeanRequest, LeanResponse};
 
                     let response = match request {
@@ -398,10 +408,12 @@ where
                         }
                     };
 
-                    if let Err(e) = self.swarm
+                    if let Err(e) = self
+                        .swarm
                         .behaviour_mut()
                         .req_resp
-                        .send_response(channel, response) {
+                        .send_response(channel, response)
+                    {
                         warn!(peer = %peer, ?e, "Failed to send response");
                     }
                 }
@@ -528,7 +540,7 @@ where
                 let slot = signed_attestation.message.data.slot.0;
                 #[cfg(feature = "devnet2")]
                 let slot = signed_attestation.message.slot.0;
-                
+
                 match signed_attestation.to_ssz() {
                     Ok(bytes) => {
                         if let Err(err) = self.publish_to_topic(GossipsubKind::Attestation, bytes) {
