@@ -345,6 +345,10 @@ fn initialize_state_from_test(test_state: &TestAnchorState) -> State {
 
     let config = Config {
         genesis_time: test_state.config.genesis_time,
+        seconds_per_slot: 4,
+        intervals_per_slot: 4,
+        seconds_per_interval: 1,
+        genesis_validators: Vec::new(),
     };
 
     let latest_block_header = BlockHeader {

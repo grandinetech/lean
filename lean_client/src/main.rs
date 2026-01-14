@@ -12,7 +12,7 @@ use containers::{
 };
 use fork_choice::{
     handlers::{on_attestation, on_block, on_tick},
-    store::{get_forkchoice_store, Store, INTERVALS_PER_SLOT},
+    store::{get_forkchoice_store, Store},
 };
 use libp2p_identity::Keypair;
 use networking::gossipsub::config::GossipsubConfig;
@@ -51,7 +51,7 @@ fn count_validators(state: &State) -> u64 {
 }
 
 fn print_chain_status(store: &Store, connected_peers: u64) {
-    let current_slot = store.time / INTERVALS_PER_SLOT;
+    let current_slot = store.time / store.config.intervals_per_slot;
 
     let head_slot = store
         .blocks
@@ -155,16 +155,19 @@ async fn main() {
         mpsc::unbounded_channel::<ChainMessage>();
 
     let (genesis_time, validators) = if let Some(genesis_path) = &args.genesis {
-        let genesis_config = containers::GenesisConfig::load_from_file(genesis_path)
+        let genesis_config = containers::Config::load_from_file(genesis_path)
             .expect("Failed to load genesis config");
 
         let validators: Vec<containers::validator::Validator> = genesis_config
             .genesis_validators
             .iter()
             .enumerate()
-            .map(|(i, v_str)| {
+            .map(|(i, v_value)| {
+                let v_str = v_value.as_str().expect("Validator pubkey must be a string");
+                
                 let pubkey = containers::validator::BlsPublicKey::from_hex(v_str)
                     .expect("Invalid genesis validator pubkey");
+                    
                 containers::validator::Validator {
                     pubkey,
                     index: i as u64,
@@ -228,7 +231,13 @@ async fn main() {
         },
     };
 
-    let config = Config { genesis_time };
+    let config = Config { 
+        genesis_time,
+        seconds_per_slot: 4,
+        intervals_per_slot: 4,
+        seconds_per_interval: 1,
+        genesis_validators: Vec::new(),
+    };
     let store = get_forkchoice_store(genesis_state.clone(), genesis_signed_block, config);
 
     let num_validators = count_validators(&genesis_state);
@@ -372,8 +381,8 @@ async fn main() {
                         .as_secs();
                     on_tick(&mut store, now, false);
 
-                    let current_slot = store.time / INTERVALS_PER_SLOT;
-                    let current_interval = store.time % INTERVALS_PER_SLOT;
+                    let current_slot = store.time / store.config.intervals_per_slot;
+                    let current_interval = store.time % store.config.intervals_per_slot;
 
                     if last_status_slot != Some(current_slot) {
                         let peers = peer_count.load(Ordering::Relaxed);

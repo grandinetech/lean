@@ -7,7 +7,7 @@ use ssz::SszHash;
 #[inline]
 pub fn on_tick(store: &mut Store, time: u64, has_proposal: bool) {
     // Calculate target time in intervals
-    let tick_interval_time = time.saturating_sub(store.config.genesis_time) / SECONDS_PER_INTERVAL;
+    let tick_interval_time = time.saturating_sub(store.config.genesis_time) / store.config.seconds_per_interval;
 
     // Tick forward one interval at a time
     while store.time < tick_interval_time {
@@ -45,7 +45,7 @@ pub fn on_attestation(
     let target_slot = signed_attestation.message.target.slot;
 
     // Validate attestation is not from future
-    let curr_slot = store.time / INTERVALS_PER_SLOT;
+    let curr_slot = store.time / store.config.intervals_per_slot;
     if attestation_slot.0 > curr_slot {
         return Err(format!(
             "Err: (Fork-choice::Handlers::OnAttestation) Attestation for slot {} has not yet occurred, out of sync. (CURRENT SLOT NUMBER: {})",

@@ -16,7 +16,7 @@ impl BasisPoint {
 pub struct ChainConfig {
     pub intervals_per_slot: u64,
     pub slot_duration_ms: u64,
-    pub second_per_slot: u64,
+    pub seconds_per_slot: u64,
     pub seconds_per_interval: u64,
     pub justification_lookback_slots: u64,
     pub proposer_reorg_cutoff_bps: BasisPoint,
@@ -35,7 +35,7 @@ impl ChainConfig {
 
         Self {
             slot_duration_ms,
-            second_per_slot: seconds_per_slot,
+            seconds_per_slot,
             intervals_per_slot,
             seconds_per_interval: seconds_per_slot / intervals_per_slot,
             justification_lookback_slots: 3,

@@ -17,7 +17,7 @@ pub use block::{
     Block, BlockBody, BlockHeader, BlockWithAttestation, SignedBlock, SignedBlockWithAttestation,
 };
 pub use checkpoint::Checkpoint;
-pub use config::{Config, GenesisConfig};
+pub use config::Config;
 pub use slot::Slot;
 pub use state::State;
 pub use status::Status;

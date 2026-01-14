@@ -1,6 +1,6 @@
 use super::common::create_test_store;
 use fork_choice::handlers::on_tick;
-use fork_choice::store::{tick_interval, INTERVALS_PER_SLOT, SECONDS_PER_SLOT};
+use fork_choice::store::tick_interval; 
 use containers::Slot;
 use containers::types::Uint64;
 
@@ -37,14 +37,16 @@ fn test_on_tick_already_current() {
 #[test]
 fn test_tick_interval_actions_by_phase() {
     let mut store = create_test_store();
+    // Reikšmę imame iš konfigūracijos, o ne iš konstantos
+    let intervals_per_slot = store.config.intervals_per_slot;
     store.time = 0;
 
-    for interval in 0..INTERVALS_PER_SLOT {
+    for interval in 0..intervals_per_slot {
         let has_proposal = interval == 0;
         tick_interval(&mut store, has_proposal);
 
-        let current_interval = store.time % INTERVALS_PER_SLOT;
-        let expected_interval = (interval + 1) % INTERVALS_PER_SLOT;
+        let current_interval = store.time % intervals_per_slot;
+        let expected_interval = (interval + 1) % intervals_per_slot;
         assert_eq!(current_interval, expected_interval);
     }
 }
@@ -52,7 +54,16 @@ fn test_tick_interval_actions_by_phase() {
 #[test]
 fn test_time_to_slot_conversion() {
     let genesis_time = 1000;
-    let time_after_five_slots = genesis_time + 5 * SECONDS_PER_SLOT;
-    let slot_5 = (time_after_five_slots - genesis_time) / SECONDS_PER_SLOT;
+    // Konfigūraciją kuriame testo viduje
+    let config = containers::config::Config {
+        genesis_time: 0,
+        seconds_per_slot: 4,
+        intervals_per_slot: 4,
+        seconds_per_interval: 1,
+        genesis_validators: Vec::new(),
+    };
+    
+    let time_after_five_slots = genesis_time + 5 * config.seconds_per_slot;
+    let slot_5 = (time_after_five_slots - genesis_time) / config.seconds_per_slot;
     assert_eq!(slot_5, 5);
 }

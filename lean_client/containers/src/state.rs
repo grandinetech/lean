@@ -76,6 +76,10 @@ impl State {
         Self {
             config: Config {
                 genesis_time,
+                seconds_per_slot: 4,
+                intervals_per_slot: 4,
+                seconds_per_interval: 1,
+                genesis_validators: Vec::new(),
             },
             slot: Slot(0),
             latest_block_header: genesis_header,
@@ -120,6 +124,10 @@ impl State {
         Self {
             config: Config {
                 genesis_time,
+                seconds_per_slot: 4,
+                intervals_per_slot: 4,
+                seconds_per_interval: 1,
+                genesis_validators: Vec::new(),
             },
             slot: Slot(0),
             latest_block_header: header,

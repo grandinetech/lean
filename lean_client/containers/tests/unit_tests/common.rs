@@ -145,5 +145,9 @@ pub fn base_state_with_validators(config: Config, num_validators: usize) -> Stat
 pub fn sample_config() -> Config {
     Config {
         genesis_time: 0,
+        seconds_per_slot: 4,
+        intervals_per_slot: 4,
+        seconds_per_interval: 1,
+        genesis_validators: Vec::new(),
     }
 }

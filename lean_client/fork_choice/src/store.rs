@@ -5,9 +5,6 @@ use containers::{
 use ssz::SszHash;
 use std::collections::HashMap;
 pub type Interval = u64;
-pub const INTERVALS_PER_SLOT: Interval = 4;
-pub const SECONDS_PER_SLOT: u64 = 4;
-pub const SECONDS_PER_INTERVAL: u64 = SECONDS_PER_SLOT / INTERVALS_PER_SLOT;
 
 #[derive(Debug, Clone, Default)]
 pub struct Store {
@@ -51,7 +48,7 @@ pub fn get_forkchoice_store(
     };
 
     Store {
-        time: block_slot.0 * INTERVALS_PER_SLOT,
+        time: block_slot.0 * config.intervals_per_slot,
         config,
         head: block_root,
         safe_target: block_root,
@@ -182,7 +179,7 @@ pub fn accept_new_attestations(store: &mut Store) {
 
 pub fn tick_interval(store: &mut Store, has_proposal: bool) {
     store.time += 1;
-    let curr_interval = (store.time % SECONDS_PER_SLOT) % INTERVALS_PER_SLOT;
+    let curr_interval = (store.time % store.config.seconds_per_slot) / store.config.seconds_per_interval;
 
     match curr_interval {
         0 if has_proposal => accept_new_attestations(store),
@@ -236,7 +233,7 @@ pub fn get_vote_target(store: &Store) -> Checkpoint {
 
 #[inline]
 pub fn get_proposal_head(store: &mut Store, slot: Slot) -> Root {
-    let slot_time = store.config.genesis_time + (slot.0 * SECONDS_PER_SLOT);
+    let slot_time = store.config.genesis_time + (slot.0 * store.config.seconds_per_slot);
 
     crate::handlers::on_tick(store, slot_time, true);
     accept_new_attestations(store);

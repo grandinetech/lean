@@ -12,8 +12,12 @@ use containers::ssz::SszHash;
 
 pub fn create_test_store() -> Store {
     let config = Config {
-        genesis_time: 1000,
-    };
+    genesis_time: 0, 
+    seconds_per_slot: 4,
+    intervals_per_slot: 4,
+    seconds_per_interval: 1,
+    genesis_validators: Vec::new(),
+};
     
     let validators = vec![
         Validator::default(); 10
