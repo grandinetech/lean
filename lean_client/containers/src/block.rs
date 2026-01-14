@@ -7,7 +7,6 @@ use leansig::signature::generalized_xmss::instantiations_poseidon::lifetime_2_to
 use ssz::{PersistentList, SszHash};
 use typenum::U4096;
 use crate::attestation::{AggregatedAttestations, AttestationSignatures};
-use crate::validator::BlsPublicKey;
 
 /// The body of a block, containing payload data.
 ///
