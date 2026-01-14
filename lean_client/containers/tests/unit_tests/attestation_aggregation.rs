@@ -2,7 +2,7 @@
 #[cfg(test)]
 mod tests {
     use containers::attestation::{AggregatedAttestation, AggregationBits, Attestation, AttestationData};
-    use containers::{Bytes32, Uint64};
+    use containers::types::{Bytes32, Uint64};
     use containers::checkpoint::Checkpoint;
     use containers::slot::Slot;
 
@@ -70,15 +70,15 @@ mod tests {
 
         let attestations = vec![
             Attestation {
-                validator_id: Uint64(1),
+                validator_id: 1,
                 data: att_data1.clone(),
             },
             Attestation {
-                validator_id: Uint64(3),
+                validator_id: 3,
                 data: att_data1.clone(),
             },
             Attestation {
-                validator_id: Uint64(5),
+                validator_id: 5,
                 data: att_data2.clone(),
             },
         ];
@@ -120,7 +120,7 @@ mod tests {
         };
 
         let attestations = vec![Attestation {
-            validator_id: Uint64(5),
+            validator_id: 5,
             data: att_data.clone(),
         }];
         let aggregated = AggregatedAttestation::aggregate_by_data(&attestations);

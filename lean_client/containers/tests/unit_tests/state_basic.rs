@@ -1,6 +1,6 @@
 // tests/state_basic.rs
-use containers::{block::{BlockBody, hash_tree_root}, state::State, types::Uint64, ValidatorIndex};
-use pretty_assertions::assert_eq;
+use containers::{block::BlockBody, state::State, types::Uint64, ValidatorIndex};
+use containers::ssz::SszHash; // Importuojame taisyklę čia
 
 #[path = "common.rs"]
 mod common;
@@ -9,13 +9,13 @@ use common::sample_config;
 #[test]
 fn test_generate_genesis() {
     let config = sample_config();
-    let state = State::generate_genesis(Uint64(config.genesis_time), Uint64(4));
+    let state = State::generate_genesis(config.genesis_time, 4);
 
     assert_eq!(state.config, config);
     assert_eq!(state.slot.0, 0);
 
     let empty_body = BlockBody { attestations: ssz::PersistentList::default() };
-    assert_eq!(state.latest_block_header.body_root, hash_tree_root(&empty_body));
+    assert_eq!(state.latest_block_header.body_root, empty_body.hash_tree_root());
 
     // Check that collections are empty by trying to get the first element
     assert!(state.historical_block_hashes.get(0).is_err());
@@ -26,8 +26,8 @@ fn test_generate_genesis() {
 
 #[test]
 fn test_proposer_round_robin() {
-    let state = State::generate_genesis(Uint64(0), Uint64(4));
-    assert!(state.is_proposer(containers::types::ValidatorIndex(0)));
+    let state = State::generate_genesis(0, 4);
+    assert!(state.is_proposer(0));
 }
 
 #[test]
@@ -44,12 +44,12 @@ fn test_hash_tree_root() {
     let body = BlockBody { attestations: ssz::PersistentList::default() };
     let block = containers::block::Block {
         slot: containers::slot::Slot(1),
-        proposer_index: ValidatorIndex(0),
-        parent_root: containers::types::Bytes32(ssz::H256::zero()),
-        state_root: containers::types::Bytes32(ssz::H256::zero()),
+        proposer_index: 0,
+        parent_root: ssz::H256::zero(),
+        state_root: ssz::H256::zero(),
         body,
     };
 
-    let root = hash_tree_root(&block);
-    assert_ne!(root, containers::types::Bytes32(ssz::H256::zero()));
+    let root = block.hash_tree_root();
+    assert_ne!(root, ssz::H256::zero());
 }

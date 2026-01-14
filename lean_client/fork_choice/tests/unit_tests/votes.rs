@@ -1,17 +1,19 @@
 use super::common::create_test_store;
 use fork_choice::handlers::on_attestation;
-use fork_choice::store::{accept_new_attestations, INTERVALS_PER_SLOT};
+use fork_choice::store::accept_new_attestations;
 use containers::{
     attestation::{Attestation, AttestationData, SignedAttestation, Signature},
     checkpoint::Checkpoint,
-    Bytes32, Slot, Uint64, ValidatorIndex,
+    Bytes32, Slot, ValidatorIndex,
 };
+use containers::types::Uint64;
+use containers::ssz::SszHash;
 
 #[cfg(feature = "devnet1")]
 fn create_signed_attestation(validator_id: u64, slot: Slot, head_root: Bytes32) -> SignedAttestation {
     SignedAttestation {
         message: Attestation {
-            validator_id: Uint64(validator_id),
+            validator_id: validator_id,
             data: AttestationData {
                 slot,
                 head: Checkpoint { root: head_root, slot },
@@ -29,9 +31,9 @@ fn test_accept_new_attestations() {
     let mut store = create_test_store();
 
     // Setup initial known attestations
-    let val1 = ValidatorIndex(1);
-    let val2 = ValidatorIndex(2);
-    let val3 = ValidatorIndex(3);
+    let val1 = 1;
+    let val2 = 2;
+    let val3 = 3;
 
     store.latest_known_attestations.insert(
         val1,
@@ -71,7 +73,7 @@ fn test_accept_new_attestations_multiple() {
     
     for i in 0..5 {
         store.latest_new_attestations.insert(
-            ValidatorIndex(i),
+            i,
             create_signed_attestation(i, Slot(i), store.head),
         );
     }
@@ -100,7 +102,7 @@ fn test_accept_new_attestations_empty() {
 #[cfg(feature = "devnet1")]
 fn test_on_attestation_lifecycle() {
     let mut store = create_test_store();
-    let validator_idx = ValidatorIndex(1);
+    let validator_idx = 1;
     let slot_0 = Slot(0);
     let slot_1 = Slot(1);
 
@@ -148,7 +150,7 @@ fn test_on_attestation_future_slot() {
 #[cfg(feature = "devnet1")]
 fn test_on_attestation_update_vote() {
     let mut store = create_test_store();
-    let validator_idx = ValidatorIndex(1);
+    let validator_idx = 1;
     
     // First attestation at slot 0
     let signed_attestation1 = create_signed_attestation(1, Slot(0), store.head);
@@ -170,7 +172,7 @@ fn test_on_attestation_update_vote() {
 #[cfg(feature = "devnet1")]
 fn test_on_attestation_ignore_old_vote() {
     let mut store = create_test_store();
-    let validator_idx = ValidatorIndex(1);
+    let validator_idx = 1;
     
     // Advance time
     store.time = 2 * INTERVALS_PER_SLOT;
@@ -193,7 +195,7 @@ fn test_on_attestation_ignore_old_vote() {
 #[cfg(feature = "devnet1")]
 fn test_on_attestation_from_block_supersedes_new() {
     let mut store = create_test_store();
-    let validator_idx = ValidatorIndex(1);
+    let validator_idx = 1;
     
     // First, add attestation via gossip
     let signed_attestation1 = create_signed_attestation(1, Slot(0), store.head);
@@ -215,7 +217,7 @@ fn test_on_attestation_from_block_supersedes_new() {
 #[cfg(feature = "devnet1")]
 fn test_on_attestation_newer_from_block_removes_older_new() {
     let mut store = create_test_store();
-    let validator_idx = ValidatorIndex(1);
+    let validator_idx = 1;
     
     // Add older attestation via gossip
     let signed_attestation_gossip = create_signed_attestation(1, Slot(0), store.head);

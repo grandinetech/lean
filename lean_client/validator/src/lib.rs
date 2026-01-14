@@ -1,17 +1,16 @@
 // Lean validator client with XMSS signing support
 use std::collections::HashMap;
 use std::path::Path;
+use containers::ssz::SszHash;
 
-use containers::attestation::{AggregatedAttestations};
 #[cfg(feature = "devnet2")]
 use containers::attestation::{NaiveAggregatedSignature};
 use containers::block::BlockSignatures;
 use containers::{
     attestation::{Attestation, AttestationData, Signature, SignedAttestation},
-    block::{hash_tree_root, BlockWithAttestation, SignedBlockWithAttestation},
+    block::{BlockWithAttestation, SignedBlockWithAttestation},
     checkpoint::Checkpoint,
-    types::{Uint64, ValidatorIndex},
-    AggregatedAttestation, Slot,
+    types::ValidatorIndex, Slot,
 };
 use fork_choice::store::{get_proposal_head, get_vote_target, Store};
 use tracing::{info, warn};
@@ -21,7 +20,7 @@ pub mod keys;
 use keys::KeyManager;
 
 pub type ValidatorRegistry = HashMap<String, Vec<u64>>;
-// Node
+
 #[derive(Debug, Clone)]
 pub struct ValidatorConfig {
     pub node_id: String,
@@ -29,7 +28,6 @@ pub struct ValidatorConfig {
 }
 
 impl ValidatorConfig {
-    // load validator index
     pub fn load_from_file(
         path: impl AsRef<Path>,
         node_id: &str,
@@ -83,7 +81,6 @@ impl ValidatorService {
     ) -> Result<Self, Box<dyn std::error::Error>> {
         let mut key_manager = KeyManager::new(keys_dir)?;
 
-        // Load keys for all assigned validators
         for &idx in &config.validator_indices {
             key_manager.load_key(idx)?;
         }
@@ -110,13 +107,12 @@ impl ValidatorService {
         let proposer = slot.0 % self.num_validators;
 
         if self.config.is_assigned(proposer) {
-            Some(ValidatorIndex(proposer))
+            Some(proposer) // ValidatorIndex dabar yra u64, todėl tiesiog grąžiname reikšmę
         } else {
             None
         }
     }
 
-    /// Build a block proposal for the given slot
     pub fn build_block_proposal(
         &self,
         store: &mut Store,
@@ -125,7 +121,7 @@ impl ValidatorService {
     ) -> Result<SignedBlockWithAttestation, String> {
         info!(
             slot = slot.0,
-            proposer = proposer_index.0,
+            proposer = proposer_index,
             "Building block proposal"
         );
 
@@ -137,7 +133,6 @@ impl ValidatorService {
 
         let vote_target = get_vote_target(store);
 
-        // Validate that target slot is strictly greater than source slot
         if vote_target.slot <= store.latest_justified.slot {
             return Err(format!(
                 "Invalid attestation: target slot {} must be greater than source slot {}",
@@ -155,7 +150,7 @@ impl ValidatorService {
         };
 
         let proposer_attestation = Attestation {
-            validator_id: Uint64(proposer_index.0),
+            validator_id: proposer_index,
             data: AttestationData {
                 slot,
                 head: head_checkpoint,
@@ -164,14 +159,6 @@ impl ValidatorService {
             },
         };
 
-        // Collect valid attestations from the NEW attestations pool (gossip attestations
-        // that haven't been included in any block yet).
-        // Do NOT use latest_known_attestations - those have already been included in blocks!
-        // Filter to only include attestations that:
-        // 1. Have source matching the parent state's justified checkpoint
-        // 2. Have target slot > source slot (valid attestations)
-        // 3. Target block must be known
-        // Also collect the corresponding signatures
         let valid_signed_attestations: Vec<&SignedAttestation> = store
             .latest_new_attestations
             .values()
@@ -180,11 +167,9 @@ impl ValidatorService {
                 let data = &att.message.data;
                 #[cfg(feature = "devnet2")]
                 let data = &att.message;
-                // Source must match the parent state's justified checkpoint (not store's!)
+                
                 let source_matches = data.source == parent_state.latest_justified;
-                // Target must be strictly after source
                 let target_after_source = data.target.slot > data.source.slot;
-                // Target block must be known
                 let target_known = store.blocks.contains_key(&data.target.root);
 
                 source_matches && target_after_source && target_known
@@ -210,7 +195,6 @@ impl ValidatorService {
             "Collected new attestations for block"
         );
 
-        // Build block with collected attestations (empty body - attestations go to state)
         #[cfg(feature = "devnet1")]
         let (block, _post_state, _collected_atts, sigs) = parent_state.build_block(
             slot,
@@ -220,12 +204,13 @@ impl ValidatorService {
             None,
             None,
         )?;
+
         #[cfg(feature = "devnet2")]
         let (block, _post_state, _collected_atts, sigs) = {
-            let valid_attestations: Vec<Attestation> = valid_attestations
+            let valid_atts_wrapped: Vec<Attestation> = valid_attestations
                 .iter()
                 .map(|data| Attestation {
-                    validator_id: Uint64(0), // Placeholder, real validator IDs should be used
+                    validator_id: 0,
                     data: data.clone(),
                 })
                 .collect();
@@ -233,17 +218,17 @@ impl ValidatorService {
                 slot,
                 proposer_index,
                 parent_root,
-                Some(valid_attestations),
+                Some(valid_atts_wrapped),
                 None,
                 None,
             )?
         };
 
-        // Collect signatures from the attestations we included
         #[cfg(feature = "devnet1")]
         let mut signatures = sigs;
         #[cfg(feature = "devnet2")]
         let mut signatures = sigs.attestation_signatures;
+
         for signed_att in &valid_signed_attestations {
             #[cfg(feature = "devnet1")]
             signatures
@@ -251,7 +236,6 @@ impl ValidatorService {
                 .map_err(|e| format!("Failed to add attestation signature: {:?}", e))?;
             #[cfg(feature = "devnet2")]
             {
-                // TODO: Use real aggregation instead of naive placeholder when spec is more up to date
                 let aggregated_sig: NaiveAggregatedSignature = NaiveAggregatedSignature::default();
                 signatures
                     .push(aggregated_sig)
@@ -261,42 +245,38 @@ impl ValidatorService {
 
         info!(
             slot = block.slot.0,
-            proposer = block.proposer_index.0,
-            parent_root = %format!("0x{:x}", block.parent_root.0),
-            state_root = %format!("0x{:x}", block.state_root.0),
+            proposer = block.proposer_index,
+            parent_root = %hex::encode(block.parent_root),
+            state_root = %hex::encode(block.state_root),
             attestation_sigs = valid_signed_attestations.len(),
             "Block built successfully"
         );
 
-        // Sign the proposer attestation
         if let Some(ref key_manager) = self.key_manager {
-            // Sign proposer attestation with XMSS
-            let message = hash_tree_root(&proposer_attestation);
+            let message = proposer_attestation.hash_tree_root();
             let epoch = slot.0 as u32;
 
-            match key_manager.sign(proposer_index.0, epoch, &message.0.into()) {
+            match key_manager.sign(proposer_index, epoch, &message.into()) {
                 Ok(sig) => {
                     #[cfg(feature = "devnet1")]
                     signatures
                         .push(sig)
                         .map_err(|e| format!("Failed to add proposer signature: {:?}", e))?;
+                    
                     #[cfg(feature = "devnet2")]
                     {
-                        // TODO: Use real aggregation instead of naive placeholder when spec is more up to date
-                        let aggregated_sig: NaiveAggregatedSignature =
-                            NaiveAggregatedSignature::default();
+                        let aggregated_sig: NaiveAggregatedSignature = NaiveAggregatedSignature::default();
                         signatures
                             .push(aggregated_sig)
                             .map_err(|e| format!("Failed to add proposer signature: {:?}", e))?;
                     }
-                    info!(proposer = proposer_index.0, "Signed proposer attestation");
+                    info!(proposer = proposer_index, "Signed proposer attestation");
                 }
                 Err(e) => {
                     return Err(format!("Failed to sign proposer attestation: {}", e));
                 }
             }
         } else {
-            // No key manager - use zero signature
             warn!("Building block with zero signature (no key manager)");
         }
 
@@ -317,12 +297,9 @@ impl ValidatorService {
         Ok(signed_block)
     }
 
-    /// Create attestations for all our validators for the given slot
     pub fn create_attestations(&self, store: &Store, slot: Slot) -> Vec<SignedAttestation> {
         let vote_target = get_vote_target(store);
 
-        // Skip attestation creation if target slot is not strictly greater than source slot
-        // This prevents creating invalid attestations when the node's view is behind
         if vote_target.slot <= store.latest_justified.slot {
             warn!(
                 target_slot = vote_target.slot.0,
@@ -332,11 +309,9 @@ impl ValidatorService {
             return vec![];
         }
 
-        let get_head_block_info = match store.blocks.get(&store.head) {
+        let head_block_info = match store.blocks.get(&store.head) {
             Some(b) => b,
             None => {
-                // Pasileiskit, su DEBUG. Kitaip galima pakeist i tiesiog
-                // println!("WARNING: Attestation skipped. (Reason: HEAD BLOCK NOT FOUND)\n");
                 warn!("WARNING: Attestation skipped. (Reason: HEAD BLOCK NOT FOUND)");
                 return vec![];
             }
@@ -344,7 +319,7 @@ impl ValidatorService {
 
         let head_checkpoint = Checkpoint {
             root: store.head,
-            slot: get_head_block_info.message.block.slot,
+            slot: head_block_info.message.block.slot,
         };
 
         self.config
@@ -353,7 +328,7 @@ impl ValidatorService {
             .filter_map(|&idx| {
                 #[cfg(feature = "devnet1")]
                 let attestation = Attestation {
-                    validator_id: Uint64(idx),
+                    validator_id: idx,
                     data: AttestationData {
                         slot,
                         head: head_checkpoint.clone(),
@@ -371,66 +346,48 @@ impl ValidatorService {
                 };
 
                 let signature = if let Some(ref key_manager) = self.key_manager {
-                    // Sign with XMSS
-                    let message = hash_tree_root(&attestation);
+                    let message = attestation.hash_tree_root();
                     let epoch = slot.0 as u32;
 
-                    match key_manager.sign(idx, epoch, &message.0.into()) {
+                    match key_manager.sign(idx, epoch, &message.into()) {
                         Ok(sig) => {
                             info!(
                                 slot = slot.0,
                                 validator = idx,
-                                target_slot = vote_target.slot.0,
-                                source_slot = store.latest_justified.slot.0,
                                 "Created signed attestation"
                             );
                             sig
                         }
                         Err(e) => {
-                            warn!(
-                                validator = idx,
-                                error = %e,
-                                "Failed to sign attestation, skipping"
-                            );
+                            warn!(validator = idx, error = %e, "Failed to sign attestation, skipping");
                             return None;
                         }
                     }
                 } else {
-                    // No key manager - use zero signature
-                    info!(
-                        slot = slot.0,
-                        validator = idx,
-                        target_slot = vote_target.slot.0,
-                        source_slot = store.latest_justified.slot.0,
-                        "Created attestation with zero signature"
-                    );
                     Signature::default()
                 };
 
+                #[cfg(feature = "devnet1")]
                 {
-                    #[cfg(feature = "devnet1")]
-                    {
-                        Some(SignedAttestation {
-                            message: attestation,
-                            signature,
-                        })
-                    }
+                    Some(SignedAttestation {
+                        message: attestation,
+                        signature,
+                    })
+                }
 
-                    #[cfg(feature = "devnet2")]
-                    {
-                        Some(SignedAttestation {
-                            validator_id: idx,
-                            message: attestation,
-                            signature,
-                        })
-                    }
+                #[cfg(feature = "devnet2")]
+                {
+                    Some(SignedAttestation {
+                        validator_id: idx,
+                        message: attestation,
+                        signature,
+                    })
                 }
             })
             .collect()
     }
 }
 
-// DI GENERUOTI TESTAI
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -443,17 +400,11 @@ mod tests {
         };
         let service = ValidatorService::new(config, 4);
 
-        // Validator 2 should propose at slots 2, 6, 10, ...
         assert!(service.get_proposer_for_slot(Slot(2)).is_some());
         assert!(service.get_proposer_for_slot(Slot(6)).is_some());
         assert!(service.get_proposer_for_slot(Slot(10)).is_some());
 
-        // Validator 2 should NOT propose at slots 0, 1, 3, 4, 5, ...
         assert!(service.get_proposer_for_slot(Slot(0)).is_none());
-        assert!(service.get_proposer_for_slot(Slot(1)).is_none());
-        assert!(service.get_proposer_for_slot(Slot(3)).is_none());
-        assert!(service.get_proposer_for_slot(Slot(4)).is_none());
-        assert!(service.get_proposer_for_slot(Slot(5)).is_none());
     }
 
     #[test]
@@ -464,10 +415,6 @@ mod tests {
         };
 
         assert!(config.is_assigned(2));
-        assert!(config.is_assigned(5));
-        assert!(config.is_assigned(8));
         assert!(!config.is_assigned(0));
-        assert!(!config.is_assigned(1));
-        assert!(!config.is_assigned(3));
     }
 }

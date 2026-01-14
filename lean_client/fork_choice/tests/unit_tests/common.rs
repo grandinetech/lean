@@ -5,26 +5,31 @@ use containers::{
     config::Config,
     state::State,
     validator::Validator,
-    Bytes32, Slot, Uint64, ValidatorIndex,
+    Bytes32, Slot, ValidatorIndex,
 };
-use ssz::SszHash;
+use containers::types::Uint64;
+use containers::ssz::SszHash;
 
 pub fn create_test_store() -> Store {
     let config = Config {
-        genesis_time: 1000,
-    };
+    genesis_time: 0, 
+    seconds_per_slot: 4,
+    intervals_per_slot: 4,
+    seconds_per_interval: 1,
+    genesis_validators: Vec::new(),
+};
     
     let validators = vec![
         Validator::default(); 10
     ];
     
-    let state = State::generate_genesis_with_validators(Uint64(1000), validators);
+    let state = State::generate_genesis_with_validators(1000, validators);
     
     let block = Block {
         slot: Slot(0),
-        proposer_index: ValidatorIndex(0),
+        proposer_index: 0,
         parent_root: Bytes32::default(),
-        state_root: Bytes32(state.hash_tree_root()),
+        state_root: state.hash_tree_root(),
         body: BlockBody::default(),
     };
     

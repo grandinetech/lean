@@ -5,17 +5,19 @@ use fork_choice::{
 
 use containers::{
     attestation::{Attestation, AttestationData, SignedAttestation, Signature},
-    block::{hash_tree_root, Block, BlockBody, BlockHeader, BlockWithAttestation, SignedBlockWithAttestation},
+    block::{Block, BlockBody, BlockHeader, BlockWithAttestation, SignedBlockWithAttestation},
     checkpoint::Checkpoint,
     config::Config,
     state::State,
-    Bytes32, Slot, Uint64, ValidatorIndex,
+    Bytes32, Slot, ValidatorIndex,
 };
 
 use serde::Deserialize;
-use ssz::{PersistentList, SszHash};
+use containers::ssz::PersistentList;
 use std::collections::HashMap;
 use std::panic::AssertUnwindSafe;
+use containers::types::Uint64;
+use containers::ssz::SszHash;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -217,7 +219,7 @@ fn parse_root(hex_str: &str) -> Bytes32 {
         panic!("Invalid root length: {} (expected 64 hex chars)", hex.len());
     }
 
-    Bytes32(ssz::H256::from(bytes))
+    ssz::H256::from(bytes)
 }
 
 fn convert_test_checkpoint(test_cp: &TestCheckpoint) -> Checkpoint {
@@ -246,7 +248,7 @@ fn convert_test_attestation(test_att: &TestAttestation) -> Attestation {
     };
 
     Attestation {
-        validator_id: Uint64(validator_id),
+        validator_id: validator_id,
         data: AttestationData {
             slot: Slot(slot),
             head: convert_test_checkpoint(head),
@@ -269,7 +271,7 @@ fn convert_test_anchor_block(test_block: &TestAnchorBlock) -> SignedBlockWithAtt
 
     let block = Block {
         slot: Slot(test_block.slot),
-        proposer_index: ValidatorIndex(test_block.proposer_index),
+        proposer_index: test_block.proposer_index,
         parent_root: parse_root(&test_block.parent_root),
         state_root: parse_root(&test_block.state_root),
         body: BlockBody { attestations },
@@ -277,7 +279,7 @@ fn convert_test_anchor_block(test_block: &TestAnchorBlock) -> SignedBlockWithAtt
 
     // Create proposer attestation
     let proposer_attestation = Attestation {
-        validator_id: Uint64(test_block.proposer_index),
+        validator_id: test_block.proposer_index,
         data: AttestationData {
             slot: Slot(test_block.slot),
             head: Checkpoint {
@@ -318,7 +320,7 @@ fn convert_test_block(test_block_with_att: &TestBlockWithAttestation) -> SignedB
 
     let block = Block {
         slot: Slot(test_block.slot),
-        proposer_index: ValidatorIndex(test_block.proposer_index),
+        proposer_index: test_block.proposer_index,
         parent_root: parse_root(&test_block.parent_root),
         state_root: parse_root(&test_block.state_root),
         body: BlockBody { attestations },
@@ -343,11 +345,15 @@ fn initialize_state_from_test(test_state: &TestAnchorState) -> State {
 
     let config = Config {
         genesis_time: test_state.config.genesis_time,
+        seconds_per_slot: 4,
+        intervals_per_slot: 4,
+        seconds_per_interval: 1,
+        genesis_validators: Vec::new(),
     };
 
     let latest_block_header = BlockHeader {
         slot: Slot(test_state.latest_block_header.slot),
-        proposer_index: ValidatorIndex(test_state.latest_block_header.proposer_index),
+        proposer_index: test_state.latest_block_header.proposer_index,
         parent_root: parse_root(&test_state.latest_block_header.parent_root),
         state_root: parse_root(&test_state.latest_block_header.state_root),
         body_root: parse_root(&test_state.latest_block_header.body_root),
@@ -388,7 +394,7 @@ fn initialize_state_from_test(test_state: &TestAnchorState) -> State {
             .expect("Failed to parse validator pubkey");
         let validator = containers::validator::Validator {
             pubkey,
-            index: containers::Uint64(test_validator.index),
+            index: test_validator.index,
         };
         validators.push(validator).expect("Failed to add validator");
     }
@@ -455,7 +461,7 @@ fn verify_checks(
 
     if let Some(att_checks) = &checks.attestation_checks {
         for check in att_checks {
-            let validator = ValidatorIndex(check.validator);
+            let validator = check.validator;
 
             match check.location.as_str() {
                 "new" => {
@@ -503,7 +509,7 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
     let mut anchor_state = initialize_state_from_test(&test.anchor_state);
     let anchor_block = convert_test_anchor_block(&test.anchor_block);
 
-    let body_root = hash_tree_root(&anchor_block.message.block.body);
+    let body_root = anchor_block.message.block.body.hash_tree_root();
     anchor_state.latest_block_header = BlockHeader {
         slot: anchor_block.message.block.slot,
         proposer_index: anchor_block.message.block.proposer_index,
@@ -529,7 +535,7 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
 
                 let result = std::panic::catch_unwind(AssertUnwindSafe(|| {
                     let signed_block = convert_test_block(test_block);
-                    let block_root = Bytes32(signed_block.message.block.hash_tree_root());
+                    let block_root = signed_block.message.block.hash_tree_root();
 
                     // Advance time to the block's slot to ensure attestations are processable
                     // SECONDS_PER_SLOT is 4 (not 12)

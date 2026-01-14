@@ -30,7 +30,6 @@ where
 }
 
 /// Special deserializer for BitList that handles {"data": []} array format from test vectors
-/// BitList normally serializes as hex string, but test vectors use empty arrays
 pub mod bitlist {
     use super::*;
     use ssz::BitList;
@@ -51,27 +50,22 @@ pub mod bitlist {
     {
         use serde::de::Error;
 
-        // First unwrap the {"data": ...} wrapper
         let wrapper = DataWrapper::<BitListData>::deserialize(deserializer)?;
 
         match wrapper.data {
             BitListData::HexString(hex_str) => {
-                // Handle hex string format (e.g., "0x01ff")
                 let hex_str = hex_str.trim_start_matches("0x");
                 if hex_str.is_empty() {
-                    // Empty hex string means empty bitlist
                     return Ok(BitList::default());
                 }
 
                 let bytes = hex::decode(hex_str)
                     .map_err(|e| D::Error::custom(format!("Invalid hex string: {}", e)))?;
 
-                // Decode SSZ bitlist (with delimiter bit)
                 BitList::from_ssz_unchecked(&(), &bytes)
                     .map_err(|e| D::Error::custom(format!("Invalid SSZ bitlist: {:?}", e)))
             }
             BitListData::BoolArray(bools) => {
-                // Handle array format (e.g., [true, false, true])
                 let mut bitlist = BitList::with_length(bools.len());
                 for (index, bit) in bools.into_iter().enumerate() {
                     bitlist.set(index, bit);
@@ -88,7 +82,6 @@ pub mod bitlist {
     {
         use ssz::SszWrite;
 
-        // Serialize as hex string in {"data": "0x..."} format
         let mut bytes = Vec::new();
         value
             .write_variable(&mut bytes)
@@ -101,13 +94,11 @@ pub mod bitlist {
 }
 
 /// Special deserializer for Signature that handles structured XMSS format from test vectors
-/// Signatures in test vectors are structured with {path, rho, hashes} instead of hex bytes
 pub mod signature {
     use super::*;
     use crate::Signature;
     use serde_json::Value;
 
-    /// Structured XMSS signature format from test vectors
     #[derive(Deserialize)]
     struct XmssSignature {
         path: XmssPath,
@@ -126,10 +117,8 @@ pub mod signature {
     {
         use serde::de::Error;
 
-        // First, try to parse as a JSON value to inspect the structure
         let value = Value::deserialize(deserializer)?;
 
-        // Check if it's a hex string (normal format)
         if let Value::String(hex_str) = &value {
             let hex_str = hex_str.trim_start_matches("0x");
             let bytes = hex::decode(hex_str)
@@ -139,61 +128,52 @@ pub mod signature {
                 .map_err(|_| D::Error::custom("Invalid signature length"));
         }
 
-        // Otherwise, parse as structured XMSS signature
         let xmss_sig: XmssSignature = serde_json::from_value(value)
             .map_err(|e| D::Error::custom(format!("Failed to parse XMSS signature: {}", e)))?;
 
-        // Serialize the XMSS signature to bytes
-        // Format: siblings (variable length) + rho (28 bytes) + hashes (variable length)
         let mut bytes = Vec::new();
 
-        // Write siblings
         for sibling in &xmss_sig.path.siblings.data {
             for val in &sibling.data {
                 bytes.extend_from_slice(&val.to_le_bytes());
             }
         }
 
-        // Write rho (7 u32s = 28 bytes)
         for val in &xmss_sig.rho.data {
             bytes.extend_from_slice(&val.to_le_bytes());
         }
 
-        // Write hashes
         for hash in &xmss_sig.hashes.data {
             for val in &hash.data {
                 bytes.extend_from_slice(&val.to_le_bytes());
             }
         }
 
-        // Pad or truncate to 3112 bytes
+        // Pad or truncate to 3112 bytes to match U3112
         bytes.resize(3112, 0);
 
         Signature::try_from(bytes.as_slice())
-            .map_err(|_| D::Error::custom("Failed to create signature"))
+            .map_err(|_| D::Error::custom("Failed to create signature from XMSS structure"))
     }
 
     pub fn serialize<S>(value: &Signature, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        // Serialize as hex string
         let hex_str = format!("0x{}", hex::encode(value.as_bytes()));
         hex_str.serialize(serializer)
     }
 }
 
-/// Custom deserializer for BlockSignatures that handles the {"data": [sig, ...]} format
-/// where each signature can be either hex string or structured XMSS format
+/// Custom deserializer for BlockSignatures
 pub mod block_signatures {
     use super::*;
     use crate::block::BlockSignatures;
     use crate::Signature;
     use serde_json::Value;
-    use ssz::PersistentList;
-    use typenum::U4096;
+    
+    
 
-    /// Structured XMSS signature format from test vectors
     #[derive(Deserialize, Clone)]
     struct XmssSignature {
         path: XmssPath,
@@ -207,7 +187,6 @@ pub mod block_signatures {
     }
 
     fn parse_single_signature(value: &Value) -> Result<Signature, String> {
-        // Check if it's a hex string (normal format)
         if let Value::String(hex_str) = value {
             let hex_str = hex_str.trim_start_matches("0x");
             let bytes = hex::decode(hex_str).map_err(|e| format!("Invalid hex string: {}", e))?;
@@ -216,34 +195,27 @@ pub mod block_signatures {
                 .map_err(|_| "Invalid signature length".to_string());
         }
 
-        // Otherwise, parse as structured XMSS signature
         let xmss_sig: XmssSignature = serde_json::from_value(value.clone())
             .map_err(|e| format!("Failed to parse XMSS signature: {}", e))?;
 
-        // Serialize the XMSS signature to bytes
-        // Format: siblings (variable length) + rho (28 bytes) + hashes (variable length)
         let mut bytes = Vec::new();
 
-        // Write siblings
         for sibling in &xmss_sig.path.siblings.data {
             for val in &sibling.data {
                 bytes.extend_from_slice(&val.to_le_bytes());
             }
         }
 
-        // Write rho (7 u32s = 28 bytes)
         for val in &xmss_sig.rho.data {
             bytes.extend_from_slice(&val.to_le_bytes());
         }
 
-        // Write hashes
         for hash in &xmss_sig.hashes.data {
             for val in &hash.data {
                 bytes.extend_from_slice(&val.to_le_bytes());
             }
         }
 
-        // Pad or truncate to 3112 bytes
         bytes.resize(3112, 0);
 
         Signature::try_from(bytes.as_slice()).map_err(|_| "Failed to create signature".to_string())
@@ -258,7 +230,6 @@ pub mod block_signatures {
     {
         use serde::de::Error;
 
-        // Parse the {"data": [...]} wrapper
         let wrapper: DataWrapper<Vec<Value>> = DataWrapper::deserialize(deserializer)?;
 
         let mut signatures = PersistentList::default();
@@ -292,7 +263,6 @@ pub mod block_signatures {
     where
         S: Serializer,
     {
-        // Collect all signatures as hex strings
         let mut sigs: Vec<String> = Vec::new();
         let mut i = 0u64;
         loop {
