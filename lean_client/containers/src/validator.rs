@@ -4,7 +4,7 @@ use ssz_derive::Ssz;
 use typenum::{Unsigned, U52};
 
 /// Size of XMSS public keys in bytes (as defined in lean spec)
-pub type PublicKeySize = U52;
+type PublicKeySize = U52;
 
 /// XMSS public key (as defined in lean spec)
 #[derive(Clone, Debug, PartialEq, Eq, Ssz)]
