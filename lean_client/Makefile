@@ -30,6 +30,8 @@ aarch64-unknown-linux-gnu: ./target/aarch64-unknown-linux-gnu/release/lean_clien
 
 DOCKER_REPO ?= sifrai/lean
 DOCKER_TAG ?= unstable
+COMMIT_SHA := $(shell git rev-parse HEAD)
+BUILD_DATE := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 
 .PHONY: release
 release: docker
@@ -43,6 +45,8 @@ docker: ./target/x86_64-unknown-linux-gnu/release/lean_client ./target/aarch64-u
 	docker buildx build \
 		--file Dockerfile \
 		--platform linux/amd64,linux/arm64 \
+		--build-arg COMMIT_SHA=$(COMMIT_SHA) \
+		--build-arg BUILD_DATE=$(BUILD_DATE) \
 		--tag $(DOCKER_REPO):$(DOCKER_TAG) \
 		--push \
 		.
