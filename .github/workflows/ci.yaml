@@ -6,19 +6,21 @@ jobs:
   ci:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-    
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
     runs-on: ${{ matrix.os }}
 
     steps:
+      - name: Enable long paths (Windows)
+        if: runner.os == 'Windows'
+        run: git config --system core.longpaths true
+        shell: bash
+
       - name: Checkout repository
         uses: actions/checkout@v6
 
       - name: Check formatting
         run: make check-format
-
-      - name: Enable long paths
-        run: git config --system core.longpaths true
 
       - name: Build client
         run: make build
