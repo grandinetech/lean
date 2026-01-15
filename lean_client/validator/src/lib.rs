@@ -229,7 +229,7 @@ impl ValidatorService {
         #[cfg(feature = "devnet2")]
         let mut signatures = sigs.attestation_signatures;
 
-        for signed_att in &valid_signed_attestations {
+        for _signed_att in &valid_signed_attestations {
             #[cfg(feature = "devnet1")]
             signatures
                 .push(signed_att.signature.clone())
@@ -257,7 +257,7 @@ impl ValidatorService {
             let epoch = slot.0 as u32;
 
             match key_manager.sign(proposer_index, epoch, &message.into()) {
-                Ok(sig) => {
+                Ok(_sig) => {
                     #[cfg(feature = "devnet1")]
                     signatures
                         .push(sig)
@@ -364,6 +364,7 @@ impl ValidatorService {
                         }
                     }
                 } else {
+                    warn!("Created attestation with zero signature");
                     Signature::default()
                 };
 

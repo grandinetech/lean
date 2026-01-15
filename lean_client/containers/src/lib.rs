@@ -22,10 +22,11 @@ pub use slot::Slot;
 pub use state::State;
 pub use status::Status;
 pub use types::{
-    Bytes32, HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots, Validators,
+    HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots, Validators,
     ValidatorIndex,
 };
 
-pub use types::Bytes32 as Root;
+pub use types::H256 as Root;
 // Re-export grandine ssz so tests can reference it if needed
 pub use ssz;
+pub use ssz::H256;

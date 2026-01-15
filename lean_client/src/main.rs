@@ -155,27 +155,10 @@ async fn main() {
         mpsc::unbounded_channel::<ChainMessage>();
 
     let (genesis_time, validators) = if let Some(genesis_path) = &args.genesis {
-        let genesis_config = containers::Config::load_from_file(genesis_path)
-            .expect("Failed to load genesis config");
+    let genesis_config = containers::Config::load_from_file(genesis_path)
+        .expect("Failed to load genesis config");
 
-        let validators: Vec<containers::validator::Validator> = genesis_config
-            .genesis_validators
-            .iter()
-            .enumerate()
-            .map(|(i, v_value)| {
-                let v_str = v_value.as_str().expect("Validator pubkey must be a string");
-                
-                let pubkey = containers::validator::BlsPublicKey::from_hex(v_str)
-                    .expect("Invalid genesis validator pubkey");
-                    
-                containers::validator::Validator {
-                    pubkey,
-                    index: i as u64,
-                }
-            })
-            .collect();
-
-        (genesis_config.genesis_time, validators)
+        (genesis_config.genesis_time, genesis_config.genesis_validators)
     } else {
         let num_validators = 3;
         let validators = (0..num_validators)
@@ -238,7 +221,7 @@ async fn main() {
         seconds_per_interval: 1,
         genesis_validators: Vec::new(),
     };
-    let store = get_forkchoice_store(genesis_state.clone(), genesis_signed_block, config);
+    let store = get_forkchoice_store(genesis_state.clone(), genesis_signed_block, config.clone());
 
     let num_validators = count_validators(&genesis_state);
     info!(num_validators = num_validators, "Genesis state loaded");
@@ -302,7 +285,7 @@ async fn main() {
 
     let fork = "devnet0".to_string();
     let gossipsub_topics = get_topics(fork);
-    let mut gossipsub_config = GossipsubConfig::new();
+    let mut gossipsub_config = GossipsubConfig::new(&config);
     gossipsub_config.set_topics(gossipsub_topics);
 
     let network_service_config = Arc::new(NetworkServiceConfig::new(

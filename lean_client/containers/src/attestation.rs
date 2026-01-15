@@ -1,16 +1,14 @@
 use crate::{Checkpoint, Slot};
 use serde::{Deserialize, Serialize};
 use ssz::BitList;
-use ssz::ByteVector;
+use ssz::{ByteVector, ReadError};
 use ssz_derive::Ssz;
 use typenum::{Prod, Sum, U100, U12, U31, U4096};
 
-// Type-level number for 3112 bytes
-pub type U3112 = Sum<Prod<U31, U100>, U12>;
 
 // Type alias for Signature
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
-pub struct Signature(pub ByteVector<U3112>);
+pub struct Signature(pub ByteVector<Sum<Prod<U31, U100>, U12>>);
 
 impl Signature {
     pub fn verify(&self) -> bool {
@@ -22,15 +20,17 @@ impl Signature {
     }
 }
 
+// Pakeiskite šią dalį faile containers/src/attestation.rs
+
+
 impl TryFrom<&[u8]> for Signature {
-    type Error = String;
+    type Error = ReadError; 
+
     fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
-        ByteVector::<U3112>::try_from(bytes)
+        ByteVector::<Sum<Prod<U31, U100>, U12>>::try_from(bytes)
             .map(Signature)
-            .map_err(|e| format!("{:?}", e))
     }
 }
-
 // Type-level number for 4096 (validator registry limit)
 
 /// List of validator attestations included in a block (without signatures).

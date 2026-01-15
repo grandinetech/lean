@@ -4,12 +4,13 @@ use containers::{
     checkpoint::Checkpoint, 
     slot::Slot, 
     state::State, 
-    types::{Uint64, ValidatorIndex, Bytes32}, 
+    types::ValidatorIndex, 
     Validators, AggregatedAttestation, Signature,
     ssz::SszHash
 };
 use ssz::PersistentList;
 use typenum::U4096;
+use ssz::H256;
 
 pub const DEVNET_CONFIG_VALIDATOR_REGISTRY_LIMIT: usize = 1 << 12; // 4096
 pub const TEST_VALIDATOR_COUNT: usize = 4; 

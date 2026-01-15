@@ -2,7 +2,6 @@ use super::common::create_test_store;
 use fork_choice::handlers::on_tick;
 use fork_choice::store::tick_interval; 
 use containers::Slot;
-use containers::types::Uint64;
 
 #[test]
 fn test_on_tick_basic() {

@@ -128,6 +128,7 @@ pub fn get_fork_choice_head(
         let children = match child_map.get(&curr) {
             Some(list) if !list.is_empty() => list,
             _ => return curr,
+            // Choose best child: most attestations, then lexicographically highest hash
         };
 
         curr = *children

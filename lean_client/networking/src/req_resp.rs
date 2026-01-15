@@ -2,7 +2,8 @@ use std::io;
 use std::io::{Read, Write};
 
 use async_trait::async_trait;
-use containers::{Bytes32, SignedBlockWithAttestation, Status};
+use ssz::H256;
+use containers::{SignedBlockWithAttestation, Status};
 use containers::ssz::{SszReadDefault, SszWrite};
 use futures::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 use libp2p::request_response::{
@@ -28,7 +29,7 @@ impl AsRef<str> for LeanProtocol {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum LeanRequest {
     Status(Status),
-    BlocksByRoot(Vec<Bytes32>),
+    BlocksByRoot(Vec<H256>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

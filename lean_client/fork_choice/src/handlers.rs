@@ -1,8 +1,9 @@
 use crate::store::*;
 use containers::{
-    attestation::SignedAttestation, block::SignedBlockWithAttestation, Bytes32,
+    attestation::SignedAttestation, block::SignedBlockWithAttestation, 
 };
 use ssz::SszHash;
+use ssz::H256;
 
 #[inline]
 pub fn on_tick(store: &mut Store, time: u64, has_proposal: bool) {
@@ -162,7 +163,7 @@ pub fn on_block(store: &mut Store, signed_block: SignedBlockWithAttestation) -> 
 fn process_block_internal(
     store: &mut Store,
     signed_block: SignedBlockWithAttestation,
-    block_root: Bytes32,
+    block_root: H256,
 ) -> Result<(), String> {
     let block = &signed_block.message.block;
 
@@ -283,7 +284,7 @@ fn process_block_internal(
     }
 }
 
-fn process_pending_blocks(store: &mut Store, mut roots: Vec<Bytes32>) {
+fn process_pending_blocks(store: &mut Store, mut roots: Vec<H256>) {
     while let Some(parent_root) = roots.pop() {
         if let Some(purgatory) = store.blocks_queue.remove(&parent_root) {
             for block in purgatory {

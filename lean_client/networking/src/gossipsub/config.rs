@@ -12,9 +12,9 @@ pub struct GossipsubConfig {
 }
 
 impl GossipsubConfig {
-    pub fn new() -> Self {
+    pub fn new(config: &containers::Config) -> Self {
         let justification_lookback_slots: u64 = 3;
-        let seconds_per_slot: u64 = 4;
+        let seconds_per_slot = config.seconds_per_slot;
         
         let seen_ttl_secs = seconds_per_slot * justification_lookback_slots * 2;
         

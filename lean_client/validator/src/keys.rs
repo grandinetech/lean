@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use containers::Signature;
 use containers::ssz::ByteVector;
-use containers::attestation::U3112;
+use typenum::{Prod, Sum, U100, U12, U31};
 use tracing::info;
 
 #[cfg(feature = "xmss-signing")]
@@ -94,9 +94,9 @@ impl KeyManager {
             }
 
             // Convert to ByteVector<U3112> using unsafe pointer copy (same pattern as BlsPublicKey)
-            let mut byte_vec: ByteVector<U3112> = ByteVector::default();
+            let mut byte_vec: ByteVector<Sum<Prod<U31, U100>, U12>> = ByteVector::default();
             unsafe {
-                let dest = &mut byte_vec as *mut ByteVector<U3112> as *mut u8;
+                let dest = &mut byte_vec as *mut ByteVector<Sum<Prod<U31, U100>, U12>> as *mut u8;
                 std::ptr::copy_nonoverlapping(sig_bytes.as_ptr(), dest, 3112);
             }
 

@@ -1,4 +1,5 @@
-use crate::{Bytes32, Slot};
+use crate::Slot;
+use ssz::H256; 
 use ssz_derive::Ssz;
 use serde::{Deserialize, Serialize};
 
@@ -10,7 +11,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
 pub struct Checkpoint {
     /// The root hash of the checkpoint's block.
-    pub root: Bytes32,
+    pub root: H256,
     /// The slot number of the checkpoint's block.
     pub slot: Slot,
 }

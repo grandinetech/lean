@@ -1,26 +1,17 @@
-use ssz_derive::Ssz;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::fs::File;
 use std::io::BufReader;
+use crate::validator::Validator;
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq, Ssz)]
-#[serde(rename_all = "camelCase")]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase", default)] 
 pub struct Config {
     pub genesis_time: u64,
-    
-    #[serde(default = "default_seconds_per_slot")]
     pub seconds_per_slot: u64,
-    
-    #[serde(default = "default_intervals_per_slot")]
     pub intervals_per_slot: u64,
-    
-    #[serde(default = "default_seconds_per_interval")]
     pub seconds_per_interval: u64,
-
-    #[ssz(skip)] 
-    #[serde(default)]
-    pub genesis_validators: Vec<serde_json::Value>,
+    pub genesis_validators: Vec<Validator>,
 }
 
 impl Config {
@@ -32,6 +23,14 @@ impl Config {
     }
 }
 
-fn default_seconds_per_slot() -> u64 { 4 }
-fn default_intervals_per_slot() -> u64 { 4 }
-fn default_seconds_per_interval() -> u64 { 1 }
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            genesis_time: 0,
+            seconds_per_slot: 12,   
+            intervals_per_slot: 4,
+            seconds_per_interval: 3,
+            genesis_validators: Vec::new(),
+        }
+    }
+}

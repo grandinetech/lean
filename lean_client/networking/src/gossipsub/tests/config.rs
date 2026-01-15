@@ -3,7 +3,11 @@ use crate::gossipsub::topic::{get_topics, GossipsubKind};
 
 #[test]
 fn test_default_parameters() {
-    let config = GossipsubConfig::new();
+    // 1. Sukuriame numatytąją konfigūraciją testui (centralizuotas šaltinis)
+    let global_config = containers::Config::default(); 
+
+    // 2. Perduodame nuorodą į ją
+    let config = GossipsubConfig::new(&global_config);
 
     assert!(config.config.mesh_n_low() < config.config.mesh_n());
     assert!(config.config.mesh_n() < config.config.mesh_n_high());
@@ -32,7 +36,8 @@ fn test_default_parameters() {
 
 #[test]
 fn test_set_topics() {
-    let mut config = GossipsubConfig::new();
+    let global_config = containers::Config::default();
+    let mut config = GossipsubConfig::new(&global_config);
     let topics = get_topics("genesis".to_string());
 
     config.set_topics(topics.clone());

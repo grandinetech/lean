@@ -4,7 +4,7 @@ use containers::{
     checkpoint::Checkpoint,
     slot::Slot,
     state::State,
-    types::{Bytes32, Uint64, ValidatorIndex},
+    types::ValidatorIndex,
     Attestation, AttestationData,
     ssz::SszHash, // Naudojame šį
 };
@@ -12,6 +12,7 @@ use pretty_assertions::assert_eq;
 use rstest::{fixture, rstest};
 use ssz::PersistentList as List;
 use typenum::U4096;
+use ssz::H256;
 
 #[path = "common.rs"]
 mod common;
@@ -83,7 +84,7 @@ fn test_process_block_header_valid() {
 fn test_process_block_header_invalid(
     #[case] bad_slot: u64,
     #[case] bad_proposer: u64,
-    #[case] bad_parent_root: Option<Bytes32>,
+    #[case] bad_parent_root: Option<H256>,
     #[case] expected_error: &str,
 ) {
     let genesis_state = genesis_state();

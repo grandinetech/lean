@@ -4,13 +4,13 @@ use fork_choice::store::accept_new_attestations;
 use containers::{
     attestation::{Attestation, AttestationData, SignedAttestation, Signature},
     checkpoint::Checkpoint,
-    Bytes32, Slot, ValidatorIndex,
+    Slot, ValidatorIndex,
 };
-use containers::types::Uint64;
 use containers::ssz::SszHash;
+use ssz::H256;
 
 #[cfg(feature = "devnet1")]
-fn create_signed_attestation(validator_id: u64, slot: Slot, head_root: Bytes32) -> SignedAttestation {
+fn create_signed_attestation(validator_id: u64, slot: Slot, head_root: H256) -> SignedAttestation {
     SignedAttestation {
         message: Attestation {
             validator_id: validator_id,
@@ -18,7 +18,7 @@ fn create_signed_attestation(validator_id: u64, slot: Slot, head_root: Bytes32) 
                 slot,
                 head: Checkpoint { root: head_root, slot },
                 target: Checkpoint { root: head_root, slot },
-                source: Checkpoint { root: Bytes32::default(), slot: Slot(0) },
+                source: Checkpoint { root: H256::default(), slot: Slot(0) },
             },
         },
         signature: Signature::default(),

@@ -1,7 +1,7 @@
 // tests/state_justifications.rs
 use containers::{
     state::State,
-    types::Bytes32,
+    types::H256,
     Config
 };
 use pretty_assertions::assert_eq;
@@ -198,7 +198,7 @@ fn test_with_justifications_invalid_length() {
     map
 })]
 fn test_justifications_roundtrip(
-    #[case] justifications_map: std::collections::BTreeMap<Bytes32, Vec<bool>>,
+    #[case] justifications_map: std::collections::BTreeMap<H256, Vec<bool>>,
 ) {
     let state = state(sample_config());
 

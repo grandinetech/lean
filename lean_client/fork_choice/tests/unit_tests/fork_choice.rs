@@ -1,7 +1,6 @@
 use super::common::create_test_store;
 use fork_choice::store::{get_proposal_head, get_vote_target};
 use containers::Slot;
-use containers::types::Uint64; 
 use containers::ssz::SszHash;
 
 #[test]

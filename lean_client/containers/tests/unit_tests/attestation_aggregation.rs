@@ -2,24 +2,24 @@
 #[cfg(test)]
 mod tests {
     use containers::attestation::{AggregatedAttestation, AggregationBits, Attestation, AttestationData};
-    use containers::types::{Bytes32, Uint64};
     use containers::checkpoint::Checkpoint;
     use containers::slot::Slot;
+    use ssz::H256;
 
     #[test]
     fn test_aggregated_attestation_structure() {
         let att_data = AttestationData {
             slot: Slot(5),
             head: Checkpoint {
-                root: Bytes32::default(),
+                root: H256::default(),
                 slot: Slot(4),
             },
             target: Checkpoint {
-                root: Bytes32::default(),
+                root: H256::default(),
                 slot: Slot(3),
             },
             source: Checkpoint {
-                root: Bytes32::default(),
+                root: H256::default(),
                 slot: Slot(2),
             }
         };
@@ -40,30 +40,30 @@ mod tests {
         let att_data1 = AttestationData {
             slot: Slot(5),
             head: Checkpoint {
-                root: Bytes32::default(),
+                root: H256::default(),
                 slot: Slot(4),
             },
             target: Checkpoint {
-                root: Bytes32::default(),
+                root: H256::default(),
                 slot: Slot(3),
             },
             source: Checkpoint {
-                root: Bytes32::default(),
+                root: H256::default(),
                 slot: Slot(2),
             }
         };
         let att_data2 = AttestationData {
             slot: Slot(6),
             head: Checkpoint {
-                root: Bytes32::default(),
+                root: H256::default(),
                 slot: Slot(5),
             },
             target: Checkpoint {
-                root: Bytes32::default(),
+                root: H256::default(),
                 slot: Slot(4),
             },
             source: Checkpoint {
-                root: Bytes32::default(),
+                root: H256::default(),
                 slot: Slot(3),
             }
         };
@@ -106,15 +106,15 @@ mod tests {
         let att_data = AttestationData {
             slot: Slot(5),
             head: Checkpoint {
-                root: Bytes32::default(),
+                root: H256::default(),
                 slot: Slot(4),
             },
             target: Checkpoint {
-                root: Bytes32::default(),
+                root: H256::default(),
                 slot: Slot(3),
             },
             source: Checkpoint {
-                root: Bytes32::default(),
+                root: H256::default(),
                 slot: Slot(2),
             }
         };

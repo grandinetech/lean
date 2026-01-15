@@ -1,10 +1,10 @@
 use crate::validator::Validator;
 use crate::{
     block::{Block, BlockBody, BlockHeader, SignedBlockWithAttestation}, 
-    Attestation, Attestations, Bytes32, Checkpoint, Config, 
+    Attestation, Attestations, Checkpoint, Config, 
     SignedAttestation, Slot, ValidatorIndex
 };
-use crate::types::Uint64;
+use ssz::H256;
 use crate::{
     HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots, Validators,
 };
@@ -24,6 +24,7 @@ pub const JUSTIFICATIONS_VALIDATORS_MAX: usize =
 #[serde(rename_all = "camelCase")]
 pub struct State {
     // --- configuration (spec-local) ---
+    #[ssz(skip)]
     pub config: Config,
 
     // --- slot / header tracking ---
@@ -54,7 +55,7 @@ pub struct State {
 
 impl State {
     pub fn generate_genesis_with_validators(
-        genesis_time: Uint64,
+        genesis_time: u64,
         validators: Vec<Validator>,
     ) -> Self {
         let body_for_root = BlockBody {
@@ -99,7 +100,7 @@ impl State {
         }
     }
 
-    pub fn generate_genesis(genesis_time: Uint64, num_validators: Uint64) -> Self {
+    pub fn generate_genesis(genesis_time: u64, num_validators: u64) -> Self {
         let body_for_root = BlockBody {
             attestations: Default::default(),
         };
@@ -158,18 +159,11 @@ impl State {
     }
 
     /// Get the number of validators (since PersistentList doesn't have len())
-    pub fn validator_count(&self) -> usize {
-        let mut count: u64 = 0;
-        loop {
-            match self.validators.get(count) {
-                Ok(_) => count += 1,
-                Err(_) => break,
-            }
-        }
-        count as usize
-    }
+pub fn validator_count(&self) -> usize {
+    self.validators.len_u64() as usize
+}
 
-    pub fn get_justifications(&self) -> BTreeMap<Bytes32, Vec<bool>> {
+    pub fn get_justifications(&self) -> BTreeMap<H256, Vec<bool>> {
         // Use actual validator count, matching leanSpec
         let num_validators = self.validator_count();
         (&self.justifications_roots)
@@ -192,7 +186,7 @@ impl State {
             .collect()
     }
 
-    pub fn with_justifications(mut self, map: BTreeMap<Bytes32, Vec<bool>>) -> Self {
+    pub fn with_justifications(mut self, map: BTreeMap<H256, Vec<bool>>) -> Self {
         // Use actual validator count, matching leanSpec
         let num_validators = self.validator_count();
         let mut roots: Vec<_> = map.keys().cloned().collect();
@@ -229,7 +223,7 @@ impl State {
         self
     }
 
-    pub fn with_historical_hashes(mut self, hashes: Vec<Bytes32>) -> Self {
+    pub fn with_historical_hashes(mut self, hashes: Vec<H256>) -> Self {
         let mut new_hashes = HistoricalBlockHashes::default();
         for h in hashes {
             new_hashes.push(h).expect("within limit");
@@ -289,22 +283,15 @@ impl State {
     }
 
     pub fn process_slot(&self) -> Self {
-        // Cache the state root in the header if not already set (matches leanSpec)
-        // Per spec: leanSpec/src/lean_spec/subspecs/containers/state/state.py lines 173-176
-        if self.latest_block_header.state_root == ssz::H256::zero() {
-            let state_for_hash = self.clone();
-            let previous_state_root = self.hash_tree_root();
 
-            let mut new_header = self.latest_block_header.clone();
-            new_header.state_root = previous_state_root;
-
-            let mut new_state = self.clone();
-            new_state.latest_block_header = new_header;
-            return new_state;
-        }
-
-        self.clone()
+    if self.latest_block_header.state_root == ssz::H256::zero() {
+        let mut new_state = self.clone();
+        new_state.latest_block_header.state_root = self.hash_tree_root();
+        return new_state;
     }
+
+    self.clone()
+}
 
     pub fn process_block(&self, block: &Block) -> Result<Self, String> {
         let state = self.process_block_header(block)?;
@@ -574,10 +561,10 @@ impl State {
         &self,
         slot: Slot,
         proposer_index: ValidatorIndex,
-        parent_root: Bytes32,
+        parent_root: H256,
         initial_attestations: Option<Vec<Attestation>>,
         available_signed_attestations: Option<&[SignedBlockWithAttestation]>,
-        known_block_roots: Option<&std::collections::HashSet<Bytes32>>,
+        known_block_roots: Option<&std::collections::HashSet<H256>>,
     ) -> Result<(Block, Self, Vec<Attestation>, PersistentList<Signature, U4096>), String> {
         // Initialize empty attestation set for iterative collection
         let mut attestations = initial_attestations.unwrap_or_default();
@@ -696,10 +683,10 @@ impl State {
         &self,
         _slot: Slot,
         _proposer_index: ValidatorIndex,
-        _parent_root: Bytes32,
+        _parent_root: H256,
         _initial_attestations: Option<Vec<Attestation>>,
         _available_signed_attestations: Option<&[SignedAttestation]>,
-        _known_block_roots: Option<&std::collections::HashSet<Bytes32>>,
+        _known_block_roots: Option<&std::collections::HashSet<H256>>,
     ) -> Result<(Block, Self, Vec<Attestation>, BlockSignatures), String> {
         Err("build_block is not implemented for devnet2".to_string())
     }

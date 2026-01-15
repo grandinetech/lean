@@ -9,15 +9,15 @@ use containers::{
     checkpoint::Checkpoint,
     config::Config,
     state::State,
-    Bytes32, Slot, ValidatorIndex,
 };
 
 use serde::Deserialize;
 use containers::ssz::PersistentList;
+use containers::{Slot, ValidatorIndex};
 use std::collections::HashMap;
 use std::panic::AssertUnwindSafe;
-use containers::types::Uint64;
 use containers::ssz::SszHash;
+use ssz::H256;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -206,7 +206,7 @@ struct TestInfo {
     fixture_format: String,
 }
 
-fn parse_root(hex_str: &str) -> Bytes32 {
+fn parse_root(hex_str: &str) -> H256 {
     let hex = hex_str.trim_start_matches("0x");
     let mut bytes = [0u8; 32];
 
@@ -417,7 +417,7 @@ fn initialize_state_from_test(test_state: &TestAnchorState) -> State {
 fn verify_checks(
     store: &Store,
     checks: &Option<TestChecks>,
-    block_labels: &HashMap<String, Bytes32>,
+    block_labels: &HashMap<String, H256>,
     step_idx: usize,
 ) -> Result<(), String> {
     // If no checks provided, nothing to verify
@@ -523,7 +523,7 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
     };
 
     let mut store = get_forkchoice_store(anchor_state, anchor_block, config);
-    let mut block_labels: HashMap<String, Bytes32> = HashMap::new();
+    let mut block_labels: HashMap<String, H256> = HashMap::new();
 
     for (step_idx, step) in test.steps.iter().enumerate() {
         match step.step_type.as_str() {

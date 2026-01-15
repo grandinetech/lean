@@ -1,7 +1,5 @@
-use ssz::H256;
+pub use ssz::H256;
 
-pub type Bytes32 = H256;
-pub type Uint64 = u64;
 pub type ValidatorIndex = u64;
 
 // Type-level constants for SSZ collection limits
@@ -12,13 +10,13 @@ use crate::validator::Validator;
 /// Type-level number for 4000 bytes (signature size) = 4 * 1000
 pub type U4000 = Prod<U4, U1000>;
 
-/// List of historical block root hashes (SSZList<Bytes32, historical_roots_limit>)
-pub type HistoricalBlockHashes = ssz::PersistentList<Bytes32, U262144>;
+/// List of historical block root hashes (SSZList<H256, historical_roots_limit>)
+pub type HistoricalBlockHashes = ssz::PersistentList<H256, U262144>;
 
 pub type Validators = ssz::PersistentList<Validator, U4096>;
 
-/// List of justified block roots (SSZList<Bytes32, historical_roots_limit>)
-pub type JustificationRoots = ssz::PersistentList<Bytes32, U262144>;
+/// List of justified block roots (SSZList<H256, historical_roots_limit>)
+pub type JustificationRoots = ssz::PersistentList<H256, U262144>;
 
 /// Bitlist tracking justified slots (BitList<historical_roots_limit>)
 pub type JustifiedSlots = ssz::BitList<U262144>; // 2^18

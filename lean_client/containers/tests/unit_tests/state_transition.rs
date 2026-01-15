@@ -2,13 +2,13 @@
 use containers::{
     block::{Block, BlockWithAttestation, SignedBlockWithAttestation},
     state::State,
-    types::{Bytes32, Uint64},
-    Attestation, Attestations, Slot,
 };
 use pretty_assertions::assert_eq;
+use containers::{Attestation, Attestations, Slot};
 use rstest::fixture;
 use ssz::PersistentList;
 use containers::ssz::SszHash;
+use ssz::H256;
 
 #[path = "common.rs"]
 mod common;
@@ -42,7 +42,7 @@ fn test_state_transition_full() {
             let plain_attestations = aggregated_attestation.to_plain();
             // For each attestatio in the vector, push to the list
             for attestation in plain_attestations {
-                unaggregated_attestations.push(attestation);
+                let _ = unaggregated_attestations.push(attestation);
             }
         }
         state_after_header.process_attestations(&unaggregated_attestations)
@@ -90,7 +90,7 @@ fn test_state_transition_invalid_signatures() {
             let plain_attestations = aggregated_attestation.to_plain();
             // For each attestatio in the vector, push to the list
             for attestation in plain_attestations {
-                list.push(attestation);
+                let _ = list.push(attestation);
             }
         }
         list
@@ -163,7 +163,7 @@ fn test_state_transition_devnet2() {
             let plain_attestations = aggregated_attestation.to_plain();
             // For each attestatio in the vector, push to the list
             for attestation in plain_attestations {
-                unaggregated_attestations.push(attestation);
+                let _ = unaggregated_attestations.push(attestation);
             }
         }
         state_after_header.process_attestations(&unaggregated_attestations)

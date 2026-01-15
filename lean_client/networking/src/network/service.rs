@@ -602,7 +602,7 @@ where
     pub fn send_blocks_by_root_request(
         &mut self,
         peer_id: PeerId,
-        roots: Vec<containers::Bytes32>,
+        roots: Vec<ssz::H256>,
     ) {
         if roots.is_empty() {
             return;

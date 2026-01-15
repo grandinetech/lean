@@ -5,9 +5,9 @@ use containers::{
     config::Config,
     state::State,
     validator::Validator,
-    Bytes32, Slot, ValidatorIndex,
+    Slot, ValidatorIndex,
 };
-use containers::types::Uint64;
+use ssz::H256;
 use containers::ssz::SszHash;
 
 pub fn create_test_store() -> Store {
@@ -28,7 +28,7 @@ pub fn create_test_store() -> Store {
     let block = Block {
         slot: Slot(0),
         proposer_index: 0,
-        parent_root: Bytes32::default(),
+        parent_root: H256::default(),
         state_root: state.hash_tree_root(),
         body: BlockBody::default(),
     };

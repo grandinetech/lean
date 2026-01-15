@@ -1,4 +1,5 @@
-use crate::{Attestation, Bytes32, Signature, Slot, State, ValidatorIndex};
+use crate::{Attestation, Signature, Slot, State, ValidatorIndex};
+use ssz::H256; 
 use serde::{Deserialize, Serialize};
 use ssz_derive::Ssz;
 
@@ -25,9 +26,9 @@ pub struct BlockBody {
 pub struct BlockHeader {
     pub slot: Slot,
     pub proposer_index: ValidatorIndex,
-    pub parent_root: Bytes32,
-    pub state_root: Bytes32,
-    pub body_root: Bytes32,
+    pub parent_root: H256,
+    pub state_root: H256,
+    pub body_root: H256,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
@@ -35,8 +36,8 @@ pub struct BlockHeader {
 pub struct Block {
     pub slot: Slot,
     pub proposer_index: ValidatorIndex,
-    pub parent_root: Bytes32,
-    pub state_root: Bytes32,
+    pub parent_root: H256,
+    pub state_root: H256,
     pub body: BlockBody,
 }
 

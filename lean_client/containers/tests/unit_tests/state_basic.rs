@@ -1,5 +1,5 @@
 // tests/state_basic.rs
-use containers::{block::BlockBody, state::State, types::Uint64, ValidatorIndex};
+use containers::{block::BlockBody, state::State, ValidatorIndex};
 use containers::ssz::SszHash; // Importuojame taisyklę čia
 
 #[path = "common.rs"]
