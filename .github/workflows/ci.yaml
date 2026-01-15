@@ -17,6 +17,9 @@ jobs:
       - name: Check formatting
         run: make check-format
 
+      - name: Enable long paths
+        run: git config --system core.longpaths true
+
       - name: Build client
         run: make build
 
