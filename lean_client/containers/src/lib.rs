@@ -8,6 +8,8 @@ pub mod state;
 pub mod status;
 pub mod types;
 pub mod validator;
+mod public_key;
+mod signature_wrapper;
 
 pub use attestation::{
     AggregatedAttestations, AggregatedSignatures, AggregationBits, Attestation, AttestationData,

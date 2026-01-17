@@ -859,6 +859,8 @@ dependencies = [
 name = "containers"
 version = "0.1.0"
 dependencies = [
+ "alloy-primitives",
+ "anyhow",
  "hex",
  "leansig",
  "pretty_assertions",

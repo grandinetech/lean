@@ -4,8 +4,7 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use ssz_derive::Ssz;
 
-#[cfg(feature = "xmss-verify")]
-use leansig::signature::generalized_xmss::instantiations_poseidon::lifetime_2_to_the_20::target_sum::SIGTargetSumLifetime20W2NoOff;
+use crate::public_key::PublicKey;
 
 /// The body of a block, containing payload data.
 ///
@@ -164,18 +163,7 @@ impl SignedBlockWithAttestation {
 
         let validators = &parent_state.validators;
 
-        // Count validators (PersistentList doesn't expose len directly)
-        let mut num_validators: u64 = 0;
-        let mut k: u64 = 0;
-        loop {
-            match validators.get(k) {
-                Ok(_) => {
-                    num_validators += 1;
-                    k += 1;
-                }
-                Err(_) => break,
-            }
-        }
+        let num_validators: u64 = validators.len_u64();
 
         // Verify each attestation signature
         for (attestation, signature) in all_attestations.iter().zip(signatures_vec.iter()) {
@@ -198,52 +186,65 @@ impl SignedBlockWithAttestation {
 
             #[cfg(feature = "xmss-verify")]
             {
-                use leansig::serialization::Serializable;
-                use leansig::signature::SignatureScheme;
-
                 // Compute the message hash from the attestation
                 let message_bytes: [u8; 32] = hash_tree_root(attestation).0.into();
                 let epoch = attestation.data.slot.0 as u32;
 
-                // Get public key bytes - use as_bytes() method
-                let pubkey_bytes = validator.pubkey.0.as_bytes();
+                // Public key in state is a `ByteVector<52>`; wrap it and let the wrapper handle decoding.
+                let pk_wrapped = PublicKey::from(validator.pubkey.0.as_bytes());
 
-                // Deserialize the public key using Serializable trait
-                type PubKey = <SIGTargetSumLifetime20W2NoOff as SignatureScheme>::PublicKey;
-                let pubkey = match PubKey::from_bytes(pubkey_bytes) {
-                    Ok(pk) => pk,
+                // Signatures in blocks are stored as SSZ `ByteVector<3112>`.
+                // Convert to our fixed-size wrapper, then verify via leansig using the wrapper APIs.
+                let sig_wrapped = crate::signature_wrapper::SignatureWrapper::from(signature.as_bytes());
+
+                // Ensure decoding is consistent before verification
+                pk_wrapped
+                    .debug_roundtrip()
+                    .map_err(|e| {
+                        eprintln!(
+                            "PublicKey roundtrip failed: {:?} fp={}",
+                            e,
+                            pk_wrapped.fingerprint_hex()
+                        );
+                        e
+                    })
+                    .ok();
+
+                sig_wrapped
+                    .debug_roundtrip()
+                    .map_err(|e| {
+                        eprintln!(
+                            "Signature roundtrip failed: {:?} fp={}",
+                            e,
+                            sig_wrapped.fingerprint_hex()
+                        );
+                        e
+                    })
+                    .ok();
+
+                eprintln!(
+                    "verify: slot={:?} epoch={} pk_fp={} sig_fp={}",
+                    attestation.data.slot,
+                    epoch,
+                    pk_wrapped.fingerprint_hex(),
+                    sig_wrapped.fingerprint_hex(),
+                );
+                match sig_wrapped.verify(&pk_wrapped, epoch, &message_bytes) {
+                    Ok(true) => {}
+                    Ok(false) => {
+                        eprintln!(
+                            "XMSS signature verification failed at slot {:?}",
+                            attestation.data.slot
+                        );
+                        return false;
+                    }
                     Err(e) => {
                         eprintln!(
-                            "Failed to deserialize public key at slot {:?}: {:?}",
+                            "Failed to verify XMSS signature at slot {:?}: {:?}",
                             attestation.data.slot, e
                         );
                         return false;
                     }
-                };
-
-                // Get signature bytes - use as_bytes() method
-                let sig_bytes = signature.as_bytes();
-
-                // Deserialize the signature using Serializable trait
-                type Sig = <SIGTargetSumLifetime20W2NoOff as SignatureScheme>::Signature;
-                let sig = match Sig::from_bytes(sig_bytes) {
-                    Ok(s) => s,
-                    Err(e) => {
-                        eprintln!(
-                            "Failed to deserialize signature at slot {:?}: {:?}",
-                            attestation.data.slot, e
-                        );
-                        return false;
-                    }
-                };
-
-                // Verify the signature
-                if !SIGTargetSumLifetime20W2NoOff::verify(&pubkey, epoch, &message_bytes, &sig) {
-                    eprintln!(
-                        "XMSS signature verification failed at slot {:?}",
-                        attestation.data.slot
-                    );
-                    return false;
                 }
             }
 

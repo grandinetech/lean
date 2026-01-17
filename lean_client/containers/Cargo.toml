@@ -20,6 +20,8 @@ serde_yaml = "0.9"
 hex = "0.4.3"
 sha2 = "0.10"
 leansig = { git = "https://github.com/leanEthereum/leanSig", branch = "main", optional = true }
+alloy-primitives = "1.4.1"
+anyhow = "1.0.100"
 
 [dev-dependencies]
 rstest = "0.18"
