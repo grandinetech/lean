@@ -108,6 +108,12 @@ struct Args {
     #[arg(short, long, default_value_t = 8083)]
     port: u16,
 
+    #[arg(short, long, default_value_t = 8084)]
+    discovery_port: u16,
+
+    #[arg(long, default_value_t = false)]
+    disable_discovery: bool,
+
     #[arg(short, long)]
     bootnodes: Vec<String>,
 
@@ -286,10 +292,14 @@ async fn main() {
     let mut gossipsub_config = GossipsubConfig::new();
     gossipsub_config.set_topics(gossipsub_topics);
 
+    let discovery_enabled = !args.disable_discovery;
+
     let network_service_config = Arc::new(NetworkServiceConfig::new(
         gossipsub_config,
         args.address,
         args.port,
+        args.discovery_port,
+        discovery_enabled,
         args.bootnodes,
     ));
 
