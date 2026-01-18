@@ -6,6 +6,8 @@ use containers::attestation::{AggregatedAttestations};
 #[cfg(feature = "devnet2")]
 use containers::attestation::MultisigAggregatedSignature;
 use containers::block::BlockSignatures;
+#[cfg(feature = "devnet2")]
+use containers::ssz;
 use containers::{
     attestation::{Attestation, AttestationData, Signature, SignedAttestation},
     block::{hash_tree_root, BlockWithAttestation, SignedBlockWithAttestation},
@@ -219,6 +221,8 @@ impl ValidatorService {
             Some(valid_attestations),
             None,
             None,
+            None,
+            None,
         )?;
         #[cfg(feature = "devnet2")]
         let (block, _post_state, _collected_atts, sigs) = {
@@ -236,29 +240,22 @@ impl ValidatorService {
                 Some(valid_attestations),
                 None,
                 None,
+                None,
+                None,
             )?
         };
 
-        // Collect signatures from the attestations we included
         #[cfg(not(feature = "devnet2"))]
         let mut signatures = sigs;
-        #[cfg(feature = "devnet2")]
-        let mut signatures = sigs.attestation_signatures;
+        #[cfg(not(feature = "devnet2"))]
         for signed_att in &valid_signed_attestations {
-            #[cfg(not(feature = "devnet2"))]
             signatures
                 .push(signed_att.signature.clone())
                 .map_err(|e| format!("Failed to add attestation signature: {:?}", e))?;
-            #[cfg(feature = "devnet2")]
-            {
-                // TODO: Use real lean-multisig aggregation once we have individual signatures
-                // For now, use an empty proof placeholder that verify_aggregated_payload will accept
-                let aggregated_sig = MultisigAggregatedSignature::default();
-                signatures
-                    .push(aggregated_sig)
-                    .map_err(|e| format!("Failed to add attestation signature: {:?}", e))?;
-            }
         }
+
+        #[cfg(feature = "devnet2")]
+        let signatures = sigs;
 
         info!(
             slot = block.slot.0,
@@ -270,6 +267,11 @@ impl ValidatorService {
         );
 
         // Sign the proposer attestation
+        #[cfg(not(feature = "devnet2"))]
+        let proposer_signature: Signature;
+        #[cfg(feature = "devnet2")]
+        let proposer_signature: Signature;
+        
         if let Some(ref key_manager) = self.key_manager {
             // Sign proposer attestation with XMSS
             let message = hash_tree_root(&proposer_attestation);
@@ -278,16 +280,15 @@ impl ValidatorService {
             match key_manager.sign(proposer_index.0, epoch, &message.0.into()) {
                 Ok(sig) => {
                     #[cfg(not(feature = "devnet2"))]
-                    signatures
-                        .push(sig)
-                        .map_err(|e| format!("Failed to add proposer signature: {:?}", e))?;
+                    {
+                        signatures
+                            .push(sig.clone())
+                            .map_err(|e| format!("Failed to add proposer signature: {:?}", e))?;
+                        proposer_signature = sig;
+                    }
                     #[cfg(feature = "devnet2")]
                     {
-                        // TODO: Use real lean-multisig aggregation for proposer attestation
-                        let aggregated_sig = MultisigAggregatedSignature::default();
-                        signatures
-                            .push(aggregated_sig)
-                            .map_err(|e| format!("Failed to add proposer signature: {:?}", e))?;
+                        proposer_signature = sig;
                     }
                     info!(proposer = proposer_index.0, "Signed proposer attestation");
                 }
@@ -298,7 +299,19 @@ impl ValidatorService {
         } else {
             // No key manager - use zero signature
             warn!("Building block with zero signature (no key manager)");
+            proposer_signature = Signature::default();
         }
+
+        // Convert signatures to PersistentList for BlockSignatures
+        #[cfg(feature = "devnet2")]
+        let attestation_signatures = {
+            let mut list = ssz::PersistentList::default();
+            for sig in signatures {
+                list.push(sig)
+                    .map_err(|e| format!("Failed to add attestation signature: {:?}", e))?;
+            }
+            list
+        };
 
         let signed_block = SignedBlockWithAttestation {
             message: BlockWithAttestation {
@@ -309,8 +322,8 @@ impl ValidatorService {
             signature: signatures,
             #[cfg(feature = "devnet2")]
             signature: BlockSignatures {
-                attestation_signatures: signatures,
-                proposer_signature: Signature::default(),
+                attestation_signatures,
+                proposer_signature,
             },
         };
 
