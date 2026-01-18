@@ -144,8 +144,6 @@ impl MultisigAggregatedSignature {
         // NOTE: This stub matches Python leanSpec behavior (test_mode=True).
         // Python also uses test_mode=True with TODO: "Remove test_mode once leanVM
         // supports correct signature encoding."
-        // See: src/lean_spec/subspecs/xmss/aggregation.py
-        //
         // Once leanVM/lean-multisig supports proper signature encoding:
         // 1. Extract public keys from validators
         // 2. Convert message bytes to field element format
@@ -180,6 +178,41 @@ pub enum AggregationError {
     AggregationFailed,
     /// Verification of aggregated proof failed.
     VerificationFailed,
+}
+
+/// Aggregated signature proof with participant tracking.
+///
+/// This type combines the participant bitfield with the proof bytes,
+/// matches Python's `AggregatedSignatureProof` container structure.
+/// Used in `aggregated_payloads` to track which validators are covered by each proof.
+#[cfg(feature = "devnet2")]
+#[derive(Clone, Debug, PartialEq, Eq, Default, Ssz, Serialize, Deserialize)]
+pub struct AggregatedSignatureProof {
+    /// Bitfield indicating which validators' signatures are included.
+    pub participants: AggregationBits,
+    /// The raw aggregated proof bytes from lean-multisig.
+    pub proof_data: MultisigAggregatedSignature,
+}
+
+#[cfg(feature = "devnet2")]
+impl AggregatedSignatureProof {
+    /// Create a new AggregatedSignatureProof.
+    pub fn new(participants: AggregationBits, proof_data: MultisigAggregatedSignature) -> Self {
+        Self { participants, proof_data }
+    }
+
+
+    pub fn from_aggregation(participant_ids: &[u64], proof: MultisigAggregatedSignature) -> Self {
+        Self {
+            participants: AggregationBits::from_validator_indices(participant_ids),
+            proof_data: proof,
+        }
+    }
+
+    /// Get the validator indices covered by this proof.
+    pub fn get_participant_indices(&self) -> Vec<u64> {
+        self.participants.to_validator_indices()
+    }
 }
 
 /// Bitlist representing validator participation in an attestation.

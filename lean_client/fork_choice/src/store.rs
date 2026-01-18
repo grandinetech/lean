@@ -4,7 +4,7 @@ use containers::{
     Bytes32, Root, Slot, ValidatorIndex,
 };
 #[cfg(feature = "devnet2")]
-use containers::{MultisigAggregatedSignature, Signature, SignatureKey};
+use containers::{AggregatedSignatureProof, Signature, SignatureKey};
 use ssz::SszHash;
 use std::collections::HashMap;
 pub type Interval = u64;
@@ -30,7 +30,7 @@ pub struct Store {
     pub gossip_signatures: HashMap<SignatureKey, Signature>,
 
     #[cfg(feature = "devnet2")]
-    pub aggregated_payloads: HashMap<SignatureKey, Vec<MultisigAggregatedSignature>>,
+    pub aggregated_payloads: HashMap<SignatureKey, Vec<AggregatedSignatureProof>>,
 }
 
 pub fn get_forkchoice_store(
@@ -297,7 +297,7 @@ pub fn produce_block_with_signatures(
     store: &mut Store,
     slot: Slot,
     validator_index: ValidatorIndex,
-) -> Result<(Root, containers::block::Block, Vec<MultisigAggregatedSignature>), String> {
+) -> Result<(Root, containers::block::Block, Vec<AggregatedSignatureProof>), String> {
     use containers::Attestation;
 
     // Get parent block head

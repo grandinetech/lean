@@ -303,11 +303,12 @@ impl ValidatorService {
         }
 
         // Convert signatures to PersistentList for BlockSignatures
+        // Extract proof_data from AggregatedSignatureProof for wire format
         #[cfg(feature = "devnet2")]
         let attestation_signatures = {
             let mut list = ssz::PersistentList::default();
-            for sig in signatures {
-                list.push(sig)
+            for proof in signatures {
+                list.push(proof.proof_data)
                     .map_err(|e| format!("Failed to add attestation signature: {:?}", e))?;
             }
             list

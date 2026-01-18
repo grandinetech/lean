@@ -256,7 +256,13 @@ fn process_block_internal(
             let data_root = aggregated_attestation.data.data_root_bytes();
             
             // Get the corresponding proof from attestation_signatures
-            if let Ok(proof) = signatures.attestation_signatures.get(att_idx as u64) {
+            if let Ok(proof_data) = signatures.attestation_signatures.get(att_idx as u64) {
+                // Create AggregatedSignatureProof with participants and proof data
+                let aggregated_proof = containers::AggregatedSignatureProof::new(
+                    aggregated_attestation.aggregation_bits.clone(),
+                    proof_data.clone(),
+                );
+                
                 // Store proof for each validator in the aggregation
                 for (bit_idx, bit) in aggregated_attestation.aggregation_bits.0.iter().enumerate() {
                     if *bit {
@@ -265,7 +271,7 @@ fn process_block_internal(
                         store.aggregated_payloads
                             .entry(sig_key)
                             .or_insert_with(Vec::new)
-                            .push(proof.clone());
+                            .push(aggregated_proof.clone());
                     }
                 }
             }

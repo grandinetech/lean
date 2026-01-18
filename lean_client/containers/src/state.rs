@@ -702,8 +702,8 @@ impl State {
         available_attestations: Option<Vec<Attestation>>,
         known_block_roots: Option<&std::collections::HashSet<Bytes32>>,
         gossip_signatures: Option<&std::collections::HashMap<crate::SignatureKey, Signature>>,
-        aggregated_payloads: Option<&std::collections::HashMap<crate::SignatureKey, Vec<crate::MultisigAggregatedSignature>>>,
-    ) -> Result<(Block, Self, Vec<crate::AggregatedAttestation>, Vec<crate::MultisigAggregatedSignature>), String> {
+        aggregated_payloads: Option<&std::collections::HashMap<crate::SignatureKey, Vec<crate::AggregatedSignatureProof>>>,
+    ) -> Result<(Block, Self, Vec<crate::AggregatedAttestation>, Vec<crate::AggregatedSignatureProof>), String> {
         use crate::attestation::{AggregatedAttestation, SignatureKey};
         
         // Initialize attestation set
@@ -862,12 +862,12 @@ impl State {
         &self,
         attestations: &[Attestation],
         gossip_signatures: Option<&std::collections::HashMap<crate::SignatureKey, Signature>>,
-        aggregated_payloads: Option<&std::collections::HashMap<crate::SignatureKey, Vec<crate::MultisigAggregatedSignature>>>,
-    ) -> Result<(Vec<crate::AggregatedAttestation>, Vec<crate::MultisigAggregatedSignature>), String> {
+        aggregated_payloads: Option<&std::collections::HashMap<crate::SignatureKey, Vec<crate::AggregatedSignatureProof>>>,
+    ) -> Result<(Vec<crate::AggregatedAttestation>, Vec<crate::AggregatedSignatureProof>), String> {
         use crate::attestation::{AggregatedAttestation, AggregationBits, SignatureKey};
         use std::collections::HashSet;
 
-        let mut results: Vec<(AggregatedAttestation, crate::MultisigAggregatedSignature)> = Vec::new();
+        let mut results: Vec<(AggregatedAttestation, crate::AggregatedSignatureProof)> = Vec::new();
 
         // Group individual attestations by data
         for aggregated in AggregatedAttestation::aggregate_by_data(attestations) {
@@ -878,7 +878,7 @@ impl State {
             // Phase 1: Gossip Collection
             // Try to collect individual signatures from gossip network
             let mut gossip_ids: Vec<u64> = Vec::new();
-            let mut gossip_sigs_collected: Vec<Signature> = Vec::new();
+            let mut _gossip_sigs_collected: Vec<Signature> = Vec::new();
             let mut remaining: HashSet<u64> = HashSet::new();
 
             if let Some(gossip_sigs) = gossip_signatures {
@@ -886,7 +886,7 @@ impl State {
                     let key = SignatureKey::new(*vid, data_root);
                     if let Some(sig) = gossip_sigs.get(&key) {
                         gossip_ids.push(*vid);
-                        gossip_sigs_collected.push(sig.clone());
+                        _gossip_sigs_collected.push(sig.clone());
                     } else {
                         remaining.insert(*vid);
                     }
@@ -897,13 +897,18 @@ impl State {
             }
 
             // If we collected any gossip signatures, create an aggregated proof
+            // NOTE: This matches Python leanSpec behavior (test_mode=True).
+            // Python also uses test_mode=True with TODO: "Remove test_mode once leanVM
+            // supports correct signature encoding."
+            // Once lean-multisig is fully integrated, this will call:
+            //   MultisigAggregatedSignature::aggregate(public_keys, signatures, message, epoch)
             if !gossip_ids.is_empty() {
                 let participants = AggregationBits::from_validator_indices(&gossip_ids);
                 
-                // TODO: Actually aggregate signatures using lean-multisig when we have
-                // the proper public key and signature conversion
-                // For now, create empty proof placeholder
-                let proof = crate::MultisigAggregatedSignature::new(Vec::new());
+                // Create proof placeholder (matches Python test_mode behavior)
+                // TODO: Call actual aggregation when lean-multisig supports proper encoding
+                let proof_data = crate::MultisigAggregatedSignature::new(Vec::new());
+                let proof = crate::AggregatedSignatureProof::new(participants.clone(), proof_data);
                 
                 results.push((
                     AggregatedAttestation {
@@ -932,18 +937,32 @@ impl State {
                 };
 
                 // Greedy selection: find proof covering most remaining validators
-                // We need to check each candidate to see which validators it covers
-                // For now, we use a simplified approach: each proof in aggregated_payloads
-                // is assumed to cover a set of validators that we track
-                
-                // TODO: Extract actual participants from proof metadata
-                // For now, assume each proof covers the validators it's indexed by
-                // Use simplified single-validator coverage
-                let best_proof = &candidates[0];
-                let covered_validators = vec![target_id];
-                
-                // Create attestation with this proof's participants
+                // For each candidate proof, compute intersection with remaining validators
+                let (best_proof, covered_set) = candidates
+                    .iter()
+                    .map(|proof| {
+                        let proof_validators: HashSet<u64> = proof
+                            .get_participant_indices()
+                            .into_iter()
+                            .collect();
+                        let intersection: HashSet<u64> = remaining
+                            .intersection(&proof_validators)
+                            .copied()
+                            .collect();
+                        (proof, intersection)
+                    })
+                    .max_by_key(|(_, intersection)| intersection.len())
+                    .expect("candidates is non-empty");
+
+                // Guard: If best proof has zero overlap, stop
+                if covered_set.is_empty() {
+                    break;
+                }
+
+                // Record proof with its actual participants (from the proof itself)
+                let covered_validators: Vec<u64> = best_proof.get_participant_indices();
                 let participants = AggregationBits::from_validator_indices(&covered_validators);
+                
                 results.push((
                     AggregatedAttestation {
                         aggregation_bits: participants,
@@ -953,7 +972,7 @@ impl State {
                 ));
 
                 // Remove covered validators from remaining
-                for vid in &covered_validators {
+                for vid in &covered_set {
                     remaining.remove(vid);
                 }
             }
