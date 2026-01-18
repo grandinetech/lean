@@ -35,3 +35,33 @@ leanEthereum Consensus Client written in Rust using Grandine's libraries.
                  --bootnodes "/ip4/127.0.0.1/udp/9004/quic-v1/p2p/16Uiu2HAm7TYVs6qvDKnrovd9m4vvRikc4HPXm1WyLumKSe5fHxBv"
    ```
 4. Leave client running for a few minutes and observe warnings, errors, check if blocks are being justified and finalized (don't need debug mode for this last one)
+
+## Testing discovery
+
+1. Start the bootnode
+
+   Run in the terminal:
+   ```
+   RUST_LOG=info cargo run --features devnet2 -- \
+                 --port 9000 \
+                 --discovery-port 9100
+   ```
+   
+2. Start the other nodes
+
+   Run in the terminal:
+   ```
+   RUST_LOG=info cargo run --features devnet2 -- \
+                 --port 9001 \
+                 --discovery-port 9101 \
+                 --bootnodes "<bootnode-enr>"
+   ```
+   
+   ```
+   RUST_LOG=info cargo run --features devnet2 -- \
+                 --port 9002 \
+                 --discovery-port 9102 \
+                 --bootnodes "<bootnode-enr>"
+   ```
+   
+After a minute all the nodes should be synced up and see each other
