@@ -1,9 +1,9 @@
 use crate::{Bytes32, Slot};
-use ssz_derive::Ssz;
 use serde::{Deserialize, Serialize};
+use ssz_derive::Ssz;
 
 /// Represents a checkpoint in the chain's history.
-/// 
+///
 /// A checkpoint marks a specific moment in the chain. It combines a block
 /// identifier with a slot number. Checkpoints are used for justification and
 /// finalization.

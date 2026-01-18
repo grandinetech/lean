@@ -2,8 +2,8 @@ use std::io;
 use std::io::{Read, Write};
 
 use async_trait::async_trait;
-use containers::{Bytes32, SignedBlockWithAttestation, Status};
 use containers::ssz::{SszReadDefault, SszWrite};
+use containers::{Bytes32, SignedBlockWithAttestation, Status};
 use futures::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 use libp2p::request_response::{
     Behaviour as RequestResponse, Codec, Config, Event, ProtocolSupport,
@@ -46,8 +46,9 @@ impl LeanCodec {
     fn compress(data: &[u8]) -> io::Result<Vec<u8>> {
         let mut encoder = FrameEncoder::new(Vec::new());
         encoder.write_all(data)?;
-        encoder.into_inner()
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Snappy framing failed: {e}")))
+        encoder.into_inner().map_err(|e| {
+            io::Error::new(io::ErrorKind::Other, format!("Snappy framing failed: {e}"))
+        })
     }
 
     /// Decompress data using Snappy framing format (required for req/resp protocol)
@@ -60,8 +61,9 @@ impl LeanCodec {
 
     fn encode_request(request: &LeanRequest) -> io::Result<Vec<u8>> {
         let ssz_bytes = match request {
-            LeanRequest::Status(status) => status.to_ssz()
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("SSZ encode failed: {e}")))?,
+            LeanRequest::Status(status) => status.to_ssz().map_err(|e| {
+                io::Error::new(io::ErrorKind::Other, format!("SSZ encode failed: {e}"))
+            })?,
             LeanRequest::BlocksByRoot(roots) => {
                 let mut bytes = Vec::new();
                 for root in roots {
@@ -77,12 +79,16 @@ impl LeanCodec {
         if data.is_empty() {
             return Ok(LeanRequest::Status(Status::default()));
         }
-        
+
         let ssz_bytes = Self::decompress(data)?;
-        
+
         if protocol.contains("status") {
-            let status = Status::from_ssz_default(&ssz_bytes)
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("SSZ decode Status failed: {e:?}")))?;
+            let status = Status::from_ssz_default(&ssz_bytes).map_err(|e| {
+                io::Error::new(
+                    io::ErrorKind::Other,
+                    format!("SSZ decode Status failed: {e:?}"),
+                )
+            })?;
             Ok(LeanRequest::Status(status))
         } else if protocol.contains("blocks_by_root") {
             let mut roots = Vec::new();
@@ -96,35 +102,44 @@ impl LeanCodec {
             if roots.len() > MAX_REQUEST_BLOCKS {
                 return Err(io::Error::new(
                     io::ErrorKind::InvalidData,
-                    format!("Too many block roots requested: {} > {}", roots.len(), MAX_REQUEST_BLOCKS),
+                    format!(
+                        "Too many block roots requested: {} > {}",
+                        roots.len(),
+                        MAX_REQUEST_BLOCKS
+                    ),
                 ));
             }
             Ok(LeanRequest::BlocksByRoot(roots))
         } else {
-            Err(io::Error::new(io::ErrorKind::Other, format!("Unknown protocol: {protocol}")))
+            Err(io::Error::new(
+                io::ErrorKind::Other,
+                format!("Unknown protocol: {protocol}"),
+            ))
         }
     }
 
     fn encode_response(response: &LeanResponse) -> io::Result<Vec<u8>> {
         let ssz_bytes = match response {
-            LeanResponse::Status(status) => status.to_ssz()
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("SSZ encode failed: {e}")))?,
+            LeanResponse::Status(status) => status.to_ssz().map_err(|e| {
+                io::Error::new(io::ErrorKind::Other, format!("SSZ encode failed: {e}"))
+            })?,
             LeanResponse::BlocksByRoot(blocks) => {
                 let mut bytes = Vec::new();
                 for block in blocks {
-                    let block_bytes = block.to_ssz()
-                        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("SSZ encode failed: {e}")))?;
+                    let block_bytes = block.to_ssz().map_err(|e| {
+                        io::Error::new(io::ErrorKind::Other, format!("SSZ encode failed: {e}"))
+                    })?;
                     bytes.extend_from_slice(&block_bytes);
                 }
                 bytes
             }
             LeanResponse::Empty => Vec::new(),
         };
-        
+
         if ssz_bytes.is_empty() {
             return Ok(Vec::new());
         }
-        
+
         Self::compress(&ssz_bytes)
     }
 
@@ -132,22 +147,33 @@ impl LeanCodec {
         if data.is_empty() {
             return Ok(LeanResponse::Empty);
         }
-        
+
         let ssz_bytes = Self::decompress(data)?;
-        
+
         if protocol.contains("status") {
-            let status = Status::from_ssz_default(&ssz_bytes)
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("SSZ decode Status failed: {e:?}")))?;
+            let status = Status::from_ssz_default(&ssz_bytes).map_err(|e| {
+                io::Error::new(
+                    io::ErrorKind::Other,
+                    format!("SSZ decode Status failed: {e:?}"),
+                )
+            })?;
             Ok(LeanResponse::Status(status))
         } else if protocol.contains("blocks_by_root") {
             if ssz_bytes.is_empty() {
                 return Ok(LeanResponse::BlocksByRoot(Vec::new()));
             }
-            let block = SignedBlockWithAttestation::from_ssz_default(&ssz_bytes)
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("SSZ decode Block failed: {e:?}")))?;
+            let block = SignedBlockWithAttestation::from_ssz_default(&ssz_bytes).map_err(|e| {
+                io::Error::new(
+                    io::ErrorKind::Other,
+                    format!("SSZ decode Block failed: {e:?}"),
+                )
+            })?;
             Ok(LeanResponse::BlocksByRoot(vec![block]))
         } else {
-            Err(io::Error::new(io::ErrorKind::Other, format!("Unknown protocol: {protocol}")))
+            Err(io::Error::new(
+                io::ErrorKind::Other,
+                format!("Unknown protocol: {protocol}"),
+            ))
         }
     }
 }

@@ -1,4 +1,4 @@
 // tests/lib - Test entry point
 mod debug_deserialize;
-mod unit_tests;
 mod test_vectors;
+mod unit_tests;

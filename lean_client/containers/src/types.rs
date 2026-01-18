@@ -38,8 +38,8 @@ impl fmt::Display for Bytes32 {
 }
 
 // Type-level constants for SSZ collection limits
-use typenum::{Prod, U4, U1000, U4096, U262144, U1073741824};
 use crate::validator::Validator;
+use typenum::{Prod, U1000, U1073741824, U262144, U4, U4096};
 // 2^18, 4096 * 262144
 
 /// Type-level number for 4000 bytes (signature size) = 4 * 1000

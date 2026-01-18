@@ -1,8 +1,8 @@
+use containers::attestation::U3112;
+use containers::ssz::ByteVector;
+use containers::Signature;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use containers::Signature;
-use containers::ssz::ByteVector;
-use containers::attestation::U3112;
 use tracing::info;
 
 #[cfg(feature = "xmss-signing")]
@@ -42,7 +42,9 @@ impl KeyManager {
 
     /// Load a secret key for a specific validator index
     pub fn load_key(&mut self, validator_index: u64) -> Result<(), Box<dyn std::error::Error>> {
-        let sk_path = self.keys_dir.join(format!("validator_{}_sk.ssz", validator_index));
+        let sk_path = self
+            .keys_dir
+            .join(format!("validator_{}_sk.ssz", validator_index));
 
         if !sk_path.exists() {
             return Err(format!("Secret key file not found: {:?}", sk_path).into());
@@ -69,20 +71,20 @@ impl KeyManager {
     ) -> Result<Signature, Box<dyn std::error::Error>> {
         #[cfg(feature = "xmss-signing")]
         {
-            let key_bytes = self.keys
+            let key_bytes = self
+                .keys
                 .get(&validator_index)
                 .ok_or_else(|| format!("No key loaded for validator {}", validator_index))?;
 
-            type SecretKey = <SIGTopLevelTargetSumLifetime32Dim64Base8 as SignatureScheme>::SecretKey;
+            type SecretKey =
+                <SIGTopLevelTargetSumLifetime32Dim64Base8 as SignatureScheme>::SecretKey;
 
             let secret_key = SecretKey::from_bytes(key_bytes)
                 .map_err(|e| format!("Failed to deserialize secret key: {:?}", e))?;
 
-            let leansig_signature = SIGTopLevelTargetSumLifetime32Dim64Base8::sign(
-                &secret_key,
-                epoch,
-                message,
-            ).map_err(|e| format!("Failed to sign message: {:?}", e))?;
+            let leansig_signature =
+                SIGTopLevelTargetSumLifetime32Dim64Base8::sign(&secret_key, epoch, message)
+                    .map_err(|e| format!("Failed to sign message: {:?}", e))?;
 
             let sig_bytes = leansig_signature.to_bytes();
 
@@ -90,10 +92,11 @@ impl KeyManager {
                 return Err(format!(
                     "Invalid signature size: expected 3112, got {}",
                     sig_bytes.len()
-                ).into());
+                )
+                .into());
             }
 
-            // Convert to ByteVector<U3112> using unsafe pointer copy (same pattern as BlsPublicKey)
+            // Convert to ByteVector<U3112> using unsafe pointer copy (same pattern as PublicKey)
             let mut byte_vec: ByteVector<U3112> = ByteVector::default();
             unsafe {
                 let dest = &mut byte_vec as *mut ByteVector<U3112> as *mut u8;
@@ -105,7 +108,7 @@ impl KeyManager {
 
         #[cfg(not(feature = "xmss-signing"))]
         {
-            let _ = (epoch, message);  // Suppress unused warnings
+            let _ = (epoch, message); // Suppress unused warnings
             warn!(
                 validator = validator_index,
                 "XMSS signing disabled - using zero signature"

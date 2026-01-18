@@ -3,7 +3,12 @@
 //! Tests for genesis generation, proposer selection, slot rules, and hash tree root.
 
 // tests/state_basic.rs
-use containers::{block::{BlockBody, hash_tree_root}, state::State, types::Uint64, ValidatorIndex};
+use containers::{
+    block::{hash_tree_root, BlockBody},
+    state::State,
+    types::Uint64,
+    ValidatorIndex,
+};
 use pretty_assertions::assert_eq;
 
 #[path = "common.rs"]
@@ -18,8 +23,13 @@ fn test_generate_genesis() {
     assert_eq!(state.config, config);
     assert_eq!(state.slot.0, 0);
 
-    let empty_body = BlockBody { attestations: ssz::PersistentList::default() };
-    assert_eq!(state.latest_block_header.body_root, hash_tree_root(&empty_body));
+    let empty_body = BlockBody {
+        attestations: ssz::PersistentList::default(),
+    };
+    assert_eq!(
+        state.latest_block_header.body_root,
+        hash_tree_root(&empty_body)
+    );
 
     // Check that collections are empty by trying to get the first element
     assert!(state.historical_block_hashes.get(0).is_err());
@@ -45,7 +55,9 @@ fn test_slot_justifiability_rules() {
 
 #[test]
 fn test_hash_tree_root() {
-    let body = BlockBody { attestations: ssz::PersistentList::default() };
+    let body = BlockBody {
+        attestations: ssz::PersistentList::default(),
+    };
     let block = containers::block::Block {
         slot: containers::slot::Slot(1),
         proposer_index: ValidatorIndex(0),

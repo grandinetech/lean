@@ -1,5 +1,5 @@
-use ssz_derive::Ssz;
 use serde::{Deserialize, Serialize};
+use ssz_derive::Ssz;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
