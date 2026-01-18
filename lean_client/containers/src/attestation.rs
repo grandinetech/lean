@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use ssz::BitList;
 use ssz::ByteVector;
 use ssz_derive::Ssz;
-use typenum::{Prod, Sum, U100, U12, U31, U1024};
+use typenum::{Prod, Sum, U100, U1024, U12, U31};
 
 // Type-level number for 1 MiB (1048576 = 1024 * 1024)
 pub type U1048576 = Prod<U1024, U1024>;
@@ -32,7 +32,7 @@ pub type AttestationSignatures = ssz::PersistentList<MultisigAggregatedSignature
 pub type NaiveAggregatedSignature = ssz::PersistentList<Signature, U4096>;
 
 /// Aggregated signature proof from lean-multisig zkVM.
-/// 
+///
 /// This is a variable-length byte list (up to 1 MiB) containing the serialized
 /// proof bytes from `xmss_aggregate_signatures()`. The `#[ssz(transparent)]`
 /// attribute makes this type serialize directly as a ByteList for SSZ wire format.
@@ -85,12 +85,9 @@ impl MultisigAggregatedSignature {
             return Err(AggregationError::MismatchedLengths);
         }
 
-        let proof_bytes = lean_multisig::xmss_aggregate_signatures(
-            public_keys,
-            signatures,
-            message,
-            epoch,
-        ).map_err(|_| AggregationError::AggregationFailed)?;
+        let proof_bytes =
+            lean_multisig::xmss_aggregate_signatures(public_keys, signatures, message, epoch)
+                .map_err(|_| AggregationError::AggregationFailed)?;
 
         Ok(Self::new(proof_bytes))
     }
@@ -113,7 +110,8 @@ impl MultisigAggregatedSignature {
             message,
             self.0.as_bytes(),
             epoch,
-        ).map_err(|_| AggregationError::VerificationFailed)
+        )
+        .map_err(|_| AggregationError::VerificationFailed)
     }
 
     /// Verify the aggregated payload against validators and message.
@@ -142,7 +140,7 @@ impl MultisigAggregatedSignature {
         // 2. Convert message bytes to field element format
         // 3. Call lean_multisig::xmss_verify_aggregated_signatures
         let _ = (validators, message, epoch);
-        
+
         Ok(())
     }
 }
@@ -176,9 +174,11 @@ pub struct AggregatedSignatureProof {
 impl AggregatedSignatureProof {
     /// Create a new AggregatedSignatureProof.
     pub fn new(participants: AggregationBits, proof_data: MultisigAggregatedSignature) -> Self {
-        Self { participants, proof_data }
+        Self {
+            participants,
+            proof_data,
+        }
     }
-
 
     pub fn from_aggregation(participant_ids: &[u64], proof: MultisigAggregatedSignature) -> Self {
         Self {
@@ -281,7 +281,10 @@ pub struct SignatureKey {
 impl SignatureKey {
     /// Create a new signature key.
     pub fn new(validator_id: u64, data_root: crate::Bytes32) -> Self {
-        Self { validator_id, data_root }
+        Self {
+            validator_id,
+            data_root,
+        }
     }
 }
 

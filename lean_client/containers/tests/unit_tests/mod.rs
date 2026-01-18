@@ -1,9 +1,9 @@
 // tests/unit_tests/mod.rs
 
 // Modules that work with both devnet1 and devnet2
+mod attestation_aggregation;
 mod state_basic;
 mod state_justifications;
-mod attestation_aggregation;
 
 // TODO: Update these modules for devnet2 data structures
 // (SignedAttestation now uses AttestationData directly, BlockSignatures changed, etc.)

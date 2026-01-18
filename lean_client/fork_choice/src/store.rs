@@ -288,12 +288,21 @@ pub fn produce_block_with_signatures(
     store: &mut Store,
     slot: Slot,
     validator_index: ValidatorIndex,
-) -> Result<(Root, containers::block::Block, Vec<AggregatedSignatureProof>), String> {
+) -> Result<
+    (
+        Root,
+        containers::block::Block,
+        Vec<AggregatedSignatureProof>,
+    ),
+    String,
+> {
     use containers::Attestation;
 
     // Get parent block head
     let head_root = get_proposal_head(store, slot);
-    let head_state = store.states.get(&head_root)
+    let head_state = store
+        .states
+        .get(&head_root)
         .ok_or_else(|| "Head state not found".to_string())?
         .clone();
 
@@ -308,30 +317,31 @@ pub fn produce_block_with_signatures(
     }
 
     // Convert AttestationData to Attestation objects for build_block
-    let available_attestations: Vec<Attestation> = store.latest_known_attestations
+    let available_attestations: Vec<Attestation> = store
+        .latest_known_attestations
         .iter()
-        .map(|(validator_idx, signed_att)| {
-            Attestation {
-                validator_id: containers::Uint64(validator_idx.0),
-                data: signed_att.message.clone(),
-            }
+        .map(|(validator_idx, signed_att)| Attestation {
+            validator_id: containers::Uint64(validator_idx.0),
+            data: signed_att.message.clone(),
         })
         .collect();
 
     // Get known block roots for attestation validation
-    let known_block_roots: std::collections::HashSet<Bytes32> = store.blocks.keys().copied().collect();
+    let known_block_roots: std::collections::HashSet<Bytes32> =
+        store.blocks.keys().copied().collect();
 
     // Build block with fixed-point attestation collection and signature aggregation
-    let (final_block, final_post_state, _aggregated_attestations, signatures) = head_state.build_block(
-        slot,
-        validator_index,
-        head_root,
-        None, // initial_attestations - start with empty, let fixed-point collect
-        Some(available_attestations),
-        Some(&known_block_roots),
-        Some(&store.gossip_signatures),
-        Some(&store.aggregated_payloads),
-    )?;
+    let (final_block, final_post_state, _aggregated_attestations, signatures) = head_state
+        .build_block(
+            slot,
+            validator_index,
+            head_root,
+            None, // initial_attestations - start with empty, let fixed-point collect
+            Some(available_attestations),
+            Some(&known_block_roots),
+            Some(&store.gossip_signatures),
+            Some(&store.aggregated_payloads),
+        )?;
 
     // Compute block root
     let block_root = Bytes32(final_block.hash_tree_root());

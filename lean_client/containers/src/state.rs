@@ -1,5 +1,9 @@
+use crate::attestation::{AggregatedAttestation, AggregatedAttestations};
 use crate::validator::Validator;
-use crate::{block::{hash_tree_root, Block, BlockBody, BlockHeader, SignedBlockWithAttestation}, Attestation, Bytes32, Checkpoint, Config, Signature, Slot, Uint64, ValidatorIndex};
+use crate::{
+    block::{hash_tree_root, Block, BlockBody, BlockHeader, SignedBlockWithAttestation},
+    Attestation, Bytes32, Checkpoint, Config, Signature, Slot, Uint64, ValidatorIndex,
+};
 use crate::{
     HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots, Validators,
 };
@@ -7,7 +11,6 @@ use serde::{Deserialize, Serialize};
 use ssz::PersistentList as List;
 use ssz_derive::Ssz;
 use std::collections::BTreeMap;
-use crate::attestation::{AggregatedAttestation, AggregatedAttestations};
 
 pub const VALIDATOR_REGISTRY_LIMIT: usize = 1 << 12; // 4096
 pub const JUSTIFICATION_ROOTS_LIMIT: usize = 1 << 18; // 262144
@@ -294,7 +297,7 @@ impl State {
 
     pub fn process_block(&self, block: &Block) -> Result<Self, String> {
         let state = self.process_block_header(block)?;
-        
+
         if AggregatedAttestation::has_duplicate_data(&block.body.attestations) {
             return Err("Block contains duplicate AttestationData".to_string());
         }
@@ -402,7 +405,9 @@ impl State {
         }
 
         for aggregated_attestation in attestations {
-            let validator_ids = aggregated_attestation.aggregation_bits.to_validator_indices();
+            let validator_ids = aggregated_attestation
+                .aggregation_bits
+                .to_validator_indices();
             self.process_single_attestation(
                 &aggregated_attestation.data,
                 &validator_ids,
@@ -414,7 +419,12 @@ impl State {
             );
         }
 
-        self.finalize_attestation_processing(justifications, latest_justified, latest_finalized, justified_slots_working)
+        self.finalize_attestation_processing(
+            justifications,
+            latest_justified,
+            latest_finalized,
+            justified_slots_working,
+        )
     }
 
     /// Process a single attestation's votes.
@@ -436,11 +446,25 @@ impl State {
         let target_slot_int = target_slot.0 as usize;
         let source_slot_int = source_slot.0 as usize;
 
-        let source_is_justified = justified_slots_working.get(source_slot_int).copied().unwrap_or(false);
-        let target_already_justified = justified_slots_working.get(target_slot_int).copied().unwrap_or(false);
+        let source_is_justified = justified_slots_working
+            .get(source_slot_int)
+            .copied()
+            .unwrap_or(false);
+        let target_already_justified = justified_slots_working
+            .get(target_slot_int)
+            .copied()
+            .unwrap_or(false);
 
-        let source_root_matches = self.historical_block_hashes.get(source_slot_int as u64).map(|r| *r == source_root).unwrap_or(false);
-        let target_root_matches = self.historical_block_hashes.get(target_slot_int as u64).map(|r| *r == target_root).unwrap_or(false);
+        let source_root_matches = self
+            .historical_block_hashes
+            .get(source_slot_int as u64)
+            .map(|r| *r == source_root)
+            .unwrap_or(false);
+        let target_root_matches = self
+            .historical_block_hashes
+            .get(target_slot_int as u64)
+            .map(|r| *r == target_root)
+            .unwrap_or(false);
 
         let is_valid_vote = source_is_justified
             && !target_already_justified
@@ -471,7 +495,10 @@ impl State {
             if 3 * count >= 2 * num_validators {
                 *latest_justified = vote.target.clone();
 
-                justified_slots_working.extend(std::iter::repeat_n(false, (target_slot_int + 1).saturating_sub(justified_slots_working.len())));
+                justified_slots_working.extend(std::iter::repeat_n(
+                    false,
+                    (target_slot_int + 1).saturating_sub(justified_slots_working.len()),
+                ));
                 justified_slots_working[target_slot_int] = true;
 
                 justifications.remove(&target_root);
@@ -537,10 +564,20 @@ impl State {
         available_attestations: Option<Vec<Attestation>>,
         known_block_roots: Option<&std::collections::HashSet<Bytes32>>,
         gossip_signatures: Option<&std::collections::HashMap<crate::SignatureKey, Signature>>,
-        aggregated_payloads: Option<&std::collections::HashMap<crate::SignatureKey, Vec<crate::AggregatedSignatureProof>>>,
-    ) -> Result<(Block, Self, Vec<crate::AggregatedAttestation>, Vec<crate::AggregatedSignatureProof>), String> {
+        aggregated_payloads: Option<
+            &std::collections::HashMap<crate::SignatureKey, Vec<crate::AggregatedSignatureProof>>,
+        >,
+    ) -> Result<
+        (
+            Block,
+            Self,
+            Vec<crate::AggregatedAttestation>,
+            Vec<crate::AggregatedSignatureProof>,
+        ),
+        String,
+    > {
         use crate::attestation::{AggregatedAttestation, SignatureKey};
-        
+
         // Initialize attestation set
         let mut attestations = initial_attestations.unwrap_or_default();
 
@@ -577,11 +614,12 @@ impl State {
                 Some(avail) => avail,
                 None => {
                     // No fixed-point: compute signatures and return
-                    let (aggregated_attestations, aggregated_proofs) = self.compute_aggregated_signatures(
-                        &attestations,
-                        gossip_signatures,
-                        aggregated_payloads,
-                    )?;
+                    let (aggregated_attestations, aggregated_proofs) = self
+                        .compute_aggregated_signatures(
+                            &attestations,
+                            gossip_signatures,
+                            aggregated_payloads,
+                        )?;
 
                     let mut final_attestations_list = AggregatedAttestations::default();
                     for att in &aggregated_attestations {
@@ -600,7 +638,12 @@ impl State {
                         },
                     };
 
-                    return Ok((final_block, post_state, aggregated_attestations, aggregated_proofs));
+                    return Ok((
+                        final_block,
+                        post_state,
+                        aggregated_attestations,
+                        aggregated_proofs,
+                    ));
                 }
             };
 
@@ -638,8 +681,10 @@ impl State {
                 // Check if we have a signature for this attestation
                 let data_root = attestation.data.data_root_bytes();
                 let sig_key = SignatureKey::new(attestation.validator_id.0, data_root);
-                let has_gossip_sig = gossip_signatures.map_or(false, |gs| gs.contains_key(&sig_key));
-                let has_block_proof = aggregated_payloads.map_or(false, |ap| ap.contains_key(&sig_key));
+                let has_gossip_sig =
+                    gossip_signatures.map_or(false, |gs| gs.contains_key(&sig_key));
+                let has_block_proof =
+                    aggregated_payloads.map_or(false, |ap| ap.contains_key(&sig_key));
 
                 if has_gossip_sig || has_block_proof {
                     new_attestations.push(attestation.clone());
@@ -649,11 +694,12 @@ impl State {
             // Fixed point reached: no new attestations found
             if new_attestations.is_empty() {
                 // Compute aggregated signatures
-                let (aggregated_attestations, aggregated_proofs) = self.compute_aggregated_signatures(
-                    &attestations,
-                    gossip_signatures,
-                    aggregated_payloads,
-                )?;
+                let (aggregated_attestations, aggregated_proofs) = self
+                    .compute_aggregated_signatures(
+                        &attestations,
+                        gossip_signatures,
+                        aggregated_payloads,
+                    )?;
 
                 let mut final_attestations_list = AggregatedAttestations::default();
                 for att in &aggregated_attestations {
@@ -672,7 +718,12 @@ impl State {
                     },
                 };
 
-                return Ok((final_block, post_state, aggregated_attestations, aggregated_proofs));
+                return Ok((
+                    final_block,
+                    post_state,
+                    aggregated_attestations,
+                    aggregated_proofs,
+                ));
             }
 
             // Add new attestations and continue iteration
@@ -684,8 +735,16 @@ impl State {
         &self,
         attestations: &[Attestation],
         gossip_signatures: Option<&std::collections::HashMap<crate::SignatureKey, Signature>>,
-        aggregated_payloads: Option<&std::collections::HashMap<crate::SignatureKey, Vec<crate::AggregatedSignatureProof>>>,
-    ) -> Result<(Vec<crate::AggregatedAttestation>, Vec<crate::AggregatedSignatureProof>), String> {
+        aggregated_payloads: Option<
+            &std::collections::HashMap<crate::SignatureKey, Vec<crate::AggregatedSignatureProof>>,
+        >,
+    ) -> Result<
+        (
+            Vec<crate::AggregatedAttestation>,
+            Vec<crate::AggregatedSignatureProof>,
+        ),
+        String,
+    > {
         use crate::attestation::{AggregatedAttestation, AggregationBits, SignatureKey};
         use std::collections::HashSet;
 
@@ -726,12 +785,12 @@ impl State {
             //   MultisigAggregatedSignature::aggregate(public_keys, signatures, message, epoch)
             if !gossip_ids.is_empty() {
                 let participants = AggregationBits::from_validator_indices(&gossip_ids);
-                
+
                 // Create proof placeholder (matches Python test_mode behavior)
                 // TODO: Call actual aggregation when lean-multisig supports proper encoding
                 let proof_data = crate::MultisigAggregatedSignature::new(Vec::new());
                 let proof = crate::AggregatedSignatureProof::new(participants.clone(), proof_data);
-                
+
                 results.push((
                     AggregatedAttestation {
                         aggregation_bits: participants,
@@ -763,14 +822,10 @@ impl State {
                 let (best_proof, covered_set) = candidates
                     .iter()
                     .map(|proof| {
-                        let proof_validators: HashSet<u64> = proof
-                            .get_participant_indices()
-                            .into_iter()
-                            .collect();
-                        let intersection: HashSet<u64> = remaining
-                            .intersection(&proof_validators)
-                            .copied()
-                            .collect();
+                        let proof_validators: HashSet<u64> =
+                            proof.get_participant_indices().into_iter().collect();
+                        let intersection: HashSet<u64> =
+                            remaining.intersection(&proof_validators).copied().collect();
                         (proof, intersection)
                     })
                     .max_by_key(|(_, intersection)| intersection.len())
@@ -784,7 +839,7 @@ impl State {
                 // Record proof with its actual participants (from the proof itself)
                 let covered_validators: Vec<u64> = best_proof.get_participant_indices();
                 let participants = AggregationBits::from_validator_indices(&covered_validators);
-                
+
                 results.push((
                     AggregatedAttestation {
                         aggregation_bits: participants,
@@ -806,11 +861,9 @@ impl State {
         }
 
         // Unzip results into parallel lists
-        let (aggregated_attestations, aggregated_proofs): (Vec<_>, Vec<_>) = 
+        let (aggregated_attestations, aggregated_proofs): (Vec<_>, Vec<_>) =
             results.into_iter().unzip();
 
         Ok((aggregated_attestations, aggregated_proofs))
     }
 }
-
-

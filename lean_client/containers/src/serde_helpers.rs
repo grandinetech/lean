@@ -209,8 +209,7 @@ pub mod byte_list {
         let bytes = hex::decode(hex_str)
             .map_err(|e| D::Error::custom(format!("Invalid hex string: {}", e)))?;
 
-        ByteList::try_from(bytes)
-            .map_err(|_| D::Error::custom("ByteList exceeds maximum length"))
+        ByteList::try_from(bytes).map_err(|_| D::Error::custom("ByteList exceeds maximum length"))
     }
 
     pub fn serialize<S, N>(value: &ByteList<N>, serializer: S) -> Result<S::Ok, S::Error>

@@ -232,7 +232,7 @@ impl ValidatorService {
 
         // Sign the proposer attestation
         let proposer_signature: Signature;
-        
+
         if let Some(ref key_manager) = self.key_manager {
             // Sign proposer attestation with XMSS
             let message = hash_tree_root(&proposer_attestation);

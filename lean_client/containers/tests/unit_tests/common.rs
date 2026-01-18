@@ -3,10 +3,18 @@
 //! Helper functions for creating test blocks, states, and attestations
 //! using the devnet2 data structures.
 
-use containers::{Attestation, Attestations, BlockWithAttestation, Config, SignedBlockWithAttestation, block::{Block, BlockBody, BlockHeader, hash_tree_root}, checkpoint::Checkpoint, slot::Slot, state::State, types::{Bytes32, ValidatorIndex}, Validators, AggregatedAttestation, Signature};
-use ssz::{PersistentList};
-use typenum::U4096;
 use containers::block::BlockSignatures;
+use containers::{
+    block::{hash_tree_root, Block, BlockBody, BlockHeader},
+    checkpoint::Checkpoint,
+    slot::Slot,
+    state::State,
+    types::{Bytes32, ValidatorIndex},
+    AggregatedAttestation, Attestation, Attestations, BlockWithAttestation, Config, Signature,
+    SignedBlockWithAttestation, Validators,
+};
+use ssz::PersistentList;
+use typenum::U4096;
 
 pub const DEVNET_CONFIG_VALIDATOR_REGISTRY_LIMIT: usize = 1 << 12; // 4096
 pub const TEST_VALIDATOR_COUNT: usize = 4; // Actual validator count used in tests
@@ -15,29 +23,36 @@ pub const TEST_VALIDATOR_COUNT: usize = 4; // Actual validator count used in tes
 const _: [(); DEVNET_CONFIG_VALIDATOR_REGISTRY_LIMIT - TEST_VALIDATOR_COUNT] =
     [(); DEVNET_CONFIG_VALIDATOR_REGISTRY_LIMIT - TEST_VALIDATOR_COUNT];
 
-pub fn create_block(slot: u64, parent_header: &mut BlockHeader, attestations: Option<Attestations>) -> SignedBlockWithAttestation {
+pub fn create_block(
+    slot: u64,
+    parent_header: &mut BlockHeader,
+    attestations: Option<Attestations>,
+) -> SignedBlockWithAttestation {
     let body = BlockBody {
         attestations: {
             let attestations_vec = attestations.unwrap_or_default();
-            
+
             // Convert PersistentList into a Vec
-            let attestations_vec: Vec<Attestation> = attestations_vec.into_iter().cloned().collect();
+            let attestations_vec: Vec<Attestation> =
+                attestations_vec.into_iter().cloned().collect();
 
             let aggregated: Vec<AggregatedAttestation> =
                 AggregatedAttestation::aggregate_by_data(&attestations_vec);
 
             // Create a new empty PersistentList
-            let mut persistent_list: PersistentList<AggregatedAttestation, U4096> = PersistentList::default();
+            let mut persistent_list: PersistentList<AggregatedAttestation, U4096> =
+                PersistentList::default();
 
             // Push each aggregated attestation
             for agg in aggregated {
-                persistent_list.push(agg).expect("PersistentList capacity exceeded");
+                persistent_list
+                    .push(agg)
+                    .expect("PersistentList capacity exceeded");
             }
 
             persistent_list
         },
     };
-
 
     let block_message = Block {
         slot: Slot(slot),
@@ -55,11 +70,10 @@ pub fn create_block(slot: u64, parent_header: &mut BlockHeader, attestations: Op
         signature: BlockSignatures {
             attestation_signatures: PersistentList::default(),
             proposer_signature: Signature::default(),
-        }
+        },
     };
-    
-    return_value
 
+    return_value
 }
 
 pub fn create_attestations(indices: &[usize]) -> Vec<bool> {
@@ -94,8 +108,11 @@ pub fn base_state(config: Config) -> State {
 }
 
 pub fn base_state_with_validators(config: Config, num_validators: usize) -> State {
-    use containers::{HistoricalBlockHashes, JustificationRoots, JustifiedSlots, JustificationsValidators, validator::Validator, Uint64};
-    
+    use containers::{
+        validator::Validator, HistoricalBlockHashes, JustificationRoots, JustificationsValidators,
+        JustifiedSlots, Uint64,
+    };
+
     // Create validators list with the specified number of validators
     let mut validators = Validators::default();
     for i in 0..num_validators {
@@ -105,7 +122,7 @@ pub fn base_state_with_validators(config: Config, num_validators: usize) -> Stat
         };
         validators.push(validator).expect("within limit");
     }
-    
+
     State {
         config,
         slot: Slot(0),
@@ -121,7 +138,5 @@ pub fn base_state_with_validators(config: Config, num_validators: usize) -> Stat
 }
 
 pub fn sample_config() -> Config {
-    Config {
-        genesis_time: 0,
-    }
+    Config { genesis_time: 0 }
 }

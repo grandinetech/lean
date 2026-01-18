@@ -1,8 +1,8 @@
 use crate::store::*;
+use containers::SignatureKey;
 use containers::{
     attestation::SignedAttestation, block::SignedBlockWithAttestation, Bytes32, ValidatorIndex,
 };
-use containers::SignatureKey;
 use ssz::SszHash;
 
 #[inline]
@@ -53,9 +53,7 @@ pub fn on_attestation(
         if store
             .latest_known_attestations
             .get(&validator_id)
-            .map_or(true, |existing| {
-                existing.message.slot < attestation_slot
-            })
+            .map_or(true, |existing| existing.message.slot < attestation_slot)
         {
             store
                 .latest_known_attestations
@@ -73,15 +71,15 @@ pub fn on_attestation(
         // Store signature for later aggregation during block building
         let data_root = signed_attestation.message.data_root_bytes();
         let sig_key = SignatureKey::new(signed_attestation.validator_id, data_root);
-        store.gossip_signatures.insert(sig_key, signed_attestation.signature.clone());
-        
+        store
+            .gossip_signatures
+            .insert(sig_key, signed_attestation.signature.clone());
+
         // Track attestation for fork choice
         if store
             .latest_new_attestations
             .get(&validator_id)
-            .map_or(true, |existing| {
-                existing.message.slot < attestation_slot
-            })
+            .map_or(true, |existing| existing.message.slot < attestation_slot)
         {
             store
                 .latest_new_attestations
@@ -155,12 +153,12 @@ fn process_block_internal(
 
     let aggregated_attestations = &signed_block.message.block.body.attestations;
     let proposer_attestation = &signed_block.message.proposer_attestation;
-    
+
     // Store aggregated proofs for future block building
     // Each attestation_signature proof is indexed by (validator_id, data_root) for each participating validator
     for (att_idx, aggregated_attestation) in aggregated_attestations.into_iter().enumerate() {
         let data_root = aggregated_attestation.data.data_root_bytes();
-        
+
         // Get the corresponding proof from attestation_signatures
         if let Ok(proof_data) = signatures.attestation_signatures.get(att_idx as u64) {
             // Create AggregatedSignatureProof with participants and proof data
@@ -168,13 +166,14 @@ fn process_block_internal(
                 aggregated_attestation.aggregation_bits.clone(),
                 proof_data.clone(),
             );
-            
+
             // Store proof for each validator in the aggregation
             for (bit_idx, bit) in aggregated_attestation.aggregation_bits.0.iter().enumerate() {
                 if *bit {
                     let validator_id = bit_idx as u64;
                     let sig_key = SignatureKey::new(validator_id, data_root);
-                    store.aggregated_payloads
+                    store
+                        .aggregated_payloads
                         .entry(sig_key)
                         .or_insert_with(Vec::new)
                         .push(aggregated_proof.clone());
@@ -187,7 +186,8 @@ fn process_block_internal(
     // Note: Signature verification is done in verify_signatures() before on_block()
     for aggregated_attestation in aggregated_attestations.into_iter() {
         let validator_ids: Vec<u64> = aggregated_attestation
-            .aggregation_bits.0
+            .aggregation_bits
+            .0
             .iter()
             .enumerate()
             .filter(|(_, bit)| **bit)

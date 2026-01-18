@@ -1,16 +1,16 @@
 //! State process tests
-//! 
+//!
 //! Tests for state processing functions including slot transitions,
 //! block header processing, and attestation processing.
 
 // tests/state_process.rs
 use containers::{
-    block::{Block, BlockBody, hash_tree_root},
+    block::{hash_tree_root, Block, BlockBody},
     checkpoint::Checkpoint,
     slot::Slot,
     state::State,
     types::{Bytes32, Uint64, ValidatorIndex},
-    Attestation, AttestationData, AggregatedAttestation,
+    AggregatedAttestation, Attestation, AttestationData,
 };
 use pretty_assertions::assert_eq;
 use rstest::{fixture, rstest};
@@ -31,15 +31,24 @@ pub fn genesis_state() -> State {
 fn test_process_slot() {
     let genesis_state = genesis_state();
 
-    assert_eq!(genesis_state.latest_block_header.state_root, Bytes32(ssz::H256::zero()));
+    assert_eq!(
+        genesis_state.latest_block_header.state_root,
+        Bytes32(ssz::H256::zero())
+    );
 
     let state_after_slot = genesis_state.process_slot();
     let expected_root = hash_tree_root(&genesis_state);
 
-    assert_eq!(state_after_slot.latest_block_header.state_root, expected_root);
+    assert_eq!(
+        state_after_slot.latest_block_header.state_root,
+        expected_root
+    );
 
     let state_after_second_slot = state_after_slot.process_slot();
-    assert_eq!(state_after_second_slot.latest_block_header.state_root, expected_root);
+    assert_eq!(
+        state_after_second_slot.latest_block_header.state_root,
+        expected_root
+    );
 }
 
 #[test]
@@ -50,7 +59,10 @@ fn test_process_slots() {
     let new_state = genesis_state.process_slots(target_slot).unwrap();
 
     assert_eq!(new_state.slot, target_slot);
-    assert_eq!(new_state.latest_block_header.state_root, hash_tree_root(&genesis_state));
+    assert_eq!(
+        new_state.latest_block_header.state_root,
+        hash_tree_root(&genesis_state)
+    );
 }
 
 #[test]
@@ -73,11 +85,21 @@ fn test_process_block_header_valid() {
 
     assert_eq!(new_state.latest_finalized.root, genesis_header_root);
     assert_eq!(new_state.latest_justified.root, genesis_header_root);
-    assert_eq!(new_state.historical_block_hashes.get(0).ok(), Some(&genesis_header_root));
-    let justified_slot_0 = new_state.justified_slots.get(0).map(|b| *b).unwrap_or(false);
+    assert_eq!(
+        new_state.historical_block_hashes.get(0).ok(),
+        Some(&genesis_header_root)
+    );
+    let justified_slot_0 = new_state
+        .justified_slots
+        .get(0)
+        .map(|b| *b)
+        .unwrap_or(false);
     assert_eq!(justified_slot_0, true);
     assert_eq!(new_state.latest_block_header.slot, Slot(1));
-    assert_eq!(new_state.latest_block_header.state_root, Bytes32(ssz::H256::zero()));
+    assert_eq!(
+        new_state.latest_block_header.state_root,
+        Bytes32(ssz::H256::zero())
+    );
 }
 
 #[rstest]
@@ -100,7 +122,9 @@ fn test_process_block_header_invalid(
         proposer_index: ValidatorIndex(bad_proposer),
         parent_root: bad_parent_root.unwrap_or(parent_root),
         state_root: Bytes32(ssz::H256::zero()),
-        body: BlockBody { attestations: List::default() },
+        body: BlockBody {
+            attestations: List::default(),
+        },
     };
 
     let result = state_at_slot_1.process_block_header(&block);
@@ -119,13 +143,17 @@ fn test_process_attestations_justification_and_finalization() {
     let mut state_at_slot_1 = state.process_slots(Slot(1)).unwrap();
     let block1 = create_block(1, &mut state_at_slot_1.latest_block_header, None);
     // Use process_block_header and process_operations separately to avoid state root validation
-    let state_after_header1 = state_at_slot_1.process_block_header(&block1.message.block).unwrap();
+    let state_after_header1 = state_at_slot_1
+        .process_block_header(&block1.message.block)
+        .unwrap();
     state = state_after_header1.process_attestations(&block1.message.block.body.attestations);
 
     // Process slot 4 and block
     let mut state_at_slot_4 = state.process_slots(Slot(4)).unwrap();
     let block4 = create_block(4, &mut state_at_slot_4.latest_block_header, None);
-    let state_after_header4 = state_at_slot_4.process_block_header(&block4.message.block).unwrap();
+    let state_after_header4 = state_at_slot_4
+        .process_block_header(&block4.message.block)
+        .unwrap();
     state = state_after_header4.process_attestations(&block4.message.block.body.attestations);
 
     // Advance to slot 5
@@ -156,7 +184,7 @@ fn test_process_attestations_justification_and_finalization() {
 
     // Aggregate attestations for devnet2 format
     let aggregated = AggregatedAttestation::aggregate_by_data(&attestations_for_4);
-    
+
     // Convert to AggregatedAttestations (PersistentList)
     let mut attestations_list: List<AggregatedAttestation, U4096> = List::default();
     for agg in aggregated {
@@ -166,8 +194,14 @@ fn test_process_attestations_justification_and_finalization() {
     let new_state = state.process_attestations(&attestations_list);
 
     assert_eq!(new_state.latest_justified, checkpoint4);
-    let justified_slot_4 = new_state.justified_slots.get(4).map(|b| *b).unwrap_or(false);
+    let justified_slot_4 = new_state
+        .justified_slots
+        .get(4)
+        .map(|b| *b)
+        .unwrap_or(false);
     assert_eq!(justified_slot_4, true);
     assert_eq!(new_state.latest_finalized, genesis_checkpoint);
-    assert!(!new_state.get_justifications().contains_key(&checkpoint4.root));
+    assert!(!new_state
+        .get_justifications()
+        .contains_key(&checkpoint4.root));
 }
