@@ -23,12 +23,13 @@ leanEthereum Consensus Client written in Rust using Grandine's libraries.
    Run in debug mode via terminal (with XMSS signing):
    ```
    RUST_LOG=info ./target/release/lean_client \
-                 --genesis ../lean-quickstart/local-devnet/genesis/config.yaml \
-                 --validator-registry-path ../lean-quickstart/local-devnet/genesis/validators.yaml \
-                 --hash-sig-key-dir ../lean-quickstart/local-devnet/genesis/hash-sig-keys \
+                 --genesis ../../lean-quickstart/local-devnet/genesis/config.yaml \
+                 --validator-registry-path ../../lean-quickstart/local-devnet/genesis/validators.yaml \
+                 --hash-sig-key-dir ../../lean-quickstart/local-devnet/genesis/hash-sig-keys \
                  --node-id qlean_0 \
-                 --node-key ../lean-quickstart/local-devnet/genesis/qlean_0.key \
+                 --node-key ../../lean-quickstart/local-devnet/genesis/qlean_0.key \
                  --port 9003 \
+                 --disable-discovery
                  --bootnodes "/ip4/127.0.0.1/udp/9001/quic-v1/p2p/16Uiu2HAkvi2sxT75Bpq1c7yV2FjnSQJJ432d6jeshbmfdJss1i6f" \
                  --bootnodes "/ip4/127.0.0.1/udp/9002/quic-v1/p2p/16Uiu2HAmPQhkD6Zg5Co2ee8ShshkiY4tDePKFARPpCS2oKSLj1E1" \
                  --bootnodes "/ip4/127.0.0.1/udp/9004/quic-v1/p2p/16Uiu2HAm7TYVs6qvDKnrovd9m4vvRikc4HPXm1WyLumKSe5fHxBv"
