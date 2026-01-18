@@ -340,20 +340,13 @@ impl AggregatedAttestation {
             })
             .collect()
     }
-}
 
-/// Trait for checking duplicate attestation data.
-pub trait HasDuplicateData {
-    /// Returns true if the list contains duplicate AttestationData.
-    fn has_duplicate_data(&self) -> bool;
-}
-
-impl HasDuplicateData for AggregatedAttestations {
-    fn has_duplicate_data(&self) -> bool {
+    /// Returns true if the provided list contains duplicate AttestationData.
+    pub fn has_duplicate_data(attestations: &AggregatedAttestations) -> bool {
         use ssz::SszHash;
         use std::collections::HashSet;
         let mut seen: HashSet<ssz::H256> = HashSet::new();
-        for attestation in self {
+        for attestation in attestations {
             let root = attestation.data.hash_tree_root();
             if !seen.insert(root) {
                 return true;

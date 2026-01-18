@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use ssz::PersistentList as List;
 use ssz_derive::Ssz;
 use std::collections::BTreeMap;
-use crate::attestation::{AggregatedAttestations, HasDuplicateData};
+use crate::attestation::{AggregatedAttestation, AggregatedAttestations};
 
 pub const VALIDATOR_REGISTRY_LIMIT: usize = 1 << 12; // 4096
 pub const JUSTIFICATION_ROOTS_LIMIT: usize = 1 << 18; // 262144
@@ -295,7 +295,7 @@ impl State {
     pub fn process_block(&self, block: &Block) -> Result<Self, String> {
         let state = self.process_block_header(block)?;
         
-        if block.body.attestations.has_duplicate_data() {
+        if AggregatedAttestation::has_duplicate_data(&block.body.attestations) {
             return Err("Block contains duplicate AttestationData".to_string());
         }
 
@@ -471,9 +471,7 @@ impl State {
             if 3 * count >= 2 * num_validators {
                 *latest_justified = vote.target.clone();
 
-                while justified_slots_working.len() <= target_slot_int {
-                    justified_slots_working.push(false);
-                }
+                justified_slots_working.extend(std::iter::repeat_n(false, (target_slot_int + 1).saturating_sub(justified_slots_working.len())));
                 justified_slots_working[target_slot_int] = true;
 
                 justifications.remove(&target_root);
