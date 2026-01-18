@@ -1,10 +1,6 @@
-//! Test vector modules
+//! Test vector modules for devnet2 format
 //!
-//! TODO: Update these test vectors for devnet2 format:
-//! - Update runner.rs to use AggregatedAttestations
-//! - Update block_processing.rs tests 
-//! - Update genesis.rs tests
-//! - Update verify_signatures.rs to use BlockSignatures structure
+//! Contains test runners and test cases for block processing, genesis, and signature verification.
 
 // Test vector modules
 pub mod runner;

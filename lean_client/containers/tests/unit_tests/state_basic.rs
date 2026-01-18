@@ -1,10 +1,6 @@
-//! State basic tests
+//! State basic tests for devnet2 format
 //!
-//! TODO: Update these tests for devnet2 format:
-//! - test_generate_genesis
-//! - test_proposer_round_robin
-//! - test_slot_justifiability_rules
-//! - test_hash_tree_root
+//! Tests for genesis generation, proposer selection, slot rules, and hash tree root.
 
 // tests/state_basic.rs
 use containers::{block::{BlockBody, hash_tree_root}, state::State, types::Uint64, ValidatorIndex};

@@ -1,12 +1,7 @@
 //! State process tests
 //! 
-//! TODO: Update these tests for devnet2 format:
-//! - test_process_slot
-//! - test_process_slots  
-//! - test_process_slots_backwards
-//! - test_process_block_header_valid
-//! - test_process_block_header_invalid
-//! - test_process_attestations_justification_and_finalization
+//! Tests for state processing functions including slot transitions,
+//! block header processing, and attestation processing.
 
 // tests/state_process.rs
 use containers::{
@@ -15,7 +10,7 @@ use containers::{
     slot::Slot,
     state::State,
     types::{Bytes32, Uint64, ValidatorIndex},
-    Attestation, AttestationData,
+    Attestation, AttestationData, AggregatedAttestation,
 };
 use pretty_assertions::assert_eq;
 use rstest::{fixture, rstest};
@@ -116,8 +111,6 @@ fn test_process_block_header_invalid(
 }
 
 // This test verifies that attestations correctly justify and finalize slots
-// TODO: Update for devnet2 - needs AggregatedAttestations format
-/*
 #[test]
 fn test_process_attestations_justification_and_finalization() {
     let mut state = genesis_state();
@@ -148,6 +141,7 @@ fn test_process_attestations_justification_and_finalization() {
         slot: Slot(4),
     };
 
+    // Create attestations for slot 4 using devnet2 format
     let attestations_for_4: Vec<Attestation> = (0..7)
         .map(|i| Attestation {
             validator_id: Uint64(i),
@@ -160,10 +154,13 @@ fn test_process_attestations_justification_and_finalization() {
         })
         .collect();
 
-    // Convert Vec to PersistentList
-    let mut attestations_list: List<_, U4096> = List::default();
-    for a in attestations_for_4 { 
-        attestations_list.push(a).unwrap(); 
+    // Aggregate attestations for devnet2 format
+    let aggregated = AggregatedAttestation::aggregate_by_data(&attestations_for_4);
+    
+    // Convert to AggregatedAttestations (PersistentList)
+    let mut attestations_list: List<AggregatedAttestation, U4096> = List::default();
+    for agg in aggregated {
+        attestations_list.push(agg).unwrap();
     }
 
     let new_state = state.process_attestations(&attestations_list);
@@ -174,4 +171,3 @@ fn test_process_attestations_justification_and_finalization() {
     assert_eq!(new_state.latest_finalized, genesis_checkpoint);
     assert!(!new_state.get_justifications().contains_key(&checkpoint4.root));
 }
-*/

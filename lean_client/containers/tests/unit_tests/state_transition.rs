@@ -1,16 +1,14 @@
 //! State transition tests
-//! 
-//! TODO: Update these tests for devnet2 format:
-//! - test_state_transition_full
-//! - test_state_transition_invalid_signatures
-//! - test_state_transition_bad_state_root
+//!
+//! Tests for full state transitions including signature validation
+//! and state root verification.
 
 // tests/state_transition.rs
 use containers::{
-    block::{hash_tree_root, Block, BlockWithAttestation, SignedBlockWithAttestation},
+    block::{hash_tree_root, Block, BlockSignatures, BlockWithAttestation, SignedBlockWithAttestation},
     state::State,
     types::{Bytes32, Uint64},
-    Attestation, Slot,
+    Attestation, Signature, Slot,
 };
 use pretty_assertions::assert_eq;
 use rstest::fixture;
@@ -92,8 +90,7 @@ fn test_state_transition_invalid_signatures() {
     assert_eq!(result.unwrap_err(), "Block signatures must be valid");
 }
 
-// TODO: Update for devnet2 - needs BlockSignatures structure
-/*
+// Test with bad state root using devnet2 BlockSignatures structure
 #[test]
 fn test_state_transition_bad_state_root() {
     let state = genesis_state();
@@ -110,14 +107,16 @@ fn test_state_transition_bad_state_root() {
             block,
             proposer_attestation: Attestation::default(),
         },
-        signature: PersistentList::default(),
+        signature: BlockSignatures {
+            attestation_signatures: PersistentList::default(),
+            proposer_signature: Signature::default(),
+        },
     };
 
     let result = state.state_transition(final_signed_block_with_attestation, true);
     assert!(result.is_err());
     assert_eq!(result.unwrap_err(), "Invalid block state root");
 }
-*/
 
 #[test]
 fn test_state_transition_devnet2() {

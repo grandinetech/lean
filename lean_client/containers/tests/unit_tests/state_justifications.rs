@@ -1,9 +1,6 @@
-//! State justifications tests
+//! State justifications tests for devnet2 format
 //!
-//! TODO: Update these tests for devnet2 format:
-//! - test_get_justifications_empty
-//! - test_get_justifications_single_root
-//! - test_get_justifications_multiple_roots
+//! Tests for justification get/set operations and roundtrip verification.
 
 // tests/state_justifications.rs
 use containers::{

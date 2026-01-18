@@ -1,9 +1,7 @@
-//! Common test utilities
-//! 
-//! TODO: Update these test utilities for devnet2 format:
-//! - Update create_block to use AggregatedAttestations instead of Attestations
-//! - Update SignedBlockWithAttestation to use BlockSignatures structure
-//! - Update process_attestations calls to use new signature format
+//! Common test utilities for devnet2 format
+//!
+//! Helper functions for creating test blocks, states, and attestations
+//! using the devnet2 data structures.
 
 use containers::{Attestation, Attestations, BlockWithAttestation, Config, SignedBlockWithAttestation, block::{Block, BlockBody, BlockHeader, hash_tree_root}, checkpoint::Checkpoint, slot::Slot, state::State, types::{Bytes32, ValidatorIndex}, Validators, AggregatedAttestation, Signature};
 use ssz::{PersistentList};

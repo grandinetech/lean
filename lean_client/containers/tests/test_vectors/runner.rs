@@ -553,7 +553,8 @@ impl TestRunner {
     // Test runner for verify_signatures test vectors
     // Tests XMSS signature verification on SignedBlockWithAttestation
     //
-    // TODO: Update for devnet2 format - needs BlockSignatures structure
+    // NOTE: Disabled until test vector files are regenerated for devnet2 BlockSignatures format.
+    // The current JSON test vectors use signature.data array instead of attestation_signatures + proposer_signature.
     /*
     pub fn run_verify_signatures_test<P: AsRef<Path>>(path: P) -> Result<(), Box<dyn std::error::Error>> {
         let json_content = fs::read_to_string(path.as_ref())?;
