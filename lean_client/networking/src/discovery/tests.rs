@@ -445,11 +445,7 @@ impl RoutingTable {
     }
 
     pub fn closest_nodes(&self, target: &NodeId, count: usize) -> Vec<&NodeEntry> {
-        let mut all_nodes: Vec<&NodeEntry> = self
-            .buckets
-            .iter()
-            .flat_map(|b| b.iter())
-            .collect();
+        let mut all_nodes: Vec<&NodeEntry> = self.buckets.iter().flat_map(|b| b.iter()).collect();
 
         all_nodes.sort_by(|a, b| {
             let dist_a = xor_distance(&a.node_id, target);
@@ -687,8 +683,14 @@ mod tests {
 
             assert_eq!(config.k_bucket_size, constants::K_BUCKET_SIZE);
             assert_eq!(config.alpha, constants::ALPHA);
-            assert!((config.request_timeout_secs - constants::REQUEST_TIMEOUT_SECS).abs() < f64::EPSILON);
-            assert!((config.handshake_timeout_secs - constants::HANDSHAKE_TIMEOUT_SECS).abs() < f64::EPSILON);
+            assert!(
+                (config.request_timeout_secs - constants::REQUEST_TIMEOUT_SECS).abs()
+                    < f64::EPSILON
+            );
+            assert!(
+                (config.handshake_timeout_secs - constants::HANDSHAKE_TIMEOUT_SECS).abs()
+                    < f64::EPSILON
+            );
             assert_eq!(config.max_nodes_response, constants::MAX_NODES_RESPONSE);
             assert_eq!(config.bond_expiry_secs, constants::BOND_EXPIRY_SECS);
         }
@@ -922,8 +924,8 @@ mod tests {
         #[test]
         fn test_creation() {
             let id_nonce_bytes: [u8; 16] = [
-                0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-                0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10,
+                0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e,
+                0x0f, 0x10,
             ];
             let authdata = WhoAreYouAuthdata {
                 id_nonce: IdNonce::new(id_nonce_bytes),
@@ -1337,8 +1339,8 @@ mod tests {
         const PING_REQUEST_ID: [u8; 4] = [0x00, 0x00, 0x00, 0x01];
         const PING_ENR_SEQ: u64 = 2;
         const WHOAREYOU_ID_NONCE: [u8; 16] = [
-            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-            0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10,
+            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e,
+            0x0f, 0x10,
         ];
 
         #[test]
@@ -1393,11 +1395,17 @@ mod tests {
 
         // Node IDs from official test vectors (keccak256 of uncompressed pubkey)
         fn node_a_id() -> NodeId {
-            NodeId::from_slice(&hex::decode("aaaa8419e9f49d0083561b48287df592939a8d19947d8c0ef88f2a4856a69fbb").unwrap())
+            NodeId::from_slice(
+                &hex::decode("aaaa8419e9f49d0083561b48287df592939a8d19947d8c0ef88f2a4856a69fbb")
+                    .unwrap(),
+            )
         }
 
         fn node_b_id() -> NodeId {
-            NodeId::from_slice(&hex::decode("bbbb9d047f0488c0b5a93c1c3f2d8bafc7c8ff337024a55434a0d0555de64db9").unwrap())
+            NodeId::from_slice(
+                &hex::decode("bbbb9d047f0488c0b5a93c1c3f2d8bafc7c8ff337024a55434a0d0555de64db9")
+                    .unwrap(),
+            )
         }
 
         #[test]
@@ -1407,7 +1415,10 @@ mod tests {
 
             let distance = xor_distance(&node_a, &node_b);
             assert!(distance > BigUint::from(0u32));
-            assert_eq!(xor_distance(&node_a, &node_b), xor_distance(&node_b, &node_a));
+            assert_eq!(
+                xor_distance(&node_a, &node_b),
+                xor_distance(&node_b, &node_a)
+            );
         }
 
         #[test]

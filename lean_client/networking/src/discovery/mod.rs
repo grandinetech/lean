@@ -29,7 +29,12 @@ impl DiscoveryService {
     pub async fn new(config: DiscoveryConfig, keypair: &Keypair) -> Result<Self> {
         let enr_key = keypair_to_enr_key(keypair)?;
 
-        let local_enr = build_enr(&enr_key, config.listen_address, config.udp_port, config.libp2p_port)?;
+        let local_enr = build_enr(
+            &enr_key,
+            config.listen_address,
+            config.udp_port,
+            config.libp2p_port,
+        )?;
 
         info!(
             enr = %local_enr,
@@ -118,7 +123,10 @@ impl DiscoveryService {
     }
 
     pub fn enr_to_multiaddr(enr: &Enr<CombinedKey>) -> Option<Multiaddr> {
-        let ip = enr.ip4().map(IpAddr::V4).or_else(|| enr.ip6().map(IpAddr::V6))?;
+        let ip = enr
+            .ip4()
+            .map(IpAddr::V4)
+            .or_else(|| enr.ip6().map(IpAddr::V6))?;
         let libp2p_port = enr.tcp4().or_else(|| enr.tcp6())?;
 
         let peer_id = enr_to_peer_id(enr)?;
@@ -171,7 +179,12 @@ fn keypair_to_enr_key(keypair: &Keypair) -> Result<CombinedKey> {
     }
 }
 
-fn build_enr(key: &CombinedKey, ip: IpAddr, udp_port: u16, libp2p_port: u16) -> Result<Enr<CombinedKey>> {
+fn build_enr(
+    key: &CombinedKey,
+    ip: IpAddr,
+    udp_port: u16,
+    libp2p_port: u16,
+) -> Result<Enr<CombinedKey>> {
     let mut builder = EnrBuilder::default();
 
     // libp2p port is stored in tcp field, since Enr doesn't have a field for a quic port
@@ -199,7 +212,8 @@ fn enr_to_peer_id(enr: &Enr<CombinedKey>) -> Option<PeerId> {
     match public_key {
         discv5::enr::CombinedPublicKey::Secp256k1(pk) => {
             let compressed = pk.to_sec1_bytes();
-            let libp2p_pk = libp2p_identity::secp256k1::PublicKey::try_from_bytes(&compressed).ok()?;
+            let libp2p_pk =
+                libp2p_identity::secp256k1::PublicKey::try_from_bytes(&compressed).ok()?;
             let public = libp2p_identity::PublicKey::from(libp2p_pk);
             Some(PeerId::from_public_key(&public))
         }
