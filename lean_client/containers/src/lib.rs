@@ -14,7 +14,6 @@ pub use attestation::{
     Attestations, Signature, SignatureKey, SignedAggregatedAttestation, SignedAttestation,
 };
 
-#[cfg(feature = "devnet2")]
 pub use attestation::{AggregatedSignatureProof, MultisigAggregatedSignature};
 pub use block::{
     Block, BlockBody, BlockHeader, BlockWithAttestation, SignedBlock, SignedBlockWithAttestation,

@@ -3,7 +3,6 @@ use containers::{
     block::SignedBlockWithAttestation, checkpoint::Checkpoint, config::Config, state::State,
     Bytes32, Root, Slot, ValidatorIndex,
 };
-#[cfg(feature = "devnet2")]
 use containers::{AggregatedSignatureProof, Signature, SignatureKey};
 use ssz::SszHash;
 use std::collections::HashMap;
@@ -26,10 +25,8 @@ pub struct Store {
     pub latest_new_attestations: HashMap<ValidatorIndex, SignedAttestation>,
     pub blocks_queue: HashMap<Root, Vec<SignedBlockWithAttestation>>,
 
-    #[cfg(feature = "devnet2")]
     pub gossip_signatures: HashMap<SignatureKey, Signature>,
 
-    #[cfg(feature = "devnet2")]
     pub aggregated_payloads: HashMap<SignatureKey, Vec<AggregatedSignatureProof>>,
 }
 
@@ -71,9 +68,7 @@ pub fn get_forkchoice_store(
         latest_known_attestations: HashMap::new(),
         latest_new_attestations: HashMap::new(),
         blocks_queue: HashMap::new(),
-        #[cfg(feature = "devnet2")]
         gossip_signatures: HashMap::new(),
-        #[cfg(feature = "devnet2")]
         aggregated_payloads: HashMap::new(),
     }
 }
@@ -97,9 +92,6 @@ pub fn get_fork_choice_head(
 
     // stage 1: accumulate weights by walking up from each attestation's head
     for attestation in latest_attestations.values() {
-        #[cfg(not(feature = "devnet2"))]
-        let mut curr = attestation.message.data.head.root;
-        #[cfg(feature = "devnet2")]
         let mut curr = attestation.message.head.root;
 
         if let Some(block) = store.blocks.get(&curr) {
@@ -292,7 +284,6 @@ pub fn get_proposal_head(store: &mut Store, slot: Slot) -> Root {
 ///
 /// # Returns
 /// Tuple of (block root, finalized Block, attestation signature proofs)
-#[cfg(feature = "devnet2")]
 pub fn produce_block_with_signatures(
     store: &mut Store,
     slot: Slot,

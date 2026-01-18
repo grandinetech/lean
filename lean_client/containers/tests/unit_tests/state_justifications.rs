@@ -1,5 +1,9 @@
-//! State justifications tests for devnet1 format
-#![cfg(not(feature = "devnet2"))]
+//! State justifications tests
+//!
+//! TODO: Update these tests for devnet2 format:
+//! - test_get_justifications_empty
+//! - test_get_justifications_single_root
+//! - test_get_justifications_multiple_roots
 
 // tests/state_justifications.rs
 use containers::{

@@ -1,5 +1,10 @@
-//! Test vector modules for devnet1 format
-#![cfg(not(feature = "devnet2"))]
+//! Test vector modules
+//!
+//! TODO: Update these test vectors for devnet2 format:
+//! - Update runner.rs to use AggregatedAttestations
+//! - Update block_processing.rs tests 
+//! - Update genesis.rs tests
+//! - Update verify_signatures.rs to use BlockSignatures structure
 
 // Test vector modules
 pub mod runner;

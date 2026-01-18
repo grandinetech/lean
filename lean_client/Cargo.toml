@@ -52,10 +52,8 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["devnet2", "xmss-signing"]
+default = ["xmss-signing"]
 xmss-signing = ["validator/xmss-signing"]
-devnet1 = ["containers/devnet1", "fork-choice/devnet1", "networking/devnet1", "validator/devnet1"]
-devnet2 = ["containers/devnet2", "fork-choice/devnet2", "networking/devnet2", "validator/devnet2"]
 
 [dependencies]
 chain = { path = "./chain" }

@@ -1,5 +1,10 @@
-//! State basic tests for devnet1 format
-#![cfg(not(feature = "devnet2"))]
+//! State basic tests
+//!
+//! TODO: Update these tests for devnet2 format:
+//! - test_generate_genesis
+//! - test_proposer_round_robin
+//! - test_slot_justifiability_rules
+//! - test_hash_tree_root
 
 // tests/state_basic.rs
 use containers::{block::{BlockBody, hash_tree_root}, state::State, types::Uint64, ValidatorIndex};

@@ -1,13 +1,10 @@
-use crate::{Attestation, Attestations, Bytes32, Signature, Slot, State, ValidatorIndex};
+use crate::{Attestation, Bytes32, Signature, Slot, State, ValidatorIndex};
 use serde::{Deserialize, Serialize};
 use ssz_derive::Ssz;
 
 #[cfg(feature = "xmss-verify")]
 use leansig::signature::generalized_xmss::instantiations_poseidon::lifetime_2_to_the_20::target_sum::SIGTargetSumLifetime20W2NoOff;
-use ssz::{PersistentList, SszHash};
-use typenum::U4096;
 use crate::attestation::{AggregatedAttestations, AttestationSignatures};
-use crate::validator::BlsPublicKey;
 
 /// The body of a block, containing payload data.
 ///
@@ -15,11 +12,7 @@ use crate::validator::BlsPublicKey;
 /// separately in BlockSignatures to match the spec architecture.
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
 pub struct BlockBody {
-    #[cfg(feature = "devnet2")]
     pub attestations: AggregatedAttestations,
-    #[cfg(not(feature = "devnet2"))]
-    #[serde(with = "crate::serde_helpers")]
-    pub attestations: Attestations,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
@@ -67,10 +60,6 @@ pub struct SignedBlockWithAttestation {
     /// Aggregated signature payload for the block.
     ///
     /// Signatures remain in attestation order followed by the proposer signature.
-    #[cfg(not(feature = "devnet2"))]
-    #[serde(with = "crate::serde_helpers::block_signatures")]
-    pub signature: PersistentList<Signature, U4096>,
-    #[cfg(feature = "devnet2")]
     pub signature: BlockSignatures,
 }
 
@@ -128,99 +117,9 @@ impl SignedBlockWithAttestation {
     ///
     /// - Spec: <https://github.com/leanEthereum/leanSpec/blob/main/src/lean_spec/subspecs/containers/block/block.py#L35>
     /// - XMSS Library: <https://github.com/leanEthereum/leanSig>
-    #[cfg(not(feature = "devnet2"))]
-    pub fn verify_signatures(&self, parent_state: State) -> bool {
-        // Unpack the signed block components
-        let block = &self.message.block;
-        let signatures = &self.signature;
-
-        // Combine all attestations that need verification
-        //
-        // This creates a single list containing both:
-        // 1. Block body attestations (from other validators)
-        // 2. Proposer attestation (from the block producer)
-        let mut all_attestations: Vec<Attestation> = Vec::new();
-
-        // Collect block body attestations
-        let mut i: u64 = 0;
-        loop {
-            match block.body.attestations.get(i) {
-                Ok(a) => all_attestations.push(a.clone()),
-                Err(_) => break,
-            }
-            i += 1;
-        }
-
-        // Append proposer attestation
-        all_attestations.push(self.message.proposer_attestation.clone());
-
-        // Collect signatures into a Vec
-        let mut signatures_vec: Vec<Signature> = Vec::new();
-        let mut j: u64 = 0;
-        loop {
-            match signatures.get(j) {
-                Ok(s) => signatures_vec.push(s.clone()),
-                Err(_) => break,
-            }
-            j += 1;
-        }
-
-        // Verify signature count matches attestation count
-        //
-        // Each attestation must have exactly one corresponding signature.
-        //
-        // The ordering must be preserved:
-        // 1. Block body attestations,
-        // 2. The proposer attestation.
-        assert_eq!(
-            signatures_vec.len(),
-            all_attestations.len(),
-            "Number of signatures does not match number of attestations"
-        );
-
-        let validators = &parent_state.validators;
-        let num_validators = validators.len_u64();
-
-        // Verify each attestation signature
-        for (attestation, signature) in all_attestations.iter().zip(signatures_vec.iter()) {
-            // Ensure validator exists in the active set
-            assert!(
-                attestation.validator_id.0 < num_validators,
-                "Validator index out of range"
-            );
-
-            let validator = validators
-                .get(attestation.validator_id.0)
-                .expect("validator must exist");
-
-            // Verify the XMSS signature
-            //
-            // This cryptographically proves that:
-            // - The validator possesses the secret key for their public key
-            // - The attestation has not been tampered with
-            // - The signature was created at the correct epoch (slot)
-
-            let message_bytes: [u8; 32] = hash_tree_root(attestation).0.into();
-
-            assert!(
-                verify_xmss_signature(
-                    validator.pubkey.0.as_bytes(),
-                    attestation.data.slot,
-                    &message_bytes,
-                    &signature,
-                ),
-                "Attestation signature verification failed"
-            );
-        }
-
-        true
-    }
-
-
     /// Verifies all attestation signatures using lean-multisig aggregated proofs.
     /// Each attestation has a single `MultisigAggregatedSignature` proof that covers
     /// all participating validators.
-    #[cfg(feature = "devnet2")]
     pub fn verify_signatures(&self, parent_state: State) -> bool {
         // Unpack the signed block components
         let block = &self.message.block;

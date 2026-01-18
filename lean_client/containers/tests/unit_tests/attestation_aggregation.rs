@@ -1,4 +1,3 @@
-#[cfg(feature = "devnet2")]
 #[cfg(test)]
 mod tests {
     use containers::attestation::{AggregatedAttestation, AggregationBits, Attestation, AttestationData};

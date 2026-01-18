@@ -2,18 +2,14 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use containers::attestation::{AggregatedAttestations};
-#[cfg(feature = "devnet2")]
-use containers::attestation::MultisigAggregatedSignature;
 use containers::block::BlockSignatures;
-#[cfg(feature = "devnet2")]
 use containers::ssz;
 use containers::{
     attestation::{Attestation, AttestationData, Signature, SignedAttestation},
     block::{hash_tree_root, BlockWithAttestation, SignedBlockWithAttestation},
     checkpoint::Checkpoint,
     types::{Uint64, ValidatorIndex},
-    AggregatedAttestation, Slot,
+    Slot,
 };
 use fork_choice::store::{get_proposal_head, get_vote_target, Store};
 use tracing::{info, warn};
@@ -178,9 +174,6 @@ impl ValidatorService {
             .latest_new_attestations
             .values()
             .filter(|att| {
-                #[cfg(not(feature = "devnet2"))]
-                let data = &att.message.data;
-                #[cfg(feature = "devnet2")]
                 let data = &att.message;
                 // Source must match the parent state's justified checkpoint (not store's!)
                 let source_matches = data.source == parent_state.latest_justified;
@@ -193,13 +186,6 @@ impl ValidatorService {
             })
             .collect();
 
-        #[cfg(not(feature = "devnet2"))]
-        let valid_attestations: Vec<Attestation> = valid_signed_attestations
-            .iter()
-            .map(|att| att.message.clone())
-            .collect();
-
-        #[cfg(feature = "devnet2")]
         let valid_attestations: Vec<AttestationData> = valid_signed_attestations
             .iter()
             .map(|att| att.message.clone())
@@ -213,18 +199,6 @@ impl ValidatorService {
         );
 
         // Build block with collected attestations (empty body - attestations go to state)
-        #[cfg(not(feature = "devnet2"))]
-        let (block, _post_state, _collected_atts, sigs) = parent_state.build_block(
-            slot,
-            proposer_index,
-            parent_root,
-            Some(valid_attestations),
-            None,
-            None,
-            None,
-            None,
-        )?;
-        #[cfg(feature = "devnet2")]
         let (block, _post_state, _collected_atts, sigs) = {
             let valid_attestations: Vec<Attestation> = valid_attestations
                 .iter()
@@ -245,16 +219,6 @@ impl ValidatorService {
             )?
         };
 
-        #[cfg(not(feature = "devnet2"))]
-        let mut signatures = sigs;
-        #[cfg(not(feature = "devnet2"))]
-        for signed_att in &valid_signed_attestations {
-            signatures
-                .push(signed_att.signature.clone())
-                .map_err(|e| format!("Failed to add attestation signature: {:?}", e))?;
-        }
-
-        #[cfg(feature = "devnet2")]
         let signatures = sigs;
 
         info!(
@@ -267,9 +231,6 @@ impl ValidatorService {
         );
 
         // Sign the proposer attestation
-        #[cfg(not(feature = "devnet2"))]
-        let proposer_signature: Signature;
-        #[cfg(feature = "devnet2")]
         let proposer_signature: Signature;
         
         if let Some(ref key_manager) = self.key_manager {
@@ -279,17 +240,7 @@ impl ValidatorService {
 
             match key_manager.sign(proposer_index.0, epoch, &message.0.into()) {
                 Ok(sig) => {
-                    #[cfg(not(feature = "devnet2"))]
-                    {
-                        signatures
-                            .push(sig.clone())
-                            .map_err(|e| format!("Failed to add proposer signature: {:?}", e))?;
-                        proposer_signature = sig;
-                    }
-                    #[cfg(feature = "devnet2")]
-                    {
-                        proposer_signature = sig;
-                    }
+                    proposer_signature = sig;
                     info!(proposer = proposer_index.0, "Signed proposer attestation");
                 }
                 Err(e) => {
@@ -304,7 +255,6 @@ impl ValidatorService {
 
         // Convert signatures to PersistentList for BlockSignatures
         // Extract proof_data from AggregatedSignatureProof for wire format
-        #[cfg(feature = "devnet2")]
         let attestation_signatures = {
             let mut list = ssz::PersistentList::default();
             for proof in signatures {
@@ -319,9 +269,6 @@ impl ValidatorService {
                 block,
                 proposer_attestation,
             },
-            #[cfg(not(feature = "devnet2"))]
-            signature: signatures,
-            #[cfg(feature = "devnet2")]
             signature: BlockSignatures {
                 attestation_signatures,
                 proposer_signature,
@@ -365,18 +312,6 @@ impl ValidatorService {
             .validator_indices
             .iter()
             .filter_map(|&idx| {
-                #[cfg(not(feature = "devnet2"))]
-                let attestation = Attestation {
-                    validator_id: Uint64(idx),
-                    data: AttestationData {
-                        slot,
-                        head: head_checkpoint.clone(),
-                        target: vote_target.clone(),
-                        source: store.latest_justified.clone(),
-                    },
-                };
-
-                #[cfg(feature = "devnet2")]
                 let attestation = AttestationData {
                     slot,
                     head: head_checkpoint.clone(),
@@ -421,24 +356,11 @@ impl ValidatorService {
                     Signature::default()
                 };
 
-                {
-                    #[cfg(not(feature = "devnet2"))]
-                    {
-                        Some(SignedAttestation {
-                            message: attestation,
-                            signature,
-                        })
-                    }
-
-                    #[cfg(feature = "devnet2")]
-                    {
-                        Some(SignedAttestation {
-                            validator_id: idx,
-                            message: attestation,
-                            signature,
-                        })
-                    }
-                }
+                Some(SignedAttestation {
+                    validator_id: idx,
+                    message: attestation,
+                    signature,
+                })
             })
             .collect()
     }

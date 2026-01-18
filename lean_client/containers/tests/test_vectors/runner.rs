@@ -550,9 +550,11 @@ impl TestRunner {
         Ok(())
     }
 
-    /// Test runner for verify_signatures test vectors
-    /// Tests XMSS signature verification on SignedBlockWithAttestation
-    #[cfg(feature = "devnet1")]
+    // Test runner for verify_signatures test vectors
+    // Tests XMSS signature verification on SignedBlockWithAttestation
+    //
+    // TODO: Update for devnet2 format - needs BlockSignatures structure
+    /*
     pub fn run_verify_signatures_test<P: AsRef<Path>>(path: P) -> Result<(), Box<dyn std::error::Error>> {
         let json_content = fs::read_to_string(path.as_ref())?;
         
@@ -608,5 +610,6 @@ impl TestRunner {
         
         Ok(())
     }
+    */
 
 }

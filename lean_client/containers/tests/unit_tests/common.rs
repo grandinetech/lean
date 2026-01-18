@@ -1,5 +1,9 @@
-//! Common test utilities for devnet1 format
-#![cfg(not(feature = "devnet2"))]
+//! Common test utilities
+//! 
+//! TODO: Update these test utilities for devnet2 format:
+//! - Update create_block to use AggregatedAttestations instead of Attestations
+//! - Update SignedBlockWithAttestation to use BlockSignatures structure
+//! - Update process_attestations calls to use new signature format
 
 use containers::{Attestation, Attestations, BlockWithAttestation, Config, SignedBlockWithAttestation, block::{Block, BlockBody, BlockHeader, hash_tree_root}, checkpoint::Checkpoint, slot::Slot, state::State, types::{Bytes32, ValidatorIndex}, Validators, AggregatedAttestation, Signature};
 use ssz::{PersistentList};
@@ -14,21 +18,12 @@ const _: [(); DEVNET_CONFIG_VALIDATOR_REGISTRY_LIMIT - TEST_VALIDATOR_COUNT] =
     [(); DEVNET_CONFIG_VALIDATOR_REGISTRY_LIMIT - TEST_VALIDATOR_COUNT];
 
 pub fn create_block(slot: u64, parent_header: &mut BlockHeader, attestations: Option<Attestations>) -> SignedBlockWithAttestation {
-    #[cfg(feature = "devnet1")]
-    let body = BlockBody {
-        attestations: attestations.unwrap_or_else(PersistentList::default),
-    };
-    #[cfg(feature = "devnet2")]
     let body = BlockBody {
         attestations: {
             let attestations_vec = attestations.unwrap_or_default();
             
             // Convert PersistentList into a Vec
             let attestations_vec: Vec<Attestation> = attestations_vec.into_iter().cloned().collect();
-
-            let aggregated: Vec<AggregatedAttestation> =
-                AggregatedAttestation::aggregate_by_data(&attestations_vec);
-
 
             let aggregated: Vec<AggregatedAttestation> =
                 AggregatedAttestation::aggregate_by_data(&attestations_vec);
@@ -43,7 +38,6 @@ pub fn create_block(slot: u64, parent_header: &mut BlockHeader, attestations: Op
 
             persistent_list
         },
-        // other BlockBody fields...
     };
 
 
@@ -55,16 +49,6 @@ pub fn create_block(slot: u64, parent_header: &mut BlockHeader, attestations: Op
         body: body,
     };
 
-    #[cfg(feature = "devnet1")]
-    let return_value = SignedBlockWithAttestation {
-        message: BlockWithAttestation {
-            block: block_message,
-            proposer_attestation: Attestation::default(),
-        },
-        signature: PersistentList::default(),
-    };
-
-    #[cfg(feature = "devnet2")]
     let return_value = SignedBlockWithAttestation {
         message: BlockWithAttestation {
             block: block_message,

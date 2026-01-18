@@ -220,9 +220,6 @@ async fn main() {
             block: genesis_block,
             proposer_attestation: genesis_proposer_attestation,
         },
-        #[cfg(not(feature = "devnet2"))]
-        signature: PersistentList::default(),
-        #[cfg(feature = "devnet2")]
         signature: BlockSignatures {
             attestation_signatures: PersistentList::default(),
             proposer_signature: Signature::default(),
@@ -434,9 +431,6 @@ async fn main() {
                                 if last_attestation_slot != Some(current_slot) {
                                     let attestations = vs.create_attestations(&store, Slot(current_slot));
                                     for signed_att in attestations {
-                                        #[cfg(not(feature = "devnet2"))]
-                                        let validator_id = signed_att.message.validator_id.0;
-                                        #[cfg(feature = "devnet2")]
                                         let validator_id = signed_att.validator_id;
                                         info!(
                                             slot = current_slot,
@@ -444,19 +438,6 @@ async fn main() {
                                             "Broadcasting attestation"
                                         );
 
-                                        #[cfg(not(feature = "devnet2"))]
-                                        match on_attestation(&mut store, signed_att.clone(), false) {
-                                            Ok(()) => {
-                                                if let Err(e) = chain_outbound_sender.send(
-                                                    OutboundP2pRequest::GossipAttestation(signed_att)
-                                                ) {
-                                                    warn!("Failed to gossip attestation: {}", e);
-                                                }
-                                            }
-                                            Err(e) => warn!("Error processing own attestation: {}", e),
-                                        }
-
-                                        #[cfg(feature = "devnet2")]
                                         match on_attestation(&mut store, signed_att.clone(), false) {
                                             Ok(()) => {
                                                 if let Err(e) = chain_outbound_sender.send(
@@ -552,22 +533,9 @@ async fn main() {
                             should_gossip,
                             ..
                         } => {
-                            #[cfg(not(feature = "devnet2"))]
-                            let att_slot = signed_attestation.message.data.slot.0;
-                            #[cfg(not(feature = "devnet2"))]
-                            let source_slot = signed_attestation.message.data.source.slot.0;
-                            #[cfg(not(feature = "devnet2"))]
-                            let target_slot = signed_attestation.message.data.target.slot.0;
-                            #[cfg(not(feature = "devnet2"))]
-                            let validator_id = signed_attestation.message.validator_id.0;
-
-                            #[cfg(feature = "devnet2")]
                             let att_slot = signed_attestation.message.slot.0;
-                            #[cfg(feature = "devnet2")]
                             let source_slot = signed_attestation.message.source.slot.0;
-                            #[cfg(feature = "devnet2")]
                             let target_slot = signed_attestation.message.target.slot.0;
-                            #[cfg(feature = "devnet2")]
                             let validator_id = signed_attestation.validator_id;
 
                             info!(

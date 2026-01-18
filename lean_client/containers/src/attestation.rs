@@ -25,15 +25,10 @@ pub type Attestations = ssz::PersistentList<Attestation, U4096>;
 
 pub type AggregatedAttestations = ssz::PersistentList<AggregatedAttestation, U4096>;
 
-#[cfg(not(feature = "devnet2"))]
-pub type AttestationSignatures = ssz::PersistentList<SignedAttestation, U4096>;
-
-#[cfg(feature = "devnet2")]
 pub type AttestationSignatures = ssz::PersistentList<MultisigAggregatedSignature, U4096>;
 
 /// Legacy naive aggregated signature type (list of individual XMSS signatures).
 /// Kept for backwards compatibility but no longer used in wire format.
-#[cfg(feature = "devnet2")]
 pub type NaiveAggregatedSignature = ssz::PersistentList<Signature, U4096>;
 
 /// Aggregated signature proof from lean-multisig zkVM.
@@ -41,7 +36,6 @@ pub type NaiveAggregatedSignature = ssz::PersistentList<Signature, U4096>;
 /// This is a variable-length byte list (up to 1 MiB) containing the serialized
 /// proof bytes from `xmss_aggregate_signatures()`. The `#[ssz(transparent)]`
 /// attribute makes this type serialize directly as a ByteList for SSZ wire format.
-#[cfg(feature = "devnet2")]
 #[derive(Clone, Debug, PartialEq, Eq, Default, Ssz, Serialize, Deserialize)]
 #[ssz(transparent)]
 pub struct MultisigAggregatedSignature(
@@ -50,7 +44,6 @@ pub struct MultisigAggregatedSignature(
     pub ssz::ByteList<U1048576>,
 );
 
-#[cfg(feature = "devnet2")]
 impl MultisigAggregatedSignature {
     /// Create a new MultisigAggregatedSignature from proof bytes.
     pub fn new(proof: Vec<u8>) -> Self {
@@ -152,22 +145,9 @@ impl MultisigAggregatedSignature {
         
         Ok(())
     }
-
-    /// Stub verification when lean-multisig is not available.
-    /// Always returns Ok(()) for testing without cryptographic verification.
-    #[cfg(not(feature = "devnet2"))]
-    pub fn verify_stub<P, M>(
-        &self,
-        _public_keys: &[P],
-        _message: M,
-        _epoch: u64,
-    ) -> Result<(), ()> {
-        Ok(())
-    }
 }
 
 /// Error types for signature aggregation operations.
-#[cfg(feature = "devnet2")]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AggregationError {
     /// No signatures provided for aggregation.
@@ -185,7 +165,6 @@ pub enum AggregationError {
 /// This type combines the participant bitfield with the proof bytes,
 /// matches Python's `AggregatedSignatureProof` container structure.
 /// Used in `aggregated_payloads` to track which validators are covered by each proof.
-#[cfg(feature = "devnet2")]
 #[derive(Clone, Debug, PartialEq, Eq, Default, Ssz, Serialize, Deserialize)]
 pub struct AggregatedSignatureProof {
     /// Bitfield indicating which validators' signatures are included.
@@ -194,7 +173,6 @@ pub struct AggregatedSignatureProof {
     pub proof_data: MultisigAggregatedSignature,
 }
 
-#[cfg(feature = "devnet2")]
 impl AggregatedSignatureProof {
     /// Create a new AggregatedSignatureProof.
     pub fn new(participants: AggregationBits, proof_data: MultisigAggregatedSignature) -> Self {
@@ -320,12 +298,8 @@ pub struct Attestation {
 /// Validator attestation bundled with its signature.
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
 pub struct SignedAttestation {
-    #[cfg(feature = "devnet2")]
     pub validator_id: u64,
-    #[cfg(feature = "devnet2")]
     pub message: AttestationData,
-    #[cfg(not(feature = "devnet2"))]
-    pub message: Attestation,
     pub signature: Signature,
 }
 
