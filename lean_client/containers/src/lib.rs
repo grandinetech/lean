@@ -22,8 +22,8 @@ pub use slot::Slot;
 pub use state::State;
 pub use status::Status;
 pub use types::{
-    Bytes32, HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots,
-    Uint64, ValidatorIndex, Validators,
+    Bytes20, Bytes32, HistoricalBlockHashes, JustificationRoots, JustificationsValidators,
+    JustifiedSlots, Uint64, ValidatorIndex, Validators,
 };
 
 pub use types::Bytes32 as Root;

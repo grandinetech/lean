@@ -8,8 +8,8 @@ use tokio::sync::mpsc;
 
 use crate::serde_utils::quoted_u64;
 
-pub const MESSAGE_DOMAIN_VALID_SNAPPY: &[u8; 4] = &[0x01, 0x00, 0x00, 0x00];
-pub const MESSAGE_DOMAIN_INVALID_SNAPPY: &[u8; 4] = &[0x00, 0x00, 0x00, 0x00];
+pub const MESSAGE_DOMAIN_VALID_SNAPPY: &[u8; 1] = &[0x01];
+pub const MESSAGE_DOMAIN_INVALID_SNAPPY: &[u8; 1] = &[0x00];
 
 #[derive(Debug, Serialize, Clone, Copy, PartialEq, Eq, Hash)]
 #[serde(rename_all = "lowercase")]
