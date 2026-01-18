@@ -26,6 +26,7 @@ use tracing::{debug, info, trace, warn};
 use crate::{
     bootnodes::{BootnodeSource, StaticBootnodes},
     compressor::Compressor,
+    discovery::{DiscoveryConfig, DiscoveryService},
     gossipsub::{self, config::GossipsubConfig, message::GossipsubMessage, topic::GossipsubKind},
     network::behaviour::{LeanNetworkBehaviour, LeanNetworkBehaviourEvent},
     req_resp::{self, BLOCKS_BY_ROOT_PROTOCOL_V1, LeanRequest, ReqRespMessage, STATUS_PROTOCOL_V1},
@@ -39,6 +40,8 @@ pub struct NetworkServiceConfig {
     pub gossipsub_config: GossipsubConfig,
     pub socket_address: IpAddr,
     pub socket_port: u16,
+    pub discovery_port: u16,
+    pub discovery_enabled: bool,
     bootnodes: StaticBootnodes,
 }
 
@@ -47,21 +50,25 @@ impl NetworkServiceConfig {
         gossipsub_config: GossipsubConfig,
         socket_address: IpAddr,
         socket_port: u16,
+        discovery_port: u16,
+        discovery_enabled: bool,
         bootnodes: Vec<String>,
     ) -> Self {
-        let bootnodes = StaticBootnodes::new(
-            bootnodes
-                .iter()
-                .filter_map(|addr_str| addr_str.parse().ok())
-                .collect::<Vec<Multiaddr>>(),
-        );
+        let bootnodes = StaticBootnodes::parse(&bootnodes);
 
         NetworkServiceConfig {
             gossipsub_config,
             socket_address,
             socket_port,
+            discovery_port,
+            discovery_enabled,
             bootnodes,
         }
+    }
+
+    /// Get ENR bootnodes for discv5.
+    pub fn enr_bootnodes(&self) -> Vec<enr::Enr<discv5::enr::CombinedKey>> {
+        self.bootnodes.enrs().to_vec()
     }
 }
 
@@ -83,6 +90,7 @@ where
 {
     network_config: Arc<NetworkServiceConfig>,
     swarm: Swarm<LeanNetworkBehaviour>,
+    discovery: Option<DiscoveryService>,
     peer_table: Arc<Mutex<HashMap<PeerId, ConnectionState>>>,
     peer_count: Arc<AtomicU64>,
     outbound_p2p_requests: R,
@@ -147,9 +155,36 @@ where
             .with_swarm_config(|_| config)
             .build();
 
+        let discovery = if network_config.discovery_enabled {
+            let discovery_config = DiscoveryConfig::new(
+                network_config.socket_address,
+                network_config.discovery_port,
+                network_config.socket_port,
+            )
+            .with_bootnodes(network_config.enr_bootnodes());
+
+            match DiscoveryService::new(discovery_config, &local_key).await {
+                Ok(disc) => {
+                    info!(
+                        enr = %disc.local_enr(),
+                        "Discovery service initialized"
+                    );
+                    Some(disc)
+                }
+                Err(e) => {
+                    warn!(error = ?e, "Failed to initialize discovery service, continuing without it");
+                    None
+                }
+            }
+        } else {
+            info!("Discovery service disabled");
+            None
+        };
+
         let mut service = Self {
             network_config,
             swarm,
+            discovery,
             peer_table: Arc::new(Mutex::new(HashMap::new())),
             peer_count,
             outbound_p2p_requests,
@@ -166,10 +201,23 @@ where
         // Periodic reconnect attempts to bootnodes
         let mut reconnect_interval = interval(Duration::from_secs(30));
         reconnect_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
+
+        // Periodic discovery searches
+        let mut discovery_interval = interval(Duration::from_secs(30));
+        discovery_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
+
         loop {
             select! {
                 _ = reconnect_interval.tick() => {
                     self.connect_to_peers(self.network_config.bootnodes.to_multiaddrs()).await;
+                }
+                _ = discovery_interval.tick() => {
+                    // Trigger active peer discovery
+                    if let Some(ref discovery) = self.discovery {
+                        let known_peers = discovery.connected_peers();
+                        debug!(known_peers, "Triggering random peer discovery lookup");
+                        discovery.find_random_peers();
+                    }
                 }
                 request = self.outbound_p2p_requests.recv() => {
                     if let Some(request) = request {
@@ -179,6 +227,23 @@ where
                 event = self.swarm.select_next_some() => {
                     if let Some(event) = self.parse_swarm_event(event).await {
                         info!(?event, "Swarm event");
+                    }
+                }
+                enr = async {
+                    match &mut self.discovery {
+                        Some(disc) => disc.recv().await,
+                        None => std::future::pending().await,
+                    }
+                } => {
+                    if let Some(enr) = enr {
+                        if let Some(multiaddr) = DiscoveryService::enr_to_multiaddr(&enr) {
+                            info!(
+                                node_id = %enr.node_id(),
+                                %multiaddr,
+                                "Discovered peer via discv5, attempting connection"
+                            );
+                            self.connect_to_peers(vec![multiaddr]).await;
+                        }
                     }
                 }
             }
@@ -593,6 +658,10 @@ where
 
     pub fn local_peer_id(&self) -> PeerId {
         *self.swarm.local_peer_id()
+    }
+
+    pub fn local_enr(&self) -> Option<&enr::Enr<discv5::enr::CombinedKey>> {
+        self.discovery.as_ref().map(|d| d.local_enr())
     }
 
     pub fn swarm_mut(&mut self) -> &mut Swarm<LeanNetworkBehaviour> {
