@@ -38,27 +38,33 @@ leanEthereum Consensus Client written in Rust using Grandine's libraries.
 
 ## Testing discovery
 
-1. Start the bootnode
+1. Build the client:
+   ```bash
+   cd lean_client/
+   cargo build --release
+   ```
+   
+2. Start the bootnode
 
    Run in the terminal:
    ```
-   RUST_LOG=info cargo run --features devnet2 -- \
+   RUST_LOG=info ./target/release/lean_client \
                  --port 9000 \
                  --discovery-port 9100
    ```
    
-2. Start the other nodes
+3. Start the other nodes
 
    Run in the terminal:
    ```
-   RUST_LOG=info cargo run --features devnet2 -- \
+   RUST_LOG=info ./target/release/lean_client \
                  --port 9001 \
                  --discovery-port 9101 \
                  --bootnodes "<bootnode-enr>"
    ```
    
    ```
-   RUST_LOG=info cargo run --features devnet2 -- \
+   RUST_LOG=info ./target/release/lean_client \
                  --port 9002 \
                  --discovery-port 9102 \
                  --bootnodes "<bootnode-enr>"
