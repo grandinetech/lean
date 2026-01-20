@@ -174,7 +174,7 @@ impl GossipsubTopic {
     /// # Example
     ///
     /// ```
-    /// use lean_client_networking::gossipsub::topic::GossipsubTopic;
+    /// use networking::gossipsub::topic::GossipsubTopic;
     ///
     /// let topic = GossipsubTopic::from_string("/leanconsensus/0x12345678/block/ssz_snappy")?;
     /// # Ok::<(), String>(())
@@ -306,7 +306,7 @@ pub fn get_topics(fork: String) -> Vec<GossipsubTopic> {
 /// # Example
 ///
 /// ```
-/// use lean_client_networking::gossipsub::topic::format_topic_string;
+/// use networking::gossipsub::topic::format_topic_string;
 ///
 /// let topic_str = format_topic_string("block", "0x12345678", None, None);
 /// assert_eq!(topic_str, "/leanconsensus/0x12345678/block/ssz_snappy");
@@ -346,7 +346,7 @@ pub fn format_topic_string(
 /// # Example
 ///
 /// ```
-/// use lean_client_networking::gossipsub::topic::parse_topic_string;
+/// use networking::gossipsub::topic::parse_topic_string;
 ///
 /// let (prefix, fork, name, enc) = parse_topic_string("/leanconsensus/0x12345678/block/ssz_snappy")?;
 /// assert_eq!(prefix, "leanconsensus");

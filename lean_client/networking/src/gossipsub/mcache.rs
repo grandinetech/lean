@@ -85,8 +85,8 @@ pub struct CacheEntry {
 /// # Example
 ///
 /// ```
-/// use lean_client_networking::gossipsub::mcache::MessageCache;
-/// use lean_client_networking::gossipsub::message::RawGossipsubMessage;
+/// use networking::gossipsub::mcache::MessageCache;
+/// use networking::gossipsub::message::RawGossipsubMessage;
 ///
 /// let mut cache = MessageCache::new(6, 3);
 ///

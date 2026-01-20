@@ -122,7 +122,7 @@ pub struct IDontWant {
 /// # Example
 ///
 /// ```
-/// use lean_client_networking::gossipsub::control::*;
+/// use networking::gossipsub::control::*;
 ///
 /// let control = ControlMessage {
 ///     grafts: vec![Graft { topic_id: "blocks".to_string() }],

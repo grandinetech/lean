@@ -152,8 +152,9 @@ impl Default for TopicMesh {
 /// # Example
 ///
 /// ```
-/// use lean_client_networking::gossipsub::mesh::MeshState;
-/// use lean_client_networking::gossipsub::config::GossipsubParameters;
+/// use networking::gossipsub::mesh::MeshState;
+/// use networking::gossipsub::config::GossipsubParameters;
+/// use std::collections::HashSet;
 ///
 /// let mut state = MeshState::new(GossipsubParameters::default());
 ///
