@@ -163,18 +163,7 @@ pub fn update_head(store: &mut Store) {
 
 pub fn update_safe_target(store: &mut Store) {
     let n_validators = if let Some(state) = store.states.get(&store.head) {
-        let mut count: u64 = 0;
-        let mut i: u64 = 0;
-        loop {
-            match state.validators.get(i) {
-                Ok(_) => {
-                    count += 1;
-                    i += 1;
-                }
-                Err(_) => break,
-            }
-        }
-        count as usize
+        state.validators.len_usize()
     } else {
         0
     };

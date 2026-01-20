@@ -138,40 +138,13 @@ impl State {
 
     /// Simple RR proposer rule (round-robin).
     pub fn is_proposer(&self, index: ValidatorIndex) -> bool {
-        // Count validators by iterating (since PersistentList doesn't have len())
-        let mut num_validators: u64 = 0;
-        let mut i: u64 = 0;
-        loop {
-            match self.validators.get(i) {
-                Ok(_) => {
-                    num_validators += 1;
-                    i += 1;
-                }
-                Err(_) => break,
-            }
-        }
-
-        if num_validators == 0 {
-            return false; // No validators
-        }
+        let num_validators: u64 = self.validators.len_u64();
         (self.slot.0 % num_validators) == (index.0 % num_validators)
-    }
-
-    /// Get the number of validators (since PersistentList doesn't have len())
-    pub fn validator_count(&self) -> usize {
-        let mut count: u64 = 0;
-        loop {
-            match self.validators.get(count) {
-                Ok(_) => count += 1,
-                Err(_) => break,
-            }
-        }
-        count as usize
     }
 
     pub fn get_justifications(&self) -> BTreeMap<Bytes32, Vec<bool>> {
         // Use actual validator count, matching leanSpec
-        let num_validators = self.validator_count();
+        let num_validators = self.validators.len_usize();
         (&self.justifications_roots)
             .into_iter()
             .enumerate()
@@ -194,7 +167,7 @@ impl State {
 
     pub fn with_justifications(mut self, map: BTreeMap<Bytes32, Vec<bool>>) -> Self {
         // Use actual validator count, matching leanSpec
-        let num_validators = self.validator_count();
+        let num_validators = self.validators.len_usize();
         let mut roots: Vec<_> = map.keys().cloned().collect();
         roots.sort();
 
@@ -480,7 +453,7 @@ impl State {
             if !justifications.contains_key(&target_root) {
                 // Use actual validator count, not VALIDATOR_REGISTRY_LIMIT
                 // This matches leanSpec: justifications[target.root] = [Boolean(False)] * self.validators.count
-                let num_validators = self.validator_count();
+                let num_validators = self.validators.len_usize();
                 justifications.insert(target_root, vec![false; num_validators]);
             }
 
@@ -489,18 +462,7 @@ impl State {
                 if validator_id < votes.len() && !votes[validator_id] {
                     votes[validator_id] = true;
 
-                    // Count validators
-                    let mut num_validators: u64 = 0;
-                    let mut i: u64 = 0;
-                    loop {
-                        match self.validators.get(i) {
-                            Ok(_) => {
-                                num_validators += 1;
-                                i += 1;
-                            }
-                            Err(_) => break,
-                        }
-                    }
+                    let num_validators: u64 = self.validators.len_u64();
 
                     let count = votes.iter().filter(|&&v| v).count();
                     if 3 * count >= 2 * num_validators as usize {

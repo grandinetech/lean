@@ -39,17 +39,6 @@ fn load_node_key(path: &str) -> Result<Keypair, Box<dyn std::error::Error>> {
     Ok(Keypair::from(keypair))
 }
 
-fn count_validators(state: &State) -> u64 {
-    let mut count = 0u64;
-    loop {
-        match state.validators.get(count) {
-            Ok(_) => count += 1,
-            Err(_) => break,
-        }
-    }
-    count
-}
-
 fn print_chain_status(store: &Store, connected_peers: u64) {
     let current_slot = store.time / INTERVALS_PER_SLOT;
 
@@ -225,7 +214,7 @@ async fn main() {
     let config = Config { genesis_time };
     let store = get_forkchoice_store(genesis_state.clone(), genesis_signed_block, config);
 
-    let num_validators = count_validators(&genesis_state);
+    let num_validators = genesis_state.validators.len_u64();
     info!(num_validators = num_validators, "Genesis state loaded");
 
     let validator_service = if let (Some(node_id), Some(registry_path)) =

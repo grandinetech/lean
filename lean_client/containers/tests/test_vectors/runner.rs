@@ -89,18 +89,7 @@ impl TestRunner {
 
                 // Only check validator count if specified in post-state
                 if let Some(expected_count) = post.validator_count {
-                    // Count validators
-                    let mut num_validators: u64 = 0;
-                    let mut i: u64 = 0;
-                    loop {
-                        match state.validators.get(i) {
-                            Ok(_) => {
-                                num_validators += 1;
-                                i += 1;
-                            }
-                            Err(_) => break,
-                        }
-                    }
+                    let mut num_validators: u64 = state.validators.len_u64();
 
                     if num_validators as usize != expected_count {
                         return Err(format!(
@@ -255,17 +244,7 @@ impl TestRunner {
             println!("\nProcessing single empty block at slot {:?}", block.slot);
 
             // Verify it's an empty block (no attestations)
-            let attestation_count = {
-                let mut count = 0u64;
-                loop {
-                    match block.body.attestations.get(count) {
-                        Ok(_) => count += 1,
-                        Err(_) => break,
-                    }
-                }
-                count
-            };
-
+            let attestation_count = block.body.attestations.len_u64();
             if attestation_count > 0 {
                 return Err(format!(
                     "Expected empty block, but found {} attestations",
@@ -409,17 +388,7 @@ impl TestRunner {
                     return Err(format!("Block {} parent_root mismatch", idx + 1).into());
                 }
 
-                // Check if block is empty (no attestations)
-                let attestation_count = {
-                    let mut count = 0u64;
-                    loop {
-                        match block.body.attestations.get(count) {
-                            Ok(_) => count += 1,
-                            Err(_) => break,
-                        }
-                    }
-                    count
-                };
+                let attestation_count = block.body.attestations.len_u64();
 
                 // Process the full block (header + operations)
                 let result = state_after_slots.process_block(block);
@@ -481,18 +450,7 @@ impl TestRunner {
 
         let state = &test_case.pre;
 
-        // Count validators
-        let mut num_validators: u64 = 0;
-        let mut i: u64 = 0;
-        loop {
-            match state.validators.get(i) {
-                Ok(_) => {
-                    num_validators += 1;
-                    i += 1;
-                }
-                Err(_) => break,
-            }
-        }
+        let num_validators: u64 = state.validators.len_u64();
         println!(
             "  Genesis time: {}, slot: {}, validators: {}",
             state.config.genesis_time, state.slot.0, num_validators
@@ -617,17 +575,7 @@ impl TestRunner {
 
             // Verify validator count if specified
             if let Some(expected_count) = post.validator_count {
-                let mut num_validators: u64 = 0;
-                let mut i: u64 = 0;
-                loop {
-                    match state.validators.get(i) {
-                        Ok(_) => {
-                            num_validators += 1;
-                            i += 1;
-                        }
-                        Err(_) => break,
-                    }
-                }
+                let num_validators: u64 = state.validators.len_u64();
 
                 if num_validators as usize != expected_count {
                     return Err(format!(
@@ -677,34 +625,15 @@ impl TestRunner {
             signed_block.message.block.proposer_index.0
         );
 
-        // Count attestations
-        let mut attestation_count = 0u64;
-        loop {
-            match signed_block
-                .message
-                .block
-                .body
-                .attestations
-                .get(attestation_count)
-            {
-                Ok(_) => attestation_count += 1,
-                Err(_) => break,
-            }
-        }
+        let attestation_count = signed_block.message.block.body.attestations.len_u64();
+
         println!("  Attestations in block: {}", attestation_count);
         println!(
             "  Proposer attestation validator: {}",
             signed_block.message.proposer_attestation.validator_id.0
         );
 
-        // Count signatures
-        let mut signature_count = 0u64;
-        loop {
-            match signed_block.signature.get(signature_count) {
-                Ok(_) => signature_count += 1,
-                Err(_) => break,
-            }
-        }
+        let signature_count = signed_block.signature.len_u64();
         println!("  Signatures: {}", signature_count);
 
         // Check if we expect this test to fail

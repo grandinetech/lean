@@ -165,13 +165,7 @@ fn process_block_internal(
 
     // Process proposer attestation as gossip (is_from_block=false)
     // This ensures it goes to "new" attestations and doesn't immediately affect fork choice
-    let num_body_attestations = {
-        let mut count = 0;
-        while attestations.get(count).is_ok() {
-            count += 1;
-        }
-        count
-    };
+    let num_body_attestations = attestations.len_u64();
 
     // Get proposer signature or use default if not present (for tests)
     use containers::attestation::Signature;
