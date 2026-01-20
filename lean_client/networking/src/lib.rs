@@ -1,5 +1,6 @@
 pub mod bootnodes;
 pub mod compressor;
+pub mod discovery;
 pub mod gossipsub;
 pub mod network;
 pub mod req_resp;

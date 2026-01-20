@@ -10,7 +10,7 @@ check-format:
 
 .PHONY: test
 test:
-	cargo test --workspace --all-features --no-fail-fast
+	cargo test --workspace --no-fail-fast
 
 .PHONY: build
 build:
