@@ -21,7 +21,7 @@ pub use mcache::{CacheEntry, MessageCache, SeenCache};
 pub use mesh::{FanoutEntry, MeshState, TopicMesh};
 pub use message::{GossipsubMessage, RawGossipsubMessage, SnappyDecompressor};
 pub use topic::{
-    format_topic_string, get_topics, parse_topic_string, GossipsubKind, GossipsubTopic,
-    ATTESTATION_TOPIC, BLOCK_TOPIC, SSZ_SNAPPY_ENCODING_POSTFIX, TOPIC_PREFIX,
+    ATTESTATION_TOPIC, BLOCK_TOPIC, GossipsubKind, GossipsubTopic, SSZ_SNAPPY_ENCODING_POSTFIX,
+    TOPIC_PREFIX, format_topic_string, get_topics, parse_topic_string,
 };
 pub use types::{MessageId, PeerId, Timestamp, TopicId};

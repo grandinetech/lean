@@ -54,7 +54,6 @@
 /// ## References
 ///
 /// - Gossipsub v1.0: <https://github.com/libp2p/specs/blob/master/pubsub/gossipsub/gossipsub-v1.0.md>
-
 use std::collections::{HashMap, HashSet, VecDeque};
 
 use super::message::RawGossipsubMessage;
@@ -68,7 +67,7 @@ use super::types::{MessageId, Timestamp, TopicId};
 pub struct CacheEntry {
     /// The cached gossipsub message.
     pub message: RawGossipsubMessage,
-    
+
     /// Topic this message was published to.
     ///
     /// Used to filter messages when generating IHAVE gossip for a specific topic.
@@ -112,19 +111,19 @@ pub struct MessageCache {
     /// Higher values increase memory usage but improve message
     /// availability for late IWANT requests.
     mcache_len: usize,
-    
+
     /// Number of recent windows to include in IHAVE gossip.
     ///
     /// Only messages from the most recent windows are advertised.
     /// Should be less than or equal to mcache_len.
     mcache_gossip: usize,
-    
+
     /// Sliding window of message ID sets.
     ///
     /// Index 0 is the newest window. Each heartbeat, windows shift
     /// right and a new empty window is prepended.
     windows: VecDeque<HashSet<MessageId>>,
-    
+
     /// Message lookup index keyed by ID.
     ///
     /// Provides O(1) retrieval for IWANT responses.
@@ -141,7 +140,7 @@ impl MessageCache {
     pub fn new(mcache_len: usize, mcache_gossip: usize) -> Self {
         let mut windows = VecDeque::with_capacity(mcache_len);
         windows.push_back(HashSet::new());
-        
+
         Self {
             mcache_len,
             mcache_gossip,
@@ -149,7 +148,7 @@ impl MessageCache {
             by_id: HashMap::new(),
         }
     }
-    
+
     /// Add a message to the cache.
     ///
     /// Messages are added to the newest window (index 0) and
@@ -165,19 +164,19 @@ impl MessageCache {
     /// `true` if added (not a duplicate)
     pub fn put(&mut self, topic: TopicId, message: RawGossipsubMessage) -> bool {
         let msg_id = message.id();
-        
+
         if self.by_id.contains_key(&msg_id) {
             return false;
         }
-        
+
         if let Some(window) = self.windows.front_mut() {
             window.insert(msg_id.clone());
         }
-        
+
         self.by_id.insert(msg_id, CacheEntry { message, topic });
         true
     }
-    
+
     /// Retrieve a message by ID.
     ///
     /// Used to respond to IWANT requests from peers.
@@ -192,7 +191,7 @@ impl MessageCache {
     pub fn get(&self, msg_id: &MessageId) -> Option<&RawGossipsubMessage> {
         self.by_id.get(msg_id).map(|entry| &entry.message)
     }
-    
+
     /// Check if a message is cached.
     ///
     /// # Arguments
@@ -205,7 +204,7 @@ impl MessageCache {
     pub fn has(&self, msg_id: &MessageId) -> bool {
         self.by_id.contains_key(msg_id)
     }
-    
+
     /// Get message IDs for IHAVE gossip.
     ///
     /// Returns IDs from the most recent `mcache_gossip` windows
@@ -221,7 +220,7 @@ impl MessageCache {
     pub fn get_gossip_ids(&self, topic: &str) -> Vec<MessageId> {
         let mut result = Vec::new();
         let windows_to_check = self.mcache_gossip.min(self.windows.len());
-        
+
         for i in 0..windows_to_check {
             if let Some(window) = self.windows.get(i) {
                 for msg_id in window {
@@ -233,10 +232,10 @@ impl MessageCache {
                 }
             }
         }
-        
+
         result
     }
-    
+
     /// Shift the cache window, evicting the oldest.
     ///
     /// Called at each heartbeat to age the cache:
@@ -249,7 +248,7 @@ impl MessageCache {
     /// Number of messages evicted
     pub fn shift(&mut self) -> usize {
         let mut evicted = 0;
-        
+
         if self.windows.len() >= self.mcache_len {
             if let Some(oldest) = self.windows.pop_back() {
                 for msg_id in oldest {
@@ -259,23 +258,23 @@ impl MessageCache {
                 }
             }
         }
-        
+
         self.windows.push_front(HashSet::new());
         evicted
     }
-    
+
     /// Clear all cached messages.
     pub fn clear(&mut self) {
         self.windows.clear();
         self.windows.push_back(HashSet::new());
         self.by_id.clear();
     }
-    
+
     /// Get the total number of cached messages.
     pub fn len(&self) -> usize {
         self.by_id.len()
     }
-    
+
     /// Check if the cache is empty.
     pub fn is_empty(&self) -> bool {
         self.by_id.is_empty()
@@ -303,12 +302,12 @@ pub struct SeenCache {
     /// - long enough to cover network propagation,
     /// - short enough to bound memory usage.
     ttl_seconds: u64,
-    
+
     /// Set of message IDs that have been seen.
     ///
     /// Provides O(1) membership testing.
     seen: HashSet<MessageId>,
-    
+
     /// Timestamp when each message was first seen.
     ///
     /// Used to determine expiry during cleanup.
@@ -328,7 +327,7 @@ impl SeenCache {
             timestamps: HashMap::new(),
         }
     }
-    
+
     /// Mark a message as seen.
     ///
     /// # Arguments
@@ -343,12 +342,12 @@ impl SeenCache {
         if self.seen.contains(&msg_id) {
             return false;
         }
-        
+
         self.seen.insert(msg_id.clone());
         self.timestamps.insert(msg_id, timestamp);
         true
     }
-    
+
     /// Check if a message has been seen.
     ///
     /// # Arguments
@@ -361,7 +360,7 @@ impl SeenCache {
     pub fn has(&self, msg_id: &MessageId) -> bool {
         self.seen.contains(msg_id)
     }
-    
+
     /// Remove expired entries.
     ///
     /// Should be called periodically (e.g., each heartbeat)
@@ -382,27 +381,27 @@ impl SeenCache {
             .filter(|(_, ts)| **ts < cutoff)
             .map(|(id, _)| id.clone())
             .collect();
-        
+
         let count = expired.len();
         for msg_id in expired {
             self.seen.remove(&msg_id);
             self.timestamps.remove(&msg_id);
         }
-        
+
         count
     }
-    
+
     /// Clear all seen entries.
     pub fn clear(&mut self) {
         self.seen.clear();
         self.timestamps.clear();
     }
-    
+
     /// Get the number of seen message IDs.
     pub fn len(&self) -> usize {
         self.seen.len()
     }
-    
+
     /// Check if the seen cache is empty.
     pub fn is_empty(&self) -> bool {
         self.seen.is_empty()

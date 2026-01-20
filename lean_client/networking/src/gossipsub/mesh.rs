@@ -30,7 +30,6 @@
 /// ## References
 ///
 /// - Gossipsub v1.0: <https://github.com/libp2p/specs/blob/master/pubsub/gossipsub/gossipsub-v1.0.md>
-
 use rand::seq::SliceRandom;
 use std::collections::{HashMap, HashSet};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -51,7 +50,7 @@ pub struct FanoutEntry {
     ///
     /// Selected randomly from available topic peers, up to D peers.
     pub peers: HashSet<PeerId>,
-    
+
     /// Unix timestamp of the last publish to this topic.
     ///
     /// Used to determine if the entry has expired.
@@ -66,7 +65,7 @@ impl FanoutEntry {
             last_published: 0.0,
         }
     }
-    
+
     /// Check if this fanout entry has expired.
     ///
     /// # Arguments
@@ -109,7 +108,7 @@ impl TopicMesh {
             peers: HashSet::new(),
         }
     }
-    
+
     /// Add a peer to this topic's mesh.
     ///
     /// # Arguments
@@ -122,7 +121,7 @@ impl TopicMesh {
     pub fn add_peer(&mut self, peer_id: PeerId) -> bool {
         self.peers.insert(peer_id)
     }
-    
+
     /// Remove a peer from this topic's mesh.
     ///
     /// # Arguments
@@ -177,13 +176,13 @@ impl Default for TopicMesh {
 pub struct MeshState {
     /// Gossipsub parameters controlling mesh behavior.
     params: GossipsubParameters,
-    
+
     /// Mesh state for each subscribed topic. Keyed by topic ID.
     meshes: HashMap<TopicId, TopicMesh>,
-    
+
     /// Fanout state for publish-only topics. Keyed by topic ID.
     fanouts: HashMap<TopicId, FanoutEntry>,
-    
+
     /// Set of topics we are subscribed to.
     subscriptions: HashSet<TopicId>,
 }
@@ -198,27 +197,27 @@ impl MeshState {
             subscriptions: HashSet::new(),
         }
     }
-    
+
     /// Get the target mesh size per topic.
     pub fn d(&self) -> usize {
         self.params.d
     }
-    
+
     /// Get the low watermark - graft when mesh is smaller.
     pub fn d_low(&self) -> usize {
         self.params.d_low
     }
-    
+
     /// Get the high watermark - prune when mesh is larger.
     pub fn d_high(&self) -> usize {
         self.params.d_high
     }
-    
+
     /// Get the number of peers for IHAVE gossip.
     pub fn d_lazy(&self) -> usize {
         self.params.d_lazy
     }
-    
+
     /// Subscribe to a topic, initializing its mesh.
     ///
     /// If we have fanout peers for this topic, they are
@@ -231,9 +230,9 @@ impl MeshState {
         if self.subscriptions.contains(&topic) {
             return;
         }
-        
+
         self.subscriptions.insert(topic.clone());
-        
+
         // Promote fanout peers to mesh if any
         let mut mesh = TopicMesh::new();
         if let Some(fanout) = self.fanouts.remove(&topic) {
@@ -241,7 +240,7 @@ impl MeshState {
         }
         self.meshes.insert(topic, mesh);
     }
-    
+
     /// Unsubscribe from a topic.
     ///
     /// # Arguments
@@ -258,7 +257,7 @@ impl MeshState {
             .map(|mesh| mesh.peers)
             .unwrap_or_default()
     }
-    
+
     /// Check if subscribed to a topic.
     ///
     /// # Arguments
@@ -271,7 +270,7 @@ impl MeshState {
     pub fn is_subscribed(&self, topic: &TopicId) -> bool {
         self.subscriptions.contains(topic)
     }
-    
+
     /// Get mesh peers for a topic.
     ///
     /// # Arguments
@@ -287,7 +286,7 @@ impl MeshState {
             .map(|mesh| mesh.peers.clone())
             .unwrap_or_default()
     }
-    
+
     /// Add a peer to a topic's mesh.
     ///
     /// # Arguments
@@ -306,7 +305,7 @@ impl MeshState {
             false
         }
     }
-    
+
     /// Remove a peer from a topic's mesh.
     ///
     /// # Arguments
@@ -325,7 +324,7 @@ impl MeshState {
             false
         }
     }
-    
+
     /// Get fanout peers for a topic.
     ///
     /// # Arguments
@@ -341,7 +340,7 @@ impl MeshState {
             .map(|fanout| fanout.peers.clone())
             .unwrap_or_default()
     }
-    
+
     /// Update fanout for publishing to a non-subscribed topic.
     ///
     /// For subscribed topics, returns mesh peers instead.
@@ -362,24 +361,21 @@ impl MeshState {
         if self.subscriptions.contains(topic) {
             return self.get_mesh_peers(topic);
         }
-        
+
         let d = self.d();
         let fanout = self
             .fanouts
             .entry(topic.to_string())
             .or_insert_with(FanoutEntry::new);
-        
+
         fanout.last_published = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs_f64();
-        
+
         // Fill fanout up to D peers
         if fanout.peers.len() < d {
-            let candidates: Vec<_> = available_peers
-                .difference(&fanout.peers)
-                .cloned()
-                .collect();
+            let candidates: Vec<_> = available_peers.difference(&fanout.peers).cloned().collect();
             let needed = d - fanout.peers.len();
             let mut rng = rand::thread_rng();
             let new_peers: Vec<_> = candidates
@@ -388,10 +384,10 @@ impl MeshState {
                 .collect();
             fanout.peers.extend(new_peers);
         }
-        
+
         fanout.peers.clone()
     }
-    
+
     /// Remove expired fanout entries.
     ///
     /// # Arguments
@@ -406,22 +402,22 @@ impl MeshState {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs_f64();
-        
+
         let stale: Vec<_> = self
             .fanouts
             .iter()
             .filter(|(_, fanout)| fanout.is_stale(current_time, ttl))
             .map(|(topic, _)| topic.clone())
             .collect();
-        
+
         let count = stale.len();
         for topic in stale {
             self.fanouts.remove(&topic);
         }
-        
+
         count
     }
-    
+
     /// Select non-mesh peers for IHAVE gossip.
     ///
     /// Randomly selects up to D_lazy peers from those not in the mesh.
@@ -441,15 +437,12 @@ impl MeshState {
         all_topic_peers: &HashSet<PeerId>,
     ) -> Vec<PeerId> {
         let mesh_peers = self.get_mesh_peers(topic);
-        let candidates: Vec<_> = all_topic_peers
-            .difference(&mesh_peers)
-            .cloned()
-            .collect();
-        
+        let candidates: Vec<_> = all_topic_peers.difference(&mesh_peers).cloned().collect();
+
         if candidates.len() <= self.d_lazy() {
             return candidates;
         }
-        
+
         let mut rng = rand::thread_rng();
         candidates
             .choose_multiple(&mut rng, self.d_lazy())

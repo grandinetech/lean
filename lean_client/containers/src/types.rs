@@ -21,11 +21,11 @@ impl Bytes20 {
     pub fn new(data: [u8; 20]) -> Self {
         Bytes20(data)
     }
-    
+
     pub fn len(&self) -> usize {
         20
     }
-    
+
     pub fn is_empty(&self) -> bool {
         false
     }

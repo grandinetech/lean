@@ -1,7 +1,6 @@
 /// Gossipsub Type Definitions
 ///
 /// Type aliases for common gossipsub types.
-
 use containers::Bytes20;
 
 /// 20-byte message identifier.

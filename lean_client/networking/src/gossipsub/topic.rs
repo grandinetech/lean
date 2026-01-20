@@ -42,7 +42,6 @@
 /// ## References
 ///
 /// - Ethereum P2P: <https://github.com/ethereum/consensus-specs/blob/dev/specs/phase0/p2p-interface.md>
-
 use libp2p::gossipsub::{IdentTopic, TopicHash};
 
 /// Network prefix for Lean consensus gossip topics.
@@ -77,7 +76,7 @@ pub const ATTESTATION_TOPIC: &str = "attestation";
 pub enum GossipsubKind {
     /// Signed beacon block messages.
     Block,
-    
+
     /// Signed attestation messages.
     Attestation,
 }
@@ -113,7 +112,7 @@ pub struct GossipsubTopic {
     ///
     /// Peers must match on fork digest to exchange messages on a topic.
     pub fork: String,
-    
+
     /// The topic type (block, attestation, etc.).
     ///
     /// Determines what kind of messages are exchanged on this topic.
@@ -130,7 +129,7 @@ impl GossipsubTopic {
     pub fn new(fork: String, kind: GossipsubKind) -> Self {
         Self { fork, kind }
     }
-    
+
     /// Create a block topic for the given fork.
     ///
     /// # Arguments
@@ -143,7 +142,7 @@ impl GossipsubTopic {
     pub fn block(fork_digest: String) -> Self {
         Self::new(fork_digest, GossipsubKind::Block)
     }
-    
+
     /// Create an attestation topic for the given fork.
     ///
     /// # Arguments
@@ -156,7 +155,7 @@ impl GossipsubTopic {
     pub fn attestation(fork_digest: String) -> Self {
         Self::new(fork_digest, GossipsubKind::Attestation)
     }
-    
+
     /// Parse a topic string into a GossipsubTopic.
     ///
     /// # Arguments
@@ -181,23 +180,25 @@ impl GossipsubTopic {
     /// ```
     pub fn from_string(topic_str: &str) -> Result<Self, String> {
         let (prefix, fork_digest, topic_name, encoding) = parse_topic_string(topic_str)?;
-        
+
         if prefix != TOPIC_PREFIX {
-            return Err(format!("Invalid prefix: expected '{TOPIC_PREFIX}', got '{prefix}'"));
+            return Err(format!(
+                "Invalid prefix: expected '{TOPIC_PREFIX}', got '{prefix}'"
+            ));
         }
-        
+
         if encoding != SSZ_SNAPPY_ENCODING_POSTFIX {
             return Err(format!(
                 "Invalid encoding: expected '{SSZ_SNAPPY_ENCODING_POSTFIX}', got '{encoding}'"
             ));
         }
-        
+
         let kind = match topic_name {
             BLOCK_TOPIC => GossipsubKind::Block,
             ATTESTATION_TOPIC => GossipsubKind::Attestation,
             other => return Err(format!("Unknown topic: '{other}'")),
         };
-        
+
         Ok(Self::new(fork_digest.to_string(), kind))
     }
 
@@ -236,7 +237,7 @@ impl GossipsubTopic {
             other => Err(format!("Invalid topic kind: {other:?}")),
         }
     }
-    
+
     /// Convert to topic string as bytes.
     pub fn as_bytes(&self) -> Vec<u8> {
         self.to_string().into_bytes()
@@ -357,11 +358,14 @@ pub fn format_topic_string(
 /// ```
 pub fn parse_topic_string(topic_str: &str) -> Result<(&str, &str, &str, &str), String> {
     let parts: Vec<&str> = topic_str.trim_start_matches('/').split('/').collect();
-    
+
     if parts.len() != 4 {
-        return Err(format!("Invalid topic format: expected 4 parts, got {}", parts.len()));
+        return Err(format!(
+            "Invalid topic format: expected 4 parts, got {}",
+            parts.len()
+        ));
     }
-    
+
     Ok((parts[0], parts[1], parts[2], parts[3]))
 }
 
@@ -372,17 +376,20 @@ mod tests {
     #[test]
     fn test_gossip_topic_creation() {
         let topic = GossipsubTopic::new("0x12345678".to_string(), GossipsubKind::Block);
-        
+
         assert_eq!(topic.kind, GossipsubKind::Block);
         assert_eq!(topic.fork, "0x12345678");
-        assert_eq!(topic.to_string(), "/leanconsensus/0x12345678/block/ssz_snappy");
+        assert_eq!(
+            topic.to_string(),
+            "/leanconsensus/0x12345678/block/ssz_snappy"
+        );
     }
 
     #[test]
     fn test_gossip_topic_from_string() {
         let topic = GossipsubTopic::from_string("/leanconsensus/0x12345678/block/ssz_snappy")
             .expect("Failed to parse topic");
-        
+
         assert_eq!(topic.kind, GossipsubKind::Block);
         assert_eq!(topic.fork, "0x12345678");
     }
@@ -391,7 +398,7 @@ mod tests {
     fn test_gossip_topic_factory_methods() {
         let block_topic = GossipsubTopic::block("0xabcd1234".to_string());
         assert_eq!(block_topic.kind, GossipsubKind::Block);
-        
+
         let attestation_topic = GossipsubTopic::attestation("0xabcd1234".to_string());
         assert_eq!(attestation_topic.kind, GossipsubKind::Attestation);
     }
@@ -407,7 +414,7 @@ mod tests {
         let (prefix, fork_digest, topic_name, encoding) =
             parse_topic_string("/leanconsensus/0x12345678/block/ssz_snappy")
                 .expect("Failed to parse");
-        
+
         assert_eq!(prefix, "leanconsensus");
         assert_eq!(fork_digest, "0x12345678");
         assert_eq!(topic_name, "block");

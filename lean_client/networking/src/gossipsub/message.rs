@@ -42,7 +42,6 @@
 ///
 /// - [Ethereum P2P spec](https://github.com/ethereum/consensus-specs/blob/dev/specs/phase0/p2p-interface.md)
 /// - [Gossipsub v1.0](https://github.com/libp2p/specs/blob/master/pubsub/gossipsub/gossipsub-v1.0.md)
-
 use containers::Bytes20;
 use sha2::{Digest, Sha256};
 use std::sync::Arc;
@@ -86,19 +85,19 @@ pub struct RawGossipsubMessage {
     ///
     /// Example: `b"/leanconsensus/0x12345678/block/ssz_snappy"`
     pub topic: Vec<u8>,
-    
+
     /// Raw message payload.
     ///
     /// Typically snappy-compressed SSZ data. The actual content
     /// depends on the topic (block, attestation, etc.).
     pub raw_data: Vec<u8>,
-    
+
     /// Optional snappy decompression function.
     ///
     /// If provided, decompression is attempted during ID computation
     /// to determine the domain byte.
     snappy_decompress: Option<Arc<dyn SnappyDecompressor>>,
-    
+
     /// Cached message ID.
     ///
     /// Computed lazily on first access to `id()` method. Once computed,
@@ -126,7 +125,7 @@ impl RawGossipsubMessage {
             cached_id: None,
         }
     }
-    
+
     /// Get the 20-byte message ID.
     ///
     /// Computed lazily on first access using the Ethereum consensus
@@ -139,15 +138,15 @@ impl RawGossipsubMessage {
         if let Some(id) = &self.cached_id {
             return id.clone();
         }
-        
+
         // Compute ID
         let id = Self::compute_id(&self.topic, &self.raw_data, self.snappy_decompress.as_ref());
-        
+
         // Note: We can't cache here because self is immutable
         // In practice, callers should use a mutable reference or compute once
         id
     }
-    
+
     /// Compute a 20-byte message ID from raw data.
     ///
     /// Implements the Ethereum consensus message ID function:
@@ -185,17 +184,17 @@ impl RawGossipsubMessage {
         } else {
             (MESSAGE_DOMAIN_INVALID_SNAPPY, data.to_vec())
         };
-        
+
         let mut preimage = Vec::new();
         preimage.extend_from_slice(domain);
         preimage.extend_from_slice(&(topic.len() as u64).to_le_bytes());
         preimage.extend_from_slice(topic);
         preimage.extend_from_slice(&data_for_hash);
-        
+
         let hash = Sha256::digest(&preimage);
         Bytes20::from(&hash[..20])
     }
-    
+
     /// Get the topic as a UTF-8 string.
     ///
     /// # Returns

@@ -39,7 +39,6 @@
 ///
 /// - Gossipsub v1.0: <https://github.com/libp2p/specs/blob/master/pubsub/gossipsub/gossipsub-v1.0.md>
 /// - Gossipsub v1.2: <https://github.com/libp2p/specs/blob/master/pubsub/gossipsub/gossipsub-v1.2.md>
-
 use serde::{Deserialize, Serialize};
 
 use super::types::MessageId;
@@ -85,7 +84,7 @@ pub struct Prune {
 pub struct IHave {
     /// Topic the advertised messages belong to.
     pub topic_id: String,
-    
+
     /// IDs of messages available in the sender's cache.
     pub message_ids: Vec<MessageId>,
 }
@@ -137,19 +136,19 @@ pub struct ControlMessage {
     /// GRAFT messages requesting mesh membership.
     #[serde(default)]
     pub grafts: Vec<Graft>,
-    
+
     /// PRUNE messages notifying mesh removal.
     #[serde(default)]
     pub prunes: Vec<Prune>,
-    
+
     /// IHAVE messages advertising cached message IDs.
     #[serde(default)]
     pub ihaves: Vec<IHave>,
-    
+
     /// IWANT messages requesting full messages.
     #[serde(default)]
     pub iwants: Vec<IWant>,
-    
+
     /// IDONTWANT messages declining specific messages (v1.2).
     #[serde(default)]
     pub idontwants: Vec<IDontWant>,

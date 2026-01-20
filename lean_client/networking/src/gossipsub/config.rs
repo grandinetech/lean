@@ -50,7 +50,6 @@
 /// - Ethereum P2P spec: <https://github.com/ethereum/consensus-specs/blob/dev/specs/phase0/p2p-interface.md>
 /// - Gossipsub v1.0: <https://github.com/libp2p/specs/blob/master/pubsub/gossipsub/gossipsub-v1.0.md>
 /// - Gossipsub v1.2: <https://github.com/libp2p/specs/blob/master/pubsub/gossipsub/gossipsub-v1.2.md>
-
 use crate::gossipsub::topic::GossipsubTopic;
 use crate::types::MESSAGE_DOMAIN_VALID_SNAPPY;
 use libp2p::gossipsub::{Config, ConfigBuilder, Message, MessageId, ValidationMode};
@@ -69,11 +68,10 @@ pub struct GossipsubParameters {
     /// The protocol ID for gossip messages.
     #[serde(default = "default_protocol_id")]
     pub protocol_id: String,
-    
+
     // -------------------------------------------------------------------------
     // Mesh Degree Parameters
     // -------------------------------------------------------------------------
-    
     /// Target number of mesh peers per topic.
     ///
     /// The heartbeat procedure adjusts the mesh toward this size:
@@ -82,21 +80,21 @@ pub struct GossipsubParameters {
     /// - If |mesh| > D_high: prune peers down to D
     #[serde(default = "default_d")]
     pub d: usize,
-    
+
     /// Minimum mesh peers before grafting.
     ///
     /// When mesh size drops below this threshold, the heartbeat
     /// will graft new peers to reach the target D.
     #[serde(default = "default_d_low")]
     pub d_low: usize,
-    
+
     /// Maximum mesh peers before pruning.
     ///
     /// When mesh size exceeds this threshold, the heartbeat
     /// will prune excess peers down to the target D.
     #[serde(default = "default_d_high")]
     pub d_high: usize,
-    
+
     /// Number of non-mesh peers for IHAVE gossip.
     ///
     /// During heartbeat, IHAVE messages are sent to this many
@@ -104,11 +102,10 @@ pub struct GossipsubParameters {
     /// the lazy pull protocol for reliability.
     #[serde(default = "default_d_lazy")]
     pub d_lazy: usize,
-    
+
     // -------------------------------------------------------------------------
     // Timing Parameters
     // -------------------------------------------------------------------------
-    
     /// Interval between heartbeat ticks in seconds.
     ///
     /// The heartbeat procedure runs periodically to:
@@ -119,7 +116,7 @@ pub struct GossipsubParameters {
     /// - Shift the message cache window
     #[serde(default = "default_heartbeat_interval_secs")]
     pub heartbeat_interval_secs: f64,
-    
+
     /// Time-to-live for fanout entries in seconds.
     ///
     /// Fanout peers are used when publishing to topics we don't
@@ -127,18 +124,17 @@ pub struct GossipsubParameters {
     /// inactivity to free resources.
     #[serde(default = "default_fanout_ttl_secs")]
     pub fanout_ttl_secs: u64,
-    
+
     // -------------------------------------------------------------------------
     // Message Cache Parameters
     // -------------------------------------------------------------------------
-    
     /// Total number of history windows in the message cache.
     ///
     /// - Messages are stored for this many heartbeat intervals.
     /// - After mcache_len heartbeats, messages are evicted.
     #[serde(default = "default_mcache_len")]
     pub mcache_len: usize,
-    
+
     /// Number of recent windows included in IHAVE gossip.
     ///
     /// Only messages from the most recent mcache_gossip windows
@@ -146,7 +142,7 @@ pub struct GossipsubParameters {
     /// be retrieved via IWANT but won't be actively gossiped.
     #[serde(default = "default_mcache_gossip")]
     pub mcache_gossip: usize,
-    
+
     /// Time-to-live for seen message IDs in seconds.
     ///
     /// Message IDs are tracked to detect duplicates. This should
@@ -154,11 +150,10 @@ pub struct GossipsubParameters {
     /// short enough to bound memory usage.
     #[serde(default = "default_seen_ttl_secs")]
     pub seen_ttl_secs: u64,
-    
+
     // -------------------------------------------------------------------------
     // IDONTWANT Optimization (v1.2)
     // -------------------------------------------------------------------------
-    
     /// Minimum message size in bytes to trigger IDONTWANT.
     ///
     /// When receiving a message larger than this threshold,
@@ -243,7 +238,7 @@ pub struct GossipsubConfig {
 impl GossipsubConfig {
     pub fn new() -> Self {
         let params = GossipsubParameters::default();
-        
+
         let config = ConfigBuilder::default()
             // leanSpec: heartbeat_interval_secs = 0.7
             .heartbeat_interval(Duration::from_millis(700))
