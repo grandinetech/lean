@@ -18,6 +18,7 @@ libp2p-mplex = "0.39"
 parking_lot = "0.12"
 rand = "0.8"
 tokio = { workspace = true }
+metrics = { path = "../metrics" }
 tracing = "0.1"
 yamux = "0.12"
 ssz = { workspace = true }

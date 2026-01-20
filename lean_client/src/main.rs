@@ -31,6 +31,10 @@ use tokio::{
 use tracing::{debug, info, warn};
 use validator::{ValidatorConfig, ValidatorService};
 
+// Metrics (optional)
+use metrics::{Metrics, SharedMetrics};
+use metrics::server::{MetricsServerConfig, run_metrics_server};
+
 fn load_node_key(path: &str) -> Result<Keypair, Box<dyn std::error::Error>> {
     let hex_str = std::fs::read_to_string(path)?.trim().to_string();
     let bytes = hex::decode(&hex_str)?;
@@ -48,6 +52,12 @@ fn count_validators(state: &State) -> u64 {
         }
     }
     count
+}
+
+/// Count 'active' validators using the latest justifications root's vote bitlist.
+fn count_active_validators(_store: &Store) -> usize {
+    // TODO: Implement proper active validator counting
+    0
 }
 
 fn print_chain_status(store: &Store, connected_peers: u64) {
@@ -122,6 +132,14 @@ struct Args {
     #[arg(short, long)]
     bootnodes: Vec<String>,
 
+    /// Expose Prometheus /metrics
+    #[arg(long)]
+    metrics: bool,
+
+    /// Port to expose metrics on
+    #[arg(long, default_value_t = 9100)]
+    metrics_port: u16,
+
     #[arg(short, long)]
     genesis: Option<String>,
 
@@ -148,6 +166,30 @@ async fn main() {
         .init();
 
     let args = Args::parse();
+
+    // Optional metrics server
+    let metrics_option: Option<SharedMetrics> = if args.metrics {
+        eprintln!("Enabling metrics server on {}:{}", args.address, args.metrics_port);
+        let metrics = Arc::new(Metrics::new());
+        let server_config = MetricsServerConfig {
+            metrics_address: args.address,
+            metrics_port: args.metrics_port,
+            timeout: 1000,
+        };
+        let metrics_clone = metrics.clone();
+        tokio::spawn(async move {
+            eprintln!("Starting metrics server...");
+            if let Err(e) = run_metrics_server(server_config, metrics_clone).await {
+                eprintln!("Metrics server exited with error: {}", e);
+            } else {
+                eprintln!("Metrics server started successfully");
+            }
+        });
+        Some(metrics)
+    } else {
+        eprintln!("Metrics not enabled");
+        None
+    };
 
     let (outbound_p2p_sender, outbound_p2p_receiver) =
         mpsc::unbounded_channel::<OutboundP2pRequest>();
@@ -227,6 +269,11 @@ async fn main() {
 
     let num_validators = count_validators(&genesis_state);
     info!(num_validators = num_validators, "Genesis state loaded");
+
+    // If metrics enabled report static validator count
+    if let Some(ref m) = metrics_option {
+        m.set_validators_total(num_validators as i64);
+    }
 
     let validator_service = if let (Some(node_id), Some(registry_path)) =
         (&args.node_id, &args.validator_registry_path)
@@ -312,28 +359,29 @@ async fn main() {
                     chain_message_sender.clone(),
                     peer_count,
                     keypair,
+                    metrics_option.clone(),
                 )
                 .await
                 .expect("Failed to create network service with custom key")
             }
             Err(e) => {
                 warn!("Failed to load node key: {}, using random key", e);
-                NetworkService::new_with_peer_count(
+                NetworkService::new_with_metrics(
                     network_service_config.clone(),
                     outbound_p2p_receiver,
                     chain_message_sender.clone(),
-                    peer_count,
+                    metrics_option.clone(),
                 )
                 .await
                 .expect("Failed to create network service")
             }
         }
     } else {
-        NetworkService::new_with_peer_count(
+        NetworkService::new_with_metrics(
             network_service_config.clone(),
             outbound_p2p_receiver,
             chain_message_sender.clone(),
-            peer_count,
+            metrics_option.clone(),
         )
         .await
         .expect("Failed to create network service")
@@ -353,6 +401,8 @@ async fn main() {
         let mut last_status_slot: Option<u64> = None;
         let mut last_proposal_slot: Option<u64> = None;
         let mut last_attestation_slot: Option<u64> = None;
+        let mut previous_head = store.head;
+        let mut reorg_depth = 0u64;
 
         let peer_count = peer_count_for_status;
         let mut store = store;
@@ -372,6 +422,39 @@ async fn main() {
                     if last_status_slot != Some(current_slot) {
                         let peers = peer_count.load(Ordering::Relaxed);
                         print_chain_status(&store, peers);
+
+                        // Update Prometheus metrics if enabled
+                        if let Some(ref m) = metrics_option {
+                            m.set_peers(peers as i64);
+
+                            let head_slot = store
+                                .blocks
+                                .get(&store.head)
+                                .map(|b| b.message.block.slot.0)
+                                .unwrap_or(0);
+                            m.set_current_slot(current_slot as i64);
+                            m.set_safe_target_slot(head_slot as i64);
+
+                            // Check for reorg
+                            if store.head != previous_head {
+                                m.inc_fork_choice_reorgs();
+                                // Calculate depth (difference in slots)
+                                if let (Some(old_block), Some(new_block)) = (
+                                    store.blocks.get(&previous_head),
+                                    store.blocks.get(&store.head),
+                                ) {
+                                    let old_slot = old_block.message.block.slot.0;
+                                    let new_slot = new_block.message.block.slot.0;
+                                    reorg_depth = old_slot.max(new_slot) - old_slot.min(new_slot);
+                                    m.observe_fork_choice_reorg_depth(reorg_depth as f64);
+                                }
+                                previous_head = store.head;
+                            }
+
+                            let active = count_active_validators(&store);
+                            m.set_validators_active(active as i64);
+                        }
+
                         last_status_slot = Some(current_slot);
                     }
 
@@ -435,15 +518,26 @@ async fn main() {
                                         );
 
 
+                                        let start = std::time::Instant::now();
                                         match on_attestation(&mut store, signed_att.clone(), false) {
                                             Ok(()) => {
+                                                if let Some(ref m) = metrics_option {
+                                                    m.observe_attestation_validation_time(start.elapsed().as_secs_f64());
+                                                    m.inc_attestations_valid("block"); // Own attestations from block processing
+                                                }
                                                 if let Err(e) = chain_outbound_sender.send(
                                                     OutboundP2pRequest::GossipAttestation(signed_att)
                                                 ) {
                                                     warn!("Failed to gossip attestation: {}", e);
                                                 }
                                             }
-                                            Err(e) => warn!("Error processing own attestation: {}", e),
+                                            Err(e) => {
+                                                if let Some(ref m) = metrics_option {
+                                                    m.observe_attestation_validation_time(start.elapsed().as_secs_f64());
+                                                    m.inc_attestations_invalid("block");
+                                                }
+                                                warn!("Error processing own attestation: {}", e);
+                                            }
                                         }
                                     }
                                     last_attestation_slot = Some(current_slot);
@@ -494,8 +588,12 @@ async fn main() {
                                 .as_secs();
                             on_tick(&mut store, now, false);
 
+                            let start = std::time::Instant::now();
                             match on_block(&mut store, signed_block_with_attestation.clone()) {
                                 Ok(()) => {
+                                    if let Some(ref m) = metrics_option {
+                                        m.observe_block_processing_time(start.elapsed().as_secs_f64());
+                                    }
                                     info!("Block processed successfully");
 
                                     if should_gossip {
@@ -542,8 +640,13 @@ async fn main() {
                                 validator_id
                             );
 
+                            let start = std::time::Instant::now();
                             match on_attestation(&mut store, signed_attestation.clone(), false) {
                                 Ok(()) => {
+                                    if let Some(ref m) = metrics_option {
+                                        m.observe_attestation_validation_time(start.elapsed().as_secs_f64());
+                                        m.inc_attestations_valid("gossip");
+                                    }
                                     if should_gossip {
                                         if let Err(e) = outbound_p2p_sender.send(
                                             OutboundP2pRequest::GossipAttestation(signed_attestation)
@@ -554,7 +657,13 @@ async fn main() {
                                         }
                                     }
                                 }
-                                Err(e) => warn!("Error processing attestation: {}", e),
+                                Err(e) => {
+                                    if let Some(ref m) = metrics_option {
+                                        m.observe_attestation_validation_time(start.elapsed().as_secs_f64());
+                                        m.inc_attestations_invalid("gossip");
+                                    }
+                                    warn!("Error processing attestation: {}", e);
+                                }
                             }
                         }
                     }

@@ -1,5 +1,5 @@
 [workspace]
-members = ["chain", "containers", "fork_choice", "networking", "validator"]
+members = ["chain", "containers", "fork_choice", "networking", "validator", "metrics"]
 resolver = "2"
 
 [workspace.package]
@@ -67,3 +67,4 @@ tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
 tracing = "0.1.41"
 hex = "0.4"
 libp2p-identity = { version = "0.2", features = ["secp256k1"] }
+metrics = { path = "./metrics" }

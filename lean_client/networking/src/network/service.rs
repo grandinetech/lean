@@ -23,6 +23,8 @@ use tokio::select;
 use tokio::time::{Duration, MissedTickBehavior, interval};
 use tracing::{debug, info, trace, warn};
 
+use metrics::SharedMetrics;
+
 use crate::{
     bootnodes::{BootnodeSource, StaticBootnodes},
     compressor::Compressor,
@@ -87,6 +89,7 @@ where
     peer_count: Arc<AtomicU64>,
     outbound_p2p_requests: R,
     chain_message_sink: S,
+    metrics: Option<SharedMetrics>,
 }
 
 impl<R, S> NetworkService<R, S>
@@ -99,11 +102,27 @@ where
         outbound_p2p_requests: R,
         chain_message_sink: S,
     ) -> Result<Self> {
-        Self::new_with_peer_count(
+        Self::new_with_metrics(
+            network_config,
+            outbound_p2p_requests,
+            chain_message_sink,
+            None,
+        )
+        .await
+    }
+
+    pub async fn new_with_metrics(
+        network_config: Arc<NetworkServiceConfig>,
+        outbound_p2p_requests: R,
+        chain_message_sink: S,
+        metrics: Option<SharedMetrics>,
+    ) -> Result<Self> {
+        Self::new_with_peer_count_and_metrics(
             network_config,
             outbound_p2p_requests,
             chain_message_sink,
             Arc::new(AtomicU64::new(0)),
+            metrics,
         )
         .await
     }
@@ -114,6 +133,23 @@ where
         chain_message_sink: S,
         peer_count: Arc<AtomicU64>,
     ) -> Result<Self> {
+        Self::new_with_peer_count_and_metrics(
+            network_config,
+            outbound_p2p_requests,
+            chain_message_sink,
+            peer_count,
+            None,
+        )
+        .await
+    }
+
+    pub async fn new_with_peer_count_and_metrics(
+        network_config: Arc<NetworkServiceConfig>,
+        outbound_p2p_requests: R,
+        chain_message_sink: S,
+        peer_count: Arc<AtomicU64>,
+        metrics: Option<SharedMetrics>,
+    ) -> Result<Self> {
         let local_key = Keypair::generate_secp256k1();
         Self::new_with_keypair(
             network_config,
@@ -121,6 +157,7 @@ where
             chain_message_sink,
             peer_count,
             local_key,
+            metrics,
         )
         .await
     }
@@ -131,6 +168,7 @@ where
         chain_message_sink: S,
         peer_count: Arc<AtomicU64>,
         local_key: Keypair,
+        metrics: Option<SharedMetrics>,
     ) -> Result<Self> {
         let behaviour = Self::build_behaviour(&local_key, &network_config)?;
 
@@ -154,6 +192,7 @@ where
             peer_count,
             outbound_p2p_requests,
             chain_message_sink,
+            metrics,
         };
 
         service.listen(&multiaddr)?;
@@ -218,6 +257,12 @@ where
                     .count() as u64;
                 self.peer_count.store(connected, Ordering::Relaxed);
 
+                // Update metrics
+                if let Some(ref m) = self.metrics {
+                    let direction = if endpoint.is_dialer() { "outbound" } else { "inbound" };
+                    m.inc_peer_connection(direction, "success");
+                }
+
                 info!(peer = %peer_id, "Connected to peer (total: {})", connected);
 
                 if endpoint.is_dialer() {
@@ -226,7 +271,7 @@ where
 
                 None
             }
-            SwarmEvent::ConnectionClosed { peer_id, .. } => {
+            SwarmEvent::ConnectionClosed { peer_id, cause, .. } => {
                 self.peer_table
                     .lock()
                     .insert(peer_id, ConnectionState::Disconnected);
@@ -238,6 +283,16 @@ where
                     .filter(|s| **s == ConnectionState::Connected)
                     .count() as u64;
                 self.peer_count.store(connected, Ordering::Relaxed);
+
+                // Update metrics
+                if let Some(ref m) = self.metrics {
+                    let reason = match cause {
+                        Some(libp2p::swarm::ConnectionError::IO(_)) => "error",
+                        Some(libp2p::swarm::ConnectionError::KeepAliveTimeout) => "timeout",
+                        _ => "error",
+                    };
+                    m.inc_peer_disconnection("unknown", reason);
+                }
 
                 info!(peer = %peer_id, "Disconnected from peer (total: {})", connected);
                 Some(NetworkEvent::PeerDisconnected(peer_id))
@@ -251,6 +306,11 @@ where
                 peer_id.map(NetworkEvent::PeerConnectedOutgoing)
             }
             SwarmEvent::OutgoingConnectionError { peer_id, error, .. } => {
+                // Update metrics
+                if let Some(ref m) = self.metrics {
+                    m.inc_peer_connection("outbound", "error");
+                }
+
                 warn!(?peer_id, ?error, "Failed to connect to peer");
                 None
             }
