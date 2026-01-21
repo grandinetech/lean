@@ -5,4 +5,5 @@ pub mod gossipsub;
 pub mod network;
 pub mod req_resp;
 pub mod serde_utils;
+pub mod sync;
 pub mod types;
