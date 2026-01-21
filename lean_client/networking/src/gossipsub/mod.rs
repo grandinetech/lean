@@ -1,10 +1,5 @@
 pub mod config;
-pub mod control;
-pub mod mcache;
-pub mod mesh;
-pub mod message;
 pub mod topic;
-pub mod types;
 
 #[cfg(test)]
 mod tests;
@@ -15,13 +10,8 @@ use libp2p::gossipsub::{AllowAllSubscriptionFilter, Behaviour};
 pub type GossipsubBehaviour = Behaviour<Compressor, AllowAllSubscriptionFilter>;
 
 // Re-export commonly used types
-pub use config::{GossipsubConfig, GossipsubParameters};
-pub use control::{ControlMessage, Graft, IDontWant, IHave, IWant, Prune};
-pub use mcache::{CacheEntry, MessageCache, SeenCache};
-pub use mesh::{FanoutEntry, MeshState, TopicMesh};
-pub use message::{GossipsubMessage, RawGossipsubMessage, SnappyDecompressor};
+pub use config::{GossipsubConfig, GossipsubParameters, compute_message_id};
 pub use topic::{
     ATTESTATION_TOPIC, BLOCK_TOPIC, GossipsubKind, GossipsubTopic, SSZ_SNAPPY_ENCODING_POSTFIX,
     TOPIC_PREFIX, format_topic_string, get_topics, parse_topic_string,
 };
-pub use types::{MessageId, PeerId, Timestamp, TopicId};
