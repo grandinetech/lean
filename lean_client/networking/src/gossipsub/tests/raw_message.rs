@@ -25,7 +25,7 @@ fn test_message_id_computation_no_snappy() {
     let message = RawGossipsubMessage::new(topic.to_vec(), raw_data.to_vec(), None);
     let message_id = message.id();
 
-    assert_eq!(message_id.len(), 20);
+    assert_eq!(message_id.0.len(), 20);
 }
 
 #[test]
@@ -40,7 +40,7 @@ fn test_message_id_computation_with_snappy() {
     );
     let message_id = message.id();
 
-    assert_eq!(message_id.len(), 20);
+    assert_eq!(message_id.0.len(), 20);
 }
 
 #[test]
@@ -55,7 +55,7 @@ fn test_message_id_computation_snappy_fails() {
     );
     let message_id = message.id();
 
-    assert_eq!(message_id.len(), 20);
+    assert_eq!(message_id.0.len(), 20);
 }
 
 #[test]

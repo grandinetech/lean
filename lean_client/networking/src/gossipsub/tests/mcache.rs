@@ -65,7 +65,7 @@ fn test_get_gossip_ids() {
 #[test]
 fn test_seen_cache_add_and_check() {
     let mut cache = SeenCache::new(60);
-    let msg_id = Bytes20::new([1u8; 20]);
+    let msg_id = Bytes20::from([1u8; 20]);
 
     assert!(!cache.has(&msg_id));
     assert!(cache.add(msg_id.clone(), 1000.0));
@@ -76,7 +76,7 @@ fn test_seen_cache_add_and_check() {
 #[test]
 fn test_seen_cache_cleanup() {
     let mut cache = SeenCache::new(10);
-    let msg_id = Bytes20::new([1u8; 20]);
+    let msg_id = Bytes20::from([1u8; 20]);
 
     cache.add(msg_id.clone(), 1000.0);
     assert!(cache.has(&msg_id));

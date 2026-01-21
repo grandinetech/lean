@@ -1,56 +1,14 @@
+use ethereum_types::H160;
 use hex::FromHex;
 use serde::{Deserialize, Serialize};
 use ssz::H256;
 use ssz_derive::Ssz;
 use std::fmt;
-use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 
 /// 20-byte array for message IDs (gossipsub message IDs)
-/// Using transparent SSZ encoding - just the raw bytes
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-pub struct Bytes20(pub [u8; 20]);
-
-impl Default for Bytes20 {
-    fn default() -> Self {
-        Bytes20([0u8; 20])
-    }
-}
-
-impl Bytes20 {
-    pub fn new(data: [u8; 20]) -> Self {
-        Bytes20(data)
-    }
-
-    pub fn len(&self) -> usize {
-        20
-    }
-
-    pub fn is_empty(&self) -> bool {
-        false
-    }
-}
-
-impl Hash for Bytes20 {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.0.hash(state);
-    }
-}
-
-impl From<&[u8]> for Bytes20 {
-    fn from(slice: &[u8]) -> Self {
-        let mut data = [0u8; 20];
-        let len = slice.len().min(20);
-        data[..len].copy_from_slice(&slice[..len]);
-        Bytes20(data)
-    }
-}
-
-impl AsRef<[u8]> for Bytes20 {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
-    }
-}
+/// Using H160 from ethereum_types which has SSZ support
+pub type Bytes20 = H160;
 
 #[derive(
     Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Ssz, Default, Serialize, Deserialize,

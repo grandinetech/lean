@@ -19,7 +19,7 @@ fn test_prune_creation() {
 
 #[test]
 fn test_ihave_creation() {
-    let msg_ids = vec![Bytes20::from(&[1u8; 20][..]), Bytes20::from(&[2u8; 20][..])];
+    let msg_ids = vec![Bytes20::from([1u8; 20]), Bytes20::from([2u8; 20])];
     let ihave = IHave {
         topic_id: "test_topic".to_string(),
         message_ids: msg_ids.clone(),
@@ -31,7 +31,7 @@ fn test_ihave_creation() {
 
 #[test]
 fn test_iwant_creation() {
-    let msg_ids = vec![Bytes20::from(&[1u8; 20][..])];
+    let msg_ids = vec![Bytes20::from([1u8; 20])];
     let iwant = IWant {
         message_ids: msg_ids,
     };
@@ -41,7 +41,7 @@ fn test_iwant_creation() {
 
 #[test]
 fn test_idontwant_creation() {
-    let msg_ids = vec![Bytes20::from(&[1u8; 20][..])];
+    let msg_ids = vec![Bytes20::from([1u8; 20])];
     let idontwant = IDontWant {
         message_ids: msg_ids,
     };

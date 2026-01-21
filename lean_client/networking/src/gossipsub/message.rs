@@ -192,7 +192,9 @@ impl RawGossipsubMessage {
         preimage.extend_from_slice(&data_for_hash);
 
         let hash = Sha256::digest(&preimage);
-        Bytes20::from(&hash[..20])
+        let mut bytes = [0u8; 20];
+        bytes.copy_from_slice(&hash[..20]);
+        Bytes20::from(bytes)
     }
 
     /// Get the topic as a UTF-8 string.
