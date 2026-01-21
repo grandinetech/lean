@@ -27,7 +27,11 @@ use crate::{
     bootnodes::{BootnodeSource, StaticBootnodes},
     compressor::Compressor,
     discovery::{DiscoveryConfig, DiscoveryService},
-    gossipsub::{self, config::GossipsubConfig, topic::{GossipsubKind, GossipsubTopic}},
+    gossipsub::{
+        self,
+        config::GossipsubConfig,
+        topic::{GossipsubKind, GossipsubTopic},
+    },
     network::behaviour::{LeanNetworkBehaviour, LeanNetworkBehaviourEvent},
     req_resp::{self, BLOCKS_BY_ROOT_PROTOCOL_V1, LeanRequest, ReqRespMessage, STATUS_PROTOCOL_V1},
     types::{
@@ -356,64 +360,64 @@ where
                 info!(peer = %peer_id, topic = %topic, "A peer unsubscribed from topic");
             }
 
-            Event::Message { message, .. } => {
-                match GossipsubTopic::decode(&message.topic) {
-                    Ok(topic) => match topic.kind {
-                        GossipsubKind::Block => {
-                            match containers::SignedBlockWithAttestation::from_ssz_default(&message.data) {
-                                Ok(signed_block_with_attestation) => {
-                                    let slot = signed_block_with_attestation.message.block.slot.0;
+            Event::Message { message, .. } => match GossipsubTopic::decode(&message.topic) {
+                Ok(topic) => match topic.kind {
+                    GossipsubKind::Block => {
+                        match containers::SignedBlockWithAttestation::from_ssz_default(
+                            &message.data,
+                        ) {
+                            Ok(signed_block_with_attestation) => {
+                                let slot = signed_block_with_attestation.message.block.slot.0;
 
-                                    if let Err(err) = self
-                                        .chain_message_sink
-                                        .send(ChainMessage::ProcessBlock {
-                                            signed_block_with_attestation,
-                                            is_trusted: false,
-                                            should_gossip: true,
-                                        })
-                                        .await
-                                    {
-                                        warn!(
-                                            "failed to send block with attestation for slot {slot} to chain: {err:?}"
-                                        );
-                                    }
-                                }
-                                Err(err) => {
-                                    warn!(?err, topic = %message.topic, "failed to decode block");
+                                if let Err(err) = self
+                                    .chain_message_sink
+                                    .send(ChainMessage::ProcessBlock {
+                                        signed_block_with_attestation,
+                                        is_trusted: false,
+                                        should_gossip: true,
+                                    })
+                                    .await
+                                {
+                                    warn!(
+                                        "failed to send block with attestation for slot {slot} to chain: {err:?}"
+                                    );
                                 }
                             }
-                        }
-                        GossipsubKind::Attestation => {
-                            match containers::SignedAttestation::from_ssz_default(&message.data) {
-                                Ok(signed_attestation) => {
-                                    #[cfg(feature = "devnet1")]
-                                    let slot = signed_attestation.message.data.slot.0;
-                                    #[cfg(feature = "devnet2")]
-                                    let slot = signed_attestation.message.slot.0;
-
-                                    if let Err(err) = self
-                                        .chain_message_sink
-                                        .send(ChainMessage::ProcessAttestation {
-                                            signed_attestation,
-                                            is_trusted: false,
-                                            should_gossip: true,
-                                        })
-                                        .await
-                                    {
-                                        warn!("failed to send vote for slot {slot} to chain: {err:?}");
-                                    }
-                                }
-                                Err(err) => {
-                                    warn!(?err, topic = %message.topic, "failed to decode attestation");
-                                }
+                            Err(err) => {
+                                warn!(?err, topic = %message.topic, "failed to decode block");
                             }
                         }
-                    },
-                    Err(err) => {
-                        warn!(%err, topic = %message.topic, "unknown gossip topic");
                     }
+                    GossipsubKind::Attestation => {
+                        match containers::SignedAttestation::from_ssz_default(&message.data) {
+                            Ok(signed_attestation) => {
+                                #[cfg(feature = "devnet1")]
+                                let slot = signed_attestation.message.data.slot.0;
+                                #[cfg(feature = "devnet2")]
+                                let slot = signed_attestation.message.slot.0;
+
+                                if let Err(err) = self
+                                    .chain_message_sink
+                                    .send(ChainMessage::ProcessAttestation {
+                                        signed_attestation,
+                                        is_trusted: false,
+                                        should_gossip: true,
+                                    })
+                                    .await
+                                {
+                                    warn!("failed to send vote for slot {slot} to chain: {err:?}");
+                                }
+                            }
+                            Err(err) => {
+                                warn!(?err, topic = %message.topic, "failed to decode attestation");
+                            }
+                        }
+                    }
+                },
+                Err(err) => {
+                    warn!(%err, topic = %message.topic, "unknown gossip topic");
                 }
-            }
+            },
             _ => {
                 info!(?event, "Unhandled gossipsub event");
             }
