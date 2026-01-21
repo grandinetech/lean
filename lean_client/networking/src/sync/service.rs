@@ -1,3 +1,6 @@
+use containers::{Bytes32, SignedBlockWithAttestation, Slot};
+use libp2p_identity::PeerId;
+use parking_lot::Mutex;
 /// Sync service coordinating all synchronization operations.
 ///
 /// The SyncService is the main entry point for synchronization. It coordinates:
@@ -5,11 +8,7 @@
 /// - BackfillSync: Fetching missing parent blocks
 /// - PeerManager: Tracking peer status
 /// - State machine: Managing IDLE -> SYNCING -> SYNCED transitions
-
 use std::sync::Arc;
-use containers::{Bytes32, SignedBlockWithAttestation, Slot};
-use libp2p_identity::PeerId;
-use parking_lot::Mutex;
 use tracing::{debug, info, warn};
 
 use super::{
@@ -39,18 +38,14 @@ impl<N: NetworkRequester> SyncService<N> {
     pub fn new(network: N, peer_manager: PeerManager, block_cache: BlockCache) -> Self {
         let peer_manager_arc = Arc::new(Mutex::new(peer_manager));
         let block_cache_arc = Arc::new(Mutex::new(block_cache));
-        
+
         let pm_clone = peer_manager_arc.lock().clone();
         let bc_clone = block_cache_arc.lock().clone();
-        
+
         Self {
             state: SyncState::default(),
             head_sync: block_cache_arc.clone(),
-            backfill_sync: Arc::new(Mutex::new(BackfillSync::new(
-                pm_clone,
-                bc_clone,
-                network,
-            ))),
+            backfill_sync: Arc::new(Mutex::new(BackfillSync::new(pm_clone, bc_clone, network))),
             peer_manager: peer_manager_arc,
             local_head_slot: Slot(0),
         }
@@ -98,12 +93,12 @@ impl<N: NetworkRequester> SyncService<N> {
     ) -> (Bytes32, bool) {
         let slot = block.message.block.slot;
         let parent_root = block.message.block.parent_root;
-        
+
         let (root, is_orphan, missing_parents) = {
             let mut cache = self.head_sync.lock();
             let root = cache.add_block(block);
             let is_orphan = cache.is_orphan(&root);
-            
+
             let missing_parents = if is_orphan && !parent_root.0.is_zero() {
                 if !cache.contains(&parent_root) {
                     vec![parent_root]
@@ -113,7 +108,7 @@ impl<N: NetworkRequester> SyncService<N> {
             } else {
                 vec![]
             };
-            
+
             (root, is_orphan, missing_parents)
         };
 
@@ -130,7 +125,7 @@ impl<N: NetworkRequester> SyncService<N> {
                 num_missing = missing_parents.len(),
                 "Triggering backfill for missing parents"
             );
-            
+
             let mut bs = self.backfill_sync.lock();
             bs.fill_missing(missing_parents, 0).await;
         }
@@ -144,14 +139,17 @@ impl<N: NetworkRequester> SyncService<N> {
     pub fn get_processable_blocks(&self) -> Vec<SignedBlockWithAttestation> {
         let cache = self.head_sync.lock();
         let roots = cache.get_processable_blocks();
-        
+
         // Sort by slot to ensure topological order
-        let mut blocks: Vec<_> = roots.iter()
+        let mut blocks: Vec<_> = roots
+            .iter()
             .filter_map(|root| {
-                cache.get_block(root).map(|b| (b.clone(), b.message.block.slot))
+                cache
+                    .get_block(root)
+                    .map(|b| (b.clone(), b.message.block.slot))
             })
             .collect();
-        
+
         blocks.sort_by_key(|(_, slot)| *slot);
         blocks.into_iter().map(|(block, _)| block).collect()
     }
@@ -248,7 +246,7 @@ impl<N: NetworkRequester> SyncService<N> {
                 num_missing = missing_parents.len(),
                 "Found missing parents, triggering backfill"
             );
-            
+
             let mut bs = self.backfill_sync.lock();
             bs.fill_missing(missing_parents, 0).await;
         }
@@ -261,12 +259,10 @@ impl<N: NetworkRequester> SyncService<N> {
         let processable_blocks = cache.get_processable_blocks().len();
         let cached_blocks = cache.len();
         drop(cache);
-        
+
         let pm = self.peer_manager.lock();
-        let connected_peers = pm.get_all_peers()
-            .filter(|p| p.is_connected())
-            .count();
-        
+        let connected_peers = pm.get_all_peers().filter(|p| p.is_connected()).count();
+
         SyncStats {
             state: self.state,
             local_head_slot: self.local_head_slot,

@@ -1,7 +1,10 @@
-use crate::sync::{SyncService, SyncState, PeerManager, BlockCache};
 use crate::sync::backfill_sync::NetworkRequester;
+use crate::sync::{BlockCache, PeerManager, SyncService, SyncState};
 use crate::types::ConnectionState;
-use containers::{Block, BlockBody, BlockWithAttestation, Attestation, ValidatorIndex, Bytes32, Slot, SignedBlockWithAttestation, Checkpoint};
+use containers::{
+    Attestation, Block, BlockBody, BlockWithAttestation, Bytes32, Checkpoint,
+    SignedBlockWithAttestation, Slot, ValidatorIndex,
+};
 use libp2p_identity::PeerId;
 
 // Mock network for testing
@@ -38,14 +41,16 @@ fn create_test_block(slot: u64, parent_root: Bytes32) -> SignedBlockWithAttestat
 
 #[tokio::test]
 async fn test_sync_service_creation() {
-    let service: SyncService<MockNetwork> = SyncService::new(MockNetwork, PeerManager::new(), BlockCache::new());
+    let service: SyncService<MockNetwork> =
+        SyncService::new(MockNetwork, PeerManager::new(), BlockCache::new());
     assert_eq!(service.state(), SyncState::Idle);
 }
 
 #[tokio::test]
 async fn test_process_genesis_block() {
-    let mut service: SyncService<MockNetwork> = SyncService::new(MockNetwork, PeerManager::new(), BlockCache::new());
-    
+    let mut service: SyncService<MockNetwork> =
+        SyncService::new(MockNetwork, PeerManager::new(), BlockCache::new());
+
     let genesis = create_test_block(0, Bytes32::default());
     let (_root, is_processable) = service.process_gossip_block(genesis).await;
 
@@ -55,30 +60,32 @@ async fn test_process_genesis_block() {
 
 #[test]
 fn test_add_remove_peer() {
-    let service: SyncService<MockNetwork> = SyncService::new(MockNetwork, PeerManager::new(), BlockCache::new());
+    let service: SyncService<MockNetwork> =
+        SyncService::new(MockNetwork, PeerManager::new(), BlockCache::new());
     let peer_id = PeerId::random();
 
     service.add_peer(peer_id, ConnectionState::Connected);
-    
+
     // Verify peer was added by checking stats
     let stats = service.get_stats();
     assert!(stats.connected_peers >= 1);
 
     service.remove_peer(&peer_id);
-    
+
     // Note: Stats may not reflect removal immediately in a real impl,
     // but this tests the API works
 }
 
 #[test]
 fn test_sync_state_transitions() {
-    let mut service: SyncService<MockNetwork> = SyncService::new(MockNetwork, PeerManager::new(), BlockCache::new());
+    let mut service: SyncService<MockNetwork> =
+        SyncService::new(MockNetwork, PeerManager::new(), BlockCache::new());
     assert_eq!(service.state(), SyncState::Idle);
 
     // Add peer with finalized slot ahead of local head
     let peer_id = PeerId::random();
     service.add_peer(peer_id, ConnectionState::Connected);
-    
+
     let status = containers::Status {
         finalized: Checkpoint {
             root: Bytes32::default(),

@@ -1,3 +1,5 @@
+pub mod backfill_sync;
+pub mod block_cache;
 /// Sync service for the lean Ethereum consensus client.
 ///
 /// This module provides synchronization capabilities for downloading and
@@ -23,22 +25,19 @@
 /// - **IDLE**: No peers, waiting to start
 /// - **SYNCING**: Processing blocks to catch up
 /// - **SYNCED**: Reached network finalized checkpoint
-
 pub mod config;
-pub mod states;
-pub mod peer_manager;
-pub mod block_cache;
-pub mod backfill_sync;
 pub mod head_sync;
+pub mod peer_manager;
 pub mod service;
+pub mod states;
 
-pub use config::*;
-pub use states::SyncState;
-pub use peer_manager::{PeerManager, SyncPeer};
-pub use block_cache::BlockCache;
 pub use backfill_sync::BackfillSync;
+pub use block_cache::BlockCache;
+pub use config::*;
 pub use head_sync::HeadSync;
+pub use peer_manager::{PeerManager, SyncPeer};
 pub use service::SyncService;
+pub use states::SyncState;
 
 #[cfg(test)]
 mod tests;

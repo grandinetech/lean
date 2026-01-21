@@ -1,3 +1,5 @@
+use containers::{Bytes32, SignedBlockWithAttestation};
+use libp2p_identity::PeerId;
 /// Backfill synchronization for resolving orphan blocks.
 ///
 /// When a block arrives whose parent is unknown, we need to fetch that parent.
@@ -19,10 +21,7 @@
 /// - An attacker could send a block claiming to have a parent millions of slots ago
 /// - Without limits, we would exhaust memory trying to fetch the entire chain
 /// - MAX_BACKFILL_DEPTH (512) covers legitimate reorgs while bounding resources
-
 use std::collections::HashSet;
-use containers::{Bytes32, SignedBlockWithAttestation};
-use libp2p_identity::PeerId;
 use tracing::{debug, warn};
 
 use super::{
@@ -74,17 +73,13 @@ pub struct BackfillSync<N: NetworkRequester> {
     peer_manager: PeerManager,
     block_cache: BlockCache,
     network: N,
-    
+
     /// Roots currently being fetched (prevents duplicate requests)
     pending: HashSet<Bytes32>,
 }
 
 impl<N: NetworkRequester> BackfillSync<N> {
-    pub fn new(
-        peer_manager: PeerManager,
-        block_cache: BlockCache,
-        network: N,
-    ) -> Self {
+    pub fn new(peer_manager: PeerManager, block_cache: BlockCache, network: N) -> Self {
         Self {
             peer_manager,
             block_cache,
@@ -111,51 +106,51 @@ impl<N: NetworkRequester> BackfillSync<N> {
         depth: usize,
     ) -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>> {
         Box::pin(async move {
-        if depth >= MAX_BACKFILL_DEPTH {
-            // Depth limit reached. Stop fetching to prevent resource exhaustion.
-            // This is a safety measure, not an error. Deep chains may be
-            // legitimate but we cannot fetch them via backfill.
+            if depth >= MAX_BACKFILL_DEPTH {
+                // Depth limit reached. Stop fetching to prevent resource exhaustion.
+                // This is a safety measure, not an error. Deep chains may be
+                // legitimate but we cannot fetch them via backfill.
+                debug!(
+                    depth = depth,
+                    max_depth = MAX_BACKFILL_DEPTH,
+                    "Backfill depth limit reached"
+                );
+                return;
+            }
+
+            // Filter out roots we are already fetching or have cached
+            let roots_to_fetch: Vec<Bytes32> = roots
+                .into_iter()
+                .filter(|root| !self.pending.contains(root) && !self.block_cache.contains(root))
+                .collect();
+
+            if roots_to_fetch.is_empty() {
+                return;
+            }
+
             debug!(
+                num_roots = roots_to_fetch.len(),
                 depth = depth,
-                max_depth = MAX_BACKFILL_DEPTH,
-                "Backfill depth limit reached"
+                "Backfilling missing parents"
             );
-            return;
-        }
 
-        // Filter out roots we are already fetching or have cached
-        let roots_to_fetch: Vec<Bytes32> = roots
-            .into_iter()
-            .filter(|root| !self.pending.contains(root) && !self.block_cache.contains(root))
-            .collect();
+            // Mark roots as pending to avoid duplicate requests
+            for root in &roots_to_fetch {
+                self.pending.insert(*root);
+            }
 
-        if roots_to_fetch.is_empty() {
-            return;
-        }
+            // Fetch in batches to respect request limits
+            for batch_start in (0..roots_to_fetch.len()).step_by(MAX_BLOCKS_PER_REQUEST) {
+                let batch_end = (batch_start + MAX_BLOCKS_PER_REQUEST).min(roots_to_fetch.len());
+                let batch = roots_to_fetch[batch_start..batch_end].to_vec();
 
-        debug!(
-            num_roots = roots_to_fetch.len(),
-            depth = depth,
-            "Backfilling missing parents"
-        );
+                self.fetch_batch(batch, depth).await;
+            }
 
-        // Mark roots as pending to avoid duplicate requests
-        for root in &roots_to_fetch {
-            self.pending.insert(*root);
-        }
-
-        // Fetch in batches to respect request limits
-        for batch_start in (0..roots_to_fetch.len()).step_by(MAX_BLOCKS_PER_REQUEST) {
-            let batch_end = (batch_start + MAX_BLOCKS_PER_REQUEST).min(roots_to_fetch.len());
-            let batch = roots_to_fetch[batch_start..batch_end].to_vec();
-            
-            self.fetch_batch(batch, depth).await;
-        }
-
-        // Clear pending status
-        for root in &roots_to_fetch {
-            self.pending.remove(root);
-        }
+            // Clear pending status
+            for root in &roots_to_fetch {
+                self.pending.remove(root);
+            }
         })
     }
 
@@ -180,14 +175,18 @@ impl<N: NetworkRequester> BackfillSync<N> {
         self.peer_manager.on_request_start(&peer);
 
         // Request blocks
-        match self.network.request_blocks_by_root(peer, roots.clone()).await {
+        match self
+            .network
+            .request_blocks_by_root(peer, roots.clone())
+            .await
+        {
             Some(blocks) if !blocks.is_empty() => {
                 debug!(
                     peer = %peer,
                     num_blocks = blocks.len(),
                     "Received blocks from peer"
                 );
-                
+
                 self.peer_manager.on_request_complete(&peer);
                 self.process_received_blocks(blocks, peer, depth).await;
             }
@@ -199,7 +198,8 @@ impl<N: NetworkRequester> BackfillSync<N> {
             None => {
                 // Network error
                 warn!(peer = %peer, "Block request failed");
-                self.peer_manager.on_request_failure(&peer, "backfill request failed");
+                self.peer_manager
+                    .on_request_failure(&peer, "backfill request failed");
             }
         }
     }
@@ -214,10 +214,12 @@ impl<N: NetworkRequester> BackfillSync<N> {
 
         for block in blocks {
             let root = self.block_cache.add_block(block);
-            
+
             // If this block is an orphan, we need to fetch its parent
             if self.block_cache.is_orphan(&root) {
-                if let Some(parent_root) = self.block_cache.get_block(&root)
+                if let Some(parent_root) = self
+                    .block_cache
+                    .get_block(&root)
                     .map(|b| b.message.block.parent_root)
                 {
                     if !parent_root.0.is_zero() {
@@ -235,8 +237,9 @@ impl<N: NetworkRequester> BackfillSync<N> {
                 next_depth = depth + 1,
                 "Found orphan parents, continuing backfill"
             );
-            
-            self.fill_missing_internal(new_orphan_parents, depth + 1).await;
+
+            self.fill_missing_internal(new_orphan_parents, depth + 1)
+                .await;
         }
     }
 

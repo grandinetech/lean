@@ -1,12 +1,11 @@
+use super::config::MAX_CONCURRENT_REQUESTS;
+use crate::types::ConnectionState;
+use containers::{Slot, Status};
+use libp2p_identity::PeerId;
 /// Peer manager for sync operations.
 ///
 /// Tracks peer chain status and selects peers for block requests.
-
 use std::collections::HashMap;
-use containers::{Slot, Status};
-use libp2p_identity::PeerId;
-use crate::types::ConnectionState;
-use super::config::MAX_CONCURRENT_REQUESTS;
 
 /// Sync-specific peer state.
 ///
@@ -78,8 +77,13 @@ impl PeerManager {
     }
 
     /// Add a peer to the manager.
-    pub fn add_peer(&mut self, peer_id: PeerId, connection_state: ConnectionState) -> &mut SyncPeer {
-        self.peers.entry(peer_id)
+    pub fn add_peer(
+        &mut self,
+        peer_id: PeerId,
+        connection_state: ConnectionState,
+    ) -> &mut SyncPeer {
+        self.peers
+            .entry(peer_id)
             .or_insert_with(|| SyncPeer::new(peer_id, connection_state))
     }
 
@@ -133,7 +137,9 @@ impl PeerManager {
     ///
     /// Returns the mode (most common) finalized slot reported by connected peers.
     pub fn get_network_finalized_slot(&self) -> Option<Slot> {
-        let mut finalized_slots: Vec<Slot> = self.peers.values()
+        let mut finalized_slots: Vec<Slot> = self
+            .peers
+            .values()
             .filter(|peer| peer.status.is_some() && peer.is_connected())
             .map(|peer| peer.status.as_ref().unwrap().finalized.slot)
             .collect();

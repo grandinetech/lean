@@ -2,7 +2,6 @@
 ///
 /// Manages the processing of blocks received via gossip to advance the chain head.
 /// Works in coordination with backfill sync to handle out-of-order block arrivals.
-
 use containers::{Bytes32, SignedBlockWithAttestation, Slot};
 use tracing::debug;
 
@@ -42,10 +41,7 @@ impl HeadSync {
     /// - The block root
     /// - Whether the block is processable (parent exists)
     /// - Missing parent roots (if block is orphan)
-    pub fn process_gossip_block(
-        &mut self,
-        block: SignedBlockWithAttestation,
-    ) -> ProcessResult {
+    pub fn process_gossip_block(&mut self, block: SignedBlockWithAttestation) -> ProcessResult {
         let slot = block.message.block.slot;
         let parent_root = block.message.block.parent_root;
 
@@ -60,7 +56,7 @@ impl HeadSync {
 
         // Check if processable
         let is_orphan = self.block_cache.is_orphan(&root);
-        
+
         if is_orphan {
             debug!(
                 slot = slot.0,
@@ -142,7 +138,8 @@ impl HeadSync {
 
     /// Get the highest slot among cached blocks.
     pub fn get_highest_cached_slot(&self) -> Option<Slot> {
-        self.block_cache.get_processable_blocks()
+        self.block_cache
+            .get_processable_blocks()
             .iter()
             .filter_map(|root| self.block_cache.get_slot(root))
             .max()
@@ -167,10 +164,10 @@ impl HeadSync {
 pub struct ProcessResult {
     /// The root of the processed block
     pub root: Bytes32,
-    
+
     /// Whether the block can be processed immediately
     pub is_processable: bool,
-    
+
     /// Missing parent roots (if block is orphan)
     pub missing_parents: Vec<Bytes32>,
 }

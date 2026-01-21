@@ -1,7 +1,10 @@
-use crate::sync::{BackfillSync, BlockCache, PeerManager};
 use crate::sync::backfill_sync::NetworkRequester;
+use crate::sync::{BackfillSync, BlockCache, PeerManager};
 use crate::types::ConnectionState;
-use containers::{Block, BlockBody, BlockWithAttestation, Attestation, ValidatorIndex, Slot, Bytes32, SignedBlockWithAttestation};
+use containers::{
+    Attestation, Block, BlockBody, BlockWithAttestation, Bytes32, SignedBlockWithAttestation, Slot,
+    ValidatorIndex,
+};
 use libp2p_identity::PeerId;
 
 // Mock network for testing
@@ -30,10 +33,11 @@ impl NetworkRequester for MockNetwork {
         _peer_id: PeerId,
         roots: Vec<Bytes32>,
     ) -> Option<Vec<SignedBlockWithAttestation>> {
-        let blocks: Vec<_> = roots.iter()
+        let blocks: Vec<_> = roots
+            .iter()
             .filter_map(|root| self.blocks.get(root).cloned())
             .collect();
-        
+
         if blocks.is_empty() {
             None
         } else {

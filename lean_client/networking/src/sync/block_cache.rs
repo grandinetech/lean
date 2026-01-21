@@ -1,11 +1,10 @@
+use containers::block::hash_tree_root;
+use containers::{Bytes32, SignedBlockWithAttestation, Slot};
 /// Block cache for managing blocks and tracking orphans.
 ///
 /// Maintains a cache of blocks and identifies orphans (blocks whose parent
 /// is not yet known). This is essential for handling out-of-order block arrival.
-
 use std::collections::{HashMap, HashSet};
-use containers::{Bytes32, SignedBlockWithAttestation, Slot};
-use containers::block::hash_tree_root;
 
 /// Block cache for sync operations.
 ///
@@ -16,10 +15,10 @@ use containers::block::hash_tree_root;
 pub struct BlockCache {
     /// All cached blocks, indexed by block root
     blocks: HashMap<Bytes32, SignedBlockWithAttestation>,
-    
+
     /// Blocks whose parent is not in the cache (orphans)
     orphans: HashSet<Bytes32>,
-    
+
     /// Children of each block (parent_root -> set of child roots)
     children: HashMap<Bytes32, HashSet<Bytes32>>,
 }
@@ -41,7 +40,8 @@ impl BlockCache {
         self.blocks.insert(root, block);
 
         // Track parent-child relationship
-        self.children.entry(parent_root)
+        self.children
+            .entry(parent_root)
             .or_insert_with(HashSet::new)
             .insert(root);
 
@@ -84,12 +84,16 @@ impl BlockCache {
     ///
     /// Returns roots of parents that are not in the cache.
     pub fn get_missing_parents(&self) -> Vec<Bytes32> {
-        self.orphans.iter()
+        self.orphans
+            .iter()
             .filter_map(|orphan_root| {
-                self.blocks.get(orphan_root)
+                self.blocks
+                    .get(orphan_root)
                     .map(|block| block.message.block.parent_root)
             })
-            .filter(|parent_root| !parent_root.0.is_zero() && !self.blocks.contains_key(parent_root))
+            .filter(|parent_root| {
+                !parent_root.0.is_zero() && !self.blocks.contains_key(parent_root)
+            })
             .collect::<HashSet<_>>() // Deduplicate
             .into_iter()
             .collect()
@@ -100,7 +104,8 @@ impl BlockCache {
     /// Returns blocks that can be processed because their parent exists
     /// in the cache or they are genesis blocks (parent_root is zero).
     pub fn get_processable_blocks(&self) -> Vec<Bytes32> {
-        self.blocks.iter()
+        self.blocks
+            .iter()
             .filter_map(|(root, block)| {
                 let parent_root = block.message.block.parent_root;
                 if parent_root.0.is_zero() || self.blocks.contains_key(&parent_root) {
@@ -149,7 +154,8 @@ impl BlockCache {
 
     /// Get children of a block.
     pub fn get_children(&self, root: &Bytes32) -> Vec<Bytes32> {
-        self.children.get(root)
+        self.children
+            .get(root)
             .map(|children| children.iter().copied().collect())
             .unwrap_or_default()
     }

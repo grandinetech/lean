@@ -1,5 +1,8 @@
 use crate::sync::{BlockCache, HeadSync};
-use containers::{Block, BlockBody, BlockWithAttestation, Attestation, ValidatorIndex, Bytes32, Slot, SignedBlockWithAttestation};
+use containers::{
+    Attestation, Block, BlockBody, BlockWithAttestation, Bytes32, SignedBlockWithAttestation, Slot,
+    ValidatorIndex,
+};
 
 fn create_test_block(slot: u64, parent_root: Bytes32) -> SignedBlockWithAttestation {
     let block = Block {
@@ -22,7 +25,7 @@ fn create_test_block(slot: u64, parent_root: Bytes32) -> SignedBlockWithAttestat
 #[test]
 fn test_process_genesis_block() {
     let mut head_sync = HeadSync::new(BlockCache::new());
-    
+
     let genesis = create_test_block(0, Bytes32::default());
     let result = head_sync.process_gossip_block(genesis);
 
@@ -33,10 +36,10 @@ fn test_process_genesis_block() {
 #[test]
 fn test_process_orphan_block() {
     let mut head_sync = HeadSync::new(BlockCache::new());
-    
+
     let unknown_parent = Bytes32(ssz::H256::from([1u8; 32]));
     let orphan = create_test_block(1, unknown_parent);
-    
+
     let result = head_sync.process_gossip_block(orphan);
 
     assert!(!result.is_processable);
@@ -47,11 +50,11 @@ fn test_process_orphan_block() {
 #[test]
 fn test_process_chain_in_order() {
     let mut head_sync = HeadSync::new(BlockCache::new());
-    
+
     // Add genesis
     let genesis = create_test_block(0, Bytes32::default());
     let genesis_result = head_sync.process_gossip_block(genesis);
-    
+
     // Add child
     let child = create_test_block(1, genesis_result.root);
     let child_result = head_sync.process_gossip_block(child);
@@ -63,15 +66,15 @@ fn test_process_chain_in_order() {
 #[test]
 fn test_get_processable_blocks() {
     let mut head_sync = HeadSync::new(BlockCache::new());
-    
+
     // Add genesis
     let genesis = create_test_block(0, Bytes32::default());
     let genesis_root = head_sync.process_gossip_block(genesis).root;
-    
+
     // Add child
     let child = create_test_block(1, genesis_root);
     let child_root = head_sync.process_gossip_block(child).root;
-    
+
     // Add orphan
     let orphan = create_test_block(2, Bytes32(ssz::H256::from([99u8; 32])));
     head_sync.process_gossip_block(orphan);
@@ -85,14 +88,14 @@ fn test_get_processable_blocks() {
 #[test]
 fn test_stats() {
     let mut head_sync = HeadSync::new(BlockCache::new());
-    
+
     // Add genesis and child
     let genesis = create_test_block(0, Bytes32::default());
     let genesis_root = head_sync.process_gossip_block(genesis).root;
-    
+
     let child = create_test_block(1, genesis_root);
     head_sync.process_gossip_block(child);
-    
+
     // Add orphan
     let orphan = create_test_block(2, Bytes32(ssz::H256::from([99u8; 32])));
     head_sync.process_gossip_block(orphan);
