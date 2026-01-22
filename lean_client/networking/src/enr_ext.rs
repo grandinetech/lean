@@ -315,7 +315,7 @@ impl CombinedKeyExt for CombinedKey {
 
 // helper function to convert a peer_id to a node_id. This is only possible for secp256k1/ed25519 libp2p
 // peer_ids
-pub fn peer_id_to_node_id(peer_id: &PeerId) -> anyhow::Result<discv5::enr::NodeId> {
+pub fn peer_id_to_node_id(peer_id: &PeerId) -> Result<discv5::enr::NodeId> {
     // A libp2p peer id byte representation should be 2 length bytes + 4 protobuf bytes + compressed pk bytes
     // if generated from a PublicKey with Identity multihash.
     let pk_bytes = &peer_id.to_bytes()[2..];

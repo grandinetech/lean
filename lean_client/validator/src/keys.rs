@@ -1,4 +1,4 @@
-use anyhow::{ensure, Context, Result};
+use anyhow::{anyhow, ensure, Context, Result};
 use containers::attestation::U3112;
 use containers::ssz::ByteVector;
 use containers::Signature;
@@ -77,11 +77,11 @@ impl KeyManager {
                 <SIGTopLevelTargetSumLifetime32Dim64Base8 as SignatureScheme>::SecretKey;
 
             let secret_key = SecretKey::from_bytes(key_bytes)
-                .map_err(|e| anyhow::anyhow!("Failed to deserialize secret key: {:?}", e))?;
+                .map_err(|e| anyhow!("Failed to deserialize secret key: {:?}", e))?;
 
             let leansig_signature =
                 SIGTopLevelTargetSumLifetime32Dim64Base8::sign(&secret_key, epoch, message)
-                    .map_err(|e| anyhow::anyhow!("Failed to sign message: {:?}", e))?;
+                    .map_err(|e| anyhow!("Failed to sign message: {:?}", e))?;
 
             let sig_bytes = leansig_signature.to_bytes();
 
