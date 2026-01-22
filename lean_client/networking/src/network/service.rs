@@ -602,7 +602,7 @@ where
                 let slot = signed_attestation.message.data.slot.0;
                 #[cfg(feature = "devnet2")]
                 let slot = signed_attestation.message.slot.0;
-                
+
                 match signed_attestation.to_ssz() {
                     Ok(bytes) => {
                         if let Err(err) = self.publish_to_topic(GossipsubKind::Attestation, bytes) {

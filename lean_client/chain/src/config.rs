@@ -15,11 +15,6 @@ impl BasisPoint {
     pub fn get(&self) -> u64 {
         self.0
     }
-
-    #[inline]
-    pub fn get(&self) -> u64 {
-        self.0
-    }
 }
 
 #[derive(Clone, Debug)]
