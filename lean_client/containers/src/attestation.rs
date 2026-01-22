@@ -126,7 +126,7 @@ pub struct AggregatedAttestation {
     /// Bitfield indicating which validators participated in the aggregation.
     pub aggregation_bits: AggregationBits,
     /// Combined attestation data similar to the beacon chain format.
-    /// 
+    ///
     /// Multiple validator attestations are aggregated here without the complexity of
     /// committee assignments.
     pub data: AttestationData,
