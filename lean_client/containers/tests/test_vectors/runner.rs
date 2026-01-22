@@ -18,7 +18,7 @@ impl TestRunner {
             .tests
             .into_iter()
             .next()
-            .context("No test case found in JSON")?;
+            .expect("No test case found in JSON");
 
         println!("Running test: {}", test_name);
         println!("Description: {}", test_case.info.description);
@@ -120,7 +120,7 @@ impl TestRunner {
             .tests
             .into_iter()
             .next()
-            .context("No test case found in JSON")?;
+            .expect("No test case found in JSON");
 
         println!("Running test: {}", test_name);
         println!("Description: {}", test_case.info.description);
@@ -215,7 +215,7 @@ impl TestRunner {
             .tests
             .into_iter()
             .next()
-            .context("No test case found in JSON")?;
+            .expect("No test case found in JSON");
 
         println!("Running test: {}", test_name);
         println!("Description: {}", test_case.info.description);
@@ -316,7 +316,7 @@ impl TestRunner {
             .tests
             .into_iter()
             .next()
-            .context("No test case found in JSON")?;
+            .expect("No test case found in JSON");
 
         println!("\n{}: {}", test_name, test_case.info.description);
 
@@ -427,7 +427,7 @@ impl TestRunner {
             .tests
             .into_iter()
             .next()
-            .context("No test case found in JSON")?;
+            .expect("No test case found in JSON");
 
         println!("\n{}: {}", test_name, test_case.info.description);
 
@@ -584,7 +584,7 @@ impl TestRunner {
             .tests
             .into_iter()
             .next()
-            .context("No test case found in JSON")?;
+            .expect("No test case found in JSON");
 
         println!("\n{}: {}", test_name, test_case.info.description);
 

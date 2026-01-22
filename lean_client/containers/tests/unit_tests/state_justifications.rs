@@ -15,7 +15,7 @@ fn config() -> Config {
 
 #[fixture]
 fn state(config: Config) -> State {
-    base_state(config).unwrap()
+    base_state(config)
 }
 
 #[test]
@@ -104,7 +104,7 @@ fn test_get_justifications_multiple_roots() {
 #[test]
 fn test_with_justifications_empty() {
     let config = sample_config();
-    let mut initial_state = base_state(config.clone()).unwrap();
+    let mut initial_state = base_state(config.clone());
 
     let mut roots_list = List::default();
     roots_list
