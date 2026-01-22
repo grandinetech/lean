@@ -77,7 +77,10 @@ pub fn get_fork_choice_head(
             .iter()
             .min_by_key(|(_, block)| block.message.block.slot)
             .map(|(r, _)| *r)
-            .expect("Error: Empty block.");
+            .unwrap_or_else(|| {
+                // Should never happen - genesis block should always be present
+                store.head
+            });
     }
     let mut vote_weights: HashMap<Root, usize> = HashMap::new();
     let root_slot = store.blocks[&root].message.block.slot;

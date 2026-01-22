@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anyhow = { workspace = true }
+thiserror = { workspace = true }
 containers = { path = "../containers" }
 ssz = { git = "https://github.com/grandinetech/grandine", package = "ssz", branch = "develop"}
 ssz_derive = { git = "https://github.com/grandinetech/grandine", package = "ssz_derive", branch = "develop" }
@@ -11,5 +13,6 @@ typenum = "1.17.0"
 serde = { version = "1.0", features = ["derive"] }
 
 [dev-dependencies]
+anyhow = { workspace = true }
 ssz_rs = "0.9"
 serde_json = "1.0"

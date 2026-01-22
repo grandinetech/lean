@@ -126,7 +126,7 @@ fn test_process_block_header_invalid(
 
     assert!(result.is_err());
     let err_msg = result.unwrap_err();
-    assert!(err_msg.contains(expected_error));
+    assert!(err_msg.to_string().contains(expected_error));
 }
 
 // This test verifies that attestations correctly justify and finalize slots

@@ -1,3 +1,4 @@
+use anyhow::{bail, ensure, Context, Result};
 use fork_choice::{
     handlers::{on_attestation, on_block, on_tick},
     store::{get_forkchoice_store, Store},
@@ -207,30 +208,34 @@ struct TestInfo {
     fixture_format: String,
 }
 
-fn parse_root(hex_str: &str) -> Bytes32 {
+fn parse_root(hex_str: &str) -> Result<Bytes32> {
     let hex = hex_str.trim_start_matches("0x");
     let mut bytes = [0u8; 32];
+
+    ensure!(
+        hex.len() == 64 || hex.chars().all(|c| c == '0'),
+        "Invalid root length: {} (expected 64 hex chars)",
+        hex.len()
+    );
 
     if hex.len() == 64 {
         for i in 0..32 {
             bytes[i] = u8::from_str_radix(&hex[i * 2..i * 2 + 2], 16)
-                .unwrap_or_else(|_| panic!("Invalid hex at position {}: {}", i, hex));
+                .with_context(|| format!("Invalid hex at position {}: {}", i, hex))?;
         }
-    } else if !hex.chars().all(|c| c == '0') {
-        panic!("Invalid root length: {} (expected 64 hex chars)", hex.len());
     }
 
-    Bytes32(ssz::H256::from(bytes))
+    Ok(Bytes32(ssz::H256::from(bytes)))
 }
 
-fn convert_test_checkpoint(test_cp: &TestCheckpoint) -> Checkpoint {
-    Checkpoint {
-        root: parse_root(&test_cp.root),
+fn convert_test_checkpoint(test_cp: &TestCheckpoint) -> Result<Checkpoint> {
+    Ok(Checkpoint {
+        root: parse_root(&test_cp.root)?,
         slot: Slot(test_cp.slot),
-    }
+    })
 }
 
-fn convert_test_attestation(test_att: &TestAttestation) -> Attestation {
+fn convert_test_attestation(test_att: &TestAttestation) -> Result<Attestation> {
     let (validator_id, slot, head, target, source) = match test_att {
         TestAttestation::Nested { validator_id, data } => (
             *validator_id,
@@ -248,32 +253,34 @@ fn convert_test_attestation(test_att: &TestAttestation) -> Attestation {
         } => (*validator_id, *slot, head, target, source),
     };
 
-    Attestation {
+    Ok(Attestation {
         validator_id: Uint64(validator_id),
         data: AttestationData {
             slot: Slot(slot),
-            head: convert_test_checkpoint(head),
-            target: convert_test_checkpoint(target),
-            source: convert_test_checkpoint(source),
+            head: convert_test_checkpoint(head)?,
+            target: convert_test_checkpoint(target)?,
+            source: convert_test_checkpoint(source)?,
         },
-    }
+    })
 }
 
-fn convert_test_anchor_block(test_block: &TestAnchorBlock) -> SignedBlockWithAttestation {
+fn convert_test_anchor_block(test_block: &TestAnchorBlock) -> Result<SignedBlockWithAttestation> {
     let mut attestations = ssz::PersistentList::default();
 
     for (i, test_att) in test_block.body.attestations.data.iter().enumerate() {
-        let signed_vote = convert_test_attestation(test_att);
+        let signed_vote = convert_test_attestation(test_att)?;
         attestations
             .push(signed_vote)
-            .expect(&format!("Failed to add attestation {}", i));
+            .with_context(|| format!("Failed to add attestation {}", i))?;
     }
+
+    let parent_root = parse_root(&test_block.parent_root)?;
 
     let block = Block {
         slot: Slot(test_block.slot),
         proposer_index: ValidatorIndex(test_block.proposer_index),
-        parent_root: parse_root(&test_block.parent_root),
-        state_root: parse_root(&test_block.state_root),
+        parent_root,
+        state_root: parse_root(&test_block.state_root)?,
         body: BlockBody { attestations },
     };
 
@@ -283,62 +290,62 @@ fn convert_test_anchor_block(test_block: &TestAnchorBlock) -> SignedBlockWithAtt
         data: AttestationData {
             slot: Slot(test_block.slot),
             head: Checkpoint {
-                root: parse_root(&test_block.parent_root),
+                root: parent_root,
                 slot: Slot(test_block.slot),
             },
             target: Checkpoint {
-                root: parse_root(&test_block.parent_root),
+                root: parent_root,
                 slot: Slot(test_block.slot),
             },
             source: Checkpoint {
-                root: parse_root(&test_block.parent_root),
+                root: parent_root,
                 slot: Slot(0),
             },
         },
     };
 
-    SignedBlockWithAttestation {
+    Ok(SignedBlockWithAttestation {
         message: BlockWithAttestation {
             block,
             proposer_attestation,
         },
         signature: BlockSignatures::default(),
-    }
+    })
 }
 
 fn convert_test_block(
     test_block_with_att: &TestBlockWithAttestation,
-) -> SignedBlockWithAttestation {
+) -> Result<SignedBlockWithAttestation> {
     let test_block = &test_block_with_att.block;
     let mut attestations = ssz::PersistentList::default();
 
     for (i, test_att) in test_block.body.attestations.data.iter().enumerate() {
-        let signed_vote = convert_test_attestation(test_att);
+        let signed_vote = convert_test_attestation(test_att)?;
         attestations
             .push(signed_vote)
-            .expect(&format!("Failed to add attestation {}", i));
+            .with_context(|| format!("Failed to add attestation {}", i))?;
     }
 
     let block = Block {
         slot: Slot(test_block.slot),
         proposer_index: ValidatorIndex(test_block.proposer_index),
-        parent_root: parse_root(&test_block.parent_root),
-        state_root: parse_root(&test_block.state_root),
+        parent_root: parse_root(&test_block.parent_root)?,
+        state_root: parse_root(&test_block.state_root)?,
         body: BlockBody { attestations },
     };
 
-    let proposer_attestation = convert_test_attestation(&test_block_with_att.proposer_attestation);
+    let proposer_attestation = convert_test_attestation(&test_block_with_att.proposer_attestation)?;
 
-    SignedBlockWithAttestation {
+    Ok(SignedBlockWithAttestation {
         message: BlockWithAttestation {
             block,
             proposer_attestation,
         },
         signature: BlockSignatures::default(),
-    }
+    })
 }
 
-fn initialize_state_from_test(test_state: &TestAnchorState) -> State {
+fn initialize_state_from_test(test_state: &TestAnchorState) -> Result<State> {
     use containers::{
         HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots,
     };
@@ -351,16 +358,16 @@ fn initialize_state_from_test(test_state: &TestAnchorState) -> State {
     let latest_block_header = BlockHeader {
         slot: Slot(test_state.latest_block_header.slot),
         proposer_index: ValidatorIndex(test_state.latest_block_header.proposer_index),
-        parent_root: parse_root(&test_state.latest_block_header.parent_root),
-        state_root: parse_root(&test_state.latest_block_header.state_root),
-        body_root: parse_root(&test_state.latest_block_header.body_root),
+        parent_root: parse_root(&test_state.latest_block_header.parent_root)?,
+        state_root: parse_root(&test_state.latest_block_header.state_root)?,
+        body_root: parse_root(&test_state.latest_block_header.body_root)?,
     };
 
     let mut historical_block_hashes = HistoricalBlockHashes::default();
     for hash_str in &test_state.historical_block_hashes.data {
         historical_block_hashes
-            .push(parse_root(hash_str))
-            .expect("within limit");
+            .push(parse_root(hash_str)?)
+            .context("Failed to add historical block hash")?;
     }
 
     let mut justified_slots = JustifiedSlots::new(false, test_state.justified_slots.data.len());
@@ -373,8 +380,8 @@ fn initialize_state_from_test(test_state: &TestAnchorState) -> State {
     let mut justifications_roots = JustificationRoots::default();
     for root_str in &test_state.justifications_roots.data {
         justifications_roots
-            .push(parse_root(root_str))
-            .expect("within limit");
+            .push(parse_root(root_str)?)
+            .context("Failed to add justification root")?;
     }
 
     let mut justifications_validators =
@@ -388,26 +395,28 @@ fn initialize_state_from_test(test_state: &TestAnchorState) -> State {
     let mut validators = List::default();
     for test_validator in &test_state.validators.data {
         let pubkey = containers::validator::BlsPublicKey::from_hex(&test_validator.pubkey)
-            .expect("Failed to parse validator pubkey");
+            .context("Failed to parse validator pubkey")?;
         let validator = containers::validator::Validator {
             pubkey,
             index: containers::Uint64(test_validator.index),
         };
-        validators.push(validator).expect("Failed to add validator");
+        validators
+            .push(validator)
+            .context("Failed to add validator")?;
     }
 
-    State {
+    Ok(State {
         config,
         slot: Slot(test_state.slot),
         latest_block_header,
-        latest_justified: convert_test_checkpoint(&test_state.latest_justified),
-        latest_finalized: convert_test_checkpoint(&test_state.latest_finalized),
+        latest_justified: convert_test_checkpoint(&test_state.latest_justified)?,
+        latest_finalized: convert_test_checkpoint(&test_state.latest_finalized)?,
         historical_block_hashes,
         justified_slots,
         validators,
         justifications_roots,
         justifications_validators,
-    }
+    })
 }
 
 fn verify_checks(
@@ -415,7 +424,7 @@ fn verify_checks(
     checks: &Option<TestChecks>,
     block_labels: &HashMap<String, Bytes32>,
     step_idx: usize,
-) -> Result<(), String> {
+) -> Result<()> {
     // If no checks provided, nothing to verify
     let checks = match checks {
         Some(c) => c,
@@ -424,35 +433,35 @@ fn verify_checks(
 
     if let Some(expected_slot) = checks.head_slot {
         let actual_slot = store.blocks[&store.head].message.block.slot.0;
-        if actual_slot != expected_slot {
-            return Err(format!(
-                "Step {}: Head slot mismatch - expected {}, got {}",
-                step_idx, expected_slot, actual_slot
-            ));
-        }
+        ensure!(
+            actual_slot == expected_slot,
+            "Step {}: Head slot mismatch - expected {}, got {}",
+            step_idx,
+            expected_slot,
+            actual_slot
+        );
     }
 
     if let Some(label) = &checks.head_root_label {
         let expected_root = block_labels
             .get(label)
-            .ok_or_else(|| format!("Step {}: Block label '{}' not found", step_idx, label))?;
-        if &store.head != expected_root {
-            let actual_slot = store
-                .blocks
-                .get(&store.head)
-                .map(|b| b.message.block.slot.0)
-                .unwrap_or(0);
-            let expected_slot = store
-                .blocks
-                .get(expected_root)
-                .map(|b| b.message.block.slot.0)
-                .unwrap_or(0);
-            return Err(format!(
-                "Step {}: Head root mismatch for label '{}' - expected slot {}, got slot {} (known_attestations: {}, new_attestations: {})",
-                step_idx, label, expected_slot, actual_slot,
-                store.latest_known_attestations.len(), store.latest_new_attestations.len()
-            ));
-        }
+            .with_context(|| format!("Step {}: Block label '{}' not found", step_idx, label))?;
+        let actual_slot = store
+            .blocks
+            .get(&store.head)
+            .map(|b| b.message.block.slot.0)
+            .unwrap_or(0);
+        let expected_slot = store
+            .blocks
+            .get(expected_root)
+            .map(|b| b.message.block.slot.0)
+            .unwrap_or(0);
+        ensure!(
+            &store.head == expected_root,
+            "Step {}: Head root mismatch for label '{}' - expected slot {}, got slot {} (known_attestations: {}, new_attestations: {})",
+            step_idx, label, expected_slot, actual_slot,
+            store.latest_known_attestations.len(), store.latest_new_attestations.len()
+        );
     }
 
     if let Some(att_checks) = &checks.attestation_checks {
@@ -461,35 +470,35 @@ fn verify_checks(
 
             match check.location.as_str() {
                 "new" => {
-                    if !store.latest_new_attestations.contains_key(&validator) {
-                        return Err(format!(
-                            "Step {}: Expected validator {} in new attestations, but not found",
-                            step_idx, check.validator
-                        ));
-                    }
+                    ensure!(
+                        store.latest_new_attestations.contains_key(&validator),
+                        "Step {}: Expected validator {} in new attestations, but not found",
+                        step_idx,
+                        check.validator
+                    );
                     if let Some(target_slot) = check.target_slot {
                         let attestation = &store.latest_new_attestations[&validator];
-                        if attestation.message.data.target.slot.0 != target_slot {
-                            return Err(format!(
-                                "Step {}: Validator {} new attestation target slot mismatch - expected {}, got {}",
-                                step_idx, check.validator, target_slot, attestation.message.data.target.slot.0
-                            ));
-                        }
+                        ensure!(
+                            attestation.message.data.target.slot.0 == target_slot,
+                            "Step {}: Validator {} new attestation target slot mismatch - expected {}, got {}",
+                            step_idx, check.validator, target_slot, attestation.message.data.target.slot.0
+                        );
                     }
                 }
                 "known" => {
-                    if !store.latest_known_attestations.contains_key(&validator) {
-                        return Err(format!(
-                            "Step {}: Expected validator {} in known attestations, but not found",
-                            step_idx, check.validator
-                        ));
-                    }
+                    ensure!(
+                        store.latest_known_attestations.contains_key(&validator),
+                        "Step {}: Expected validator {} in known attestations, but not found",
+                        step_idx,
+                        check.validator
+                    );
                 }
                 _ => {
-                    return Err(format!(
+                    bail!(
                         "Step {}: Unknown attestation location: {}",
-                        step_idx, check.location
-                    ));
+                        step_idx,
+                        check.location
+                    );
                 }
             }
         }
@@ -498,11 +507,11 @@ fn verify_checks(
     Ok(())
 }
 
-fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
+fn run_single_test(_test_name: &str, test: TestVector) -> Result<()> {
     println!("  Running: {}", test.info.test_id);
 
-    let mut anchor_state = initialize_state_from_test(&test.anchor_state);
-    let anchor_block = convert_test_anchor_block(&test.anchor_block);
+    let mut anchor_state = initialize_state_from_test(&test.anchor_state)?;
+    let anchor_block = convert_test_anchor_block(&test.anchor_block)?;
 
     let body_root = hash_tree_root(&anchor_block.message.block.body);
     anchor_state.latest_block_header = BlockHeader {
@@ -526,10 +535,10 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
                 let test_block = step
                     .block
                     .as_ref()
-                    .ok_or_else(|| format!("Step {}: Missing block data", step_idx))?;
+                    .with_context(|| format!("Step {}: Missing block data", step_idx))?;
 
                 let result = std::panic::catch_unwind(AssertUnwindSafe(|| {
-                    let signed_block = convert_test_block(test_block);
+                    let signed_block = convert_test_block(test_block)?;
                     let block_root = Bytes32(signed_block.message.block.hash_tree_root());
 
                     // Advance time to the block's slot to ensure attestations are processable
@@ -542,9 +551,9 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
                     Ok(block_root)
                 }));
 
-                let result = match result {
+                let result: Result<Bytes32> = match result {
                     Ok(inner) => inner,
-                    Err(e) => Err(format!("Panic: {:?}", e)),
+                    Err(e) => bail!("Panic: {:?}", e),
                 };
 
                 if let Ok(block_root) = &result {
@@ -553,18 +562,17 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
                     }
                 }
 
-                if step.valid && result.is_err() {
-                    return Err(format!(
-                        "Step {}: Block should be valid but processing failed: {:?}",
-                        step_idx,
-                        result.err()
-                    ));
-                } else if !step.valid && result.is_ok() {
-                    return Err(format!(
-                        "Step {}: Block should be invalid but processing succeeded",
-                        step_idx
-                    ));
-                }
+                ensure!(
+                    !(step.valid && result.is_err()),
+                    "Step {}: Block should be valid but processing failed: {:?}",
+                    step_idx,
+                    result.err()
+                );
+                ensure!(
+                    !(!step.valid && result.is_ok()),
+                    "Step {}: Block should be invalid but processing succeeded",
+                    step_idx
+                );
 
                 if step.valid && result.is_ok() {
                     verify_checks(&store, &step.checks, &block_labels, step_idx)?;
@@ -574,7 +582,7 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
                 let time_value = step
                     .tick
                     .or(step.time)
-                    .ok_or_else(|| format!("Step {}: Missing tick/time data", step_idx))?;
+                    .with_context(|| format!("Step {}: Missing tick/time data", step_idx))?;
                 on_tick(&mut store, time_value, false);
 
                 if step.valid {
@@ -585,10 +593,10 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
                 let test_att = step
                     .attestation
                     .as_ref()
-                    .ok_or_else(|| format!("Step {}: Missing attestation data", step_idx))?;
+                    .with_context(|| format!("Step {}: Missing attestation data", step_idx))?;
 
                 let result = std::panic::catch_unwind(AssertUnwindSafe(|| {
-                    let attestation = convert_test_attestation(test_att);
+                    let attestation = convert_test_attestation(test_att)?;
                     let signed_attestation = SignedAttestation {
                         message: attestation,
                         signature: Signature::default(),
@@ -596,33 +604,29 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
                     on_attestation(&mut store, signed_attestation, false)
                 }));
 
-                let result = match result {
+                let result: Result<()> = match result {
                     Ok(inner) => inner,
-                    Err(e) => Err(format!("Panic: {:?}", e)),
+                    Err(e) => bail!("Panic: {:?}", e),
                 };
 
-                if step.valid && result.is_err() {
-                    return Err(format!(
-                        "Step {}: Attestation should be valid but processing failed: {:?}",
-                        step_idx,
-                        result.err()
-                    ));
-                } else if !step.valid && result.is_ok() {
-                    return Err(format!(
-                        "Step {}: Attestation should be invalid but processing succeeded",
-                        step_idx
-                    ));
-                }
+                ensure!(
+                    !(step.valid && result.is_err()),
+                    "Step {}: Attestation should be valid but processing failed: {:?}",
+                    step_idx,
+                    result.err()
+                );
+                ensure!(
+                    !(!step.valid && result.is_ok()),
+                    "Step {}: Attestation should be invalid but processing succeeded",
+                    step_idx
+                );
 
                 if step.valid && result.is_ok() {
                     verify_checks(&store, &step.checks, &block_labels, step_idx)?;
                 }
             }
             _ => {
-                return Err(format!(
-                    "Step {}: Unknown step type: {}",
-                    step_idx, step.step_type
-                ));
+                bail!("Step {}: Unknown step type: {}", step_idx, step.step_type);
             }
         }
     }
@@ -630,12 +634,12 @@ fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
     Ok(())
 }
 
-fn run_test_vector_file(test_path: &str) -> Result<(), String> {
+fn run_test_vector_file(test_path: &str) -> Result<()> {
     let json_str = std::fs::read_to_string(test_path)
-        .map_err(|e| format!("Failed to read file {}: {}", test_path, e))?;
+        .with_context(|| format!("Failed to read file {}", test_path))?;
 
     let test_data: TestVectorFile = serde_json::from_str(&json_str)
-        .map_err(|e| format!("Failed to parse JSON from {}: {}", test_path, e))?;
+        .with_context(|| format!("Failed to parse JSON from {}", test_path))?;
 
     for (test_name, test_vector) in test_data.tests {
         run_single_test(&test_name, test_vector)?;
@@ -648,8 +652,8 @@ fn run_test_vector_file(test_path: &str) -> Result<(), String> {
 fn test_fork_choice_head_vectors() {
     let test_dir = "../tests/test_vectors/test_fork_choice/test_fork_choice_head";
 
-    let entries =
-        std::fs::read_dir(test_dir).expect(&format!("Failed to read test directory: {}", test_dir));
+    let entries = std::fs::read_dir(test_dir)
+        .unwrap_or_else(|e| panic!("Failed to read test directory {}: {}", test_dir, e));
 
     let mut test_count = 0;
     let mut pass_count = 0;
@@ -658,18 +662,24 @@ fn test_fork_choice_head_vectors() {
     println!("\n=== Fork Choice Head Tests ===");
 
     for entry in entries {
-        let path = entry.unwrap().path();
+        let path = entry.expect("Failed to read directory entry").path();
         if path.extension().map_or(false, |ext| ext == "json") {
             test_count += 1;
-            println!("\nTest file: {:?}", path.file_name().unwrap());
+            let file_name = path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("unknown");
+            println!("\nTest file: {}", file_name);
 
-            match run_test_vector_file(path.to_str().unwrap()) {
+            let path_str = path.to_str().expect("Path contains invalid UTF-8");
+
+            match run_test_vector_file(path_str) {
                 Ok(_) => {
                     println!("  ✓ PASSED");
                     pass_count += 1;
                 }
                 Err(e) => {
-                    println!("  ✗ FAILED: {}", e);
+                    println!("  ✗ FAILED: {:#}", e);
                     fail_count += 1;
                 }
             }

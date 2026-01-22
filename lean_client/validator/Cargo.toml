@@ -8,6 +8,7 @@ default = ["xmss-signing"]
 xmss-signing = ["leansig"]
 
 [dependencies]
+anyhow = { workspace = true }
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 containers = { path = "../containers" }

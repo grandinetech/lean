@@ -1,4 +1,5 @@
 use super::*;
+use anyhow::{bail, ensure, Context, Result};
 use containers::block::hash_tree_root;
 use std::fs;
 use std::path::Path;
@@ -6,9 +7,7 @@ use std::path::Path;
 pub struct TestRunner;
 
 impl TestRunner {
-    pub fn run_sequential_block_processing_tests<P: AsRef<Path>>(
-        path: P,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn run_sequential_block_processing_tests<P: AsRef<Path>>(path: P) -> Result<()> {
         let json_content = fs::read_to_string(path)?;
 
         // Parse using the new TestVectorFile structure with camelCase
@@ -19,7 +18,7 @@ impl TestRunner {
             .tests
             .into_iter()
             .next()
-            .ok_or("No test case found in JSON")?;
+            .context("No test case found in JSON")?;
 
         println!("Running test: {}", test_name);
         println!("Description: {}", test_case.info.description);
@@ -37,14 +36,13 @@ impl TestRunner {
                 let computed_parent_root = hash_tree_root(&state_after_slots.latest_block_header);
 
                 // Verify the block's parent_root matches what we computed
-                if block.parent_root != computed_parent_root {
-                    return Err(format!(
-                        "Block {} parent_root mismatch:\n  Expected (from vector): {:?}\n  Computed (from state):  {:?}",
-                        idx + 1,
-                        block.parent_root,
-                        computed_parent_root
-                    ).into());
-                }
+                ensure!(
+                    block.parent_root == computed_parent_root,
+                    "Block {} parent_root mismatch:\n  Expected (from vector): {:?}\n  Computed (from state):  {:?}",
+                    idx + 1,
+                    block.parent_root,
+                    computed_parent_root
+                );
 
                 println!("  ✓ Parent root matches: {:?}", computed_parent_root);
 
@@ -59,45 +57,42 @@ impl TestRunner {
                         let computed_state_root = hash_tree_root(&state);
 
                         // Verify the computed state_root matches the expected one from the vector
-                        if block.state_root != computed_state_root {
-                            return Err(format!(
-                                "Block {} state_root mismatch:\n  Expected (from vector): {:?}\n  Computed (from state):  {:?}",
-                                idx + 1,
-                                block.state_root,
-                                computed_state_root
-                            ).into());
-                        }
+                        ensure!(
+                            block.state_root == computed_state_root,
+                            "Block {} state_root mismatch:\n  Expected (from vector): {:?}\n  Computed (from state):  {:?}",
+                            idx + 1,
+                            block.state_root,
+                            computed_state_root
+                        );
 
                         println!("  ✓ State root matches: {:?}", computed_state_root);
                         println!("  ✓ Block {} processed successfully", idx + 1);
                     }
                     Err(e) => {
-                        return Err(format!("Block {} processing failed: {:?}", idx + 1, e).into());
+                        bail!("Block {} processing failed: {:?}", idx + 1, e);
                     }
                 }
             }
 
             // Verify post-state conditions
             if let Some(post) = test_case.post {
-                if state.slot != post.slot {
-                    return Err(format!(
-                        "Post-state slot mismatch: expected {:?}, got {:?}",
-                        post.slot, state.slot
-                    )
-                    .into());
-                }
+                ensure!(
+                    state.slot == post.slot,
+                    "Post-state slot mismatch: expected {:?}, got {:?}",
+                    post.slot,
+                    state.slot
+                );
 
                 // Only check validator count if specified in post-state
                 if let Some(expected_count) = post.validator_count {
                     let mut num_validators: u64 = state.validators.len_u64();
 
-                    if num_validators as usize != expected_count {
-                        return Err(format!(
-                            "Post-state validator count mismatch: expected {}, got {}",
-                            expected_count, num_validators
-                        )
-                        .into());
-                    }
+                    ensure!(
+                        num_validators as usize == expected_count,
+                        "Post-state validator count mismatch: expected {}, got {}",
+                        expected_count,
+                        num_validators
+                    );
 
                     println!("\n✓ All post-state checks passed");
                     println!("  Final slot: {:?}", state.slot);
@@ -114,9 +109,7 @@ impl TestRunner {
         Ok(())
     }
 
-    pub fn run_single_block_with_slot_gap_tests<P: AsRef<Path>>(
-        path: P,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn run_single_block_with_slot_gap_tests<P: AsRef<Path>>(path: P) -> Result<()> {
         let json_content = fs::read_to_string(path)?;
 
         // Parse using the new TestVectorFile structure with camelCase
@@ -127,7 +120,7 @@ impl TestRunner {
             .tests
             .into_iter()
             .next()
-            .ok_or("No test case found in JSON")?;
+            .context("No test case found in JSON")?;
 
         println!("Running test: {}", test_name);
         println!("Description: {}", test_case.info.description);
@@ -150,14 +143,13 @@ impl TestRunner {
                 let computed_parent_root = hash_tree_root(&state_after_slots.latest_block_header);
 
                 // Verify the block's parent_root matches what we computed
-                if block.parent_root != computed_parent_root {
-                    return Err(format!(
-                        "Block {} parent_root mismatch:\n  Expected (from vector): {:?}\n  Computed (from state):  {:?}",
-                        idx + 1,
-                        block.parent_root,
-                        computed_parent_root
-                    ).into());
-                }
+                ensure!(
+                    block.parent_root == computed_parent_root,
+                    "Block {} parent_root mismatch:\n  Expected (from vector): {:?}\n  Computed (from state):  {:?}",
+                    idx + 1,
+                    block.parent_root,
+                    computed_parent_root
+                );
 
                 println!("  ✓ Parent root matches: {:?}", computed_parent_root);
 
@@ -172,14 +164,13 @@ impl TestRunner {
                         let computed_state_root = hash_tree_root(&state);
 
                         // Verify the computed state_root matches the expected one from the vector
-                        if block.state_root != computed_state_root {
-                            return Err(format!(
-                                "Block {} state_root mismatch:\n  Expected (from vector): {:?}\n  Computed (from state):  {:?}",
-                                idx + 1,
-                                block.state_root,
-                                computed_state_root
-                            ).into());
-                        }
+                        ensure!(
+                            block.state_root == computed_state_root,
+                            "Block {} state_root mismatch:\n  Expected (from vector): {:?}\n  Computed (from state):  {:?}",
+                            idx + 1,
+                            block.state_root,
+                            computed_state_root
+                        );
 
                         println!("  ✓ State root matches: {:?}", computed_state_root);
                         println!(
@@ -189,20 +180,19 @@ impl TestRunner {
                         );
                     }
                     Err(e) => {
-                        return Err(format!("Block {} processing failed: {:?}", idx + 1, e).into());
+                        bail!("Block {} processing failed: {:?}", idx + 1, e);
                     }
                 }
             }
 
             // Verify post-state conditions
             if let Some(post) = test_case.post {
-                if state.slot != post.slot {
-                    return Err(format!(
-                        "Post-state slot mismatch: expected {:?}, got {:?}",
-                        post.slot, state.slot
-                    )
-                    .into());
-                }
+                ensure!(
+                    state.slot == post.slot,
+                    "Post-state slot mismatch: expected {:?}, got {:?}",
+                    post.slot,
+                    state.slot
+                );
 
                 println!("\n✓ All post-state checks passed");
                 println!("  Final slot: {:?}", state.slot);
@@ -214,9 +204,7 @@ impl TestRunner {
         Ok(())
     }
 
-    pub fn run_single_empty_block_tests<P: AsRef<Path>>(
-        path: P,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn run_single_empty_block_tests<P: AsRef<Path>>(path: P) -> Result<()> {
         let json_content = fs::read_to_string(path)?;
 
         // Parse using the new TestVectorFile structure with camelCase
@@ -227,7 +215,7 @@ impl TestRunner {
             .tests
             .into_iter()
             .next()
-            .ok_or("No test case found in JSON")?;
+            .context("No test case found in JSON")?;
 
         println!("Running test: {}", test_name);
         println!("Description: {}", test_case.info.description);
@@ -236,22 +224,22 @@ impl TestRunner {
             let mut state = test_case.pre.clone();
 
             // Should be exactly one block
-            if blocks.len() != 1 {
-                return Err(format!("Expected 1 block, found {}", blocks.len()).into());
-            }
+            ensure!(
+                blocks.len() == 1,
+                "Expected 1 block, found {}",
+                blocks.len()
+            );
 
             let block = &blocks[0];
             println!("\nProcessing single empty block at slot {:?}", block.slot);
 
             // Verify it's an empty block (no attestations)
             let attestation_count = block.body.attestations.len_u64();
-            if attestation_count > 0 {
-                return Err(format!(
-                    "Expected empty block, but found {} attestations",
-                    attestation_count
-                )
-                .into());
-            }
+            ensure!(
+                attestation_count == 0,
+                "Expected empty block, but found {} attestations",
+                attestation_count
+            );
             println!("  ✓ Confirmed: Block has no attestations (empty block)");
 
             // Advance state to the block's slot
@@ -261,13 +249,12 @@ impl TestRunner {
             let computed_parent_root = hash_tree_root(&state_after_slots.latest_block_header);
 
             // Verify the block's parent_root matches what we computed
-            if block.parent_root != computed_parent_root {
-                return Err(format!(
-                    "Block parent_root mismatch:\n  Expected (from vector): {:?}\n  Computed (from state):  {:?}",
-                    block.parent_root,
-                    computed_parent_root
-                ).into());
-            }
+            ensure!(
+                block.parent_root == computed_parent_root,
+                "Block parent_root mismatch:\n  Expected (from vector): {:?}\n  Computed (from state):  {:?}",
+                block.parent_root,
+                computed_parent_root
+            );
 
             println!("  ✓ Parent root matches: {:?}", computed_parent_root);
 
@@ -282,31 +269,29 @@ impl TestRunner {
                     let computed_state_root = hash_tree_root(&state);
 
                     // Verify the computed state_root matches the expected one from the vector
-                    if block.state_root != computed_state_root {
-                        return Err(format!(
-                            "Block state_root mismatch:\n  Expected (from vector): {:?}\n  Computed (from state):  {:?}",
-                            block.state_root,
-                            computed_state_root
-                        ).into());
-                    }
+                    ensure!(
+                        block.state_root == computed_state_root,
+                        "Block state_root mismatch:\n  Expected (from vector): {:?}\n  Computed (from state):  {:?}",
+                        block.state_root,
+                        computed_state_root
+                    );
 
                     println!("  ✓ State root matches: {:?}", computed_state_root);
                     println!("  ✓ Empty block processed successfully");
                 }
                 Err(e) => {
-                    return Err(format!("Block processing failed: {:?}", e).into());
+                    bail!("Block processing failed: {:?}", e);
                 }
             }
 
             // Verify post-state conditions
             if let Some(post) = test_case.post {
-                if state.slot != post.slot {
-                    return Err(format!(
-                        "Post-state slot mismatch: expected {:?}, got {:?}",
-                        post.slot, state.slot
-                    )
-                    .into());
-                }
+                ensure!(
+                    state.slot == post.slot,
+                    "Post-state slot mismatch: expected {:?}, got {:?}",
+                    post.slot,
+                    state.slot
+                );
 
                 println!("\n✓ All post-state checks passed");
                 println!("  Final slot: {:?}", state.slot);
@@ -320,9 +305,7 @@ impl TestRunner {
 
     /// Generic test runner for block processing test vectors
     /// Handles all test vectors from test_blocks directory
-    pub fn run_block_processing_test<P: AsRef<Path>>(
-        path: P,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn run_block_processing_test<P: AsRef<Path>>(path: P) -> Result<()> {
         let json_content = fs::read_to_string(path.as_ref())?;
 
         // Parse using the TestVectorFile structure with camelCase
@@ -333,7 +316,7 @@ impl TestRunner {
             .tests
             .into_iter()
             .next()
-            .ok_or("No test case found in JSON")?;
+            .context("No test case found in JSON")?;
 
         println!("\n{}: {}", test_name, test_case.info.description);
 
@@ -385,7 +368,7 @@ impl TestRunner {
                     println!("    \x1b[31m✗ FAIL: Parent root mismatch\x1b[0m");
                     println!("       Expected: {:?}", block.parent_root);
                     println!("       Got:      {:?}\n", computed_parent_root);
-                    return Err(format!("Block {} parent_root mismatch", idx + 1).into());
+                    bail!("Block {} parent_root mismatch", idx + 1);
                 }
 
                 let attestation_count = block.body.attestations.len_u64();
@@ -405,7 +388,7 @@ impl TestRunner {
                             println!("    \x1b[31m✗ FAIL: State root mismatch\x1b[0m");
                             println!("       Expected: {:?}", block.state_root);
                             println!("       Got:      {:?}\n", computed_state_root);
-                            return Err(format!("Block {} state_root mismatch", idx + 1).into());
+                            bail!("Block {} state_root mismatch", idx + 1);
                         }
 
                         if attestation_count > 0 {
@@ -417,7 +400,7 @@ impl TestRunner {
                     Err(e) => {
                         println!("    \x1b[31m✗ FAIL: Processing failed\x1b[0m");
                         println!("       Error: {:?}\n", e);
-                        return Err(format!("Block {} processing failed", idx + 1).into());
+                        bail!("Block {} processing failed", idx + 1);
                     }
                 }
             }
@@ -433,7 +416,7 @@ impl TestRunner {
 
     /// Test runner for genesis state test vectors
     /// Handles test vectors from test_genesis directory
-    pub fn run_genesis_test<P: AsRef<Path>>(path: P) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn run_genesis_test<P: AsRef<Path>>(path: P) -> Result<()> {
         let json_content = fs::read_to_string(path.as_ref())?;
 
         // Parse using the TestVectorFile structure
@@ -444,7 +427,7 @@ impl TestRunner {
             .tests
             .into_iter()
             .next()
-            .ok_or("No test case found in JSON")?;
+            .context("No test case found in JSON")?;
 
         println!("\n{}: {}", test_name, test_case.info.description);
 
@@ -457,32 +440,30 @@ impl TestRunner {
         );
 
         // Verify it's at genesis (slot 0)
-        if state.slot.0 != 0 {
-            return Err(format!("Expected genesis at slot 0, got slot {}", state.slot.0).into());
-        }
+        ensure!(
+            state.slot.0 == 0,
+            "Expected genesis at slot 0, got slot {}",
+            state.slot.0
+        );
 
         // Verify checkpoint initialization
-        if state.latest_justified.slot.0 != 0 {
-            return Err(format!(
-                "Expected latest_justified at slot 0, got {}",
-                state.latest_justified.slot.0
-            )
-            .into());
-        }
+        ensure!(
+            state.latest_justified.slot.0 == 0,
+            "Expected latest_justified at slot 0, got {}",
+            state.latest_justified.slot.0
+        );
 
-        if state.latest_finalized.slot.0 != 0 {
-            return Err(format!(
-                "Expected latest_finalized at slot 0, got {}",
-                state.latest_finalized.slot.0
-            )
-            .into());
-        }
+        ensure!(
+            state.latest_finalized.slot.0 == 0,
+            "Expected latest_finalized at slot 0, got {}",
+            state.latest_finalized.slot.0
+        );
 
         // Verify empty historical data
-        let has_history = state.historical_block_hashes.get(0).is_ok();
-        if has_history {
-            return Err("Expected empty historical block hashes at genesis".into());
-        }
+        ensure!(
+            state.historical_block_hashes.get(0).is_err(),
+            "Expected empty historical block hashes at genesis"
+        );
 
         println!("  ✓ Genesis state validated");
 
@@ -497,7 +478,7 @@ impl TestRunner {
     }
 
     /// Helper: Run invalid block test (expecting exception)
-    fn run_invalid_block_test(test_case: TestCase) -> Result<(), Box<dyn std::error::Error>> {
+    fn run_invalid_block_test(test_case: TestCase) -> Result<()> {
         if let Some(ref blocks) = test_case.blocks {
             if blocks.is_empty() {
                 println!("  WARNING: Empty blocks array - cannot test invalid block");
@@ -527,9 +508,7 @@ impl TestRunner {
                             break; // Stop at first error
                         } else {
                             println!("    \x1b[31m✗ FAIL: Block processed successfully - but should have failed!\x1b[0m\n");
-                            return Err(
-                                "Expected block processing to fail, but it succeeded".into()
-                            );
+                            bail!("Expected block processing to fail, but it succeeded");
                         }
                     }
                     Err(e) => {
@@ -540,16 +519,17 @@ impl TestRunner {
                 }
             }
 
-            if !error_occurred {
-                return Err("Expected an exception but all blocks processed successfully".into());
-            }
+            ensure!(
+                error_occurred,
+                "Expected an exception but all blocks processed successfully"
+            );
         }
 
         Ok(())
     }
 
     /// Helper: Verify genesis state only (no blocks)
-    fn verify_genesis_state(test_case: TestCase) -> Result<(), Box<dyn std::error::Error>> {
+    fn verify_genesis_state(test_case: TestCase) -> Result<()> {
         let state = &test_case.pre;
 
         // Verify post-state if present
@@ -559,31 +539,26 @@ impl TestRunner {
     }
 
     /// Helper: Verify post-state conditions
-    fn verify_post_state(
-        state: &State,
-        test_case: &TestCase,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    fn verify_post_state(state: &State, test_case: &TestCase) -> Result<()> {
         if let Some(ref post) = test_case.post {
             // Verify slot
-            if state.slot != post.slot {
-                return Err(format!(
-                    "Post-state slot mismatch: expected {:?}, got {:?}",
-                    post.slot, state.slot
-                )
-                .into());
-            }
+            ensure!(
+                state.slot == post.slot,
+                "Post-state slot mismatch: expected {:?}, got {:?}",
+                post.slot,
+                state.slot
+            );
 
             // Verify validator count if specified
             if let Some(expected_count) = post.validator_count {
                 let num_validators: u64 = state.validators.len_u64();
 
-                if num_validators as usize != expected_count {
-                    return Err(format!(
-                        "Post-state validator count mismatch: expected {}, got {}",
-                        expected_count, num_validators
-                    )
-                    .into());
-                }
+                ensure!(
+                    num_validators as usize == expected_count,
+                    "Post-state validator count mismatch: expected {}, got {}",
+                    expected_count,
+                    num_validators
+                );
                 println!(
                     "  ✓ Post-state verified: slot {}, {} validators",
                     state.slot.0, num_validators
@@ -598,9 +573,7 @@ impl TestRunner {
 
     /// Test runner for verify_signatures test vectors
     /// Tests XMSS signature verification on SignedBlockWithAttestation
-    pub fn run_verify_signatures_test<P: AsRef<Path>>(
-        path: P,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn run_verify_signatures_test<P: AsRef<Path>>(path: P) -> Result<()> {
         let json_content = fs::read_to_string(path.as_ref())?;
 
         // Parse using the VerifySignaturesTestVectorFile structure
@@ -611,7 +584,7 @@ impl TestRunner {
             .tests
             .into_iter()
             .next()
-            .ok_or("No test case found in JSON")?;
+            .context("No test case found in JSON")?;
 
         println!("\n{}: {}", test_name, test_case.info.description);
 
@@ -643,9 +616,9 @@ impl TestRunner {
             // Verify signatures - we expect this to fail (return false)
             let result = signed_block.verify_signatures(anchor_state);
 
-            if result {
+            if result.is_ok() {
                 println!("    \x1b[31m✗ FAIL: Signatures verified successfully but should have failed!\x1b[0m\n");
-                return Err("Expected signature verification to fail, but it succeeded".into());
+                bail!("Expected signature verification to fail, but it succeeded");
             } else {
                 println!("    ✓ Correctly rejected: Invalid signatures detected");
                 println!("\n\x1b[32m✓ PASS\x1b[0m\n");
@@ -654,12 +627,12 @@ impl TestRunner {
             // Valid test case - signatures should verify successfully
             let result = signed_block.verify_signatures(anchor_state);
 
-            if result {
+            if result.is_ok() {
                 println!("    ✓ All signatures verified successfully");
                 println!("\n\x1b[32m✓ PASS\x1b[0m\n");
             } else {
                 println!("    \x1b[31m✗ FAIL: Signature verification failed\x1b[0m\n");
-                return Err("Signature verification failed".into());
+                bail!("Signature verification failed: {:?}", result.unwrap_err());
             }
         }
 

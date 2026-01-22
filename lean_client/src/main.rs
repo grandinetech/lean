@@ -1,3 +1,4 @@
+use anyhow::{Context, Error, Result};
 use clap::Parser;
 use containers::ssz::SszHash;
 use containers::{
@@ -11,7 +12,7 @@ use containers::{
     Slot,
 };
 use fork_choice::{
-    handlers::{on_attestation, on_block, on_tick},
+    handlers::{on_attestation, on_block, on_tick, BlockTransitionError},
     store::{get_forkchoice_store, Store, INTERVALS_PER_SLOT},
 };
 use libp2p_identity::Keypair;
@@ -31,10 +32,14 @@ use tokio::{
 use tracing::{debug, info, warn};
 use validator::{ValidatorConfig, ValidatorService};
 
-fn load_node_key(path: &str) -> Result<Keypair, Box<dyn std::error::Error>> {
-    let hex_str = std::fs::read_to_string(path)?.trim().to_string();
-    let bytes = hex::decode(&hex_str)?;
-    let secret = libp2p_identity::secp256k1::SecretKey::try_from_bytes(bytes)?;
+fn load_node_key(path: &str) -> Result<Keypair> {
+    let hex_str = std::fs::read_to_string(path)
+        .with_context(|| format!("Failed to read node key file: {}", path))?
+        .trim()
+        .to_string();
+    let bytes = hex::decode(&hex_str).context("Failed to decode node key hex")?;
+    let secret = libp2p_identity::secp256k1::SecretKey::try_from_bytes(bytes)
+        .context("Failed to parse secp256k1 secret key")?;
     let keypair = libp2p_identity::secp256k1::Keypair::from(secret);
     Ok(Keypair::from(keypair))
 }
@@ -131,7 +136,7 @@ struct Args {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
         .init();
@@ -145,21 +150,23 @@ async fn main() {
 
     let (genesis_time, validators) = if let Some(genesis_path) = &args.genesis {
         let genesis_config = containers::GenesisConfig::load_from_file(genesis_path)
-            .expect("Failed to load genesis config");
+            .context("Failed to load genesis config")?;
 
         let validators: Vec<containers::validator::Validator> = genesis_config
             .genesis_validators
             .iter()
             .enumerate()
             .map(|(i, v_str)| {
-                let pubkey = containers::validator::BlsPublicKey::from_hex(v_str)
-                    .expect("Invalid genesis validator pubkey");
-                containers::validator::Validator {
+                let pubkey =
+                    containers::validator::BlsPublicKey::from_hex(v_str).with_context(|| {
+                        format!("Invalid genesis validator pubkey at index {}: {}", i, v_str)
+                    })?;
+                Ok(containers::validator::Validator {
                     pubkey,
                     index: Uint64(i as u64),
-                }
+                })
             })
-            .collect();
+            .collect::<Result<Vec<_>>>()?;
 
         (genesis_config.genesis_time, validators)
     } else {
@@ -303,7 +310,7 @@ async fn main() {
                     keypair,
                 )
                 .await
-                .expect("Failed to create network service with custom key")
+                .context("Failed to create network service with custom key")?
             }
             Err(e) => {
                 warn!("Failed to load node key: {}, using random key", e);
@@ -314,7 +321,7 @@ async fn main() {
                     peer_count,
                 )
                 .await
-                .expect("Failed to create network service")
+                .context("Failed to create network service")?
             }
         }
     } else {
@@ -325,14 +332,10 @@ async fn main() {
             peer_count,
         )
         .await
-        .expect("Failed to create network service")
+        .context("Failed to create network service")?
     };
 
-    let network_handle = task::spawn(async move {
-        if let Err(err) = network_service.start().await {
-            panic!("Network service exited with error: {err}");
-        }
-    });
+    let network_handle = task::spawn(async move { network_service.start().await });
 
     let chain_outbound_sender = outbound_p2p_sender.clone();
 
@@ -497,8 +500,8 @@ async fn main() {
                                         }
                                     }
                                 }
-                                Err(e) if e.starts_with("Err: (Fork-choice::Handlers::OnBlock) Block queued") => {
-                                    debug!("Block queued, requesting missing parent: {}", e);
+                                Err(BlockTransitionError::BlockQueued { pending_count: _ }) => {
+                                    debug!("Block queued, requesting missing parent");
 
                                     // Request missing parent block from peers
                                     if !parent_root.0.is_zero() {
@@ -553,13 +556,17 @@ async fn main() {
     });
 
     tokio::select! {
-        _ = network_handle => {
-            println!("Network service finished.");
+        res = network_handle => {
+            res.map_err(Error::from)
+                .flatten()
+                .context("Network service failed")?;
+            info!("Network service exited normally");
         }
         _ = chain_handle => {
-            println!("Chain service finished.");
+            info!("Chain service finished");
         }
     }
 
-    println!("Main async task exiting...");
+    info!("Main async task exiting...");
+    Ok(())
 }

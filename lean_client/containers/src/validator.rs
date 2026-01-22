@@ -1,3 +1,4 @@
+use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use ssz::ByteVector;
 use ssz_derive::Ssz;
@@ -58,12 +59,14 @@ impl<'de> Deserialize<'de> for BlsPublicKey {
 }
 
 impl BlsPublicKey {
-    pub fn from_hex(s: &str) -> Result<Self, String> {
+    pub fn from_hex(s: &str) -> Result<Self> {
         let s = s.strip_prefix("0x").unwrap_or(s);
-        let decoded = hex::decode(s).map_err(|e| e.to_string())?;
-        if decoded.len() != 52 {
-            return Err(format!("Expected 52 bytes, got {}", decoded.len()));
-        }
+        let decoded = hex::decode(s).context("Failed to decode hex string")?;
+        ensure!(
+            decoded.len() == 52,
+            "Expected 52 bytes, got {}",
+            decoded.len()
+        );
         let mut byte_vec = ByteVector::default();
         unsafe {
             let dest = &mut byte_vec as *mut ByteVector<U52> as *mut u8;

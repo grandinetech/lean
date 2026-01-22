@@ -79,7 +79,10 @@ fn test_state_transition_invalid_signatures() {
 
     let result = state.state_transition(final_signed_block_with_attestation, false);
     assert!(result.is_err());
-    assert_eq!(result.unwrap_err(), "Block signatures must be valid");
+    assert_eq!(
+        result.unwrap_err().to_string(),
+        "Block signatures must be valid"
+    );
 }
 
 #[test]
@@ -103,5 +106,5 @@ fn test_state_transition_bad_state_root() {
 
     let result = state.state_transition(final_signed_block_with_attestation, true);
     assert!(result.is_err());
-    assert_eq!(result.unwrap_err(), "Invalid block state root");
+    assert_eq!(result.unwrap_err().to_string(), "Invalid block state root");
 }

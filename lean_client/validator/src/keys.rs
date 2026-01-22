@@ -1,3 +1,4 @@
+use anyhow::{ensure, Context, Result};
 use containers::attestation::U3112;
 use containers::ssz::ByteVector;
 use containers::Signature;
@@ -25,12 +26,14 @@ pub struct KeyManager {
 
 impl KeyManager {
     /// Load keys from the hash-sig-keys directory
-    pub fn new(keys_dir: impl AsRef<Path>) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(keys_dir: impl AsRef<Path>) -> Result<Self> {
         let keys_dir = keys_dir.as_ref().to_path_buf();
 
-        if !keys_dir.exists() {
-            return Err(format!("Keys directory not found: {:?}", keys_dir).into());
-        }
+        ensure!(
+            keys_dir.exists(),
+            "Keys directory not found: {:?}",
+            keys_dir
+        );
 
         info!(path = ?keys_dir, "Initializing key manager");
 
@@ -41,16 +44,15 @@ impl KeyManager {
     }
 
     /// Load a secret key for a specific validator index
-    pub fn load_key(&mut self, validator_index: u64) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn load_key(&mut self, validator_index: u64) -> Result<()> {
         let sk_path = self
             .keys_dir
             .join(format!("validator_{}_sk.ssz", validator_index));
 
-        if !sk_path.exists() {
-            return Err(format!("Secret key file not found: {:?}", sk_path).into());
-        }
+        ensure!(sk_path.exists(), "Secret key file not found: {:?}", sk_path);
 
-        let key_bytes = std::fs::read(&sk_path)?;
+        let key_bytes = std::fs::read(&sk_path)
+            .with_context(|| format!("Failed to read secret key file: {:?}", sk_path))?;
 
         info!(
             validator = validator_index,
@@ -63,38 +65,31 @@ impl KeyManager {
     }
 
     /// Sign a message with the validator's secret key
-    pub fn sign(
-        &self,
-        validator_index: u64,
-        epoch: u32,
-        message: &[u8; 32],
-    ) -> Result<Signature, Box<dyn std::error::Error>> {
+    pub fn sign(&self, validator_index: u64, epoch: u32, message: &[u8; 32]) -> Result<Signature> {
         #[cfg(feature = "xmss-signing")]
         {
             let key_bytes = self
                 .keys
                 .get(&validator_index)
-                .ok_or_else(|| format!("No key loaded for validator {}", validator_index))?;
+                .with_context(|| format!("No key loaded for validator {}", validator_index))?;
 
             type SecretKey =
                 <SIGTopLevelTargetSumLifetime32Dim64Base8 as SignatureScheme>::SecretKey;
 
             let secret_key = SecretKey::from_bytes(key_bytes)
-                .map_err(|e| format!("Failed to deserialize secret key: {:?}", e))?;
+                .map_err(|e| anyhow::anyhow!("Failed to deserialize secret key: {:?}", e))?;
 
             let leansig_signature =
                 SIGTopLevelTargetSumLifetime32Dim64Base8::sign(&secret_key, epoch, message)
-                    .map_err(|e| format!("Failed to sign message: {:?}", e))?;
+                    .map_err(|e| anyhow::anyhow!("Failed to sign message: {:?}", e))?;
 
             let sig_bytes = leansig_signature.to_bytes();
 
-            if sig_bytes.len() != 3112 {
-                return Err(format!(
-                    "Invalid signature size: expected 3112, got {}",
-                    sig_bytes.len()
-                )
-                .into());
-            }
+            ensure!(
+                sig_bytes.len() == 3112,
+                "Invalid signature size: expected 3112, got {}",
+                sig_bytes.len()
+            );
 
             // Convert to ByteVector<U3112> using unsafe pointer copy (same pattern as BlsPublicKey)
             let mut byte_vec: ByteVector<U3112> = ByteVector::default();

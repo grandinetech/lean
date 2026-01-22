@@ -7,6 +7,7 @@ use crate::{
 use crate::{
     HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots, Validators,
 };
+use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use ssz::PersistentList as List;
 use ssz_derive::Ssz;
@@ -216,7 +217,7 @@ impl State {
         &self,
         signed_block: SignedBlockWithAttestation,
         valid_signatures: bool,
-    ) -> Result<Self, String> {
+    ) -> Result<Self> {
         self.state_transition_with_validation(signed_block, valid_signatures, true)
     }
 
@@ -226,10 +227,8 @@ impl State {
         signed_block: SignedBlockWithAttestation,
         valid_signatures: bool,
         validate_state_root: bool,
-    ) -> Result<Self, String> {
-        if !valid_signatures {
-            return Err("Block signatures must be valid".to_string());
-        }
+    ) -> Result<Self> {
+        ensure!(valid_signatures, "Block signatures must be valid");
 
         let block = &signed_block.message.block;
         let mut state = self.process_slots(block.slot)?;
@@ -238,18 +237,14 @@ impl State {
         if validate_state_root {
             let state_for_hash = state.clone();
             let state_root = hash_tree_root(&state_for_hash);
-            if block.state_root != state_root {
-                return Err("Invalid block state root".to_string());
-            }
+            ensure!(block.state_root == state_root, "Invalid block state root");
         }
 
         Ok(state)
     }
 
-    pub fn process_slots(&self, target_slot: Slot) -> Result<Self, String> {
-        if self.slot >= target_slot {
-            return Err("Target slot must be in the future".to_string());
-        }
+    pub fn process_slots(&self, target_slot: Slot) -> Result<Self> {
+        ensure!(self.slot < target_slot, "Target slot must be in the future");
 
         let mut state = self.clone();
 
@@ -279,7 +274,7 @@ impl State {
         self.clone()
     }
 
-    pub fn process_block(&self, block: &Block) -> Result<Self, String> {
+    pub fn process_block(&self, block: &Block) -> Result<Self> {
         let state = self.process_block_header(block)?;
         let state_after_ops = state.process_attestations(&block.body.attestations);
 
@@ -288,23 +283,24 @@ impl State {
         Ok(state_after_ops)
     }
 
-    pub fn process_block_header(&self, block: &Block) -> Result<Self, String> {
-        if !(block.slot == self.slot) {
-            return Err(String::from("Block slot mismatch"));
-        }
-        if !(block.slot > self.latest_block_header.slot) {
-            return Err(String::from("Block is older than latest header"));
-        }
-        if !self.is_proposer(block.proposer_index) {
-            return Err(String::from("Incorrect block proposer"));
-        }
+    pub fn process_block_header(&self, block: &Block) -> Result<Self> {
+        ensure!(block.slot == self.slot, "Block slot mismatch");
+        ensure!(
+            block.slot > self.latest_block_header.slot,
+            "Block is older than latest header"
+        );
+        ensure!(
+            self.is_proposer(block.proposer_index),
+            "Incorrect block proposer"
+        );
 
         // Create a mutable clone for hash computation
         let latest_header_for_hash = self.latest_block_header.clone();
         let parent_root = hash_tree_root(&latest_header_for_hash);
-        if block.parent_root != parent_root {
-            return Err(String::from("Block parent root mismatch"));
-        }
+        ensure!(
+            block.parent_root == parent_root,
+            "Block parent root mismatch"
+        );
 
         // Build new PersistentList for historical hashes
         let mut new_historical_hashes = HistoricalBlockHashes::default();
@@ -537,7 +533,7 @@ impl State {
         initial_attestations: Option<Vec<Attestation>>,
         available_signed_attestations: Option<&[SignedBlockWithAttestation]>,
         known_block_roots: Option<&std::collections::HashSet<Bytes32>>,
-    ) -> Result<(Block, Self, Vec<Attestation>, BlockSignatures), String> {
+    ) -> Result<(Block, Self, Vec<Attestation>, BlockSignatures)> {
         // Initialize empty attestation set for iterative collection
         let mut attestations = initial_attestations.unwrap_or_default();
         let mut signatures = BlockSignatures::default();
@@ -558,7 +554,7 @@ impl State {
             for att in &attestations {
                 attestations_list
                     .push(att.clone())
-                    .map_err(|e| format!("Failed to push attestation: {:?}", e))?;
+                    .context("Failed to push attestation")?;
             }
 
             let candidate_block = Block {
@@ -643,9 +639,7 @@ impl State {
             // Add new attestations and continue iteration
             attestations.extend(new_attestations);
             for sig in new_signatures {
-                signatures
-                    .push(sig)
-                    .map_err(|e| format!("Failed to push signature: {:?}", e))?;
+                signatures.push(sig).context("Failed to push signature")?;
             }
         }
     }

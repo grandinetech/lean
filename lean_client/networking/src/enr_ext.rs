@@ -3,7 +3,7 @@
 
 //! ENR extension trait to support libp2p integration.
 
-use anyhow::{Result, bail};
+use anyhow::{Result, anyhow, bail};
 use discv5::{
     Enr,
     enr::{CombinedKey, CombinedPublicKey},
@@ -315,13 +315,13 @@ impl CombinedKeyExt for CombinedKey {
 
 // helper function to convert a peer_id to a node_id. This is only possible for secp256k1/ed25519 libp2p
 // peer_ids
-pub fn peer_id_to_node_id(peer_id: &PeerId) -> Result<discv5::enr::NodeId, String> {
+pub fn peer_id_to_node_id(peer_id: &PeerId) -> anyhow::Result<discv5::enr::NodeId> {
     // A libp2p peer id byte representation should be 2 length bytes + 4 protobuf bytes + compressed pk bytes
     // if generated from a PublicKey with Identity multihash.
     let pk_bytes = &peer_id.to_bytes()[2..];
 
     let public_key = PublicKey::try_decode_protobuf(pk_bytes).map_err(|e| {
-        format!(
+        anyhow!(
             " Cannot parse libp2p public key public key from peer id: {}",
             e
         )
@@ -353,7 +353,7 @@ pub fn peer_id_to_node_id(peer_id: &PeerId) -> Result<discv5::enr::NodeId, Strin
             Ok(discv5::enr::NodeId::parse(&output).expect("Must be correct length"))
         }
 
-        _ => Err(format!("Unsupported public key from peer {}", peer_id)),
+        _ => bail!("Unsupported public key from peer {}", peer_id),
     }
 }
 
