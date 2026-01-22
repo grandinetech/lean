@@ -1,7 +1,7 @@
 use crate::{
     Attestation, Attestations, BlockSignatures, Bytes32, Signature, Slot, State, ValidatorIndex,
 };
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use ssz_derive::Ssz;
 
@@ -198,28 +198,26 @@ impl SignedBlockWithAttestation {
 
                 // Deserialize the public key using Serializable trait
                 type PubKey = <SIGTargetSumLifetime20W2NoOff as SignatureScheme>::PublicKey;
-                let pubkey = match PubKey::from_bytes(pubkey_bytes) {
-                    Ok(pk) => pk,
-                    Err(e) => bail!(
+                let pubkey = PubKey::from_bytes(pubkey_bytes).map_err(|e| {
+                    anyhow!(
                         "Failed to deserialize public key at slot {:?}: {:?}",
                         attestation.data.slot,
                         e
-                    ),
-                };
+                    )
+                })?;
 
                 // Get signature bytes - use as_bytes() method
                 let sig_bytes = signature.as_bytes();
 
                 // Deserialize the signature using Serializable trait
                 type Sig = <SIGTargetSumLifetime20W2NoOff as SignatureScheme>::Signature;
-                let sig = match Sig::from_bytes(sig_bytes) {
-                    Ok(s) => s,
-                    Err(e) => bail!(
+                let sig = Sig::from_bytes(sig_bytes).map_err(|e| {
+                    anyhow!(
                         "Failed to deserialize signature at slot {:?}: {:?}",
                         attestation.data.slot,
                         e
-                    ),
-                };
+                    )
+                })?;
 
                 // Verify the signature
                 ensure!(
