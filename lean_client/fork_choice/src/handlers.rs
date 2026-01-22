@@ -1,5 +1,5 @@
 use crate::store::*;
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{ensure, Context, Result};
 use containers::{
     attestation::SignedAttestation, block::SignedBlockWithAttestation, Bytes32, ValidatorIndex,
 };
@@ -8,11 +8,8 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum BlockTransitionError {
-    #[error("Block queued: parent not yet available (pending: {pending_count} blocks)")]
-    BlockQueued { pending_count: usize },
-
-    #[error("No parent state found for block")]
-    NoParentState,
+    #[error("Block queued: parent not yet available")]
+    BlockQueued,
 
     #[error(transparent)]
     StateTransition(#[from] anyhow::Error),
@@ -116,9 +113,7 @@ pub fn on_block(
             .entry(parent_root)
             .or_insert_with(Vec::new)
             .push(signed_block);
-        return Err(BlockTransitionError::BlockQueued {
-            pending_count: store.blocks_queue.values().map(|v| v.len()).sum(),
-        });
+        return Err(BlockTransitionError::BlockQueued);
     }
 
     process_block_internal(store, signed_block, block_root)?;
@@ -138,7 +133,7 @@ fn process_block_internal(
     let state = store
         .states
         .get(&block.parent_root)
-        .ok_or(BlockTransitionError::NoParentState)?;
+        .context("No parent state found")?;
 
     // Execute state transition to get post-state
     let new_state = state

@@ -330,7 +330,7 @@ async fn main() -> Result<()> {
             peer_count,
         )
         .await
-        .context("Failed to create network service")?
+        .expect("Failed to create network service")
     };
 
     let network_handle = task::spawn(async move { network_service.start().await });
@@ -498,7 +498,7 @@ async fn main() -> Result<()> {
                                         }
                                     }
                                 }
-                                Err(BlockTransitionError::BlockQueued { pending_count: _ }) => {
+                                Err(BlockTransitionError::BlockQueued) => {
                                     debug!("Block queued, requesting missing parent");
 
                                     // Request missing parent block from peers
