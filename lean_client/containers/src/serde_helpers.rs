@@ -1,6 +1,7 @@
 // Serde helpers for handling test vector JSON format
 // Test vectors wrap SSZ collections in {"data": [...]} objects
-use anyhow::Result;
+
+use anyhow::{Context, Result};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// Wrapper for deserializing {"data": T} format
@@ -188,7 +189,6 @@ pub mod signature {
 pub mod block_signatures {
     use super::*;
     use crate::{BlockSignatures, Signature};
-    use anyhow::Context;
     use serde_json::Value;
     use ssz::PersistentList;
 
@@ -209,14 +209,14 @@ pub mod block_signatures {
         // Check if it's a hex string (normal format)
         if let Value::String(hex_str) = value {
             let hex_str = hex_str.trim_start_matches("0x");
-            let bytes = hex::decode(hex_str).context("Invalid hex string: {}")?;
+            let bytes = hex::decode(hex_str).context("Invalid hex string")?;
 
             return Signature::try_from(bytes.as_slice()).context("Invalid signature length");
         }
 
         // Otherwise, parse as structured XMSS signature
         let xmss_sig: XmssSignature =
-            serde_json::from_value(value.clone()).context("Failed to parse XMSS signature: {}")?;
+            serde_json::from_value(value.clone()).context("Failed to parse XMSS signature")?;
 
         // Serialize the XMSS signature to bytes
         // Format: siblings (variable length) + rho (28 bytes) + hashes (variable length)

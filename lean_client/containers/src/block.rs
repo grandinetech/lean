@@ -1,9 +1,10 @@
-use anyhow::{bail, ensure, Context, Result};
 use crate::{
     Attestation, Attestations, BlockSignatures, Bytes32, Signature, Slot, State, ValidatorIndex,
 };
+use anyhow::{bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use ssz_derive::Ssz;
+
 #[cfg(feature = "xmss-verify")]
 use leansig::signature::generalized_xmss::instantiations_poseidon::lifetime_2_to_the_20::target_sum::SIGTargetSumLifetime20W2NoOff;
 
@@ -167,12 +168,6 @@ impl SignedBlockWithAttestation {
 
         // Verify each attestation signature
         for (attestation, signature) in all_attestations.iter().zip(signatures_vec.iter()) {
-            // Ensure validator exists in the active set
-            ensure!(
-                attestation.validator_id.0 < num_validators,
-                "Validator index out of range"
-            );
-
             let validator = validators
                 .get(attestation.validator_id.0)
                 .with_context(|| {

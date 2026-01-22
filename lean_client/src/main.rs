@@ -150,23 +150,21 @@ async fn main() -> Result<()> {
 
     let (genesis_time, validators) = if let Some(genesis_path) = &args.genesis {
         let genesis_config = containers::GenesisConfig::load_from_file(genesis_path)
-            .context("Failed to load genesis config")?;
+            .expect("Failed to load genesis config");
 
         let validators: Vec<containers::validator::Validator> = genesis_config
             .genesis_validators
             .iter()
             .enumerate()
             .map(|(i, v_str)| {
-                let pubkey =
-                    containers::validator::BlsPublicKey::from_hex(v_str).with_context(|| {
-                        format!("Invalid genesis validator pubkey at index {}: {}", i, v_str)
-                    })?;
-                Ok(containers::validator::Validator {
+                let pubkey = containers::validator::BlsPublicKey::from_hex(v_str)
+                    .expect("Invalid genesis validator pubkey");
+                containers::validator::Validator {
                     pubkey,
                     index: Uint64(i as u64),
-                })
+                }
             })
-            .collect::<Result<Vec<_>>>()?;
+            .collect();
 
         (genesis_config.genesis_time, validators)
     } else {
@@ -310,7 +308,7 @@ async fn main() -> Result<()> {
                     keypair,
                 )
                 .await
-                .context("Failed to create network service with custom key")?
+                .expect("Failed to create network service with custom key")
             }
             Err(e) => {
                 warn!("Failed to load node key: {}, using random key", e);
@@ -321,7 +319,7 @@ async fn main() -> Result<()> {
                     peer_count,
                 )
                 .await
-                .context("Failed to create network service")?
+                .expect("Failed to create network service")
             }
         }
     } else {

@@ -669,7 +669,7 @@ fn test_fork_choice_head_vectors() {
                 .file_name()
                 .and_then(|n| n.to_str())
                 .unwrap_or("unknown");
-            println!("\nTest file: {}", file_name);
+            println!("\nTest file: {:?}", file_name);
 
             let path_str = path.to_str().expect("Path contains invalid UTF-8");
 
@@ -679,7 +679,7 @@ fn test_fork_choice_head_vectors() {
                     pass_count += 1;
                 }
                 Err(e) => {
-                    println!("  ✗ FAILED: {:#}", e);
+                    println!("  ✗ FAILED: {}", e);
                     fail_count += 1;
                 }
             }
