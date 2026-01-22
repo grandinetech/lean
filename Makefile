@@ -21,6 +21,10 @@ test:
 docker:
 	$(MAKE) -C lean_client docker
 
+.PHONY: docker-local
+docker-local:
+	$(MAKE) -C lean_client docker-local
+
 .PHONY: release
 release:
 	$(MAKE) -C lean_client release
