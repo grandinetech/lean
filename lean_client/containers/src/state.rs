@@ -788,7 +788,8 @@ impl State {
 
                 // Create proof placeholder (matches Python test_mode behavior)
                 // TODO: Call actual aggregation when lean-multisig supports proper encoding
-                let proof_data = crate::MultisigAggregatedSignature::new(Vec::new());
+                let proof_data = crate::MultisigAggregatedSignature::new(Vec::new())
+                    .expect("Empty proof should always be valid");
                 let proof = crate::AggregatedSignatureProof::new(participants.clone(), proof_data);
 
                 results.push((

@@ -1,12 +1,15 @@
 use crate::{Checkpoint, Slot, Uint64};
+use leansig::serialization::Serializable;
 use serde::{Deserialize, Serialize};
 use ssz::BitList;
 use ssz::ByteVector;
+use ssz::{SszHash, H256};
 use ssz_derive::Ssz;
+use std::collections::HashSet;
 use typenum::{Prod, Sum, U100, U1024, U12, U31};
 
 // Type-level number for 1 MiB (1048576 = 1024 * 1024)
-pub type U1048576 = Prod<U1024, U1024>;
+type U1048576 = Prod<U1024, U1024>;
 
 pub type U3100 = Prod<U31, U100>;
 
@@ -46,8 +49,10 @@ pub struct MultisigAggregatedSignature(
 
 impl MultisigAggregatedSignature {
     /// Create a new MultisigAggregatedSignature from proof bytes.
-    pub fn new(proof: Vec<u8>) -> Self {
-        Self(ssz::ByteList::try_from(proof).expect("proof exceeds 1 MiB limit"))
+    pub fn new(proof: Vec<u8>) -> Result<Self, AggregationError> {
+        ssz::ByteList::try_from(proof)
+            .map(Self)
+            .map_err(|_| AggregationError::AggregationFailed)
     }
 
     /// Get the proof bytes.
@@ -89,7 +94,7 @@ impl MultisigAggregatedSignature {
             lean_multisig::xmss_aggregate_signatures(public_keys, signatures, message, epoch)
                 .map_err(|_| AggregationError::AggregationFailed)?;
 
-        Ok(Self::new(proof_bytes))
+        Self::new(proof_bytes)
     }
 
     /// Verify the aggregated signature proof against the given public keys and message.
@@ -132,16 +137,24 @@ impl MultisigAggregatedSignature {
         message: &[u8; 32],
         epoch: u64,
     ) -> Result<(), AggregationError> {
-        // NOTE: This stub matches Python leanSpec behavior (test_mode=True).
-        // Python also uses test_mode=True with TODO: "Remove test_mode once leanVM
-        // supports correct signature encoding."
-        // Once leanVM/lean-multisig supports proper signature encoding:
-        // 1. Extract public keys from validators
-        // 2. Convert message bytes to field element format
-        // 3. Call lean_multisig::xmss_verify_aggregated_signatures
-        let _ = (validators, message, epoch);
+        // Extract public keys from validators
+        let mut public_keys = Vec::new();
+        for validator in validators {
+            // Convert PublicKey to lean_multisig::XmssPublicKey
+            let lean_sig_pk = validator.pubkey.as_lean_sig()
+                .map_err(|_| AggregationError::VerificationFailed)?;
+            let pk_bytes = lean_sig_pk.to_bytes();
+            // TODO: Implement proper conversion from PublicKey bytes to lean_multisig::XmssPublicKey
+            // Once lean-multisig API is clarified, convert pk_bytes to XmssPublicKey
+            todo!("Convert PublicKey to lean_multisig::XmssPublicKey and implement message field conversion");
+        }
 
-        Ok(())
+        // Convert 32-byte message to 8 field elements
+        // TODO: Implement proper conversion from 32 bytes to 8 field elements
+        let message_fields = todo!("Convert 32-byte message to [lean_multisig::F; 8]");
+
+        // Call verify with extracted keys and converted message
+        self.verify(&public_keys, message_fields, epoch)
     }
 }
 
@@ -348,9 +361,7 @@ impl AggregatedAttestation {
 
     /// Returns true if the provided list contains duplicate AttestationData.
     pub fn has_duplicate_data(attestations: &AggregatedAttestations) -> bool {
-        use ssz::SszHash;
-        use std::collections::HashSet;
-        let mut seen: HashSet<ssz::H256> = HashSet::new();
+        let mut seen: HashSet<H256> = HashSet::new();
         for attestation in attestations {
             let root = attestation.data.hash_tree_root();
             if !seen.insert(root) {
