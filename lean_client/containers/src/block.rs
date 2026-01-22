@@ -1,6 +1,7 @@
 use crate::{
     Attestation, Attestations, BlockSignatures, Bytes32, Signature, Slot, State, ValidatorIndex,
 };
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use ssz_derive::Ssz;
 
@@ -114,7 +115,7 @@ impl SignedBlockWithAttestation {
     ///
     /// - Spec: <https://github.com/leanEthereum/leanSpec/blob/main/src/lean_spec/subspecs/containers/block/block.py#L35>
     /// - XMSS Library: <https://github.com/leanEthereum/leanSig>
-    pub fn verify_signatures(&self, parent_state: State) -> bool {
+    pub fn verify_signatures(&self, parent_state: State) -> Result<()> {
         // Unpack the signed block components
         let block = &self.message.block;
         let signatures = &self.signature;
@@ -157,7 +158,7 @@ impl SignedBlockWithAttestation {
         // The ordering must be preserved:
         // 1. Block body attestations,
         // 2. The proposer attestation.
-        assert!(
+        ensure!(
             signatures_vec.len() == all_attestations.len(),
             "Number of signatures does not match number of attestations"
         );
@@ -167,15 +168,14 @@ impl SignedBlockWithAttestation {
 
         // Verify each attestation signature
         for (attestation, signature) in all_attestations.iter().zip(signatures_vec.iter()) {
-            // Ensure validator exists in the active set
-            assert!(
-                attestation.validator_id.0 < num_validators,
-                "Validator index out of range"
-            );
-
             let validator = validators
                 .get(attestation.validator_id.0)
-                .expect("validator must exist");
+                .with_context(|| {
+                    format!(
+                        "Validator {} not found in state",
+                        attestation.validator_id.0
+                    )
+                })?;
 
             // Verify the XMSS signature
             //
@@ -198,41 +198,33 @@ impl SignedBlockWithAttestation {
 
                 // Deserialize the public key using Serializable trait
                 type PubKey = <SIGTargetSumLifetime20W2NoOff as SignatureScheme>::PublicKey;
-                let pubkey = match PubKey::from_bytes(pubkey_bytes) {
-                    Ok(pk) => pk,
-                    Err(e) => {
-                        eprintln!(
-                            "Failed to deserialize public key at slot {:?}: {:?}",
-                            attestation.data.slot, e
-                        );
-                        return false;
-                    }
-                };
+                let pubkey = PubKey::from_bytes(pubkey_bytes).map_err(|e| {
+                    anyhow!(
+                        "Failed to deserialize public key at slot {:?}: {:?}",
+                        attestation.data.slot,
+                        e
+                    )
+                })?;
 
                 // Get signature bytes - use as_bytes() method
                 let sig_bytes = signature.as_bytes();
 
                 // Deserialize the signature using Serializable trait
                 type Sig = <SIGTargetSumLifetime20W2NoOff as SignatureScheme>::Signature;
-                let sig = match Sig::from_bytes(sig_bytes) {
-                    Ok(s) => s,
-                    Err(e) => {
-                        eprintln!(
-                            "Failed to deserialize signature at slot {:?}: {:?}",
-                            attestation.data.slot, e
-                        );
-                        return false;
-                    }
-                };
+                let sig = Sig::from_bytes(sig_bytes).map_err(|e| {
+                    anyhow!(
+                        "Failed to deserialize signature at slot {:?}: {:?}",
+                        attestation.data.slot,
+                        e
+                    )
+                })?;
 
                 // Verify the signature
-                if !SIGTargetSumLifetime20W2NoOff::verify(&pubkey, epoch, &message_bytes, &sig) {
-                    eprintln!(
-                        "XMSS signature verification failed at slot {:?}",
-                        attestation.data.slot
-                    );
-                    return false;
-                }
+                ensure!(
+                    SIGTargetSumLifetime20W2NoOff::verify(&pubkey, epoch, &message_bytes, &sig),
+                    "XMSS signature verification failed at slot {:?}",
+                    attestation.data.slot
+                );
             }
 
             #[cfg(not(feature = "xmss-verify"))]
@@ -246,6 +238,6 @@ impl SignedBlockWithAttestation {
             }
         }
 
-        true
+        Ok(())
     }
 }

@@ -1,8 +1,19 @@
 use crate::store::*;
+use anyhow::{ensure, Context, Result};
 use containers::{
     attestation::SignedAttestation, block::SignedBlockWithAttestation, Bytes32, ValidatorIndex,
 };
 use ssz::SszHash;
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum BlockTransitionError {
+    #[error("Block queued: parent not yet available")]
+    BlockQueued,
+
+    #[error(transparent)]
+    StateTransition(#[from] anyhow::Error),
+}
 
 #[inline]
 pub fn on_tick(store: &mut Store, time: u64, has_proposal: bool) {
@@ -24,7 +35,7 @@ pub fn on_attestation(
     store: &mut Store,
     signed_attestation: SignedAttestation,
     is_from_block: bool,
-) -> Result<(), String> {
+) -> Result<()> {
     let validator_id = ValidatorIndex(signed_attestation.message.validator_id.0);
     let attestation_slot = signed_attestation.message.data.slot;
     let source_slot = signed_attestation.message.data.source.slot;
@@ -32,20 +43,20 @@ pub fn on_attestation(
 
     // Validate attestation is not from future
     let curr_slot = store.time / INTERVALS_PER_SLOT;
-    if attestation_slot.0 > curr_slot {
-        return Err(format!(
-            "Err: (Fork-choice::Handlers::OnAttestation) Attestation for slot {} has not yet occurred, out of sync. (CURRENT SLOT NUMBER: {})",
-            attestation_slot.0, curr_slot
-        ));
-    }
+    ensure!(
+        attestation_slot.0 <= curr_slot,
+        "Attestation for slot {} has not yet occurred, out of sync (current slot: {})",
+        attestation_slot.0,
+        curr_slot
+    );
 
     // Validate source slot does not exceed target slot (per leanSpec validate_attestation)
-    if source_slot > target_slot {
-        return Err(format!(
-            "Err: (Fork-choice::Handlers::OnAttestation) Source slot {} exceeds target slot {}",
-            source_slot.0, target_slot.0
-        ));
-    }
+    ensure!(
+        source_slot <= target_slot,
+        "Source slot {} exceeds target slot {}",
+        source_slot.0,
+        target_slot.0
+    );
 
     if is_from_block {
         // On-chain attestation processing - immediately becomes "known"
@@ -84,7 +95,10 @@ pub fn on_attestation(
     Ok(())
 }
 
-pub fn on_block(store: &mut Store, signed_block: SignedBlockWithAttestation) -> Result<(), String> {
+pub fn on_block(
+    store: &mut Store,
+    signed_block: SignedBlockWithAttestation,
+) -> Result<(), BlockTransitionError> {
     let block_root = Bytes32(signed_block.message.block.hash_tree_root());
 
     if store.blocks.contains_key(&block_root) {
@@ -99,11 +113,7 @@ pub fn on_block(store: &mut Store, signed_block: SignedBlockWithAttestation) -> 
             .entry(parent_root)
             .or_insert_with(Vec::new)
             .push(signed_block);
-        return Err(format!(
-            "Err: (Fork-choice::Handlers::OnBlock) Block queued: parent {:?} not yet available (pending: {} blocks)",
-            &parent_root.0.as_bytes()[..4],
-            store.blocks_queue.values().map(|v| v.len()).sum::<usize>()
-        ));
+        return Err(BlockTransitionError::BlockQueued);
     }
 
     process_block_internal(store, signed_block, block_root)?;
@@ -116,21 +126,19 @@ fn process_block_internal(
     store: &mut Store,
     signed_block: SignedBlockWithAttestation,
     block_root: Bytes32,
-) -> Result<(), String> {
+) -> Result<(), BlockTransitionError> {
     let block = &signed_block.message.block;
 
     // Get parent state for validation
-    let state = match store.states.get(&block.parent_root) {
-        Some(state) => state,
-        None => {
-            return Err(
-                "Err: (Fork-choice::Handlers::ProcessBlockInternal) No parent state.".to_string(),
-            );
-        }
-    };
+    let state = store
+        .states
+        .get(&block.parent_root)
+        .context("No parent state found")?;
 
     // Execute state transition to get post-state
-    let new_state = state.state_transition_with_validation(signed_block.clone(), true, true)?;
+    let new_state = state
+        .state_transition_with_validation(signed_block.clone(), true, true)
+        .context("State transition failed")?;
 
     // Store block and state
     store.blocks.insert(block_root, signed_block.clone());

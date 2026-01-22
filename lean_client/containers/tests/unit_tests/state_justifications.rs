@@ -120,7 +120,8 @@ fn test_with_justifications_empty() {
 
     let new_state = initial_state
         .clone()
-        .with_justifications(std::collections::BTreeMap::new());
+        .with_justifications(std::collections::BTreeMap::new())
+        .unwrap();
 
     assert!(new_state.justifications_roots.get(0).is_err());
     assert!(new_state.justifications_validators.get(0).is_none());
@@ -142,7 +143,7 @@ fn test_with_justifications_deterministic_order() {
     justifications.insert(root2, votes2.clone());
     justifications.insert(root1, votes1.clone());
 
-    let new_state = state.with_justifications(justifications);
+    let new_state = state.with_justifications(justifications).unwrap();
 
     // Expected roots in sorted order (root1 < root2)
     assert_eq!(new_state.justifications_roots.get(0).ok(), Some(&root1));
@@ -204,7 +205,9 @@ fn test_justifications_roundtrip(
 ) {
     let state = state(sample_config());
 
-    let new_state = state.with_justifications(justifications_map.clone());
+    let new_state = state
+        .with_justifications(justifications_map.clone())
+        .unwrap();
     let reconstructed_map = new_state.get_justifications();
 
     let expected_map = justifications_map;

@@ -11,6 +11,7 @@ name = "containers"
 path = "src/lib.rs"
 
 [dependencies]
+anyhow = { workspace = true }
 ssz = { git = "https://github.com/grandinetech/grandine", package = "ssz", branch = "develop" }
 ssz_derive = { git = "https://github.com/grandinetech/grandine", package = "ssz_derive", branch = "develop" }
 typenum = "1"
@@ -22,6 +23,7 @@ sha2 = "0.10"
 leansig = { git = "https://github.com/leanEthereum/leanSig", branch = "main", optional = true }
 
 [dev-dependencies]
+anyhow = { workspace = true }
 rstest = "0.18"
 pretty_assertions = "1.4"
 serde_json = "1.0"

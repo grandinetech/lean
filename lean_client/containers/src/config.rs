@@ -1,3 +1,4 @@
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use ssz_derive::Ssz;
 use std::fs::File;
@@ -20,10 +21,12 @@ pub struct GenesisConfig {
 }
 
 impl GenesisConfig {
-    pub fn load_from_file<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn std::error::Error>> {
-        let file = File::open(path)?;
+    pub fn load_from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
+        let file = File::open(&path)
+            .with_context(|| format!("Failed to open genesis config file: {:?}", path.as_ref()))?;
         let reader = BufReader::new(file);
-        let config = serde_yaml::from_reader(reader)?;
+        let config =
+            serde_yaml::from_reader(reader).context("Failed to parse genesis config YAML")?;
         Ok(config)
     }
 }

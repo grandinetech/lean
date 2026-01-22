@@ -1,4 +1,5 @@
 // Lean validator client with XMSS signing support
+use anyhow::{bail, ensure, Context, Result};
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -26,16 +27,16 @@ pub struct ValidatorConfig {
 
 impl ValidatorConfig {
     // load validator index
-    pub fn load_from_file(
-        path: impl AsRef<Path>,
-        node_id: &str,
-    ) -> Result<Self, Box<dyn std::error::Error>> {
-        let file = std::fs::File::open(path)?;
-        let registry: ValidatorRegistry = serde_yaml::from_reader(file)?;
+    pub fn load_from_file(path: impl AsRef<Path>, node_id: &str) -> Result<Self> {
+        let file = std::fs::File::open(&path).with_context(|| {
+            format!("Failed to open validator config file: {:?}", path.as_ref())
+        })?;
+        let registry: ValidatorRegistry =
+            serde_yaml::from_reader(file).context("Failed to parse validator registry YAML")?;
 
         let indices = registry
             .get(node_id)
-            .ok_or_else(|| format!("Node '{}' not found in validator registry", node_id))?
+            .with_context(|| format!("Node '{}' not found in validator registry", node_id))?
             .clone();
 
         info!(node_id = %node_id, indices = ?indices, "Validator config loaded...");
@@ -76,7 +77,7 @@ impl ValidatorService {
         config: ValidatorConfig,
         num_validators: u64,
         keys_dir: impl AsRef<Path>,
-    ) -> Result<Self, Box<dyn std::error::Error>> {
+    ) -> Result<Self> {
         let mut key_manager = KeyManager::new(keys_dir)?;
 
         // Load keys for all assigned validators
@@ -118,7 +119,7 @@ impl ValidatorService {
         store: &mut Store,
         slot: Slot,
         proposer_index: ValidatorIndex,
-    ) -> Result<SignedBlockWithAttestation, String> {
+    ) -> Result<SignedBlockWithAttestation> {
         info!(
             slot = slot.0,
             proposer = proposer_index.0,
@@ -129,22 +130,22 @@ impl ValidatorService {
         let parent_state = store
             .states
             .get(&parent_root)
-            .ok_or_else(|| format!("Couldn't find parent state {:?}", parent_root))?;
+            .with_context(|| format!("Couldn't find parent state {:?}", parent_root))?;
 
         let vote_target = get_vote_target(store);
 
         // Validate that target slot is strictly greater than source slot
-        if vote_target.slot <= store.latest_justified.slot {
-            return Err(format!(
-                "Invalid attestation: target slot {} must be greater than source slot {}",
-                vote_target.slot.0, store.latest_justified.slot.0
-            ));
-        }
+        ensure!(
+            vote_target.slot > store.latest_justified.slot,
+            "Invalid attestation: target slot {} must be greater than source slot {}",
+            vote_target.slot.0,
+            store.latest_justified.slot.0
+        );
 
         let head_block = store
             .blocks
             .get(&store.head)
-            .ok_or("Head block not found")?;
+            .context("Head block not found")?;
         let head_checkpoint = Checkpoint {
             root: store.head,
             slot: head_block.message.block.slot,
@@ -197,21 +198,23 @@ impl ValidatorService {
         );
 
         // Build block with collected attestations (empty body - attestations go to state)
-        let (block, _post_state, _collected_atts, sigs) = parent_state.build_block(
-            slot,
-            proposer_index,
-            parent_root,
-            Some(valid_attestations),
-            None,
-            None,
-        )?;
+        let (block, _post_state, _collected_atts, sigs) = parent_state
+            .build_block(
+                slot,
+                proposer_index,
+                parent_root,
+                Some(valid_attestations),
+                None,
+                None,
+            )
+            .context("Failed to build block")?;
 
         // Collect signatures from the attestations we included
         let mut signatures = sigs;
         for signed_att in &valid_signed_attestations {
             signatures
                 .push(signed_att.signature.clone())
-                .map_err(|e| format!("Failed to add attestation signature: {:?}", e))?;
+                .context("Failed to add attestation signature")?;
         }
 
         info!(
@@ -233,11 +236,11 @@ impl ValidatorService {
                 Ok(sig) => {
                     signatures
                         .push(sig)
-                        .map_err(|e| format!("Failed to add proposer signature: {:?}", e))?;
+                        .context("Failed to add proposer signature")?;
                     info!(proposer = proposer_index.0, "Signed proposer attestation");
                 }
                 Err(e) => {
-                    return Err(format!("Failed to sign proposer attestation: {}", e));
+                    bail!("Failed to sign proposer attestation")
                 }
             }
         } else {

@@ -1,3 +1,4 @@
+use anyhow::{Result, bail, ensure};
 use libp2p::gossipsub::{IdentTopic, TopicHash};
 
 pub const TOPIC_PREFIX: &str = "leanconsensus";
@@ -32,7 +33,7 @@ pub fn get_topics(fork: String) -> Vec<GossipsubTopic> {
 }
 
 impl GossipsubTopic {
-    pub fn decode(topic: &TopicHash) -> Result<Self, String> {
+    pub fn decode(topic: &TopicHash) -> Result<Self> {
         let topic_parts = Self::split_topic(topic)?;
         Self::validate_parts(&topic_parts, topic)?;
         let fork = Self::extract_fork(&topic_parts);
@@ -41,20 +42,19 @@ impl GossipsubTopic {
         Ok(GossipsubTopic { fork, kind })
     }
 
-    fn split_topic(topic: &TopicHash) -> Result<Vec<&str>, String> {
+    fn split_topic(topic: &TopicHash) -> Result<Vec<&str>> {
         let parts: Vec<&str> = topic.as_str().trim_start_matches('/').split('/').collect();
 
-        if parts.len() != 4 {
-            return Err(format!("Invalid topic part count: {topic:?}"));
-        }
+        ensure!(parts.len() == 4, "Invalid topic part count: {topic:?}");
 
         Ok(parts)
     }
 
-    fn validate_parts(parts: &[&str], topic: &TopicHash) -> Result<(), String> {
-        if parts[0] != TOPIC_PREFIX || parts[3] != SSZ_SNAPPY_ENCODING_POSTFIX {
-            return Err(format!("Invalid topic parts: {topic:?}"));
-        }
+    fn validate_parts(parts: &[&str], topic: &TopicHash) -> Result<()> {
+        ensure!(
+            parts[0] == TOPIC_PREFIX && parts[3] == SSZ_SNAPPY_ENCODING_POSTFIX,
+            "Invalid topic parts: {topic:?}"
+        );
         Ok(())
     }
 
@@ -62,11 +62,11 @@ impl GossipsubTopic {
         parts[1].to_string()
     }
 
-    fn extract_kind(parts: &[&str]) -> Result<GossipsubKind, String> {
+    fn extract_kind(parts: &[&str]) -> Result<GossipsubKind> {
         match parts[2] {
             BLOCK_TOPIC => Ok(GossipsubKind::Block),
             ATTESTATION_TOPIC => Ok(GossipsubKind::Attestation),
-            other => Err(format!("Invalid topic kind: {other:?}")),
+            other => bail!("Invalid topic kind: {other:?}"),
         }
     }
 }

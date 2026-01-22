@@ -1,6 +1,7 @@
 // Serde helpers for handling test vector JSON format
 // Test vectors wrap SSZ collections in {"data": [...]} objects
 
+use anyhow::{Context, Result};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// Wrapper for deserializing {"data": T} format
@@ -204,19 +205,18 @@ pub mod block_signatures {
         siblings: DataWrapper<Vec<DataWrapper<Vec<u32>>>>,
     }
 
-    fn parse_single_signature(value: &Value) -> Result<Signature, String> {
+    fn parse_single_signature(value: &Value) -> Result<Signature> {
         // Check if it's a hex string (normal format)
         if let Value::String(hex_str) = value {
             let hex_str = hex_str.trim_start_matches("0x");
-            let bytes = hex::decode(hex_str).map_err(|e| format!("Invalid hex string: {}", e))?;
+            let bytes = hex::decode(hex_str).context("Invalid hex string")?;
 
-            return Signature::try_from(bytes.as_slice())
-                .map_err(|_| "Invalid signature length".to_string());
+            return Signature::try_from(bytes.as_slice()).context("Invalid signature length");
         }
 
         // Otherwise, parse as structured XMSS signature
-        let xmss_sig: XmssSignature = serde_json::from_value(value.clone())
-            .map_err(|e| format!("Failed to parse XMSS signature: {}", e))?;
+        let xmss_sig: XmssSignature =
+            serde_json::from_value(value.clone()).context("Failed to parse XMSS signature")?;
 
         // Serialize the XMSS signature to bytes
         // Format: siblings (variable length) + rho (28 bytes) + hashes (variable length)
@@ -244,7 +244,7 @@ pub mod block_signatures {
         // Pad or truncate to 3112 bytes
         bytes.resize(3112, 0);
 
-        Signature::try_from(bytes.as_slice()).map_err(|_| "Failed to create signature".to_string())
+        Signature::try_from(bytes.as_slice()).context("Failed to create signature")
     }
 
     pub fn deserialize<'de, D>(deserializer: D) -> Result<BlockSignatures, D::Error>
