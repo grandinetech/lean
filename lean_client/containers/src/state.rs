@@ -166,7 +166,7 @@ impl State {
             .collect()
     }
 
-    pub fn with_justifications(mut self, map: BTreeMap<Bytes32, Vec<bool>>) -> Self {
+    pub fn with_justifications(mut self, map: BTreeMap<Bytes32, Vec<bool>>) -> Result<Self> {
         // Use actual validator count, matching leanSpec
         let num_validators = self.validators.len_usize();
         let mut roots: Vec<_> = map.keys().cloned().collect();
@@ -175,7 +175,7 @@ impl State {
         // Build PersistentList by pushing elements
         let mut new_roots = JustificationRoots::default();
         for r in &roots {
-            new_roots.push(*r).expect("within limit");
+            new_roots.push(*r).context("within limit")?;
         }
 
         // Build BitList: create with length, then set bits
@@ -200,16 +200,16 @@ impl State {
 
         self.justifications_roots = new_roots;
         self.justifications_validators = new_validators;
-        self
+        Ok(self)
     }
 
-    pub fn with_historical_hashes(mut self, hashes: Vec<Bytes32>) -> Self {
+    pub fn with_historical_hashes(mut self, hashes: Vec<Bytes32>) -> Result<Self> {
         let mut new_hashes = HistoricalBlockHashes::default();
         for h in hashes {
-            new_hashes.push(h).expect("within limit");
+            new_hashes.push(h).context("within limit")?;
         }
         self.historical_block_hashes = new_hashes;
-        self
+        Ok(self)
     }
 
     // updated for fork choice tests
@@ -280,7 +280,7 @@ impl State {
 
         // State root validation is handled by state_transition_with_validation when needed
 
-        Ok(state_after_ops)
+        state_after_ops
     }
 
     pub fn process_block_header(&self, block: &Block) -> Result<Self> {
@@ -371,7 +371,7 @@ impl State {
         })
     }
 
-    pub fn process_attestations(&self, attestations: &Attestations) -> Self {
+    pub fn process_attestations(&self, attestations: &Attestations) -> Result<Self> {
         let mut justifications = self.get_justifications();
         let mut latest_justified = self.latest_justified.clone();
         let mut latest_finalized = self.latest_finalized.clone();
@@ -489,7 +489,10 @@ impl State {
             }
         }
 
-        let mut new_state = self.clone().with_justifications(justifications);
+        let mut new_state = self
+            .clone()
+            .with_justifications(justifications)
+            .context("Failed to update justifications")?;
 
         new_state.latest_justified = latest_justified;
         new_state.latest_finalized = latest_finalized;
@@ -501,7 +504,7 @@ impl State {
         }
         new_state.justified_slots = new_justified_slots;
 
-        new_state
+        Ok(new_state)
     }
 
     /// Build a valid block on top of this state.

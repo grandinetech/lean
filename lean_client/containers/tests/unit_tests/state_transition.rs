@@ -29,7 +29,9 @@ fn test_state_transition_full() {
 
     // Use process_block_header + process_operations to avoid state root validation during setup
     let state_after_header = state_at_slot_1.process_block_header(&block).unwrap();
-    let expected_state = state_after_header.process_attestations(&block.body.attestations);
+    let expected_state = state_after_header
+        .process_attestations(&block.body.attestations)
+        .unwrap();
 
     let block_with_correct_root = Block {
         state_root: hash_tree_root(&expected_state),
@@ -62,7 +64,9 @@ fn test_state_transition_invalid_signatures() {
 
     // Use process_block_header + process_operations to avoid state root validation during setup
     let state_after_header = state_at_slot_1.process_block_header(&block).unwrap();
-    let expected_state = state_after_header.process_attestations(&block.body.attestations);
+    let expected_state = state_after_header
+        .process_attestations(&block.body.attestations)
+        .unwrap();
 
     let block_with_correct_root = Block {
         state_root: hash_tree_root(&expected_state),

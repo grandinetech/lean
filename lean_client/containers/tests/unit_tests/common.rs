@@ -1,3 +1,4 @@
+use anyhow::{Context, Result};
 use containers::{
     block::{hash_tree_root, Block, BlockBody, BlockHeader},
     checkpoint::Checkpoint,
@@ -69,11 +70,11 @@ pub fn sample_checkpoint() -> Checkpoint {
     }
 }
 
-pub fn base_state(config: Config) -> State {
+pub fn base_state(config: Config) -> Result<State> {
     base_state_with_validators(config, TEST_VALIDATOR_COUNT)
 }
 
-pub fn base_state_with_validators(config: Config, num_validators: usize) -> State {
+pub fn base_state_with_validators(config: Config, num_validators: usize) -> Result<State> {
     use containers::{
         validator::Validator, HistoricalBlockHashes, JustificationRoots, JustificationsValidators,
         JustifiedSlots, Uint64,
@@ -86,10 +87,10 @@ pub fn base_state_with_validators(config: Config, num_validators: usize) -> Stat
             pubkey: Default::default(),
             index: Uint64(i as u64),
         };
-        validators.push(validator).expect("within limit");
+        validators.push(validator).context("within limit")?;
     }
 
-    State {
+    Ok(State {
         config,
         slot: Slot(0),
         latest_block_header: sample_block_header(),
@@ -100,7 +101,7 @@ pub fn base_state_with_validators(config: Config, num_validators: usize) -> Stat
         validators,
         justifications_roots: JustificationRoots::default(),
         justifications_validators: JustificationsValidators::default(),
-    }
+    })
 }
 
 pub fn sample_config() -> Config {

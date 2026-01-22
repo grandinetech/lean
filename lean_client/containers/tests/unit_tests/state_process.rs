@@ -141,7 +141,9 @@ fn test_process_attestations_justification_and_finalization() {
     let state_after_header1 = state_at_slot_1
         .process_block_header(&block1.message.block)
         .unwrap();
-    state = state_after_header1.process_attestations(&block1.message.block.body.attestations);
+    state = state_after_header1
+        .process_attestations(&block1.message.block.body.attestations)
+        .unwrap();
 
     // Process slot 4 and block
     let mut state_at_slot_4 = state.process_slots(Slot(4)).unwrap();
@@ -149,7 +151,9 @@ fn test_process_attestations_justification_and_finalization() {
     let state_after_header4 = state_at_slot_4
         .process_block_header(&block4.message.block)
         .unwrap();
-    state = state_after_header4.process_attestations(&block4.message.block.body.attestations);
+    state = state_after_header4
+        .process_attestations(&block4.message.block.body.attestations)
+        .unwrap();
 
     // Advance to slot 5
     state = state.process_slots(Slot(5)).unwrap();
@@ -182,7 +186,7 @@ fn test_process_attestations_justification_and_finalization() {
         attestations_list.push(a).unwrap();
     }
 
-    let new_state = state.process_attestations(&attestations_list);
+    let new_state = state.process_attestations(&attestations_list).unwrap();
 
     assert_eq!(new_state.latest_justified, checkpoint4);
     let justified_slot_4 = new_state

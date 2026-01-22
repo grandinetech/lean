@@ -85,7 +85,7 @@ impl TestRunner {
 
                 // Only check validator count if specified in post-state
                 if let Some(expected_count) = post.validator_count {
-                    let mut num_validators: u64 = state.validators.len_u64();
+                    let num_validators: u64 = state.validators.len_u64();
 
                     ensure!(
                         num_validators as usize == expected_count,
