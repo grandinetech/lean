@@ -25,7 +25,7 @@ pub type Attestations = ssz::PersistentList<Attestation, U4096>;
 
 pub type AggregatedAttestations = ssz::PersistentList<AggregatedAttestation, U4096>;
 
-pub type AttestationSignatures = ssz::PersistentList<MultisigAggregatedSignature, U4096>;
+pub type AttestationSignatures = ssz::PersistentList<AggregatedSignatureProof, U4096>;
 
 /// Legacy naive aggregated signature type (list of individual XMSS signatures).
 /// Kept for backwards compatibility but no longer used in wire format.
@@ -164,6 +164,7 @@ pub enum AggregationError {
 /// matches Python's `AggregatedSignatureProof` container structure.
 /// Used in `aggregated_payloads` to track which validators are covered by each proof.
 #[derive(Clone, Debug, PartialEq, Eq, Default, Ssz, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AggregatedSignatureProof {
     /// Bitfield indicating which validators' signatures are included.
     pub participants: AggregationBits,
@@ -196,7 +197,7 @@ impl AggregatedSignatureProof {
 /// Bitlist representing validator participation in an attestation.
 /// Limit is VALIDATOR_REGISTRY_LIMIT (4096).
 #[derive(Clone, Debug, PartialEq, Eq, Default, Ssz, Serialize, Deserialize)]
-pub struct AggregationBits(pub BitList<U4096>);
+pub struct AggregationBits(#[serde(with = "crate::serde_helpers::bitlist")] pub BitList<U4096>);
 
 impl AggregationBits {
     pub const LIMIT: u64 = 4096;
@@ -308,6 +309,7 @@ pub struct SignedAttestation {
 
 /// Aggregated attestation consisting of participation bits and message.
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AggregatedAttestation {
     /// Bitfield indicating which validators participated in the aggregation.
     pub aggregation_bits: AggregationBits,

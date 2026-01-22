@@ -258,7 +258,7 @@ impl ValidatorService {
         let attestation_signatures = {
             let mut list = ssz::PersistentList::default();
             for proof in signatures {
-                list.push(proof.proof_data)
+                list.push(proof)
                     .map_err(|e| format!("Failed to add attestation signature: {:?}", e))?;
             }
             list

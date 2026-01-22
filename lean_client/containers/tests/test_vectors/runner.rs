@@ -621,15 +621,19 @@ impl TestRunner {
     //
     // NOTE: Disabled until test vector files are regenerated for devnet2 BlockSignatures format.
     // The current JSON test vectors use signature.data array instead of attestation_signatures + proposer_signature.
-    /*
-    pub fn run_verify_signatures_test<P: AsRef<Path>>(path: P) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn run_verify_signatures_test<P: AsRef<Path>>(
+        path: P,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let json_content = fs::read_to_string(path.as_ref())?;
 
         // Parse using the VerifySignaturesTestVectorFile structure
         let test_file: VerifySignaturesTestVectorFile = serde_json::from_str(&json_content)?;
 
         // Get the first (and only) test case from the file
-        let (test_name, test_case) = test_file.tests.into_iter().next()
+        let (test_name, test_case) = test_file
+            .tests
+            .into_iter()
+            .next()
             .ok_or("No test case found in JSON")?;
 
         println!("\n{}: {}", test_name, test_case.info.description);
@@ -639,14 +643,17 @@ impl TestRunner {
 
         // Print some debug info about what we're verifying
         println!("  Block slot: {}", signed_block.message.block.slot.0);
-        println!("  Proposer index: {}", signed_block.message.block.proposer_index.0);
+        println!(
+            "  Proposer index: {}",
+            signed_block.message.block.proposer_index.0
+        );
 
         let attestation_count = signed_block.message.block.body.attestations.len_u64();
         println!("  Attestations in block: {}", attestation_count);
-        println!("  Proposer attestation validator: {}", signed_block.message.proposer_attestation.validator_id.0);
-
-        let signature_count = signed_block.signature.len_u64();
-        println!("  Signatures: {}", signature_count);
+        println!(
+            "  Proposer attestation validator: {}",
+            signed_block.message.proposer_attestation.validator_id.0
+        );
 
         // Check if we expect this test to fail
         if let Some(ref exception) = test_case.expect_exception {
@@ -677,5 +684,4 @@ impl TestRunner {
 
         Ok(())
     }
-    */
 }

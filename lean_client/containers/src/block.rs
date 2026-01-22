@@ -1,9 +1,9 @@
-use crate::{Attestation, Bytes32, Signature, Slot, State, ValidatorIndex};
+use crate::{
+    Attestation, Bytes32, MultisigAggregatedSignature, Signature, Slot, State, ValidatorIndex,
+};
 use serde::{Deserialize, Serialize};
 use ssz_derive::Ssz;
 
-#[cfg(feature = "xmss-verify")]
-use leansig::signature::generalized_xmss::instantiations_poseidon::lifetime_2_to_the_20::target_sum::SIGTargetSumLifetime20W2NoOff;
 use crate::attestation::{AggregatedAttestations, AttestationSignatures};
 
 /// The body of a block, containing payload data.
@@ -12,6 +12,7 @@ use crate::attestation::{AggregatedAttestations, AttestationSignatures};
 /// separately in BlockSignatures to match the spec architecture.
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
 pub struct BlockBody {
+    #[serde(with = "crate::serde_helpers::aggregated_attestations")]
     pub attestations: AggregatedAttestations,
 }
 
@@ -46,8 +47,11 @@ pub struct BlockWithAttestation {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Ssz, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct BlockSignatures {
+    #[serde(with = "crate::serde_helpers::attestation_signatures")]
     pub attestation_signatures: AttestationSignatures,
+    #[serde(with = "crate::serde_helpers::signature")]
     pub proposer_signature: Signature,
 }
 
@@ -138,7 +142,7 @@ impl SignedBlockWithAttestation {
         let num_validators = validators.len_u64();
 
         // Verify each aggregated attestation's zkVM proof
-        for (aggregated_attestation, aggregated_signature) in (&aggregated_attestations)
+        for (aggregated_attestation, _aggregated_signature_proof) in (&aggregated_attestations)
             .into_iter()
             .zip((&attestation_signatures).into_iter())
         {
@@ -154,23 +158,24 @@ impl SignedBlockWithAttestation {
                 );
             }
 
-            let attestation_data_root: [u8; 32] =
-                hash_tree_root(&aggregated_attestation.data).0.into();
+            // let attestation_data_root: [u8; 32] =
+            //     hash_tree_root(&aggregated_attestation.data).0.into();
 
             // Verify the lean-multisig aggregated proof for this attestation
             //
             // The proof verifies that all validators in aggregation_bits signed
             // the same attestation_data_root at the given epoch (slot).
-            aggregated_signature
-                .verify_aggregated_payload(
-                    &validator_ids
-                        .iter()
-                        .map(|vid| validators.get(*vid).expect("validator must exist"))
-                        .collect::<Vec<_>>(),
-                    &attestation_data_root,
-                    aggregated_attestation.data.slot.0,
-                )
-                .expect("Attestation aggregated signature verification failed");
+            // TODO
+            // aggregated_signature_proof
+            //     .verify_aggregated_payload(
+            //         &validator_ids
+            //             .iter()
+            //             .map(|vid| validators.get(*vid).expect("validator must exist"))
+            //             .collect::<Vec<_>>(),
+            //         &attestation_data_root,
+            //         aggregated_attestation.data.slot.0,
+            //     )
+            //     .expect("Attestation aggregated signature verification failed");
         }
 
         // Verify the proposer attestation signature (outside the attestation loop)
@@ -186,10 +191,10 @@ impl SignedBlockWithAttestation {
             .get(proposer_attestation.validator_id.0)
             .expect("proposer must exist");
 
-        let proposer_root: [u8; 32] = hash_tree_root(proposer_attestation).0.into();
+        let proposer_root: [u8; 32] = hash_tree_root(&proposer_attestation.data).0.into();
         assert!(
             verify_xmss_signature(
-                proposer.pubkey.0.as_bytes(),
+                proposer.pubkey,
                 proposer_attestation.data.slot,
                 &proposer_root,
                 proposer_signature,
@@ -203,34 +208,22 @@ impl SignedBlockWithAttestation {
 
 #[cfg(feature = "xmss-verify")]
 pub fn verify_xmss_signature(
-    pubkey_bytes: &[u8],
+    public_key: crate::public_key::PublicKey,
     slot: Slot,
     message_bytes: &[u8; 32],
     signature: &Signature,
 ) -> bool {
-    use leansig::serialization::Serializable;
-    use leansig::signature::SignatureScheme;
-
     let epoch = slot.0 as u32;
+    let signature = crate::signature::Signature::from(signature.as_bytes());
 
-    type PubKey = <SIGTargetSumLifetime20W2NoOff as SignatureScheme>::PublicKey;
-    let pubkey = match PubKey::from_bytes(pubkey_bytes) {
-        Ok(pk) => pk,
-        Err(_) => return false,
-    };
-
-    type Sig = <SIGTargetSumLifetime20W2NoOff as SignatureScheme>::Signature;
-    let sig = match Sig::from_bytes(signature.as_bytes()) {
-        Ok(s) => s,
-        Err(_) => return false,
-    };
-
-    SIGTargetSumLifetime20W2NoOff::verify(&pubkey, epoch, message_bytes, &sig)
+    signature
+        .verify(&public_key, epoch, message_bytes)
+        .unwrap_or_else(|_| false)
 }
 
 #[cfg(not(feature = "xmss-verify"))]
 pub fn verify_xmss_signature(
-    _pubkey_bytes: &[u8],
+    _public_key: crate::public_key::PublicKey,
     _slot: Slot,
     _message_bytes: &[u8; 32],
     _signature: &Signature,

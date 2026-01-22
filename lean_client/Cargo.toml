@@ -1,5 +1,5 @@
 [workspace]
-members = ["chain", "containers", "env-config", "fork_choice", "networking", "validator"]
+members = ["chain", "containers", "fork_choice", "networking", "validator"]
 resolver = "2"
 
 [workspace.package]
@@ -14,7 +14,7 @@ containers = { path = "./containers" }
 fork_choice = { path = "./fork_choice" }
 networking = { path = "./networking" }
 validator = { path = "./validator" }
-libp2p = { version = "0.56.0", default-features = false, features = [
+libp2p = {version =  "0.56.0", default-features = false, features = [
     'dns',
     'gossipsub',
     'identify',
@@ -34,12 +34,13 @@ serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 snap = "1.1"
 ssz = { git = "https://github.com/grandinetech/grandine", package = "ssz", branch = "develop" }
-ssz-derive = { git = "https://github.com/grandinetech/grandine", package = "ssz_derive", branch = "develop" }
+ssz_derive = { git = "https://github.com/grandinetech/grandine", package = "ssz_derive", branch = "develop" }
 ssz-types = "0.3.0"
 tokio = { version = "1.0", features = ["full"] }
 tree-hash = "0.4.0"
 typenum = "1.19"
 sha2 = "0.10"
+rand = "0.9"
 
 [workspace.dev-dependencies]
 rstest = "0.18.2"
@@ -52,8 +53,9 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["xmss-signing"]
+default = ["xmss-signing", "containers/xmss-verify"]
 xmss-signing = ["validator/xmss-signing"]
+xmss-verify = ["containers/xmss-verify"]
 
 [dependencies]
 chain = { path = "./chain" }

@@ -164,7 +164,7 @@ async fn main() {
             .iter()
             .enumerate()
             .map(|(i, v_str)| {
-                let pubkey = containers::validator::PublicKey::from_hex(v_str)
+                let pubkey = containers::public_key::PublicKey::from_hex(v_str)
                     .expect("Invalid genesis validator pubkey");
                 containers::validator::Validator {
                     pubkey,
@@ -178,7 +178,7 @@ async fn main() {
         let num_validators = 3;
         let validators = (0..num_validators)
             .map(|i| containers::validator::Validator {
-                pubkey: containers::validator::PublicKey::default(),
+                pubkey: containers::public_key::PublicKey::default(),
                 index: Uint64(i as u64),
             })
             .collect();
