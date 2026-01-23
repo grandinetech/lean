@@ -9,6 +9,7 @@ use lean_multisig::{
     Devnet2XmssAggregateSignature, xmss_aggregate_signatures, xmss_aggregation_setup_prover,
     xmss_aggregation_setup_verifier, xmss_verify_aggregated_signatures,
 };
+use metrics::{METRICS, stop_and_discard};
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 use ssz::{ByteList, Ssz};
 use typenum::U1048576;
@@ -60,6 +61,12 @@ impl AggregatedSignature {
     ) -> Result<Self> {
         setup_prover();
 
+        let timer = METRICS.get().map(|metrics| {
+            metrics
+                .lean_pq_sig_attestation_signatures_building_time_seconds
+                .start_timer()
+        });
+
         let public_keys = public_keys
             .into_iter()
             .map(|k| k.as_lean())
@@ -70,6 +77,7 @@ impl AggregatedSignature {
             .collect::<Vec<_>>();
 
         if public_keys.len() != signatures.len() {
+            stop_and_discard(timer);
             bail!(
                 "public key & signature count mismatch ({} != {})",
                 public_keys.len(),
@@ -81,6 +89,12 @@ impl AggregatedSignature {
             xmss_aggregate_signatures(&public_keys, &signatures, message.as_fixed_bytes(), epoch)
                 .map_err(|err| anyhow!("{err:?}"))?;
 
+        METRICS.get().map(|metrics| {
+            metrics
+                .lean_pq_sig_aggregated_signatures_total
+                .inc_by(signatures.len() as u64)
+        });
+
         Ok(Self(aggregate.as_ssz_bytes().try_into()?))
     }
 
@@ -91,6 +105,12 @@ impl AggregatedSignature {
         epoch: u32,
     ) -> Result<()> {
         setup_verifier();
+
+        let _timer = METRICS.get().map(|metrics| {
+            metrics
+                .lean_pq_sig_aggregated_signatures_verification_time_seconds
+                .start_timer()
+        });
 
         let public_keys = public_keys
             .into_iter()
@@ -106,6 +126,18 @@ impl AggregatedSignature {
             epoch,
         )
         .map_err(|err| anyhow!("{err:?}"))
+        .inspect(|_| {
+            METRICS
+                .get()
+                .map(|metrics| metrics.lean_pq_sig_aggregated_signatures_valid_total.inc());
+        })
+        .inspect_err(|_| {
+            METRICS.get().map(|metrics| {
+                metrics
+                    .lean_pq_sig_aggregated_signatures_invalid_total
+                    .inc()
+            });
+        })
     }
 
     fn as_lean(&self) -> Devnet2XmssAggregateSignature {

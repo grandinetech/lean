@@ -1,6 +1,8 @@
 use anyhow::{Result, anyhow, bail, ensure};
 use containers::{AttestationData, SignatureKey, SignedAttestation, SignedBlockWithAttestation};
+use metrics::{METRICS, stop_and_discard};
 use ssz::{H256, SszHash};
+use tracing::warn;
 
 use crate::store::{INTERVALS_PER_SLOT, SECONDS_PER_INTERVAL, Store, tick_interval, update_head};
 
@@ -95,11 +97,24 @@ pub fn on_gossip_attestation(
     store: &mut Store,
     signed_attestation: SignedAttestation,
 ) -> Result<()> {
+    let _timer = METRICS.get().map(|metrics| {
+        metrics
+            .lean_attestation_validation_time_seconds
+            .start_timer()
+    });
+
     let validator_id = signed_attestation.validator_id;
     let attestation_data = signed_attestation.message.clone();
 
     // Validate the attestation data first
-    validate_attestation_data(store, &attestation_data)?;
+    validate_attestation_data(store, &attestation_data).inspect_err(|_| {
+        METRICS.get().map(|metrics| {
+            metrics
+                .lean_attestations_invalid_total
+                .with_label_values(&["gossip"])
+                .inc()
+        });
+    })?;
 
     // Store signature for later lookup during block building
     let data_root = attestation_data.hash_tree_root();
@@ -110,6 +125,22 @@ pub fn on_gossip_attestation(
 
     // Process the attestation data (not from block)
     on_attestation_internal(store, validator_id, attestation_data, false)
+        .inspect_err(|_| {
+            METRICS.get().map(|metrics| {
+                metrics
+                    .lean_attestations_invalid_total
+                    .with_label_values(&["gossip"])
+                    .inc()
+            });
+        })
+        .inspect(|_| {
+            METRICS.get().map(|metrics| {
+                metrics
+                    .lean_attestations_valid_total
+                    .with_label_values(&["gossip"])
+                    .inc()
+            });
+        })
 }
 
 /// Process an attestation and place it into the correct attestation stage
@@ -126,11 +157,24 @@ pub fn on_attestation(
     signed_attestation: SignedAttestation,
     is_from_block: bool,
 ) -> Result<()> {
+    let _timer = METRICS.get().map(|metrics| {
+        metrics
+            .lean_attestation_validation_time_seconds
+            .start_timer()
+    });
+
     let validator_id = signed_attestation.validator_id;
     let attestation_data = signed_attestation.message.clone();
 
     // Validate attestation data
-    validate_attestation_data(store, &attestation_data)?;
+    validate_attestation_data(store, &attestation_data).inspect_err(|_| {
+        METRICS.get().map(|metrics| {
+            metrics
+                .lean_attestations_invalid_total
+                .with_label_values(&[if is_from_block { "block" } else { "gossip" }])
+                .inc()
+        });
+    })?;
 
     if !is_from_block {
         // Store signature for later aggregation during block building
@@ -142,6 +186,22 @@ pub fn on_attestation(
     }
 
     on_attestation_internal(store, validator_id, attestation_data, is_from_block)
+        .inspect_err(|_| {
+            METRICS.get().map(|metrics| {
+                metrics
+                    .lean_attestations_invalid_total
+                    .with_label_values(&[if is_from_block { "block" } else { "gossip" }])
+                    .inc()
+            });
+        })
+        .inspect(|_| {
+            METRICS.get().map(|metrics| {
+                metrics
+                    .lean_attestations_valid_total
+                    .with_label_values(&[if is_from_block { "block" } else { "gossip" }])
+                    .inc()
+            });
+        })
 }
 
 /// Internal attestation processing - stores AttestationData
@@ -197,6 +257,7 @@ pub fn on_block(store: &mut Store, signed_block: SignedBlockWithAttestation) -> 
     let block_root = signed_block.message.block.hash_tree_root();
 
     if store.blocks.contains_key(&block_root) {
+        // stop_and_discard(timer);
         return Ok(());
     }
 
@@ -226,6 +287,12 @@ fn process_block_internal(
     signed_block: SignedBlockWithAttestation,
     block_root: H256,
 ) -> Result<()> {
+    let _timer = METRICS.get().map(|metrics| {
+        metrics
+            .lean_fork_choice_block_processing_time_seconds
+            .start_timer()
+    });
+
     let block = signed_block.message.block.clone();
     let attestations_count = block.body.attestations.len_u64();
 
@@ -271,6 +338,13 @@ fn process_block_internal(
             "Store justified checkpoint updated!"
         );
         store.latest_justified = new_state.latest_justified.clone();
+        METRICS.get().map(|metrics| {
+            let Some(slot) = new_state.latest_justified.slot.0.try_into().ok() else {
+                warn!("unable to set latest_justified slot in metrics");
+                return;
+            };
+            metrics.lean_latest_justified_slot.set(slot);
+        });
     }
     if finalized_updated {
         tracing::info!(
@@ -279,6 +353,13 @@ fn process_block_internal(
             "Store finalized checkpoint updated!"
         );
         store.latest_finalized = new_state.latest_finalized.clone();
+        METRICS.get().map(|metrics| {
+            let Some(slot) = new_state.latest_finalized.slot.0.try_into().ok() else {
+                warn!("unable to set latest_finalized slot in metrics");
+                return;
+            };
+            metrics.lean_latest_finalized_slot.set(slot);
+        });
     }
 
     if !justified_updated && !finalized_updated {

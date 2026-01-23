@@ -5,6 +5,10 @@ all:
 build:
 	$(MAKE) -C lean_client build
 
+.PHONY: clean
+clean:
+	$(MAKE) -C lean_client clean
+
 .PHONY: format
 format:
 	$(MAKE) -C lean_client format

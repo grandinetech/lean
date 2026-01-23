@@ -1,10 +1,13 @@
 use std::{
     collections::HashMap,
     fs::File,
+    io,
     net::IpAddr,
     num::{NonZeroU8, NonZeroUsize},
-    sync::Arc,
-    sync::atomic::{AtomicU64, Ordering},
+    sync::{
+        Arc,
+        atomic::{AtomicU64, Ordering},
+    },
 };
 
 use anyhow::{Result, anyhow};
@@ -17,9 +20,10 @@ use libp2p::{
     gossipsub::{Event, IdentTopic, MessageAuthenticity},
     identify,
     multiaddr::Protocol,
-    swarm::{Config, Swarm, SwarmEvent},
+    swarm::{Config, ConnectionError, Swarm, SwarmEvent},
 };
 use libp2p_identity::{Keypair, PeerId};
+use metrics::{DisconnectReason, METRICS};
 use parking_lot::Mutex;
 use rand::seq::IndexedRandom;
 use serde::{Deserialize, Serialize};
@@ -324,18 +328,20 @@ where
         event: SwarmEvent<LeanNetworkBehaviourEvent>,
     ) -> Option<NetworkEvent> {
         match event {
-            SwarmEvent::Behaviour(LeanNetworkBehaviourEvent::Gossipsub(event)) => {
-                self.handle_gossipsub_event(event).await
-            }
-            SwarmEvent::Behaviour(LeanNetworkBehaviourEvent::ReqResp(event)) => {
-                self.handle_request_response_event(event)
-            }
-            SwarmEvent::Behaviour(LeanNetworkBehaviourEvent::Identify(event)) => {
-                self.handle_identify_event(event)
-            }
-            SwarmEvent::Behaviour(_) => {
-                // ConnectionLimits behaviour has no events
-                None
+            SwarmEvent::Behaviour(event) => {
+                match event {
+                    LeanNetworkBehaviourEvent::Gossipsub(event) => {
+                        self.handle_gossipsub_event(event).await
+                    }
+                    LeanNetworkBehaviourEvent::ReqResp(event) => {
+                        self.handle_request_response_event(event)
+                    }
+                    LeanNetworkBehaviourEvent::Identify(event) => self.handle_identify_event(event),
+                    LeanNetworkBehaviourEvent::ConnectionLimits(_) => {
+                        // ConnectionLimits behaviour has no events
+                        None
+                    }
+                }
             }
             SwarmEvent::ConnectionEstablished {
                 peer_id, endpoint, ..
@@ -358,9 +364,18 @@ where
                     self.send_status_request(peer_id);
                 }
 
+                METRICS.get().map(|metrics| {
+                    metrics.register_peer_connection_success(endpoint.is_listener())
+                });
+
                 None
             }
-            SwarmEvent::ConnectionClosed { peer_id, .. } => {
+            SwarmEvent::ConnectionClosed {
+                peer_id,
+                cause,
+                endpoint,
+                ..
+            } => {
                 self.peer_table
                     .lock()
                     .insert(peer_id, ConnectionState::Disconnected);
@@ -373,7 +388,24 @@ where
                     .count() as u64;
                 self.peer_count.store(connected, Ordering::Relaxed);
 
-                info!(peer = %peer_id, "Disconnected from peer (total: {})", connected);
+                info!(peer = %peer_id, ?cause, "Disconnected from peer (total: {})", connected);
+
+                METRICS.get().map(|metrics| {
+                    let reason = match cause {
+                        None => DisconnectReason::LocalClose,
+                        Some(ConnectionError::IO(io_error)) => match io_error.kind() {
+                            io::ErrorKind::UnexpectedEof | io::ErrorKind::ConnectionReset => {
+                                DisconnectReason::RemoteClose
+                            }
+                            io::ErrorKind::TimedOut => DisconnectReason::Timeout,
+                            _ => DisconnectReason::Error,
+                        },
+                        Some(ConnectionError::KeepAliveTimeout) => DisconnectReason::Timeout,
+                    };
+
+                    metrics.register_peer_disconnect(endpoint.is_listener(), reason)
+                });
+
                 Some(NetworkEvent::PeerDisconnected(peer_id))
             }
             SwarmEvent::IncomingConnection { local_addr, .. } => {
@@ -383,10 +415,6 @@ where
             SwarmEvent::Dialing { peer_id, .. } => {
                 info!(?peer_id, "Dialing peer");
                 peer_id.map(NetworkEvent::PeerConnectedOutgoing)
-            }
-            SwarmEvent::OutgoingConnectionError { peer_id, error, .. } => {
-                warn!(?peer_id, ?error, "Failed to connect to peer");
-                None
             }
             SwarmEvent::NewListenAddr {
                 listener_id,
@@ -407,6 +435,28 @@ where
             }
             SwarmEvent::ExternalAddrExpired { address } => {
                 info!(?address, "External address expired");
+                None
+            }
+            SwarmEvent::IncomingConnectionError {
+                send_back_addr,
+                error,
+                ..
+            } => {
+                warn!(?error, ?send_back_addr, "Incoming connection error");
+
+                METRICS
+                    .get()
+                    .map(|metrics| metrics.register_peer_connection_failure(true));
+
+                None
+            }
+            SwarmEvent::OutgoingConnectionError { peer_id, error, .. } => {
+                warn!(?peer_id, ?error, "Failed to connect to peer");
+
+                METRICS
+                    .get()
+                    .map(|metrics| metrics.register_peer_connection_failure(false));
+
                 None
             }
             _ => {

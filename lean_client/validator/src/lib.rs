@@ -9,6 +9,7 @@ use containers::{
 };
 use ethereum_types::H256;
 use fork_choice::store::{Store, get_proposal_head, get_vote_target};
+use metrics::METRICS;
 use ssz::SszHash;
 use tracing::{info, warn};
 
@@ -27,16 +28,13 @@ pub struct ValidatorConfig {
 
 impl ValidatorConfig {
     // load validator index
-    pub fn load_from_file(
-        path: impl AsRef<Path>,
-        node_id: &str,
-    ) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn load_from_file(path: impl AsRef<Path>, node_id: &str) -> Result<Self> {
         let file = std::fs::File::open(path)?;
         let registry: ValidatorRegistry = serde_yaml::from_reader(file)?;
 
         let indices = registry
             .get(node_id)
-            .ok_or_else(|| format!("Node '{}' not found in validator registry", node_id))?
+            .ok_or_else(|| anyhow!("Node `{node_id}` not found in validator registry"))?
             .clone();
 
         info!(node_id = %node_id, indices = ?indices, "Validator config loaded...");
@@ -66,6 +64,13 @@ impl ValidatorService {
             total_validators = num_validators,
             "VALIDATOR INITIALIZED SUCCESSFULLY"
         );
+
+        METRICS.get().map(|metrics| {
+            metrics
+                .lean_validators_count
+                .set(config.validator_indices.len() as i64)
+        });
+
         Self {
             config,
             num_validators,
@@ -92,6 +97,12 @@ impl ValidatorService {
             keys_loaded = config.validator_indices.len(),
             "VALIDATOR INITIALIZED WITH XMSS KEYS"
         );
+
+        METRICS.get().map(|metrics| {
+            metrics
+                .lean_validators_count
+                .set(config.validator_indices.len() as i64)
+        });
 
         Ok(Self {
             config,
@@ -297,6 +308,12 @@ impl ValidatorService {
         let proposer_signature: Signature;
 
         if let Some(ref key_manager) = self.key_manager {
+            let _timer = METRICS.get().map(|metrics| {
+                metrics
+                    .lean_pq_signature_attestation_signing_time_seconds
+                    .start_timer()
+            });
+
             // Sign proposer attestation with XMSS
             let message = proposer_attestation.hash_tree_root();
             let epoch = slot.0 as u32;
@@ -381,6 +398,12 @@ impl ValidatorService {
                 };
 
                 let signature = if let Some(ref key_manager) = self.key_manager {
+                    let _timer = METRICS.get().map(|metrics| {
+                        metrics
+                            .lean_pq_signature_attestation_signing_time_seconds
+                            .start_timer()
+                    });
+
                     // Sign with XMSS
                     let message = attestation.hash_tree_root();
                     let epoch = slot.0 as u32;

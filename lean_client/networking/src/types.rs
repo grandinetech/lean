@@ -3,9 +3,11 @@ use std::{collections::HashMap, fmt::Display};
 use anyhow::{Result, anyhow};
 use async_trait::async_trait;
 use containers::{SignedAttestation, SignedBlockWithAttestation};
+use metrics::METRICS;
 use serde::{Deserialize, Serialize};
 use ssz::H256;
 use tokio::sync::mpsc;
+use tracing::warn;
 
 use crate::serde_utils::quoted_u64;
 
@@ -104,6 +106,20 @@ impl PeerCount {
                 ConnectionState::Disconnecting => count.disconnecting += 1,
             }
         }
+
+        METRICS.get().map(|metrics| {
+            let Ok(connected) = count.connected.try_into() else {
+                warn!("failed to set connected pear count metric");
+                return;
+            };
+
+            // TODO(metrics): actual client names should be provided into with_label_values
+            metrics
+                .lean_connected_peers
+                .with_label_values(&["unknown"])
+                .set(connected);
+        });
+
         count
     }
 }

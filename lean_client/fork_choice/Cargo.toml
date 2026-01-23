@@ -6,6 +6,7 @@ edition = { workspace = true }
 anyhow = { workspace = true }
 containers = { workspace = true }
 env-config = { workspace = true }
+metrics = { workspace = true }
 ssz = { workspace = true }
 tracing = { workspace = true }
 xmss = { workspace = true }

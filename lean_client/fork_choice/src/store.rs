@@ -5,6 +5,7 @@ use containers::{
     AggregatedSignatureProof, Attestation, AttestationData, Block, Checkpoint, Config,
     SignatureKey, SignedBlockWithAttestation, Slot, State,
 };
+use metrics::set_gauge_u64;
 use ssz::{H256, SszHash};
 use xmss::Signature;
 
@@ -188,6 +189,18 @@ pub fn update_head(store: &mut Store) {
         0,
     );
     store.head = new_head;
+
+    set_gauge_u64(
+        |m| &m.lean_head_slot,
+        || {
+            let head = store
+                .blocks
+                .get(&new_head)
+                .ok_or(anyhow!("failed to get head block"))?;
+
+            Ok(head.slot.0)
+        },
+    );
 }
 
 pub fn update_safe_target(store: &mut Store) {
@@ -199,8 +212,21 @@ pub fn update_safe_target(store: &mut Store) {
 
     let min_score = (n_validators * 2 + 2) / 3;
     let root = store.latest_justified.root;
-    store.safe_target =
+    let new_safe_target =
         get_fork_choice_head(store, root, &store.latest_new_attestations, min_score);
+    store.safe_target = new_safe_target;
+
+    set_gauge_u64(
+        |metrics| &metrics.lean_safe_target_slot,
+        || {
+            let safe_target = store
+                .blocks
+                .get(&new_safe_target)
+                .ok_or(anyhow!("failed to get safe target block"))?;
+
+            Ok(safe_target.slot.0)
+        },
+    );
 }
 
 pub fn accept_new_attestations(store: &mut Store) {

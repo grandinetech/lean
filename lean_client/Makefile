@@ -57,9 +57,26 @@ generate-test-vectors:
 	rm -rf ./test_vectors && mkdir -p ./test_vectors
 	cp -r ./spec/fixtures/consensus/* ./test_vectors/
 
+.PHONY: generate-test-vectors
+generate-test-vectors:
+	@rm -rf spec && \
+		mkdir -p spec && \
+		cd spec && \
+		git init && \
+		git remote add origin https://github.com/leanEthereum/leanSpec.git && \
+		git fetch --depth 1 origin $(LEAN_SPEC_COMMIT) && \
+		git switch --detach FETCH_HEAD
+	cd spec && uv run fill --clean --fork=devnet
+	cp -r ./spec/fixtures/consensus/* ./tests/test_vectors/
+
 .PHONY: build
 build:
 	cargo build --release
+
+.PHONY: clean
+clean:
+	cargo clean
+	rm -rf ./bin
 
 .PHONY: x86_64-unknown-linux-gnu
 x86_64-unknown-linux-gnu: ./target/x86_64-unknown-linux-gnu/release/lean_client

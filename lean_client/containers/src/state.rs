@@ -1,4 +1,5 @@
 use anyhow::{Context, Result, ensure};
+use metrics::METRICS;
 use serde::{Deserialize, Serialize};
 use ssz::{BitList, H256, PersistentList, Ssz, SszHash};
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -229,6 +230,9 @@ impl State {
     ) -> Result<Self> {
         ensure!(valid_signatures, "invalid block signatures");
 
+        let _timer = METRICS
+            .get()
+            .map(|metrics| metrics.lean_state_transition_time_seconds.start_timer());
         let block = &signed_block.message.block;
         let mut state = self.process_slots(block.slot)?;
         state = state.process_block(block)?;
@@ -246,11 +250,21 @@ impl State {
     pub fn process_slots(&self, target_slot: Slot) -> Result<Self> {
         ensure!(self.slot < target_slot, "target slot must be in the future");
 
+        let _timer = METRICS.get().map(|metrics| {
+            metrics
+                .lean_state_transition_slots_processing_time_seconds
+                .start_timer()
+        });
+
         let mut state = self.clone();
 
         while state.slot < target_slot {
             state = state.process_slot();
             state.slot = Slot(state.slot.0 + 1);
+
+            METRICS
+                .get()
+                .map(|metrics| metrics.lean_state_transition_slots_processed_total.inc());
         }
 
         Ok(state)
@@ -275,6 +289,12 @@ impl State {
     }
 
     pub fn process_block(&self, block: &Block) -> Result<Self> {
+        let _timer = METRICS.get().map(|metrics| {
+            metrics
+                .lean_state_transition_block_processing_time_seconds
+                .start_timer()
+        });
+
         let state = self.process_block_header(block)?;
 
         ensure!(
@@ -387,6 +407,12 @@ impl State {
     }
 
     pub fn process_attestations(&self, attestations: &AggregatedAttestations) -> Self {
+        let _timer = METRICS.get().map(|metrics| {
+            metrics
+                .lean_state_transition_attestations_processing_time_seconds
+                .start_timer()
+        });
+
         let mut justifications = self.get_justifications();
         let mut latest_justified = self.latest_justified.clone();
         let mut latest_finalized = self.latest_finalized.clone();
@@ -405,6 +431,11 @@ impl State {
         }
 
         for aggregated_attestation in attestations {
+            METRICS.get().map(|metrics| {
+                metrics
+                    .lean_state_transition_attestations_processed_total
+                    .inc()
+            });
             let validator_ids = aggregated_attestation
                 .aggregation_bits
                 .to_validator_indices();
@@ -725,6 +756,17 @@ impl State {
             gossip_signatures,
             aggregated_payloads,
         )?;
+
+        METRICS.get().map(|metrics| {
+            metrics
+                .lean_pq_sig_attestations_in_aggregated_signatures_total
+                .inc_by(
+                    aggregated_attestations
+                        .iter()
+                        .map(|v| v.aggregation_bits.to_validator_indices().len())
+                        .sum::<usize>() as u64,
+                );
+        });
 
         let mut final_block = Block {
             slot,

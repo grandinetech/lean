@@ -1,14 +1,18 @@
+use anyhow::{Context as _, Result};
 use clap::Parser;
 use containers::{
     Attestation, AttestationData, Block, BlockBody, BlockSignatures, BlockWithAttestation,
     Checkpoint, Config, SignedBlockWithAttestation, Slot, State, Validator,
 };
 use ethereum_types::H256;
+use features::Feature;
 use fork_choice::{
     handlers::{on_attestation, on_block, on_tick},
     store::{INTERVALS_PER_SLOT, Store, get_forkchoice_store},
 };
+use http_api::HttpServerConfig;
 use libp2p_identity::Keypair;
+use metrics::{METRICS, Metrics, MetricsServerConfig};
 use networking::gossipsub::config::GossipsubConfig;
 use networking::gossipsub::topic::get_topics;
 use networking::network::{NetworkService, NetworkServiceConfig};
@@ -24,7 +28,7 @@ use tokio::{
     time::{Duration, interval},
 };
 use tracing::level_filters::LevelFilter;
-use tracing::{debug, info, warn};
+use tracing::{debug, error, info, warn};
 use validator::{ValidatorConfig, ValidatorService};
 use xmss::{PublicKey, Signature};
 
@@ -125,10 +129,17 @@ struct Args {
     /// Path: directory containing XMSS validator keys (validator_N_sk.ssz files)
     #[arg(long)]
     hash_sig_key_dir: Option<String>,
+
+    #[command(flatten)]
+    http_config: HttpServerConfig,
+
+    /// List of optional runtime features to enable
+    #[clap(long, value_delimiter = ',')]
+    features: Vec<Feature>,
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::builder()
@@ -138,6 +149,29 @@ async fn main() {
         .init();
 
     let args = Args::parse();
+
+    for feature in args.features {
+        feature.enable();
+    }
+
+    let metrics = if args.http_config.metrics_enabled() {
+        let metrics = Metrics::new()?;
+        metrics.register_with_default_metrics()?;
+        let metrics = Arc::new(metrics);
+        METRICS.get_or_init(|| metrics.clone());
+
+        Some(metrics)
+    } else {
+        None
+    };
+
+    metrics
+        .map(|metrics| {
+            metrics.set_client_version("grandine".to_owned(), "0.0.0".to_owned());
+            metrics.set_start_time(SystemTime::now())
+        })
+        .transpose()
+        .context("failed to set metrics on start")?;
 
     let (outbound_p2p_sender, outbound_p2p_receiver) =
         mpsc::unbounded_channel::<OutboundP2pRequest>();
@@ -342,6 +376,12 @@ async fn main() {
     });
 
     let chain_outbound_sender = outbound_p2p_sender.clone();
+
+    let http_handle = task::spawn(async move {
+        if let Err(err) = http_api::run_server(args.http_config).await {
+            error!("HTTP Server failed with error: {err:?}");
+        }
+    });
 
     let chain_handle = task::spawn(async move {
         let mut tick_interval = interval(Duration::from_millis(1000));
@@ -561,12 +601,17 @@ async fn main() {
 
     tokio::select! {
         _ = network_handle => {
-            println!("Network service finished.");
+            info!("Network service finished.");
         }
         _ = chain_handle => {
-            println!("Chain service finished.");
+            info!("Chain service finished.");
+        }
+        _ = http_handle => {
+            info!("Http service finished.");
         }
     }
 
-    println!("Main async task exiting...");
+    info!("Main async task exiting...");
+
+    Ok(())
 }

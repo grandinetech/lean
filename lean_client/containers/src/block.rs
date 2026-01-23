@@ -1,5 +1,6 @@
 use crate::{Attestation, Slot, State};
-use anyhow::{Context, Result, anyhow, ensure};
+use anyhow::{Context, Result, ensure};
+use metrics::METRICS;
 use serde::{Deserialize, Serialize};
 use ssz::{H256, Ssz, SszHash};
 use xmss::Signature;
@@ -198,6 +199,12 @@ impl SignedBlockWithAttestation {
                 "proposer {} not found in state",
                 proposer_attestation.validator_id
             ))?;
+
+        let _timer = METRICS.get().map(|metrics| {
+            metrics
+                .lean_pq_signature_attestation_verification_time_seconds
+                .start_timer()
+        });
 
         proposer_signature
             .verify(

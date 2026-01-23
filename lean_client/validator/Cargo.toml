@@ -6,11 +6,12 @@ edition = { workspace = true }
 anyhow = { workspace = true }
 containers = { workspace = true }
 env-config = { workspace = true }
+ethereum-types = { workspace = true }
 fork_choice = { workspace = true }
+metrics = { workspace = true }
 serde_yaml = { workspace = true }
+ssz = { workspace = true }
 tracing = { workspace = true }
 typenum = { workspace = true }
-ethereum-types = { workspace = true }
-ssz = { workspace = true }
 xmss = { workspace = true }
 zeroize = { workspace = true }
