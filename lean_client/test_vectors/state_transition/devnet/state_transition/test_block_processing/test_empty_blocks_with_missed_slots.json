@@ -1,6 +1,7 @@
 {
-    "tests/consensus/devnet/state_transition/test_block_processing.py::test_empty_blocks_with_missed_slots[fork_Devnet][fork_Devnet-state_transition_test]": {
+    "tests/consensus/devnet/state_transition/test_block_processing.py::test_empty_blocks_with_missed_slots[fork_Devnet][fork_devnet-state_transition_test]": {
         "network": "Devnet",
+        "leanEnv": "test",
         "pre": {
             "config": {
                 "genesisTime": 0
@@ -30,19 +31,19 @@
             "validators": {
                 "data": [
                     {
-                        "pubkey": "0xb40ec9783b56572d99965130ad1cec4f066df43a0fd89d22d420535c62b52711cdaf7f5f696c6b1e4df66a6bab48bb51abcdd77e",
+                        "pubkey": "0x8fa00001b5b22a073d21cb60c9465b379f80e74fee9baf1d137eb651ed162900a6f3ec32da74ff09265ea62fc9a5055b2e9b7c7b",
                         "index": 0
                     },
                     {
-                        "pubkey": "0xc5ed4b6fa46e83281e29201b878ad52b4a9b8a2f3c9d8017cfd9b81e8097e1372a097e62be37194c39e2f36f76e8906d2e818238",
+                        "pubkey": "0xbc56037ab0485c00441e3205d908e55a016d5450a335144f50ccb034cb253c05a1cbc047b5695a5672697d584656e96a4b94f173",
                         "index": 1
                     },
                     {
-                        "pubkey": "0x0cc8a378cdeb1a3c4b87156bcba3e87d31fb8c5f1c3ce74b4370001086b8bd5a502ea12d0878536b19cb6769b7285e1c0504fb3e",
+                        "pubkey": "0x79422d64ecdc3b0bf7c6cc31bbfb9f4eab7950107fe23c6f4f9c94465c81f80d85a1931f1003c50531147f350357805f22fdd70b",
                         "index": 2
                     },
                     {
-                        "pubkey": "0xb85c660a781e825a1b783822984e894c4558e304a4b71307f095821d92b6351197c3b1485ffcf872c9a13d5c9381b1636eeed359",
+                        "pubkey": "0x575bb17b0f673d76689c9527a21fac68eb5ebd571703a245deb2a8384baea4747be00d5b469ff30f830e234f74453f6e2c20cb26",
                         "index": 3
                     }
                 ]
@@ -58,8 +59,8 @@
             {
                 "slot": 1,
                 "proposerIndex": 1,
-                "parentRoot": "0xb0379c64780b02bee1b0005f65ae1f79c55c67f7a8aa1cb1f243c7dd46714be1",
-                "stateRoot": "0x1e2a71ba98d42232a279202b449702bac405858921073a2bab416c2024236a1e",
+                "parentRoot": "0xee3755ec636c6cabd4fbec9791efd12fb38fbad6989e09258a286dcdfa84ca0f",
+                "stateRoot": "0x976e5f2bf6a9b4c51516e650d3a7c7f0066580fa3d1b185808a5bec483292a2f",
                 "body": {
                     "attestations": {
                         "data": []
@@ -69,8 +70,8 @@
             {
                 "slot": 2,
                 "proposerIndex": 2,
-                "parentRoot": "0xf0e2cc55723ca299895cc78dad0648a35d2e3f708a1f8167a4ba558166737ae9",
-                "stateRoot": "0xa70e680f4b7f39ee3ef9c080690bb940473c3a3266f870ba11eec671520059fa",
+                "parentRoot": "0x4d16ec7e8dacf5f60d30ca84cd0a789a022a91ff3dee22975240d617c4236b0d",
+                "stateRoot": "0xb7e6a86335a19a6d737b0b3f9f60c18f2eb175206459e84b9d3b3807702acfde",
                 "body": {
                     "attestations": {
                         "data": []
@@ -80,8 +81,8 @@
             {
                 "slot": 3,
                 "proposerIndex": 3,
-                "parentRoot": "0xb30b965597442897d61ce6f3af248f2a69970bbdae257523a48f057bb05e7edf",
-                "stateRoot": "0x0e56faa2e9e1eb1bf6c392e75fca918bc964cadf507b22c798acd3f25146b43e",
+                "parentRoot": "0x64cce9455f0122be56727da4c100f9c842d93bd55c116d36648f312071968d23",
+                "stateRoot": "0x106ac834106f37ca1cb2152976c703f396030741fa17e4522acda3f586287128",
                 "body": {
                     "attestations": {
                         "data": []
@@ -91,8 +92,8 @@
             {
                 "slot": 5,
                 "proposerIndex": 1,
-                "parentRoot": "0x68c8624259868b339c77d811611e8e2e3c02f937f16094af68c58967799ab933",
-                "stateRoot": "0xbaf197fcdcb8dd839b93fef6314dbeaac1cd55783f805002c4e8b5ced454f42e",
+                "parentRoot": "0x068babbea4aa0202a94dd95e4e3f65b32e95cefe143df7ef0c76cf83858597d4",
+                "stateRoot": "0x6c26076f86536098f57f9a530b9a58873498c5bd7173cccb220b9e0a4219871d",
                 "body": {
                     "attestations": {
                         "data": []
@@ -102,8 +103,8 @@
             {
                 "slot": 6,
                 "proposerIndex": 2,
-                "parentRoot": "0x66403fc3ff2488e54ea0e8796746a48e3591ba8f78954db7b06e0ff93a609801",
-                "stateRoot": "0x60422241872bfe48fb1e1515571522896e50bb18ab6db44f8d129f585af0804c",
+                "parentRoot": "0x041eee0ddc77a228175d6ff90c00a8ede62ede3431a90f54e452d4b7a17a5ee2",
+                "stateRoot": "0x768566c1db94161383b795b29fc4e5e470af9e476fe2c0e88d289f4b52185a81",
                 "body": {
                     "attestations": {
                         "data": []
@@ -117,7 +118,7 @@
             "historicalBlockHashesCount": 6
         },
         "_info": {
-            "hash": "0x39d5ef697e5b51d473370caf9ec6ea1562afc2df534484ae01d6aabb9636955b",
+            "hash": "0xb858e8ad3f7dd0ca7b079bc5b9f2472626f277572b055d938f8d0d683f2da30b",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/state_transition/test_block_processing.py::test_empty_blocks_with_missed_slots[fork_Devnet]",
             "description": "Test processing blocks with empty body (no attestations) combined with missed slots.\n\n    Scenario\n     --------\n     Build chain of blocks with empty body + missed slot:\n     - Slot 1: Block\n     - Slot 2: Block, Empty body\n     - Slot 3: BLock, Empty body\n     - Slot 4: Missed\n     - Slot 5: Block, Empty body\n     - Slot 6: Block\n\n     Expected Behavior\n     -----------------\n     1. Blocks process at specified slots\n     2. Empty slots handled automatically\n     3. State advances to slot 6",

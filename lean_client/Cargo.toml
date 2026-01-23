@@ -41,6 +41,7 @@ tree-hash = "0.4.0"
 typenum = "1.19"
 sha2 = "0.10"
 rand = "0.9"
+test-generator = "0.3.1"
 
 [workspace.dev-dependencies]
 rstest = "0.18.2"

@@ -30,3 +30,4 @@ alloy-primitives = "1.5.2"
 rstest = "0.18"
 pretty_assertions = "1.4"
 serde_json = "1.0"
+test-generator = { workspace = true }

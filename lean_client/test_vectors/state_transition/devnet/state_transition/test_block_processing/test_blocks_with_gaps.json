@@ -1,6 +1,7 @@
 {
-    "tests/consensus/devnet/state_transition/test_block_processing.py::test_blocks_with_gaps[fork_Devnet][fork_Devnet-state_transition_test]": {
+    "tests/consensus/devnet/state_transition/test_block_processing.py::test_blocks_with_gaps[fork_Devnet][fork_devnet-state_transition_test]": {
         "network": "Devnet",
+        "leanEnv": "test",
         "pre": {
             "config": {
                 "genesisTime": 0
@@ -30,19 +31,19 @@
             "validators": {
                 "data": [
                     {
-                        "pubkey": "0xb40ec9783b56572d99965130ad1cec4f066df43a0fd89d22d420535c62b52711cdaf7f5f696c6b1e4df66a6bab48bb51abcdd77e",
+                        "pubkey": "0x8fa00001b5b22a073d21cb60c9465b379f80e74fee9baf1d137eb651ed162900a6f3ec32da74ff09265ea62fc9a5055b2e9b7c7b",
                         "index": 0
                     },
                     {
-                        "pubkey": "0xc5ed4b6fa46e83281e29201b878ad52b4a9b8a2f3c9d8017cfd9b81e8097e1372a097e62be37194c39e2f36f76e8906d2e818238",
+                        "pubkey": "0xbc56037ab0485c00441e3205d908e55a016d5450a335144f50ccb034cb253c05a1cbc047b5695a5672697d584656e96a4b94f173",
                         "index": 1
                     },
                     {
-                        "pubkey": "0x0cc8a378cdeb1a3c4b87156bcba3e87d31fb8c5f1c3ce74b4370001086b8bd5a502ea12d0878536b19cb6769b7285e1c0504fb3e",
+                        "pubkey": "0x79422d64ecdc3b0bf7c6cc31bbfb9f4eab7950107fe23c6f4f9c94465c81f80d85a1931f1003c50531147f350357805f22fdd70b",
                         "index": 2
                     },
                     {
-                        "pubkey": "0xb85c660a781e825a1b783822984e894c4558e304a4b71307f095821d92b6351197c3b1485ffcf872c9a13d5c9381b1636eeed359",
+                        "pubkey": "0x575bb17b0f673d76689c9527a21fac68eb5ebd571703a245deb2a8384baea4747be00d5b469ff30f830e234f74453f6e2c20cb26",
                         "index": 3
                     }
                 ]
@@ -58,8 +59,8 @@
             {
                 "slot": 1,
                 "proposerIndex": 1,
-                "parentRoot": "0xb0379c64780b02bee1b0005f65ae1f79c55c67f7a8aa1cb1f243c7dd46714be1",
-                "stateRoot": "0x1e2a71ba98d42232a279202b449702bac405858921073a2bab416c2024236a1e",
+                "parentRoot": "0xee3755ec636c6cabd4fbec9791efd12fb38fbad6989e09258a286dcdfa84ca0f",
+                "stateRoot": "0x976e5f2bf6a9b4c51516e650d3a7c7f0066580fa3d1b185808a5bec483292a2f",
                 "body": {
                     "attestations": {
                         "data": []
@@ -69,8 +70,8 @@
             {
                 "slot": 4,
                 "proposerIndex": 0,
-                "parentRoot": "0xf0e2cc55723ca299895cc78dad0648a35d2e3f708a1f8167a4ba558166737ae9",
-                "stateRoot": "0x580f44525ca72dad52351f78f0cab0081fefa16ab07b8c7d81f68df89cea7e7f",
+                "parentRoot": "0x4d16ec7e8dacf5f60d30ca84cd0a789a022a91ff3dee22975240d617c4236b0d",
+                "stateRoot": "0x789b378042d8d7c40826e8a4ac9d56b475824914fd6064e9d89a700502cd8d6e",
                 "body": {
                     "attestations": {
                         "data": []
@@ -80,8 +81,8 @@
             {
                 "slot": 8,
                 "proposerIndex": 0,
-                "parentRoot": "0xf4cbe7bf5f56a604059857975ff56fe364ddf470249262a1908f11cac96687e1",
-                "stateRoot": "0x5ef55253cb56a389c3db5bf55fc09801cb5c7ee78c00e68a3bd2273d7c5a2fe7",
+                "parentRoot": "0x0cd63b486d1dd15e47fed3c75d4b607fff03b0c384d2eeb0359d8a602ff9d8d4",
+                "stateRoot": "0x03c27bd408b531f462b5266bd73bc74681eaab69b9f6b209519faa6c0d0ecc09",
                 "body": {
                     "attestations": {
                         "data": []
@@ -96,7 +97,7 @@
             "historicalBlockHashesCount": 8
         },
         "_info": {
-            "hash": "0x3d776baee05fb062776f68b9dc498aca6051e7b145e58b9e86e9aa8734480126",
+            "hash": "0x6a5933287f43f90459dbc020c904e6a5b309adb8dd56f65dd5f422ce818f03f9",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/state_transition/test_block_processing.py::test_blocks_with_gaps[fork_Devnet]",
             "description": "Test blocks separated by empty slots.\n\n    Scenario\n    --------\n    Build chain with gaps:\n    - Slot 1: Block\n    - Slots 2-3: Empty\n    - Slot 4: Block\n    - Slots 5-7: Empty\n    - Slot 8: Block\n\n    Expected Behavior\n    -----------------\n    1. Blocks process at specified slots\n    2. Empty slots handled automatically\n    3. Parent linkage spans gaps correctly\n    4. State advances to slot 8\n\n    Why This Matters\n    ----------------\n    Missed proposals are common:\n    - Validators offline\n    - Network partitions\n    - Missed attestations\n\n    This validates resilience to gaps.",

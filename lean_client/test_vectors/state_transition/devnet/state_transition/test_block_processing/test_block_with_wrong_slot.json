@@ -1,16 +1,17 @@
 {
-    "tests/consensus/devnet/state_transition/test_block_processing.py::test_block_with_invalid_proposer[fork_Devnet][fork_Devnet-state_transition_test]": {
+    "tests/consensus/devnet/state_transition/test_block_processing.py::test_block_with_wrong_slot[fork_Devnet][fork_devnet-state_transition_test]": {
         "network": "Devnet",
+        "leanEnv": "test",
         "pre": {
             "config": {
                 "genesisTime": 0
             },
-            "slot": 0,
+            "slot": 1,
             "latestBlockHeader": {
                 "slot": 0,
                 "proposerIndex": 0,
                 "parentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
-                "stateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "stateRoot": "0xe964061dcf66d2772fea43f77cdbf563b6642b7d13130b42890618b16e67c1f2",
                 "bodyRoot": "0xdba9671bac9513c9482f1416a53aabd2c6ce90d5a5f865ce5a55c775325c9136"
             },
             "latestJustified": {
@@ -30,19 +31,19 @@
             "validators": {
                 "data": [
                     {
-                        "pubkey": "0xb40ec9783b56572d99965130ad1cec4f066df43a0fd89d22d420535c62b52711cdaf7f5f696c6b1e4df66a6bab48bb51abcdd77e",
+                        "pubkey": "0x8fa00001b5b22a073d21cb60c9465b379f80e74fee9baf1d137eb651ed162900a6f3ec32da74ff09265ea62fc9a5055b2e9b7c7b",
                         "index": 0
                     },
                     {
-                        "pubkey": "0xc5ed4b6fa46e83281e29201b878ad52b4a9b8a2f3c9d8017cfd9b81e8097e1372a097e62be37194c39e2f36f76e8906d2e818238",
+                        "pubkey": "0xbc56037ab0485c00441e3205d908e55a016d5450a335144f50ccb034cb253c05a1cbc047b5695a5672697d584656e96a4b94f173",
                         "index": 1
                     },
                     {
-                        "pubkey": "0x0cc8a378cdeb1a3c4b87156bcba3e87d31fb8c5f1c3ce74b4370001086b8bd5a502ea12d0878536b19cb6769b7285e1c0504fb3e",
+                        "pubkey": "0x79422d64ecdc3b0bf7c6cc31bbfb9f4eab7950107fe23c6f4f9c94465c81f80d85a1931f1003c50531147f350357805f22fdd70b",
                         "index": 2
                     },
                     {
-                        "pubkey": "0xb85c660a781e825a1b783822984e894c4558e304a4b71307f095821d92b6351197c3b1485ffcf872c9a13d5c9381b1636eeed359",
+                        "pubkey": "0x575bb17b0f673d76689c9527a21fac68eb5ebd571703a245deb2a8384baea4747be00d5b469ff30f830e234f74453f6e2c20cb26",
                         "index": 3
                     }
                 ]
@@ -56,9 +57,9 @@
         },
         "blocks": [
             {
-                "slot": 1,
-                "proposerIndex": 3,
-                "parentRoot": "0xb0379c64780b02bee1b0005f65ae1f79c55c67f7a8aa1cb1f243c7dd46714be1",
+                "slot": 2,
+                "proposerIndex": 2,
+                "parentRoot": "0xee3755ec636c6cabd4fbec9791efd12fb38fbad6989e09258a286dcdfa84ca0f",
                 "stateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
                 "body": {
                     "attestations": {
@@ -68,11 +69,12 @@
             }
         ],
         "expectException": "AssertionError",
+        "expectExceptionMessage": "Block slot mismatch",
         "_info": {
-            "hash": "0xde1af5c74196e1a96deaa0e33e8dae9cb369901ac5ff2bd4c273445c79b3443b",
+            "hash": "0x3e9a6c55ea851ac9514f3db8a433d571552638e884a3cbc64b10c2966f14fa24",
             "comment": "`leanSpec` generated test",
-            "testId": "tests/consensus/devnet/state_transition/test_block_processing.py::test_block_with_invalid_proposer[fork_Devnet]",
-            "description": "Test that blocks from wrong proposer are rejected.\n\n    Scenario\n    --------\n    Attempt to process a block where proposer index doesn't match\n    the expected proposer for that slot.\n\n    Expected Behavior\n    -----------------\n    Block processing fails with AssertionError: \"Incorrect block proposer\"\n\n    Why This Matters\n    ----------------\n    Prevents unauthorized block production:\n    - Only designated proposer can produce blocks\n    - Prevents validator impersonation\n    - Maintains protocol security\n    - Essential for consensus integrity\n\n    Without this check, any validator could produce blocks for any slot.",
+            "testId": "tests/consensus/devnet/state_transition/test_block_processing.py::test_block_with_wrong_slot[fork_Devnet]",
+            "description": "Test that blocks with mismatched slot are rejected.\n\n    Scenario\n    --------\n    Attempt to process a block at slot 1, but the block claims to be\n    at slot 2.\n\n    Expected Behavior\n    -----------------\n    Block processing fails with AssertionError: \"Block slot mismatch\"\n\n    Why This Matters\n    ----------------\n    Ensures temporal consistency:\n    - Blocks can't lie about their slot\n    - Prevents time manipulation attacks\n    - Maintains protocol timing integrity\n    - Essential for slot-based consensus",
             "fixtureFormat": "state_transition_test"
         }
     }

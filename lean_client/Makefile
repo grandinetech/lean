@@ -54,7 +54,7 @@ generate-test-vectors:
 		git fetch --depth 1 origin $(LEAN_SPEC_COMMIT) && \
 		git switch --detach FETCH_HEAD
 	cd spec && uv run fill --clean --fork=devnet
-	rm -rf ./test_vectors
+	rm -rf ./test_vectors && mkdir -p ./test_vectors
 	cp -r ./spec/fixtures/consensus/* ./test_vectors/
 
 .PHONY: build
