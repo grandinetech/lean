@@ -1,3 +1,8 @@
+//! Common test utilities for devnet2 format
+//!
+//! Helper functions for creating test blocks, states, and attestations
+//! using the devnet2 data structures.
+
 use containers::block::BlockSignatures;
 use containers::{
     block::{hash_tree_root, Block, BlockBody, BlockHeader},
@@ -23,11 +28,6 @@ pub fn create_block(
     parent_header: &mut BlockHeader,
     attestations: Option<Attestations>,
 ) -> SignedBlockWithAttestation {
-    #[cfg(feature = "devnet1")]
-    let body = BlockBody {
-        attestations: attestations.unwrap_or_else(PersistentList::default),
-    };
-    #[cfg(feature = "devnet2")]
     let body = BlockBody {
         attestations: {
             let attestations_vec = attestations.unwrap_or_default();
@@ -35,9 +35,6 @@ pub fn create_block(
             // Convert PersistentList into a Vec
             let attestations_vec: Vec<Attestation> =
                 attestations_vec.into_iter().cloned().collect();
-
-            let aggregated: Vec<AggregatedAttestation> =
-                AggregatedAttestation::aggregate_by_data(&attestations_vec);
 
             let aggregated: Vec<AggregatedAttestation> =
                 AggregatedAttestation::aggregate_by_data(&attestations_vec);
@@ -55,7 +52,6 @@ pub fn create_block(
 
             persistent_list
         },
-        // other BlockBody fields...
     };
 
     let block_message = Block {
@@ -66,16 +62,6 @@ pub fn create_block(
         body: body,
     };
 
-    #[cfg(feature = "devnet1")]
-    let return_value = SignedBlockWithAttestation {
-        message: BlockWithAttestation {
-            block: block_message,
-            proposer_attestation: Attestation::default(),
-        },
-        signature: PersistentList::default(),
-    };
-
-    #[cfg(feature = "devnet2")]
     let return_value = SignedBlockWithAttestation {
         message: BlockWithAttestation {
             block: block_message,
