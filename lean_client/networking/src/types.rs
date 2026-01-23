@@ -102,17 +102,6 @@ impl Display for ChainMessage {
                     signed_block_with_attestation.message.block.slot.0
                 )
             }
-            #[cfg(feature = "devnet1")]
-            ChainMessage::ProcessAttestation {
-                signed_attestation, ..
-            } => {
-                write!(
-                    f,
-                    "ProcessAttestation(slot={})",
-                    signed_attestation.message.data.slot.0
-                )
-            }
-            #[cfg(feature = "devnet2")]
             ChainMessage::ProcessAttestation {
                 signed_attestation, ..
             } => {

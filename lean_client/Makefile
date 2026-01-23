@@ -42,7 +42,7 @@ check-format:
 
 .PHONY: test
 test:
-	cargo test --workspace --features devnet2,xmss-signing --no-fail-fast
+	cargo test --workspace --all-features --no-fail-fast
 
 .PHONY: generate-test-vectors
 generate-test-vectors:

@@ -6,12 +6,9 @@ edition = "2021"
 [features]
 default = ["xmss-signing"]
 xmss-signing = ["leansig"]
-devnet1 = ["containers/devnet1", "fork-choice/devnet1", "env-config/devnet1"]
-devnet2 = ["containers/devnet2", "fork-choice/devnet2", "env-config/devnet1"]
 
 [dependencies]
 env-config = { path = "../env-config", default-features = false }
-serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 containers = { path = "../containers" }
 fork-choice = { path = "../fork_choice" }

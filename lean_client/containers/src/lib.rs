@@ -2,7 +2,9 @@ pub mod attestation;
 pub mod block;
 pub mod checkpoint;
 pub mod config;
+pub mod public_key;
 pub mod serde_helpers;
+pub mod signature;
 pub mod slot;
 pub mod state;
 pub mod status;
@@ -11,8 +13,10 @@ pub mod validator;
 
 pub use attestation::{
     AggregatedAttestation, AggregatedSignatures, AggregationBits, Attestation, AttestationData,
-    Attestations, Signature, SignedAggregatedAttestation, SignedAttestation,
+    Attestations, Signature, SignatureKey, SignedAggregatedAttestation, SignedAttestation,
 };
+
+pub use attestation::{AggregatedSignatureProof, MultisigAggregatedSignature};
 pub use block::{
     Block, BlockBody, BlockHeader, BlockWithAttestation, SignedBlock, SignedBlockWithAttestation,
 };

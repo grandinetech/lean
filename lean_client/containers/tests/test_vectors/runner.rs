@@ -244,7 +244,17 @@ impl TestRunner {
             println!("\nProcessing single empty block at slot {:?}", block.slot);
 
             // Verify it's an empty block (no attestations)
-            let attestation_count = block.body.attestations.len_u64();
+            let attestation_count = {
+                let mut count = 0u64;
+                loop {
+                    match block.body.attestations.get(count) {
+                        Ok(_) => count += 1,
+                        Err(_) => break,
+                    }
+                }
+                count
+            };
+
             if attestation_count > 0 {
                 return Err(format!(
                     "Expected empty block, but found {} attestations",
@@ -388,7 +398,17 @@ impl TestRunner {
                     return Err(format!("Block {} parent_root mismatch", idx + 1).into());
                 }
 
-                let attestation_count = block.body.attestations.len_u64();
+                // Check if block is empty (no attestations)
+                let attestation_count = {
+                    let mut count = 0u64;
+                    loop {
+                        match block.body.attestations.get(count) {
+                            Ok(_) => count += 1,
+                            Err(_) => break,
+                        }
+                    }
+                    count
+                };
 
                 // Process the full block (header + operations)
                 let result = state_after_slots.process_block(block);
@@ -596,9 +616,11 @@ impl TestRunner {
         Ok(())
     }
 
-    /// Test runner for verify_signatures test vectors
-    /// Tests XMSS signature verification on SignedBlockWithAttestation
-    #[cfg(feature = "devnet1")]
+    // Test runner for verify_signatures test vectors
+    // Tests XMSS signature verification on SignedBlockWithAttestation
+    //
+    // NOTE: Disabled until test vector files are regenerated for devnet2 BlockSignatures format.
+    // The current JSON test vectors use signature.data array instead of attestation_signatures + proposer_signature.
     pub fn run_verify_signatures_test<P: AsRef<Path>>(
         path: P,
     ) -> Result<(), Box<dyn std::error::Error>> {
@@ -632,9 +654,6 @@ impl TestRunner {
             "  Proposer attestation validator: {}",
             signed_block.message.proposer_attestation.validator_id.0
         );
-
-        let signature_count = signed_block.signature.len_u64();
-        println!("  Signatures: {}", signature_count);
 
         // Check if we expect this test to fail
         if let Some(ref exception) = test_case.expect_exception {

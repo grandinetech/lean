@@ -1,3 +1,7 @@
+//! Test vector modules for devnet2 format
+//!
+//! Contains test runners and test cases for block processing, genesis, and signature verification.
+
 // Test vector modules
 pub mod block_processing;
 pub mod genesis;

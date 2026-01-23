@@ -1,3 +1,7 @@
+//! State justifications tests for devnet2 format
+//!
+//! Tests for justification get/set operations and roundtrip verification.
+
 // tests/state_justifications.rs
 use containers::{state::State, types::Bytes32, Config};
 use pretty_assertions::assert_eq;

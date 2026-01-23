@@ -1,9 +1,16 @@
+//! State transition tests
+//!
+//! Tests for full state transitions including signature validation
+//! and state root verification.
+
 // tests/state_transition.rs
 use containers::{
-    block::{hash_tree_root, Block, BlockWithAttestation, SignedBlockWithAttestation},
+    block::{
+        hash_tree_root, Block, BlockSignatures, BlockWithAttestation, SignedBlockWithAttestation,
+    },
     state::State,
     types::{Bytes32, Uint64},
-    Attestation, Attestations, Slot,
+    Attestation, Signature, Slot,
 };
 use pretty_assertions::assert_eq;
 use rstest::fixture;
@@ -31,7 +38,6 @@ fn test_state_transition_full() {
     // Use process_block_header + process_operations to avoid state root validation during setup
     let state_after_header = state_at_slot_1.process_block_header(&block).unwrap();
 
-    #[cfg(feature = "devnet1")]
     let expected_state = state_after_header.process_attestations(&block.body.attestations);
 
     #[cfg(feature = "devnet2")]
@@ -79,7 +85,6 @@ fn test_state_transition_invalid_signatures() {
     // Use process_block_header + process_operations to avoid state root validation during setup
     let state_after_header = state_at_slot_1.process_block_header(&block).unwrap();
 
-    #[cfg(feature = "devnet1")]
     let expected_state = state_after_header.process_attestations(&block.body.attestations);
 
     #[cfg(feature = "devnet2")]
@@ -113,7 +118,7 @@ fn test_state_transition_invalid_signatures() {
     assert_eq!(result.unwrap_err(), "Block signatures must be valid");
 }
 
-#[cfg(feature = "devnet1")]
+// Test with bad state root using devnet2 BlockSignatures structure
 #[test]
 fn test_state_transition_bad_state_root() {
     let state = genesis_state();
@@ -130,7 +135,10 @@ fn test_state_transition_bad_state_root() {
             block,
             proposer_attestation: Attestation::default(),
         },
-        signature: PersistentList::default(),
+        signature: BlockSignatures {
+            attestation_signatures: PersistentList::default(),
+            proposer_signature: Signature::default(),
+        },
     };
 
     let result = state.state_transition(final_signed_block_with_attestation, true);
@@ -138,7 +146,6 @@ fn test_state_transition_bad_state_root() {
     assert_eq!(result.unwrap_err(), "Invalid block state root");
 }
 
-#[cfg(feature = "devnet2")]
 #[test]
 fn test_state_transition_devnet2() {
     let state = genesis_state();
@@ -152,21 +159,7 @@ fn test_state_transition_devnet2() {
     // Process the block header and attestations
     let state_after_header = state_at_slot_1.process_block_header(&block).unwrap();
 
-    #[cfg(feature = "devnet1")]
     let expected_state = state_after_header.process_attestations(&block.body.attestations);
-
-    #[cfg(feature = "devnet2")]
-    let expected_state = {
-        let mut unaggregated_attestations = Attestations::default();
-        for aggregated_attestation in &block.body.attestations {
-            let plain_attestations = aggregated_attestation.to_plain();
-            // For each attestatio in the vector, push to the list
-            for attestation in plain_attestations {
-                unaggregated_attestations.push(attestation);
-            }
-        }
-        state_after_header.process_attestations(&unaggregated_attestations)
-    };
 
     // Ensure the state root matches the expected state
     let block_with_correct_root = Block {

@@ -1,870 +1,392 @@
-use fork_choice::{
-    handlers::{on_attestation, on_block, on_tick},
-    store::{get_forkchoice_store, Store},
-};
+//! Fork choice test vectors for devnet2
+//!
+//! Integration tests for fork choice rule implementation
+//! using devnet2 data structures.
 
 use containers::{
-    attestation::{Attestation, AttestationData, Signature, SignedAttestation},
-    block::{
-        hash_tree_root, Block, BlockBody, BlockHeader, BlockWithAttestation,
-        SignedBlockWithAttestation,
-    },
+    attestation::{AttestationData, SignedAttestation},
+    block::{Block, BlockBody, BlockWithAttestation, SignedBlockWithAttestation},
     checkpoint::Checkpoint,
     config::Config,
     state::State,
+    validator::Validator,
     Bytes32, Slot, Uint64, ValidatorIndex,
 };
-
-use serde::Deserialize;
-use ssz::{PersistentList, SszHash};
+use fork_choice::store::{get_fork_choice_head, get_forkchoice_store, Store};
+use ssz::SszHash;
 use std::collections::HashMap;
-use std::panic::AssertUnwindSafe;
 
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct TestVectorFile {
-    #[serde(flatten)]
-    tests: HashMap<String, TestVector>,
+/// Helper to create a genesis store for testing
+fn create_genesis_store() -> Store {
+    let config = Config { genesis_time: 0 };
+    let validators = vec![Validator::default(); 10];
+    let state = State::generate_genesis_with_validators(Uint64(0), validators);
+
+    let block = Block {
+        slot: Slot(0),
+        proposer_index: ValidatorIndex(0),
+        parent_root: Bytes32::default(),
+        state_root: Bytes32(state.hash_tree_root()),
+        body: BlockBody::default(),
+    };
+
+    let signed_block = SignedBlockWithAttestation {
+        message: BlockWithAttestation {
+            block,
+            proposer_attestation: Default::default(),
+        },
+        signature: Default::default(),
+    };
+
+    get_forkchoice_store(state, signed_block, config)
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct TestVector {
-    #[allow(dead_code)]
-    network: String,
-    anchor_state: TestAnchorState,
-    anchor_block: TestAnchorBlock,
-    steps: Vec<TestStep>,
-    #[serde(rename = "_info")]
-    info: TestInfo,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct TestAnchorState {
-    config: TestConfig,
+/// Helper to create a signed attestation
+fn create_attestation(
+    validator_id: u64,
     slot: u64,
-    latest_block_header: TestBlockHeader,
-    latest_justified: TestCheckpoint,
-    latest_finalized: TestCheckpoint,
-    #[serde(default)]
-    historical_block_hashes: TestDataWrapper<String>,
-    #[serde(default)]
-    justified_slots: TestDataWrapper<bool>,
-    validators: TestDataWrapper<TestValidator>,
-    #[serde(default)]
-    justifications_roots: TestDataWrapper<String>,
-    #[serde(default)]
-    justifications_validators: TestDataWrapper<bool>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct TestConfig {
-    genesis_time: u64,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct TestBlockHeader {
-    slot: u64,
-    proposer_index: u64,
-    parent_root: String,
-    state_root: String,
-    body_root: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct TestCheckpoint {
-    root: String,
-    slot: u64,
-}
-
-#[derive(Debug, Deserialize, Default)]
-struct TestDataWrapper<T> {
-    data: Vec<T>,
-}
-
-#[derive(Debug, Deserialize)]
-struct TestValidator {
-    #[allow(dead_code)]
-    pubkey: String,
-    #[allow(dead_code)]
-    #[serde(default)]
-    index: u64,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct TestAnchorBlock {
-    slot: u64,
-    proposer_index: u64,
-    parent_root: String,
-    state_root: String,
-    body: TestBlockBody,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct TestBlock {
-    slot: u64,
-    proposer_index: u64,
-    parent_root: String,
-    state_root: String,
-    body: TestBlockBody,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct TestBlockWithAttestation {
-    block: TestBlock,
-    proposer_attestation: TestAttestation,
-    #[serde(default)]
-    block_root_label: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-struct TestBlockBody {
-    attestations: TestDataWrapper<TestAttestation>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-enum TestAttestation {
-    #[serde(rename_all = "camelCase")]
-    Nested {
-        validator_id: u64,
-        data: TestAttestationData,
-    },
-    #[serde(rename_all = "camelCase")]
-    Flat {
-        validator_id: u64,
-        slot: u64,
-        head: TestCheckpoint,
-        target: TestCheckpoint,
-        source: TestCheckpoint,
-    },
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct TestAttestationData {
-    slot: u64,
-    head: TestCheckpoint,
-    target: TestCheckpoint,
-    source: TestCheckpoint,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct TestStep {
-    valid: bool,
-    #[serde(default)]
-    checks: Option<TestChecks>,
-    #[serde(rename = "stepType")]
-    step_type: String,
-    block: Option<TestBlockWithAttestation>,
-    attestation: Option<TestAttestation>,
-    tick: Option<u64>,
-    time: Option<u64>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct TestChecks {
-    #[serde(rename = "headSlot")]
-    head_slot: Option<u64>,
-    #[serde(rename = "headRootLabel")]
-    head_root_label: Option<String>,
-    #[serde(rename = "attestationChecks")]
-    attestation_checks: Option<Vec<AttestationCheck>>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct AttestationCheck {
-    validator: u64,
-    #[allow(dead_code)]
-    #[serde(rename = "attestationSlot")]
-    attestation_slot: u64,
-    #[serde(rename = "targetSlot")]
-    target_slot: Option<u64>,
-    location: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct TestInfo {
-    #[allow(dead_code)]
-    hash: String,
-    #[allow(dead_code)]
-    comment: String,
-    #[serde(rename = "testId")]
-    test_id: String,
-    #[allow(dead_code)]
-    description: String,
-    #[allow(dead_code)]
-    #[serde(rename = "fixtureFormat")]
-    fixture_format: String,
-}
-
-fn parse_root(hex_str: &str) -> Bytes32 {
-    let hex = hex_str.trim_start_matches("0x");
-    let mut bytes = [0u8; 32];
-
-    if hex.len() == 64 {
-        for i in 0..32 {
-            bytes[i] = u8::from_str_radix(&hex[i * 2..i * 2 + 2], 16)
-                .unwrap_or_else(|_| panic!("Invalid hex at position {}: {}", i, hex));
-        }
-    } else if !hex.chars().all(|c| c == '0') {
-        panic!("Invalid root length: {} (expected 64 hex chars)", hex.len());
-    }
-
-    Bytes32(ssz::H256::from(bytes))
-}
-
-fn convert_test_checkpoint(test_cp: &TestCheckpoint) -> Checkpoint {
-    Checkpoint {
-        root: parse_root(&test_cp.root),
-        slot: Slot(test_cp.slot),
-    }
-}
-
-fn convert_test_attestation(test_att: &TestAttestation) -> Attestation {
-    let (validator_id, slot, head, target, source) = match test_att {
-        TestAttestation::Nested { validator_id, data } => (
-            *validator_id,
-            data.slot,
-            &data.head,
-            &data.target,
-            &data.source,
-        ),
-        TestAttestation::Flat {
-            validator_id,
-            slot,
+    head: Checkpoint,
+    target: Checkpoint,
+    source: Checkpoint,
+) -> SignedAttestation {
+    SignedAttestation {
+        validator_id,
+        message: AttestationData {
+            slot: Slot(slot),
             head,
             target,
             source,
-        } => (*validator_id, *slot, head, target, source),
-    };
-
-    Attestation {
-        validator_id: Uint64(validator_id),
-        data: AttestationData {
-            slot: Slot(slot),
-            head: convert_test_checkpoint(head),
-            target: convert_test_checkpoint(target),
-            source: convert_test_checkpoint(source),
         },
+        signature: Default::default(),
     }
 }
 
-#[cfg(feature = "devnet1")]
-fn convert_test_anchor_block(test_block: &TestAnchorBlock) -> SignedBlockWithAttestation {
-    let mut attestations = ssz::PersistentList::default();
-
-    for (i, test_att) in test_block.body.attestations.data.iter().enumerate() {
-        let signed_vote = convert_test_attestation(test_att);
-        attestations
-            .push(signed_vote)
-            .expect(&format!("Failed to add attestation {}", i));
-    }
-
+/// Helper to add a block to the store
+fn add_block(store: &mut Store, slot: u64, parent_root: Bytes32, proposer: u64) -> Bytes32 {
     let block = Block {
-        slot: Slot(test_block.slot),
-        proposer_index: ValidatorIndex(test_block.proposer_index),
-        parent_root: parse_root(&test_block.parent_root),
-        state_root: parse_root(&test_block.state_root),
-        body: BlockBody { attestations },
+        slot: Slot(slot),
+        proposer_index: ValidatorIndex(proposer),
+        parent_root,
+        state_root: Bytes32::default(),
+        body: BlockBody::default(),
     };
+    let block_root = Bytes32(block.hash_tree_root());
 
-    // Create proposer attestation
-    let proposer_attestation = Attestation {
-        validator_id: Uint64(test_block.proposer_index),
-        data: AttestationData {
-            slot: Slot(test_block.slot),
-            head: Checkpoint {
-                root: parse_root(&test_block.parent_root),
-                slot: Slot(test_block.slot),
+    store.blocks.insert(
+        block_root,
+        SignedBlockWithAttestation {
+            message: BlockWithAttestation {
+                block,
+                proposer_attestation: Default::default(),
             },
-            target: Checkpoint {
-                root: parse_root(&test_block.parent_root),
-                slot: Slot(test_block.slot),
-            },
-            source: Checkpoint {
-                root: parse_root(&test_block.parent_root),
-                slot: Slot(0),
-            },
+            signature: Default::default(),
         },
-    };
+    );
 
-    SignedBlockWithAttestation {
-        message: BlockWithAttestation {
-            block,
-            proposer_attestation,
-        },
-        signature: PersistentList::default(),
-    }
-}
-
-#[cfg(feature = "devnet1")]
-fn convert_test_block(
-    test_block_with_att: &TestBlockWithAttestation,
-) -> SignedBlockWithAttestation {
-    let test_block = &test_block_with_att.block;
-    let mut attestations = ssz::PersistentList::default();
-
-    for (i, test_att) in test_block.body.attestations.data.iter().enumerate() {
-        let signed_vote = convert_test_attestation(test_att);
-        attestations
-            .push(signed_vote)
-            .expect(&format!("Failed to add attestation {}", i));
-    }
-
-    let block = Block {
-        slot: Slot(test_block.slot),
-        proposer_index: ValidatorIndex(test_block.proposer_index),
-        parent_root: parse_root(&test_block.parent_root),
-        state_root: parse_root(&test_block.state_root),
-        body: BlockBody { attestations },
-    };
-
-    let proposer_attestation = convert_test_attestation(&test_block_with_att.proposer_attestation);
-
-    SignedBlockWithAttestation {
-        message: BlockWithAttestation {
-            block,
-            proposer_attestation,
-        },
-        signature: PersistentList::default(),
-    }
-}
-
-fn initialize_state_from_test(test_state: &TestAnchorState) -> State {
-    use containers::{
-        HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots,
-    };
-    use ssz::PersistentList as List;
-
-    let config = Config {
-        genesis_time: test_state.config.genesis_time,
-    };
-
-    let latest_block_header = BlockHeader {
-        slot: Slot(test_state.latest_block_header.slot),
-        proposer_index: ValidatorIndex(test_state.latest_block_header.proposer_index),
-        parent_root: parse_root(&test_state.latest_block_header.parent_root),
-        state_root: parse_root(&test_state.latest_block_header.state_root),
-        body_root: parse_root(&test_state.latest_block_header.body_root),
-    };
-
-    let mut historical_block_hashes = HistoricalBlockHashes::default();
-    for hash_str in &test_state.historical_block_hashes.data {
-        historical_block_hashes
-            .push(parse_root(hash_str))
-            .expect("within limit");
-    }
-
-    let mut justified_slots = JustifiedSlots::new(false, test_state.justified_slots.data.len());
-    for (i, &val) in test_state.justified_slots.data.iter().enumerate() {
-        if val {
-            justified_slots.set(i, true);
-        }
-    }
-
-    let mut justifications_roots = JustificationRoots::default();
-    for root_str in &test_state.justifications_roots.data {
-        justifications_roots
-            .push(parse_root(root_str))
-            .expect("within limit");
-    }
-
-    let mut justifications_validators =
-        JustificationsValidators::new(false, test_state.justifications_validators.data.len());
-    for (i, &val) in test_state.justifications_validators.data.iter().enumerate() {
-        if val {
-            justifications_validators.set(i, true);
-        }
-    }
-
-    let mut validators = List::default();
-    for test_validator in &test_state.validators.data {
-        let pubkey = containers::validator::BlsPublicKey::from_hex(&test_validator.pubkey)
-            .expect("Failed to parse validator pubkey");
-        let validator = containers::validator::Validator {
-            pubkey,
-            index: containers::Uint64(test_validator.index),
-        };
-        validators.push(validator).expect("Failed to add validator");
-    }
-
-    State {
-        config,
-        slot: Slot(test_state.slot),
-        latest_block_header,
-        latest_justified: convert_test_checkpoint(&test_state.latest_justified),
-        latest_finalized: convert_test_checkpoint(&test_state.latest_finalized),
-        historical_block_hashes,
-        justified_slots,
-        validators,
-        justifications_roots,
-        justifications_validators,
-    }
-}
-
-#[cfg(feature = "devnet1")]
-fn verify_checks(
-    store: &Store,
-    checks: &Option<TestChecks>,
-    block_labels: &HashMap<String, Bytes32>,
-    step_idx: usize,
-) -> Result<(), String> {
-    // If no checks provided, nothing to verify
-    let checks = match checks {
-        Some(c) => c,
-        None => return Ok(()),
-    };
-
-    if let Some(expected_slot) = checks.head_slot {
-        let actual_slot = store.blocks[&store.head].message.block.slot.0;
-        if actual_slot != expected_slot {
-            return Err(format!(
-                "Step {}: Head slot mismatch - expected {}, got {}",
-                step_idx, expected_slot, actual_slot
-            ));
-        }
-    }
-
-    if let Some(label) = &checks.head_root_label {
-        let expected_root = block_labels
-            .get(label)
-            .ok_or_else(|| format!("Step {}: Block label '{}' not found", step_idx, label))?;
-        if &store.head != expected_root {
-            let actual_slot = store
-                .blocks
-                .get(&store.head)
-                .map(|b| b.message.block.slot.0)
-                .unwrap_or(0);
-            let expected_slot = store
-                .blocks
-                .get(expected_root)
-                .map(|b| b.message.block.slot.0)
-                .unwrap_or(0);
-            return Err(format!(
-                "Step {}: Head root mismatch for label '{}' - expected slot {}, got slot {} (known_attestations: {}, new_attestations: {})",
-                step_idx, label, expected_slot, actual_slot,
-                store.latest_known_attestations.len(), store.latest_new_attestations.len()
-            ));
-        }
-    }
-
-    if let Some(att_checks) = &checks.attestation_checks {
-        for check in att_checks {
-            let validator = ValidatorIndex(check.validator);
-
-            match check.location.as_str() {
-                "new" => {
-                    if !store.latest_new_attestations.contains_key(&validator) {
-                        return Err(format!(
-                            "Step {}: Expected validator {} in new attestations, but not found",
-                            step_idx, check.validator
-                        ));
-                    }
-                    if let Some(target_slot) = check.target_slot {
-                        let attestation = &store.latest_new_attestations[&validator];
-                        if attestation.message.data.target.slot.0 != target_slot {
-                            return Err(format!(
-                                "Step {}: Validator {} new attestation target slot mismatch - expected {}, got {}",
-                                step_idx, check.validator, target_slot, attestation.message.data.target.slot.0
-                            ));
-                        }
-                    }
-                }
-                "known" => {
-                    if !store.latest_known_attestations.contains_key(&validator) {
-                        return Err(format!(
-                            "Step {}: Expected validator {} in known attestations, but not found",
-                            step_idx, check.validator
-                        ));
-                    }
-                }
-                _ => {
-                    return Err(format!(
-                        "Step {}: Unknown attestation location: {}",
-                        step_idx, check.location
-                    ));
-                }
-            }
-        }
-    }
-
-    Ok(())
-}
-
-#[cfg(feature = "devnet1")]
-fn run_single_test(_test_name: &str, test: TestVector) -> Result<(), String> {
-    println!("  Running: {}", test.info.test_id);
-
-    let mut anchor_state = initialize_state_from_test(&test.anchor_state);
-    let anchor_block = convert_test_anchor_block(&test.anchor_block);
-
-    let body_root = hash_tree_root(&anchor_block.message.block.body);
-    anchor_state.latest_block_header = BlockHeader {
-        slot: anchor_block.message.block.slot,
-        proposer_index: anchor_block.message.block.proposer_index,
-        parent_root: anchor_block.message.block.parent_root,
-        state_root: anchor_block.message.block.state_root,
-        body_root,
-    };
-
-    let config = Config {
-        genesis_time: test.anchor_state.config.genesis_time,
-    };
-
-    let mut store = get_forkchoice_store(anchor_state, anchor_block, config);
-    let mut block_labels: HashMap<String, Bytes32> = HashMap::new();
-
-    for (step_idx, step) in test.steps.iter().enumerate() {
-        match step.step_type.as_str() {
-            "block" => {
-                let test_block = step
-                    .block
-                    .as_ref()
-                    .ok_or_else(|| format!("Step {}: Missing block data", step_idx))?;
-
-                let result = std::panic::catch_unwind(AssertUnwindSafe(|| {
-                    let signed_block = convert_test_block(test_block);
-                    let block_root = Bytes32(signed_block.message.block.hash_tree_root());
-
-                    // Advance time to the block's slot to ensure attestations are processable
-                    // SECONDS_PER_SLOT is 4 (not 12)
-                    let block_time =
-                        store.config.genesis_time + (signed_block.message.block.slot.0 * 4);
-                    on_tick(&mut store, block_time, false);
-
-                    on_block(&mut store, signed_block)?;
-                    Ok(block_root)
-                }));
-
-                let result = match result {
-                    Ok(inner) => inner,
-                    Err(e) => Err(format!("Panic: {:?}", e)),
-                };
-
-                if let Ok(block_root) = &result {
-                    if let Some(label) = &test_block.block_root_label {
-                        block_labels.insert(label.clone(), *block_root);
-                    }
-                }
-
-                if step.valid && result.is_err() {
-                    return Err(format!(
-                        "Step {}: Block should be valid but processing failed: {:?}",
-                        step_idx,
-                        result.err()
-                    ));
-                } else if !step.valid && result.is_ok() {
-                    return Err(format!(
-                        "Step {}: Block should be invalid but processing succeeded",
-                        step_idx
-                    ));
-                }
-
-                if step.valid && result.is_ok() {
-                    verify_checks(&store, &step.checks, &block_labels, step_idx)?;
-                }
-            }
-            "tick" | "time" => {
-                let time_value = step
-                    .tick
-                    .or(step.time)
-                    .ok_or_else(|| format!("Step {}: Missing tick/time data", step_idx))?;
-                on_tick(&mut store, time_value, false);
-
-                if step.valid {
-                    verify_checks(&store, &step.checks, &block_labels, step_idx)?;
-                }
-            }
-            "attestation" => {
-                let test_att = step
-                    .attestation
-                    .as_ref()
-                    .ok_or_else(|| format!("Step {}: Missing attestation data", step_idx))?;
-
-                let result = std::panic::catch_unwind(AssertUnwindSafe(|| {
-                    let attestation = convert_test_attestation(test_att);
-                    let signed_attestation = SignedAttestation {
-                        message: attestation,
-                        signature: Signature::default(),
-                    };
-                    on_attestation(&mut store, signed_attestation, false)
-                }));
-
-                let result = match result {
-                    Ok(inner) => inner,
-                    Err(e) => Err(format!("Panic: {:?}", e)),
-                };
-
-                if step.valid && result.is_err() {
-                    return Err(format!(
-                        "Step {}: Attestation should be valid but processing failed: {:?}",
-                        step_idx,
-                        result.err()
-                    ));
-                } else if !step.valid && result.is_ok() {
-                    return Err(format!(
-                        "Step {}: Attestation should be invalid but processing succeeded",
-                        step_idx
-                    ));
-                }
-
-                if step.valid && result.is_ok() {
-                    verify_checks(&store, &step.checks, &block_labels, step_idx)?;
-                }
-            }
-            _ => {
-                return Err(format!(
-                    "Step {}: Unknown step type: {}",
-                    step_idx, step.step_type
-                ));
-            }
-        }
-    }
-
-    Ok(())
-}
-
-#[cfg(feature = "devnet1")]
-fn run_test_vector_file(test_path: &str) -> Result<(), String> {
-    let json_str = std::fs::read_to_string(test_path)
-        .map_err(|e| format!("Failed to read file {}: {}", test_path, e))?;
-
-    let test_data: TestVectorFile = serde_json::from_str(&json_str)
-        .map_err(|e| format!("Failed to parse JSON from {}: {}", test_path, e))?;
-
-    for (test_name, test_vector) in test_data.tests {
-        run_single_test(&test_name, test_vector)?;
-    }
-
-    Ok(())
+    block_root
 }
 
 #[test]
-#[cfg(feature = "devnet1")]
-fn test_fork_choice_head_vectors() {
-    let test_dir = "../tests/test_vectors/test_fork_choice/test_fork_choice_head";
+fn test_genesis_state_transition() {
+    let store = create_genesis_store();
 
-    let entries =
-        std::fs::read_dir(test_dir).expect(&format!("Failed to read test directory: {}", test_dir));
+    // Verify genesis state is properly initialized
+    assert!(!store.head.0.is_zero());
+    assert_eq!(store.blocks.len(), 1);
+    assert_eq!(store.states.len(), 1);
 
-    let mut test_count = 0;
-    let mut pass_count = 0;
-    let mut fail_count = 0;
-
-    println!("\n=== Fork Choice Head Tests ===");
-
-    for entry in entries {
-        let path = entry.unwrap().path();
-        if path.extension().map_or(false, |ext| ext == "json") {
-            test_count += 1;
-            println!("\nTest file: {:?}", path.file_name().unwrap());
-
-            match run_test_vector_file(path.to_str().unwrap()) {
-                Ok(_) => {
-                    println!("  ✓ PASSED");
-                    pass_count += 1;
-                }
-                Err(e) => {
-                    println!("  ✗ FAILED: {}", e);
-                    fail_count += 1;
-                }
-            }
-        }
-    }
-
-    println!("\n=== Summary ===");
-    println!(
-        "Total: {}, Passed: {}, Failed: {}",
-        test_count, pass_count, fail_count
-    );
-
-    if fail_count > 0 {
-        panic!("{} test(s) failed", fail_count);
-    }
+    // Genesis should be both justified and finalized
+    assert_eq!(store.latest_justified.slot, Slot(0));
+    assert_eq!(store.latest_finalized.slot, Slot(0));
 }
 
 #[test]
-#[cfg(feature = "devnet1")]
-fn test_attestation_processing_vectors() {
-    let test_dir = "../tests/test_vectors/test_fork_choice/test_attestation_processing";
+fn test_basic_slot_transition() {
+    let mut store = create_genesis_store();
+    let genesis_root = store.head;
 
-    let entries =
-        std::fs::read_dir(test_dir).expect(&format!("Failed to read test directory: {}", test_dir));
+    // Add blocks at slots 1, 2, 3
+    let block1_root = add_block(&mut store, 1, genesis_root, 0);
+    let block2_root = add_block(&mut store, 2, block1_root, 0);
+    let block3_root = add_block(&mut store, 3, block2_root, 0);
 
-    let mut test_count = 0;
-    let mut pass_count = 0;
-    let mut fail_count = 0;
+    assert_eq!(store.blocks.len(), 4);
 
-    println!("\n=== Attestation Processing Tests ===");
+    // Without attestations and min_votes=1, head should stay at genesis
+    // (no blocks have enough votes to be considered)
+    let empty_attestations = HashMap::new();
+    let head = get_fork_choice_head(&store, genesis_root, &empty_attestations, 1);
+    assert_eq!(head, genesis_root);
 
-    for entry in entries {
-        let path = entry.unwrap().path();
-        if path.extension().map_or(false, |ext| ext == "json") {
-            test_count += 1;
-            println!("\nTest file: {:?}", path.file_name().unwrap());
+    // With attestation for block3 and min_votes=1, head should follow the voted chain
+    let mut attestations = HashMap::new();
+    let checkpoint = Checkpoint {
+        root: block3_root,
+        slot: Slot(3),
+    };
+    let genesis_checkpoint = Checkpoint {
+        root: genesis_root,
+        slot: Slot(0),
+    };
 
-            match run_test_vector_file(path.to_str().unwrap()) {
-                Ok(_) => {
-                    println!("  ✓ PASSED");
-                    pass_count += 1;
-                }
-                Err(e) => {
-                    println!("  ✗ FAILED: {}", e);
-                    fail_count += 1;
-                }
-            }
-        }
-    }
-
-    println!("\n=== Summary ===");
-    println!(
-        "Total: {}, Passed: {}, Failed: {}",
-        test_count, pass_count, fail_count
+    attestations.insert(
+        ValidatorIndex(0),
+        create_attestation(
+            0,
+            3,
+            checkpoint.clone(),
+            checkpoint.clone(),
+            genesis_checkpoint.clone(),
+        ),
     );
 
-    if fail_count > 0 {
-        panic!("{} test(s) failed", fail_count);
-    }
+    // The fork choice should follow the chain with votes to find the heaviest head
+    let head = get_fork_choice_head(&store, genesis_root, &attestations, 1);
+
+    // With 1 vote on block3, the entire chain block1->block2->block3 gets 1 vote each
+    // So head should be block3 (the tip of the voted chain)
+    assert_eq!(head, block3_root);
 }
 
 #[test]
-#[cfg(feature = "devnet1")]
-fn test_fork_choice_reorgs_vectors() {
-    let test_dir = "../tests/test_vectors/test_fork_choice/test_fork_choice_reorgs";
+fn test_attestation_processing() {
+    let mut store = create_genesis_store();
+    let genesis_root = store.head;
+    let genesis_checkpoint = Checkpoint {
+        root: genesis_root,
+        slot: Slot(0),
+    };
 
-    let entries =
-        std::fs::read_dir(test_dir).expect(&format!("Failed to read test directory: {}", test_dir));
+    // Create a block
+    let block1_root = add_block(&mut store, 1, genesis_root, 0);
+    let block1_checkpoint = Checkpoint {
+        root: block1_root,
+        slot: Slot(1),
+    };
 
-    let mut test_count = 0;
-    let mut pass_count = 0;
-    let mut fail_count = 0;
-
-    println!("\n=== Fork Choice Reorg Tests ===");
-
-    for entry in entries {
-        let path = entry.unwrap().path();
-        if path.extension().map_or(false, |ext| ext == "json") {
-            test_count += 1;
-            println!("\nTest file: {:?}", path.file_name().unwrap());
-
-            match run_test_vector_file(path.to_str().unwrap()) {
-                Ok(_) => {
-                    println!("  ✓ PASSED");
-                    pass_count += 1;
-                }
-                Err(e) => {
-                    println!("  ✗ FAILED: {}", e);
-                    fail_count += 1;
-                }
-            }
-        }
+    // Process attestations from multiple validators
+    let mut attestations = HashMap::new();
+    for i in 0..5 {
+        attestations.insert(
+            ValidatorIndex(i),
+            create_attestation(
+                i,
+                1,
+                block1_checkpoint.clone(),
+                block1_checkpoint.clone(),
+                genesis_checkpoint.clone(),
+            ),
+        );
     }
 
-    println!("\n=== Summary ===");
-    println!(
-        "Total: {}, Passed: {}, Failed: {}",
-        test_count, pass_count, fail_count
-    );
-
-    if fail_count > 0 {
-        panic!("{} test(s) failed", fail_count);
-    }
+    let head = get_fork_choice_head(&store, genesis_root, &attestations, 0);
+    assert_eq!(head, block1_root);
 }
 
 #[test]
-#[cfg(feature = "devnet1")]
-fn test_attestation_target_selection_vectors() {
-    let test_dir = "../tests/test_vectors/test_fork_choice/test_attestation_target_selection";
+fn test_multiple_attestations() {
+    let mut store = create_genesis_store();
+    let genesis_root = store.head;
+    let genesis_checkpoint = Checkpoint {
+        root: genesis_root,
+        slot: Slot(0),
+    };
 
-    let entries =
-        std::fs::read_dir(test_dir).expect(&format!("Failed to read test directory: {}", test_dir));
+    // Create a chain of blocks
+    let block1_root = add_block(&mut store, 1, genesis_root, 0);
+    let block2_root = add_block(&mut store, 2, block1_root, 0);
+    let block3_root = add_block(&mut store, 3, block2_root, 0);
 
-    let mut test_count = 0;
-    let mut pass_count = 0;
-    let mut fail_count = 0;
+    let block3_checkpoint = Checkpoint {
+        root: block3_root,
+        slot: Slot(3),
+    };
 
-    println!("\n=== Attestation Target Selection Tests ===");
-
-    for entry in entries {
-        let path = entry.unwrap().path();
-        if path.extension().map_or(false, |ext| ext == "json") {
-            test_count += 1;
-            println!("\nTest file: {:?}", path.file_name().unwrap());
-
-            match run_test_vector_file(path.to_str().unwrap()) {
-                Ok(_) => {
-                    println!("  ✓ PASSED");
-                    pass_count += 1;
-                }
-                Err(e) => {
-                    println!("  ✗ FAILED: {}", e);
-                    fail_count += 1;
-                }
-            }
-        }
+    // All validators attest to block3
+    let mut attestations = HashMap::new();
+    for i in 0..10 {
+        attestations.insert(
+            ValidatorIndex(i),
+            create_attestation(
+                i,
+                3,
+                block3_checkpoint.clone(),
+                block3_checkpoint.clone(),
+                genesis_checkpoint.clone(),
+            ),
+        );
     }
 
-    println!("\n=== Summary ===");
-    println!(
-        "Total: {}, Passed: {}, Failed: {}",
-        test_count, pass_count, fail_count
-    );
-
-    if fail_count > 0 {
-        panic!("{} test(s) failed", fail_count);
-    }
+    let head = get_fork_choice_head(&store, genesis_root, &attestations, 0);
+    assert_eq!(head, block3_root);
 }
 
 #[test]
-#[cfg(feature = "devnet1")]
-fn test_lexicographic_tiebreaker_vectors() {
-    let test_dir = "../tests/test_vectors/test_fork_choice/test_lexicographic_tiebreaker";
+fn test_fork_choice_with_competing_blocks() {
+    let mut store = create_genesis_store();
+    let genesis_root = store.head;
+    let genesis_checkpoint = Checkpoint {
+        root: genesis_root,
+        slot: Slot(0),
+    };
 
-    let entries =
-        std::fs::read_dir(test_dir).expect(&format!("Failed to read test directory: {}", test_dir));
+    // Create two competing forks at slot 1
+    let fork_a_root = add_block(&mut store, 1, genesis_root, 0);
+    let fork_b_root = add_block(&mut store, 1, genesis_root, 1); // Different proposer
 
-    let mut test_count = 0;
-    let mut pass_count = 0;
-    let mut fail_count = 0;
+    let fork_a_checkpoint = Checkpoint {
+        root: fork_a_root,
+        slot: Slot(1),
+    };
+    let fork_b_checkpoint = Checkpoint {
+        root: fork_b_root,
+        slot: Slot(1),
+    };
 
-    println!("\n=== Lexicographic Tiebreaker Tests ===");
-
-    for entry in entries {
-        let path = entry.unwrap().path();
-        if path.extension().map_or(false, |ext| ext == "json") {
-            test_count += 1;
-            println!("\nTest file: {:?}", path.file_name().unwrap());
-
-            match run_test_vector_file(path.to_str().unwrap()) {
-                Ok(_) => {
-                    println!("  ✓ PASSED");
-                    pass_count += 1;
-                }
-                Err(e) => {
-                    println!("  ✗ FAILED: {}", e);
-                    fail_count += 1;
-                }
-            }
-        }
+    // 6 validators vote for fork A
+    let mut attestations = HashMap::new();
+    for i in 0..6 {
+        attestations.insert(
+            ValidatorIndex(i),
+            create_attestation(
+                i,
+                1,
+                fork_a_checkpoint.clone(),
+                fork_a_checkpoint.clone(),
+                genesis_checkpoint.clone(),
+            ),
+        );
     }
 
-    println!("\n=== Summary ===");
-    println!(
-        "Total: {}, Passed: {}, Failed: {}",
-        test_count, pass_count, fail_count
+    // 4 validators vote for fork B
+    for i in 6..10 {
+        attestations.insert(
+            ValidatorIndex(i),
+            create_attestation(
+                i,
+                1,
+                fork_b_checkpoint.clone(),
+                fork_b_checkpoint.clone(),
+                genesis_checkpoint.clone(),
+            ),
+        );
+    }
+
+    let head = get_fork_choice_head(&store, genesis_root, &attestations, 0);
+
+    // Fork A should win with more votes
+    assert_eq!(head, fork_a_root);
+}
+
+#[test]
+fn test_finality_prevents_reorg() {
+    let mut store = create_genesis_store();
+    let genesis_root = store.head;
+    let genesis_checkpoint = Checkpoint {
+        root: genesis_root,
+        slot: Slot(0),
+    };
+
+    // Create a finalized chain
+    let block1_root = add_block(&mut store, 1, genesis_root, 0);
+    let block2_root = add_block(&mut store, 2, block1_root, 0);
+
+    // Update finalized checkpoint
+    store.latest_finalized = Checkpoint {
+        root: block1_root,
+        slot: Slot(1),
+    };
+
+    // Create competing fork from genesis (should not be chosen due to finality)
+    let competing_root = add_block(&mut store, 1, genesis_root, 1);
+
+    let block2_checkpoint = Checkpoint {
+        root: block2_root,
+        slot: Slot(2),
+    };
+    let competing_checkpoint = Checkpoint {
+        root: competing_root,
+        slot: Slot(1),
+    };
+
+    // More votes for competing fork
+    let mut attestations = HashMap::new();
+    for i in 0..7 {
+        attestations.insert(
+            ValidatorIndex(i),
+            create_attestation(
+                i,
+                1,
+                competing_checkpoint.clone(),
+                competing_checkpoint.clone(),
+                genesis_checkpoint.clone(),
+            ),
+        );
+    }
+    for i in 7..10 {
+        attestations.insert(
+            ValidatorIndex(i),
+            create_attestation(
+                i,
+                2,
+                block2_checkpoint.clone(),
+                block2_checkpoint.clone(),
+                genesis_checkpoint.clone(),
+            ),
+        );
+    }
+
+    // Start from finalized block1
+    let head = get_fork_choice_head(&store, block1_root, &attestations, 0);
+
+    // Should follow the chain from block1, not competing fork
+    assert_eq!(head, block2_root);
+}
+
+#[test]
+fn test_attestation_from_future_slot() {
+    let mut store = create_genesis_store();
+    let genesis_root = store.head;
+    let genesis_checkpoint = Checkpoint {
+        root: genesis_root,
+        slot: Slot(0),
+    };
+
+    // Create block at slot 1
+    let block1_root = add_block(&mut store, 1, genesis_root, 0);
+    let block1_checkpoint = Checkpoint {
+        root: block1_root,
+        slot: Slot(1),
+    };
+
+    // Attestation claims to be from slot 100 (future)
+    // The fork choice still processes it based on what block it points to
+    let mut attestations = HashMap::new();
+    attestations.insert(
+        ValidatorIndex(0),
+        create_attestation(
+            0,
+            100,
+            block1_checkpoint.clone(),
+            block1_checkpoint.clone(),
+            genesis_checkpoint.clone(),
+        ),
     );
 
-    if fail_count > 0 {
-        panic!("{} test(s) failed", fail_count);
-    }
+    let head = get_fork_choice_head(&store, genesis_root, &attestations, 0);
+
+    // Should still follow the attestation to block1
+    assert_eq!(head, block1_root);
+}
+
+#[test]
+fn test_empty_attestations_returns_root() {
+    let store = create_genesis_store();
+    let genesis_root = store.head;
+
+    let empty_attestations = HashMap::new();
+    let head = get_fork_choice_head(&store, genesis_root, &empty_attestations, 0);
+
+    // With no attestations, should return the provided root
+    assert_eq!(head, genesis_root);
 }

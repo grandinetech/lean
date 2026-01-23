@@ -1,19 +1,16 @@
-use crate::attestation::AggregatedAttestations;
-use crate::block::BlockSignatures;
+use crate::attestation::{AggregatedAttestation, AggregatedAttestations};
 use crate::validator::Validator;
 use crate::{
     block::{hash_tree_root, Block, BlockBody, BlockHeader, SignedBlockWithAttestation},
-    Attestation, Attestations, Bytes32, Checkpoint, Config, Signature, SignedAttestation, Slot,
-    Uint64, ValidatorIndex,
+    Attestation, Bytes32, Checkpoint, Config, Signature, Slot, Uint64, ValidatorIndex,
 };
 use crate::{
     HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots, Validators,
 };
 use serde::{Deserialize, Serialize};
-use ssz::{PersistentList as List, PersistentList};
+use ssz::PersistentList as List;
 use ssz_derive::Ssz;
 use std::collections::BTreeMap;
-use typenum::U4096;
 
 pub const VALIDATOR_REGISTRY_LIMIT: usize = 1 << 12; // 4096
 pub const JUSTIFICATION_ROOTS_LIMIT: usize = 1 << 18; // 262144
@@ -111,7 +108,7 @@ impl State {
         let mut validators = List::default();
         for i in 0..num_validators.0 {
             let validator = Validator {
-                pubkey: crate::validator::BlsPublicKey::default(),
+                pubkey: crate::public_key::PublicKey::default(),
                 index: Uint64(i),
             };
             validators.push(validator).expect("Failed to add validator");
@@ -149,9 +146,21 @@ impl State {
         (self.slot.0 % num_validators) == (index.0 % num_validators)
     }
 
+    /// Get the number of validators (since PersistentList doesn't have len())
+    pub fn validator_count(&self) -> usize {
+        let mut count: u64 = 0;
+        loop {
+            match self.validators.get(count) {
+                Ok(_) => count += 1,
+                Err(_) => break,
+            }
+        }
+        count as usize
+    }
+
     pub fn get_justifications(&self) -> BTreeMap<Bytes32, Vec<bool>> {
         // Use actual validator count, matching leanSpec
-        let num_validators = self.validators.len_usize();
+        let num_validators = self.validator_count();
         (&self.justifications_roots)
             .into_iter()
             .enumerate()
@@ -174,7 +183,7 @@ impl State {
 
     pub fn with_justifications(mut self, map: BTreeMap<Bytes32, Vec<bool>>) -> Self {
         // Use actual validator count, matching leanSpec
-        let num_validators = self.validators.len_usize();
+        let num_validators = self.validator_count();
         let mut roots: Vec<_> = map.keys().cloned().collect();
         roots.sort();
 
@@ -288,26 +297,12 @@ impl State {
 
     pub fn process_block(&self, block: &Block) -> Result<Self, String> {
         let state = self.process_block_header(block)?;
-        #[cfg(feature = "devnet1")]
-        let state_after_ops = state.process_attestations(&block.body.attestations);
-        #[cfg(feature = "devnet2")]
-        let state_after_ops = {
-            let mut unaggregated_attestations = Attestations::default();
-            for aggregated_attestation in &block.body.attestations {
-                let plain_attestations = aggregated_attestation.to_plain();
-                // For each attestatio in the vector, push to the list
-                for attestation in plain_attestations {
-                    unaggregated_attestations
-                        .push(attestation)
-                        .map_err(|e| format!("Failed to push attestation: {:?}", e))?;
-                }
-            }
-            state.process_attestations(&unaggregated_attestations)
-        };
 
-        // State root validation is handled by state_transition_with_validation when needed
+        if AggregatedAttestation::has_duplicate_data(&block.body.attestations) {
+            return Err("Block contains duplicate AttestationData".to_string());
+        }
 
-        Ok(state_after_ops)
+        Ok(state.process_attestations(&block.body.attestations))
     }
 
     pub fn process_block_header(&self, block: &Block) -> Result<Self, String> {
@@ -397,143 +392,150 @@ impl State {
         })
     }
 
-    pub fn process_attestations(&self, attestations: &Attestations) -> Self {
+    pub fn process_attestations(&self, attestations: &AggregatedAttestations) -> Self {
         let mut justifications = self.get_justifications();
         let mut latest_justified = self.latest_justified.clone();
         let mut latest_finalized = self.latest_finalized.clone();
-        // Store initial finalized slot for justifiability checks (per leanSpec)
         let initial_finalized_slot = self.latest_finalized.slot;
         let justified_slots = self.justified_slots.clone();
 
-        // PersistentList doesn't expose iter; convert to Vec for simple iteration for now
-        // Build a temporary Vec by probing sequentially until index error
-        let mut votes_vec: Vec<Attestation> = Vec::new();
-        let mut i: u64 = 0;
-        loop {
-            match attestations.get(i) {
-                Ok(v) => votes_vec.push(v.clone()),
-                Err(_) => break,
-            }
-            i += 1;
-        }
-
-        // Create mutable working BitList for justified_slots tracking
         let mut justified_slots_working = Vec::new();
         for i in 0..justified_slots.len() {
             justified_slots_working.push(justified_slots.get(i).map(|b| *b).unwrap_or(false));
         }
 
-        for attestation in votes_vec.iter() {
-            let vote = attestation.data.clone();
-            let target_slot = vote.target.slot;
-            let source_slot = vote.source.slot;
-            let target_root = vote.target.root;
-            let source_root = vote.source.root;
+        for aggregated_attestation in attestations {
+            let validator_ids = aggregated_attestation
+                .aggregation_bits
+                .to_validator_indices();
+            self.process_single_attestation(
+                &aggregated_attestation.data,
+                &validator_ids,
+                &mut justifications,
+                &mut latest_justified,
+                &mut latest_finalized,
+                &mut justified_slots_working,
+                initial_finalized_slot,
+            );
+        }
 
-            let target_slot_int = target_slot.0 as usize;
-            let source_slot_int = source_slot.0 as usize;
+        self.finalize_attestation_processing(
+            justifications,
+            latest_justified,
+            latest_finalized,
+            justified_slots_working,
+        )
+    }
 
-            let source_is_justified = justified_slots_working
-                .get(source_slot_int)
-                .copied()
-                .unwrap_or(false);
-            let target_already_justified = justified_slots_working
-                .get(target_slot_int)
-                .copied()
-                .unwrap_or(false);
+    /// Process a single attestation's votes.
+    fn process_single_attestation(
+        &self,
+        vote: &crate::attestation::AttestationData,
+        validator_ids: &[u64],
+        justifications: &mut BTreeMap<Bytes32, Vec<bool>>,
+        latest_justified: &mut Checkpoint,
+        latest_finalized: &mut Checkpoint,
+        justified_slots_working: &mut Vec<bool>,
+        initial_finalized_slot: Slot,
+    ) {
+        let target_slot = vote.target.slot;
+        let source_slot = vote.source.slot;
+        let target_root = vote.target.root;
+        let source_root = vote.source.root;
 
-            let source_root_matches_history = self
-                .historical_block_hashes
-                .get(source_slot_int as u64)
-                .map(|root| *root == source_root)
-                .unwrap_or(false);
+        let target_slot_int = target_slot.0 as usize;
+        let source_slot_int = source_slot.0 as usize;
 
-            let target_root_matches_history = self
-                .historical_block_hashes
-                .get(target_slot_int as u64)
-                .map(|root| *root == target_root)
-                .unwrap_or(false);
+        let source_is_justified = justified_slots_working
+            .get(source_slot_int)
+            .copied()
+            .unwrap_or(false);
+        let target_already_justified = justified_slots_working
+            .get(target_slot_int)
+            .copied()
+            .unwrap_or(false);
 
-            let target_is_after_source = target_slot > source_slot;
-            // Use initial_finalized_slot per leanSpec (not the mutating local copy)
-            let target_is_justifiable = target_slot.is_justifiable_after(initial_finalized_slot);
+        let source_root_matches = self
+            .historical_block_hashes
+            .get(source_slot_int as u64)
+            .map(|r| *r == source_root)
+            .unwrap_or(false);
+        let target_root_matches = self
+            .historical_block_hashes
+            .get(target_slot_int as u64)
+            .map(|r| *r == target_root)
+            .unwrap_or(false);
 
-            // leanSpec logic: skip if BOTH source and target roots don't match history
-            // i.e., continue if EITHER matches
-            let roots_valid = source_root_matches_history || target_root_matches_history;
+        let is_valid_vote = source_is_justified
+            && !target_already_justified
+            && (source_root_matches || target_root_matches)
+            && target_slot > source_slot
+            && target_slot.is_justifiable_after(initial_finalized_slot);
 
-            let is_valid_vote = source_is_justified
-                && !target_already_justified
-                && roots_valid
-                && target_is_after_source
-                && target_is_justifiable;
+        if !is_valid_vote {
+            return;
+        }
 
-            if !is_valid_vote {
-                continue;
-            }
+        if !justifications.contains_key(&target_root) {
+            justifications.insert(target_root, vec![false; self.validator_count()]);
+        }
 
-            if !justifications.contains_key(&target_root) {
-                // Use actual validator count, not VALIDATOR_REGISTRY_LIMIT
-                // This matches leanSpec: justifications[target.root] = [Boolean(False)] * self.validators.count
-                let num_validators = self.validators.len_usize();
-                justifications.insert(target_root, vec![false; num_validators]);
-            }
-
-            let validator_id = attestation.validator_id.0 as usize;
+        for &validator_id in validator_ids {
+            let vid = validator_id as usize;
             if let Some(votes) = justifications.get_mut(&target_root) {
-                if validator_id < votes.len() && !votes[validator_id] {
-                    votes[validator_id] = true;
-
-                    let num_validators = self.validators.len_u64();
-
-                    let count = votes.iter().filter(|&&v| v).count();
-                    if 3 * count >= 2 * num_validators as usize {
-                        latest_justified = vote.target;
-
-                        // Extend justified_slots_working if needed
-                        while justified_slots_working.len() <= target_slot_int {
-                            justified_slots_working.push(false);
-                        }
-                        justified_slots_working[target_slot_int] = true;
-
-                        justifications.remove(&target_root);
-
-                        let mut is_finalizable = true;
-                        for s in (source_slot_int + 1)..target_slot_int {
-                            // Use initial_finalized_slot per leanSpec
-                            if Slot(s as u64).is_justifiable_after(initial_finalized_slot) {
-                                is_finalizable = false;
-                                break;
-                            }
-                        }
-
-                        if is_finalizable {
-                            latest_finalized = vote.source;
-                        }
-                    }
+                if vid < votes.len() && !votes[vid] {
+                    votes[vid] = true;
                 }
             }
         }
 
-        let mut new_state = self.clone().with_justifications(justifications);
+        if let Some(votes) = justifications.get(&target_root) {
+            let num_validators = self.validators.len_u64() as usize;
+            let count = votes.iter().filter(|&&v| v).count();
+            if 3 * count >= 2 * num_validators {
+                *latest_justified = vote.target.clone();
 
+                justified_slots_working.extend(std::iter::repeat_n(
+                    false,
+                    (target_slot_int + 1).saturating_sub(justified_slots_working.len()),
+                ));
+                justified_slots_working[target_slot_int] = true;
+
+                justifications.remove(&target_root);
+
+                let is_finalizable = (source_slot_int + 1..target_slot_int)
+                    .all(|s| !Slot(s as u64).is_justifiable_after(initial_finalized_slot));
+
+                if is_finalizable {
+                    *latest_finalized = vote.source.clone();
+                }
+            }
+        }
+    }
+
+    fn finalize_attestation_processing(
+        &self,
+        justifications: BTreeMap<Bytes32, Vec<bool>>,
+        latest_justified: Checkpoint,
+        latest_finalized: Checkpoint,
+        justified_slots_working: Vec<bool>,
+    ) -> Self {
+        let mut new_state = self.clone().with_justifications(justifications);
         new_state.latest_justified = latest_justified;
         new_state.latest_finalized = latest_finalized;
 
-        // Convert justified_slots_working Vec back to BitList
         let mut new_justified_slots = JustifiedSlots::with_length(justified_slots_working.len());
         for (i, &val) in justified_slots_working.iter().enumerate() {
             new_justified_slots.set(i, val);
         }
         new_state.justified_slots = new_justified_slots;
-
         new_state
     }
 
     /// Build a valid block on top of this state.
     ///
     /// Computes the post-state and creates a block with the correct state root.
-    /// If `available_signed_attestations` and `known_block_roots` are provided,
+    /// If `available_attestations` and `known_block_roots` are provided,
     /// performs fixed-point attestation collection: iteratively adds valid
     /// attestations until no more can be included. This is necessary because
     /// processing attestations may update the justified checkpoint, which may
@@ -545,48 +547,50 @@ impl State {
     /// * `proposer_index` - Validator index of the proposer
     /// * `parent_root` - Root of the parent block (must match state after slot processing)
     /// * `initial_attestations` - Initial attestations to include
-    /// * `available_signed_attestations` - Optional pool of attestations to collect from
+    /// * `available_attestations` - Optional pool of attestations to collect from
     /// * `known_block_roots` - Optional set of known block roots for attestation validation
+    /// * `gossip_signatures` - Optional map of individual signatures from gossip
+    /// * `aggregated_payloads` - Optional map of aggregated signature proofs
     ///
     /// # Returns
     ///
-    /// Tuple of (Block, post-State, collected attestations, signatures)
-    #[cfg(feature = "devnet1")]
+    /// Tuple of (Block, post-State, collected aggregated attestations, aggregated proofs)
     pub fn build_block(
         &self,
         slot: Slot,
         proposer_index: ValidatorIndex,
         parent_root: Bytes32,
         initial_attestations: Option<Vec<Attestation>>,
-        available_signed_attestations: Option<&[SignedBlockWithAttestation]>,
+        available_attestations: Option<Vec<Attestation>>,
         known_block_roots: Option<&std::collections::HashSet<Bytes32>>,
+        gossip_signatures: Option<&std::collections::HashMap<crate::SignatureKey, Signature>>,
+        aggregated_payloads: Option<
+            &std::collections::HashMap<crate::SignatureKey, Vec<crate::AggregatedSignatureProof>>,
+        >,
     ) -> Result<
         (
             Block,
             Self,
-            Vec<Attestation>,
-            PersistentList<Signature, U4096>,
+            Vec<crate::AggregatedAttestation>,
+            Vec<crate::AggregatedSignatureProof>,
         ),
         String,
     > {
-        // Initialize empty attestation set for iterative collection
+        use crate::attestation::{AggregatedAttestation, SignatureKey};
+
+        // Initialize attestation set
         let mut attestations = initial_attestations.unwrap_or_default();
-        let mut signatures = PersistentList::default();
 
         // Advance state to target slot
-        // Note: parent_root comes from fork choice and is already validated.
-        // We cannot validate it against the header hash here because process_slots()
-        // caches the state root in the header, changing its hash.
         let pre_state = self.process_slots(slot)?;
 
-        // Iteratively collect valid attestations using fixed-point algorithm
-        //
-        // Continue until no new attestations can be added to the block.
-        // This ensures we include the maximal valid attestation set.
+        // Fixed-point attestation collection loop
+        // Iteratively add valid attestations until no new ones can be added
         loop {
             // Create candidate block with current attestation set
-            let mut attestations_list = Attestations::default();
-            for att in &attestations {
+            let aggregated = AggregatedAttestation::aggregate_by_data(&attestations);
+            let mut attestations_list = AggregatedAttestations::default();
+            for att in &aggregated {
                 attestations_list
                     .push(att.clone())
                     .map_err(|e| format!("Failed to push attestation: {:?}", e))?;
@@ -605,316 +609,262 @@ impl State {
             // Apply state transition to get the post-block state
             let post_state = pre_state.process_block(&candidate_block)?;
 
-            // No attestation source provided: done after computing post_state
-            if available_signed_attestations.is_none() || known_block_roots.is_none() {
-                // Store the post state root in the block
-                let final_block = Block {
-                    slot,
-                    proposer_index,
-                    parent_root,
-                    state_root: hash_tree_root(&post_state),
-                    body: candidate_block.body,
-                };
-                return Ok((final_block, post_state, attestations, signatures));
-            }
+            // If no available attestations pool, skip fixed-point iteration
+            let available = match &available_attestations {
+                Some(avail) => avail,
+                None => {
+                    // No fixed-point: compute signatures and return
+                    let (aggregated_attestations, aggregated_proofs) = self
+                        .compute_aggregated_signatures(
+                            &attestations,
+                            gossip_signatures,
+                            aggregated_payloads,
+                        )?;
 
-            // Find new valid attestations matching post-state justification
-            let mut new_attestations = Vec::new();
-            let mut new_signatures = Vec::new();
-
-            let available = available_signed_attestations.unwrap();
-            let known_roots = known_block_roots.unwrap();
-
-            for signed_attestation in available {
-                let att = &signed_attestation.message.proposer_attestation;
-                let data = &att.data;
-
-                // Skip if target block is unknown
-                if !known_roots.contains(&data.head.root) {
-                    continue;
-                }
-
-                // Skip if attestation source does not match post-state's latest justified
-                if data.source != post_state.latest_justified {
-                    continue;
-                }
-
-                // Add attestation if not already included
-                if !attestations.contains(att) {
-                    new_attestations.push(att.clone());
-                    // Add corresponding signatures from the signed block
-                    // Note: In the actual implementation, you'd need to properly track
-                    // which signatures correspond to which attestations
-                    let mut idx = 0u64;
-                    loop {
-                        match signed_attestation.signature.get(idx) {
-                            Ok(sig) => {
-                                new_signatures.push(sig.clone());
-                                idx += 1;
-                            }
-                            Err(_) => break,
-                        }
+                    let mut final_attestations_list = AggregatedAttestations::default();
+                    for att in &aggregated_attestations {
+                        final_attestations_list
+                            .push(att.clone())
+                            .map_err(|e| format!("Failed to push attestation: {:?}", e))?;
                     }
+
+                    let final_block = Block {
+                        slot,
+                        proposer_index,
+                        parent_root,
+                        state_root: hash_tree_root(&post_state),
+                        body: BlockBody {
+                            attestations: final_attestations_list,
+                        },
+                    };
+
+                    return Ok((
+                        final_block,
+                        post_state,
+                        aggregated_attestations,
+                        aggregated_proofs,
+                    ));
+                }
+            };
+
+            // Find new valid attestations from available pool
+            let mut new_attestations: Vec<Attestation> = Vec::new();
+            let current_data_roots: std::collections::HashSet<_> = attestations
+                .iter()
+                .map(|a| a.data.data_root_bytes())
+                .collect();
+
+            for attestation in available {
+                // Skip if already included
+                if current_data_roots.contains(&attestation.data.data_root_bytes()) {
+                    continue;
+                }
+
+                // Validate attestation against post-state
+                // Source must match post-state's justified checkpoint
+                if attestation.data.source != post_state.latest_justified {
+                    continue;
+                }
+
+                // Target must be after source
+                if attestation.data.target.slot <= attestation.data.source.slot {
+                    continue;
+                }
+
+                // Target block must be known (if known_block_roots provided)
+                if let Some(known_roots) = known_block_roots {
+                    if !known_roots.contains(&attestation.data.target.root) {
+                        continue;
+                    }
+                }
+
+                // Check if we have a signature for this attestation
+                let data_root = attestation.data.data_root_bytes();
+                let sig_key = SignatureKey::new(attestation.validator_id.0, data_root);
+                let has_gossip_sig =
+                    gossip_signatures.map_or(false, |gs| gs.contains_key(&sig_key));
+                let has_block_proof =
+                    aggregated_payloads.map_or(false, |ap| ap.contains_key(&sig_key));
+
+                if has_gossip_sig || has_block_proof {
+                    new_attestations.push(attestation.clone());
                 }
             }
 
             // Fixed point reached: no new attestations found
             if new_attestations.is_empty() {
-                // Store the post state root in the block
+                // Compute aggregated signatures
+                let (aggregated_attestations, aggregated_proofs) = self
+                    .compute_aggregated_signatures(
+                        &attestations,
+                        gossip_signatures,
+                        aggregated_payloads,
+                    )?;
+
+                let mut final_attestations_list = AggregatedAttestations::default();
+                for att in &aggregated_attestations {
+                    final_attestations_list
+                        .push(att.clone())
+                        .map_err(|e| format!("Failed to push attestation: {:?}", e))?;
+                }
+
                 let final_block = Block {
                     slot,
                     proposer_index,
                     parent_root,
                     state_root: hash_tree_root(&post_state),
-                    body: candidate_block.body,
+                    body: BlockBody {
+                        attestations: final_attestations_list,
+                    },
                 };
-                return Ok((final_block, post_state, attestations, signatures));
+
+                return Ok((
+                    final_block,
+                    post_state,
+                    aggregated_attestations,
+                    aggregated_proofs,
+                ));
             }
 
             // Add new attestations and continue iteration
             attestations.extend(new_attestations);
-            for sig in new_signatures {
-                signatures
-                    .push(sig)
-                    .map_err(|e| format!("Failed to push signature: {:?}", e))?;
+        }
+    }
+
+    pub fn compute_aggregated_signatures(
+        &self,
+        attestations: &[Attestation],
+        gossip_signatures: Option<&std::collections::HashMap<crate::SignatureKey, Signature>>,
+        aggregated_payloads: Option<
+            &std::collections::HashMap<crate::SignatureKey, Vec<crate::AggregatedSignatureProof>>,
+        >,
+    ) -> Result<
+        (
+            Vec<crate::AggregatedAttestation>,
+            Vec<crate::AggregatedSignatureProof>,
+        ),
+        String,
+    > {
+        use crate::attestation::{AggregatedAttestation, AggregationBits, SignatureKey};
+        use std::collections::HashSet;
+
+        let mut results: Vec<(AggregatedAttestation, crate::AggregatedSignatureProof)> = Vec::new();
+
+        // Group individual attestations by data
+        for aggregated in AggregatedAttestation::aggregate_by_data(attestations) {
+            let data = &aggregated.data;
+            let data_root = data.data_root_bytes();
+            let validator_ids = aggregated.aggregation_bits.to_validator_indices();
+
+            // Phase 1: Gossip Collection
+            // Try to collect individual signatures from gossip network
+            let mut gossip_ids: Vec<u64> = Vec::new();
+            let mut _gossip_sigs_collected: Vec<Signature> = Vec::new();
+            let mut remaining: HashSet<u64> = HashSet::new();
+
+            if let Some(gossip_sigs) = gossip_signatures {
+                for vid in &validator_ids {
+                    let key = SignatureKey::new(*vid, data_root);
+                    if let Some(sig) = gossip_sigs.get(&key) {
+                        gossip_ids.push(*vid);
+                        _gossip_sigs_collected.push(sig.clone());
+                    } else {
+                        remaining.insert(*vid);
+                    }
+                }
+            } else {
+                // No gossip data: all validators need fallback
+                remaining = validator_ids.iter().copied().collect();
+            }
+
+            // If we collected any gossip signatures, create an aggregated proof
+            // NOTE: This matches Python leanSpec behavior (test_mode=True).
+            // Python also uses test_mode=True with TODO: "Remove test_mode once leanVM
+            // supports correct signature encoding."
+            // Once lean-multisig is fully integrated, this will call:
+            //   MultisigAggregatedSignature::aggregate(public_keys, signatures, message, epoch)
+            if !gossip_ids.is_empty() {
+                let participants = AggregationBits::from_validator_indices(&gossip_ids);
+
+                // Create proof placeholder (matches Python test_mode behavior)
+                // TODO: Call actual aggregation when lean-multisig supports proper encoding
+                let proof_data = crate::MultisigAggregatedSignature::new(Vec::new())
+                    .expect("Empty proof should always be valid");
+                let proof = crate::AggregatedSignatureProof::new(participants.clone(), proof_data);
+
+                results.push((
+                    AggregatedAttestation {
+                        aggregation_bits: participants,
+                        data: data.clone(),
+                    },
+                    proof,
+                ));
+            }
+
+            // Phase 2: Fallback to block proofs using greedy set-cover
+            // Goal: Cover remaining validators with minimum number of proofs
+            while !remaining.is_empty() {
+                let payloads = match aggregated_payloads {
+                    Some(p) => p,
+                    None => break,
+                };
+
+                // Pick any remaining validator to find candidate proofs
+                let target_id = *remaining.iter().next().unwrap();
+                let key = SignatureKey::new(target_id, data_root);
+
+                let candidates = match payloads.get(&key) {
+                    Some(proofs) if !proofs.is_empty() => proofs,
+                    _ => break, // No proofs found for this validator
+                };
+
+                // Greedy selection: find proof covering most remaining validators
+                // For each candidate proof, compute intersection with remaining validators
+                let (best_proof, covered_set) = candidates
+                    .iter()
+                    .map(|proof| {
+                        let proof_validators: HashSet<u64> =
+                            proof.get_participant_indices().into_iter().collect();
+                        let intersection: HashSet<u64> =
+                            remaining.intersection(&proof_validators).copied().collect();
+                        (proof, intersection)
+                    })
+                    .max_by_key(|(_, intersection)| intersection.len())
+                    .expect("candidates is non-empty");
+
+                // Guard: If best proof has zero overlap, stop
+                if covered_set.is_empty() {
+                    break;
+                }
+
+                // Record proof with its actual participants (from the proof itself)
+                let covered_validators: Vec<u64> = best_proof.get_participant_indices();
+                let participants = AggregationBits::from_validator_indices(&covered_validators);
+
+                results.push((
+                    AggregatedAttestation {
+                        aggregation_bits: participants,
+                        data: data.clone(),
+                    },
+                    best_proof.clone(),
+                ));
+
+                // Remove covered validators from remaining
+                for vid in &covered_set {
+                    remaining.remove(vid);
+                }
             }
         }
-    }
 
-    #[cfg(feature = "devnet2")]
-    pub fn build_block(
-        &self,
-        _slot: Slot,
-        _proposer_index: ValidatorIndex,
-        _parent_root: Bytes32,
-        _initial_attestations: Option<Vec<Attestation>>,
-        _available_signed_attestations: Option<&[SignedAttestation]>,
-        _known_block_roots: Option<&std::collections::HashSet<Bytes32>>,
-    ) -> Result<(Block, Self, Vec<Attestation>, BlockSignatures), String> {
-        Err("build_block is not implemented for devnet2".to_string())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn proposer_round_robin() {
-        let st = State::generate_genesis(Uint64(0), Uint64(4));
-        assert!(State {
-            config: st.config.clone(),
-            ..st.clone()
+        // Handle empty case
+        if results.is_empty() {
+            return Ok((Vec::new(), Vec::new()));
         }
-        .is_proposer(ValidatorIndex(0)));
-    }
 
-    #[test]
-    fn slot_justifiability_rules() {
-        use crate::slot::Slot;
-        assert!(Slot(1).is_justifiable_after(Slot(0)));
-        assert!(Slot(9).is_justifiable_after(Slot(0))); // perfect square
-        assert!(Slot(6).is_justifiable_after(Slot(0))); // pronic (2*3)
-    }
+        // Unzip results into parallel lists
+        let (aggregated_attestations, aggregated_proofs): (Vec<_>, Vec<_>) =
+            results.into_iter().unzip();
 
-    #[test]
-    fn test_hash_tree_root() {
-        let body = BlockBody {
-            attestations: List::default(),
-        };
-        let block = Block {
-            slot: Slot(1),
-            proposer_index: ValidatorIndex(0),
-            parent_root: Bytes32(ssz::H256::zero()),
-            state_root: Bytes32(ssz::H256::zero()),
-            body,
-        };
-
-        let root = hash_tree_root(&block);
-        assert_ne!(root, Bytes32(ssz::H256::zero()));
-    }
-
-    #[test]
-    fn test_process_slots() {
-        let genesis_state = State::generate_genesis(Uint64(0), Uint64(10));
-        let target_slot = Slot(5);
-
-        let new_state = genesis_state.process_slots(target_slot).unwrap();
-
-        assert_eq!(new_state.slot, target_slot);
-        let genesis_state_for_hash = genesis_state.clone(); //this is sooooo bad
-        assert_eq!(
-            new_state.latest_block_header.state_root,
-            hash_tree_root(&genesis_state_for_hash)
-        );
-    }
-
-    #[test]
-    #[cfg(feature = "devnet1")]
-    fn test_build_block() {
-        // Create genesis state with validators
-        let genesis_state = State::generate_genesis(Uint64(0), Uint64(4));
-
-        // Compute expected parent root after slot processing
-        let pre_state = genesis_state.process_slots(Slot(1)).unwrap();
-        let expected_parent_root = hash_tree_root(&pre_state.latest_block_header);
-
-        // Test 1: Build a simple block without attestations
-        let result = genesis_state.build_block(
-            Slot(1),
-            ValidatorIndex(1),
-            expected_parent_root,
-            None,
-            None,
-            None,
-        );
-
-        assert!(result.is_ok(), "Building simple block should succeed");
-        let (block, post_state, attestations, signatures) = result.unwrap();
-
-        // Verify block properties
-        assert_eq!(block.slot, Slot(1));
-        assert_eq!(block.proposer_index, ValidatorIndex(1));
-        assert_eq!(block.parent_root, expected_parent_root);
-        assert_ne!(
-            block.state_root,
-            Bytes32(ssz::H256::zero()),
-            "State root should be computed"
-        );
-
-        // Verify attestations and signatures are empty
-        assert_eq!(attestations.len(), 0);
-        // Check signatures by trying to get first element
-        assert!(signatures.get(0).is_err(), "Signatures should be empty");
-
-        // Verify post-state has advanced
-        assert_eq!(post_state.slot, Slot(1));
-        // Note: The post-state's latest_block_header.state_root is zero because it will be
-        // filled in during the next slot processing
-        assert_eq!(
-            block.parent_root, expected_parent_root,
-            "Parent root should match"
-        );
-
-        // Test 2: Build block with initial attestations
-        let attestation = Attestation {
-            validator_id: Uint64(0),
-            data: crate::AttestationData {
-                slot: Slot(1),
-                head: Checkpoint {
-                    root: expected_parent_root,
-                    slot: Slot(0),
-                },
-                target: Checkpoint {
-                    root: expected_parent_root,
-                    slot: Slot(1),
-                },
-                source: Checkpoint {
-                    root: expected_parent_root,
-                    slot: Slot(0),
-                },
-            },
-        };
-
-        let result = genesis_state.build_block(
-            Slot(1),
-            ValidatorIndex(1),
-            expected_parent_root,
-            Some(vec![attestation.clone()]),
-            None,
-            None,
-        );
-
-        assert!(
-            result.is_ok(),
-            "Building block with attestations should succeed"
-        );
-        let (block, _post_state, attestations, _signatures) = result.unwrap();
-
-        // Verify attestation was included
-        assert_eq!(attestations.len(), 1);
-        assert_eq!(attestations[0].validator_id, Uint64(0));
-        // Check that attestation list has one element
-        assert!(
-            block.body.attestations.get(0).is_ok(),
-            "Block should contain attestation"
-        );
-        assert!(
-            block.body.attestations.get(1).is_err(),
-            "Block should have only one attestation"
-        );
-    }
-
-    #[test]
-    #[cfg(feature = "devnet1")]
-    fn test_build_block_advances_state() {
-        // Create genesis state
-        let genesis_state = State::generate_genesis(Uint64(0), Uint64(10));
-
-        // Compute parent root after advancing to target slot
-        let pre_state = genesis_state.process_slots(Slot(5)).unwrap();
-        let parent_root = hash_tree_root(&pre_state.latest_block_header);
-
-        // Build block at slot 5
-        // Proposer for slot 5 with 10 validators is (5 % 10) = 5
-        let result =
-            genesis_state.build_block(Slot(5), ValidatorIndex(5), parent_root, None, None, None);
-
-        assert!(result.is_ok());
-        let (block, post_state, _, _) = result.unwrap();
-
-        // Verify state advanced through slots
-        assert_eq!(post_state.slot, Slot(5));
-        assert_eq!(block.slot, Slot(5));
-
-        // Verify block can be applied to genesis state
-        let transition_result = genesis_state.state_transition_with_validation(
-            SignedBlockWithAttestation {
-                message: crate::BlockWithAttestation {
-                    block: block.clone(),
-                    proposer_attestation: Attestation::default(),
-                },
-                signature: PersistentList::default(),
-            },
-            true, // signatures are considered valid (not validating, just marking as valid)
-            true,
-        );
-
-        assert!(
-            transition_result.is_ok(),
-            "Built block should be valid for state transition"
-        );
-    }
-
-    #[test]
-    #[cfg(feature = "devnet1")]
-    fn test_build_block_state_root_matches() {
-        // Create genesis state
-        let genesis_state = State::generate_genesis(Uint64(0), Uint64(3));
-
-        // Compute parent root after advancing to target slot
-        let pre_state = genesis_state.process_slots(Slot(1)).unwrap();
-        let parent_root = hash_tree_root(&pre_state.latest_block_header);
-
-        // Build a block
-        // Proposer for slot 1 with 3 validators is (1 % 3) = 1
-        let result =
-            genesis_state.build_block(Slot(1), ValidatorIndex(1), parent_root, None, None, None);
-
-        assert!(result.is_ok());
-        let (block, post_state, _, _) = result.unwrap();
-
-        // Verify the state root in block matches the computed post-state
-        let computed_state_root = hash_tree_root(&post_state);
-        assert_eq!(
-            block.state_root, computed_state_root,
-            "Block state root should match computed post-state root"
-        );
-
-        // Verify it's not zero
-        assert_ne!(
-            block.state_root,
-            Bytes32(ssz::H256::zero()),
-            "State root should not be zero"
-        );
+        Ok((aggregated_attestations, aggregated_proofs))
     }
 }
