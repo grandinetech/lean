@@ -916,6 +916,7 @@ dependencies = [
  "sha2 0.10.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "ssz",
  "ssz_derive",
+ "test-generator",
  "typenum",
 ]
 

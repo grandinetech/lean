@@ -1,9 +1,10 @@
 {
-    "tests/consensus/devnet/state_transition/test_genesis.py::test_genesis_custom_time[fork_Devnet][fork_Devnet-state_transition_test]": {
+    "tests/consensus/devnet/state_transition/test_genesis.py::test_genesis_custom_validator_set[fork_Devnet][fork_devnet-state_transition_test]": {
         "network": "Devnet",
+        "leanEnv": "test",
         "pre": {
             "config": {
-                "genesisTime": 1234567890
+                "genesisTime": 0
             },
             "slot": 0,
             "latestBlockHeader": {
@@ -30,20 +31,36 @@
             "validators": {
                 "data": [
                     {
-                        "pubkey": "0xb40ec9783b56572d99965130ad1cec4f066df43a0fd89d22d420535c62b52711cdaf7f5f696c6b1e4df66a6bab48bb51abcdd77e",
+                        "pubkey": "0x8fa00001b5b22a073d21cb60c9465b379f80e74fee9baf1d137eb651ed162900a6f3ec32da74ff09265ea62fc9a5055b2e9b7c7b",
                         "index": 0
                     },
                     {
-                        "pubkey": "0xc5ed4b6fa46e83281e29201b878ad52b4a9b8a2f3c9d8017cfd9b81e8097e1372a097e62be37194c39e2f36f76e8906d2e818238",
+                        "pubkey": "0xbc56037ab0485c00441e3205d908e55a016d5450a335144f50ccb034cb253c05a1cbc047b5695a5672697d584656e96a4b94f173",
                         "index": 1
                     },
                     {
-                        "pubkey": "0x0cc8a378cdeb1a3c4b87156bcba3e87d31fb8c5f1c3ce74b4370001086b8bd5a502ea12d0878536b19cb6769b7285e1c0504fb3e",
+                        "pubkey": "0x79422d64ecdc3b0bf7c6cc31bbfb9f4eab7950107fe23c6f4f9c94465c81f80d85a1931f1003c50531147f350357805f22fdd70b",
                         "index": 2
                     },
                     {
-                        "pubkey": "0xb85c660a781e825a1b783822984e894c4558e304a4b71307f095821d92b6351197c3b1485ffcf872c9a13d5c9381b1636eeed359",
+                        "pubkey": "0x575bb17b0f673d76689c9527a21fac68eb5ebd571703a245deb2a8384baea4747be00d5b469ff30f830e234f74453f6e2c20cb26",
                         "index": 3
+                    },
+                    {
+                        "pubkey": "0xd84fbd1ad59fc5331284b7230d73cf63aee8e65322eae85ce6b06d408087fb192ad07648e42ee229cda8ed266a86905252eed57b",
+                        "index": 4
+                    },
+                    {
+                        "pubkey": "0x0fb6092458097055b7b5695aee9a3306a70db27dee357637555504587cc3b70979a27e476d06f656db47a868aca9b01e1efb1978",
+                        "index": 5
+                    },
+                    {
+                        "pubkey": "0xb5cd3b4395f76558823a0f16eeab034d31e5024576d8f5529e5e3e666aa5c764d80c035ed260fa6be73ca72517e05135f264f819",
+                        "index": 6
+                    },
+                    {
+                        "pubkey": "0x522b0815c617a3545d5b53361a454251369d923ffc4b174a5712ce01a20fd60572579c3e03bf093b1015ef0fe6063e22ddef214d",
+                        "index": 7
                     }
                 ]
             },
@@ -61,8 +78,8 @@
             "latestJustifiedRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
             "latestFinalizedSlot": 0,
             "latestFinalizedRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "validatorCount": 4,
-            "configGenesisTime": 1234567890,
+            "validatorCount": 8,
+            "configGenesisTime": 0,
             "latestBlockHeaderSlot": 0,
             "latestBlockHeaderProposerIndex": 0,
             "latestBlockHeaderParentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -82,10 +99,10 @@
             }
         },
         "_info": {
-            "hash": "0x18ff784d32fe3dbc542d4683afc605f6ffe3132bab348ce62d0e177490a76b36",
+            "hash": "0xeb9c32040335d481228d18e590c01445d4e545d953d55cd14121013bd438430d",
             "comment": "`leanSpec` generated test",
-            "testId": "tests/consensus/devnet/state_transition/test_genesis.py::test_genesis_custom_time[fork_Devnet]",
-            "description": "Test genesis state with custom genesis time.\n\n    Scenario\n    --------\n    Generate a genesis state with:\n    - genesis_time = 1234567890\n    - Default 4 validators\n\n    Expected Behavior\n    -----------------\n    Genesis state should respect the custom genesis time while\n    maintaining all other genesis properties.",
+            "testId": "tests/consensus/devnet/state_transition/test_genesis.py::test_genesis_custom_validator_set[fork_Devnet]",
+            "description": "Test genesis state with custom validator set.\n\n    Scenario\n    --------\n    Generate a genesis state with:\n    - 8 validators instead of default 4\n    - Custom validator pubkeys\n\n    Expected Behavior\n    -----------------\n    Genesis state should contain exactly 8 validators while\n    maintaining all other genesis properties.",
             "fixtureFormat": "state_transition_test"
         }
     }

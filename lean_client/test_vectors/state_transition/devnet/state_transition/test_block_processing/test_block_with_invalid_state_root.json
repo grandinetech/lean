@@ -1,6 +1,7 @@
 {
-    "tests/consensus/devnet/state_transition/test_block_processing.py::test_block_with_invalid_parent_root[fork_Devnet][fork_Devnet-state_transition_test]": {
+    "tests/consensus/devnet/state_transition/test_block_processing.py::test_block_with_invalid_state_root[fork_Devnet][fork_devnet-state_transition_test]": {
         "network": "Devnet",
+        "leanEnv": "test",
         "pre": {
             "config": {
                 "genesisTime": 0
@@ -30,19 +31,19 @@
             "validators": {
                 "data": [
                     {
-                        "pubkey": "0xb40ec9783b56572d99965130ad1cec4f066df43a0fd89d22d420535c62b52711cdaf7f5f696c6b1e4df66a6bab48bb51abcdd77e",
+                        "pubkey": "0x8fa00001b5b22a073d21cb60c9465b379f80e74fee9baf1d137eb651ed162900a6f3ec32da74ff09265ea62fc9a5055b2e9b7c7b",
                         "index": 0
                     },
                     {
-                        "pubkey": "0xc5ed4b6fa46e83281e29201b878ad52b4a9b8a2f3c9d8017cfd9b81e8097e1372a097e62be37194c39e2f36f76e8906d2e818238",
+                        "pubkey": "0xbc56037ab0485c00441e3205d908e55a016d5450a335144f50ccb034cb253c05a1cbc047b5695a5672697d584656e96a4b94f173",
                         "index": 1
                     },
                     {
-                        "pubkey": "0x0cc8a378cdeb1a3c4b87156bcba3e87d31fb8c5f1c3ce74b4370001086b8bd5a502ea12d0878536b19cb6769b7285e1c0504fb3e",
+                        "pubkey": "0x79422d64ecdc3b0bf7c6cc31bbfb9f4eab7950107fe23c6f4f9c94465c81f80d85a1931f1003c50531147f350357805f22fdd70b",
                         "index": 2
                     },
                     {
-                        "pubkey": "0xb85c660a781e825a1b783822984e894c4558e304a4b71307f095821d92b6351197c3b1485ffcf872c9a13d5c9381b1636eeed359",
+                        "pubkey": "0x575bb17b0f673d76689c9527a21fac68eb5ebd571703a245deb2a8384baea4747be00d5b469ff30f830e234f74453f6e2c20cb26",
                         "index": 3
                     }
                 ]
@@ -58,8 +59,8 @@
             {
                 "slot": 1,
                 "proposerIndex": 1,
-                "parentRoot": "0xdeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddead",
-                "stateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "parentRoot": "0xee3755ec636c6cabd4fbec9791efd12fb38fbad6989e09258a286dcdfa84ca0f",
+                "stateRoot": "0xbaadbaadbaadbaadbaadbaadbaadbaadbaadbaadbaadbaadbaadbaadbaadbaad",
                 "body": {
                     "attestations": {
                         "data": []
@@ -69,10 +70,10 @@
         ],
         "expectException": "AssertionError",
         "_info": {
-            "hash": "0xaa92f50f9e8ca9bc35984f150b886a2f15b8e977f5ef9cc82cbbf0cc0fa94edb",
+            "hash": "0x5e785147cab337f4e01e3a8280a3582ba87d607bb348823bc769e76e818c1980",
             "comment": "`leanSpec` generated test",
-            "testId": "tests/consensus/devnet/state_transition/test_block_processing.py::test_block_with_invalid_parent_root[fork_Devnet]",
-            "description": "Test that blocks with wrong parent root are rejected.\n\n    Scenario\n    --------\n    Attempt to process a block where parent root doesn't match\n    hash_tree_root(state.latest block header).\n\n    Expected Behavior\n    -----------------\n    Block processing fails with AssertionError: \"Block parent root mismatch\"\n\n    Why This Matters\n    ----------------\n    Maintains chain integrity:\n    - Blocks must reference correct parent\n    - Prevents chain history forgery\n    - Ensures linear chain continuity\n    - Critical for fork resolution\n\n    Without this check, attackers could create invalid chain branches.",
+            "testId": "tests/consensus/devnet/state_transition/test_block_processing.py::test_block_with_invalid_state_root[fork_Devnet]",
+            "description": "Test that blocks with wrong state root commitment are rejected.\n\n    Scenario\n    --------\n    Create a block with state root that doesn't match the actual\n    post-state hash.\n\n    Expected Behavior\n    -----------------\n    Block processing fails with AssertionError: \"Invalid block state root\"\n\n    Why This Matters\n    ----------------\n    Cryptographic state commitment is fundamental:\n    - Proves correct state execution\n    - Prevents state manipulation\n\n    This is a critical validation - without it, proposers could claim any arbitrary state.",
             "fixtureFormat": "state_transition_test"
         }
     }
