@@ -29,6 +29,7 @@ use tokio::{
     task,
     time::{interval, Duration},
 };
+use tracing::level_filters::LevelFilter;
 use tracing::{debug, info, warn};
 use validator::{ValidatorConfig, ValidatorService};
 
@@ -134,7 +135,11 @@ struct Args {
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt()
-        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::builder()
+                .with_default_directive(LevelFilter::INFO.into())
+                .from_env_lossy(),
+        )
         .init();
 
     let args = Args::parse();
