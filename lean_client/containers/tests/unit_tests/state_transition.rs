@@ -40,19 +40,6 @@ fn test_state_transition_full() {
 
     let expected_state = state_after_header.process_attestations(&block.body.attestations);
 
-    #[cfg(feature = "devnet2")]
-    let expected_state = {
-        let mut unaggregated_attestations = Attestations::default();
-        for aggregated_attestation in &block.body.attestations {
-            let plain_attestations = aggregated_attestation.to_plain();
-            // For each attestatio in the vector, push to the list
-            for attestation in plain_attestations {
-                unaggregated_attestations.push(attestation);
-            }
-        }
-        state_after_header.process_attestations(&unaggregated_attestations)
-    };
-
     let block_with_correct_root = Block {
         state_root: hash_tree_root(&expected_state),
         ..block
@@ -86,19 +73,6 @@ fn test_state_transition_invalid_signatures() {
     let state_after_header = state_at_slot_1.process_block_header(&block).unwrap();
 
     let expected_state = state_after_header.process_attestations(&block.body.attestations);
-
-    #[cfg(feature = "devnet2")]
-    let expected_state = {
-        let mut list = Attestations::default();
-        for aggregated_attestation in &block.body.attestations {
-            let plain_attestations = aggregated_attestation.to_plain();
-            // For each attestatio in the vector, push to the list
-            for attestation in plain_attestations {
-                list.push(attestation);
-            }
-        }
-        list
-    };
 
     let block_with_correct_root = Block {
         state_root: hash_tree_root(&expected_state),
