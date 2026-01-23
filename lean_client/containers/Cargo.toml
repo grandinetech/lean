@@ -4,10 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-xmss-verify = ["leansig"]
+xmss-verify = []
 default = []
-devnet1 = ["env-config/devnet1"]
-devnet2 = ["env-config/devnet2"]
 
 [lib]
 name = "containers"
@@ -15,15 +13,18 @@ path = "src/lib.rs"
 
 [dependencies]
 env-config = { path = "../env-config", default-features = false }
-ssz = { git = "https://github.com/grandinetech/grandine", package = "ssz", branch = "develop", submodules = true }
-ssz_derive = { git = "https://github.com/grandinetech/grandine", package = "ssz_derive", branch = "develop", submodules = false }
+ssz = { workspace = true }
+serde = { workspace = true }
+ssz_derive = { workspace = true }
 typenum = "1"
-serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_yaml = "0.9"
 hex = "0.4.3"
 sha2 = "0.10"
-leansig = { git = "https://github.com/leanEthereum/leanSig", branch = "main", optional = true }
+leansig = { git = "https://github.com/leanEthereum/leanSig", branch = "main" }
+lean-multisig = { git = "https://github.com/leanEthereum/leanMultisig", branch = "main" }
+anyhow = "1.0.100"
+alloy-primitives = "1.5.2"
 
 [dev-dependencies]
 rstest = "0.18"

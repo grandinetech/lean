@@ -120,7 +120,7 @@ pub mod signature {
         siblings: DataWrapper<Vec<DataWrapper<Vec<u32>>>>,
     }
 
-    pub fn deserialize_single<'de, D>(deserializer: D) -> Result<Signature, D::Error>
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Signature, D::Error>
     where
         D: Deserializer<'de>,
     {
@@ -130,7 +130,7 @@ pub mod signature {
         let value = Value::deserialize(deserializer)?;
 
         // Check if it's a hex string (normal format)
-        if let Value::String(hex_str) = &value {
+        if let Value::String(hex_str) = value {
             let hex_str = hex_str.trim_start_matches("0x");
             let bytes = hex::decode(hex_str)
                 .map_err(|e| D::Error::custom(format!("Invalid hex string: {}", e)))?;
@@ -140,36 +140,96 @@ pub mod signature {
         }
 
         // Otherwise, parse as structured XMSS signature
-        let xmss_sig: XmssSignature = serde_json::from_value(value)
+        let xmss_sig: XmssSignature = serde_json::from_value(value.clone())
             .map_err(|e| D::Error::custom(format!("Failed to parse XMSS signature: {}", e)))?;
 
-        // Serialize the XMSS signature to bytes
-        // Format: siblings (variable length) + rho (28 bytes) + hashes (variable length)
-        let mut bytes = Vec::new();
+        println!(
+            "Parsed XMSS Signature | siblings: {:?}",
+            xmss_sig.path.siblings.data.len()
+        );
+        println!("Parsed XMSS Signature | rho: {:?}", xmss_sig.rho.data.len());
+        println!(
+            "Parsed XMSS Signature | hashes: {:?}",
+            xmss_sig.hashes.data.len()
+        );
 
-        // Write siblings
+        // --- STEP 1: PREPARE DATA BUFFERS ---
+
+        // 1. Serialize Rho (Fixed length)
+        // RAND_LEN_FE = 7, assuming u32 elements -> 28 bytes
+        let mut rho_bytes = Vec::new();
+        for val in &xmss_sig.rho.data {
+            rho_bytes.extend_from_slice(&val.to_le_bytes());
+        }
+        let rho_len = rho_bytes.len(); // Should be 28 (7 * 4)
+
+        // 2. Serialize Path/Siblings (Variable length)
+        let mut path_bytes = Vec::new();
+        // Prepend 4 bytes (containing 4) as an offset which would come with real SSZ serialization
+        let inner_offset: u32 = 4;
+        path_bytes.extend_from_slice(&inner_offset.to_le_bytes()); // [04 00 00 00]
         for sibling in &xmss_sig.path.siblings.data {
             for val in &sibling.data {
-                bytes.extend_from_slice(&val.to_le_bytes());
+                path_bytes.extend_from_slice(&val.to_le_bytes());
             }
         }
 
-        // Write rho (7 u32s = 28 bytes)
-        for val in &xmss_sig.rho.data {
-            bytes.extend_from_slice(&val.to_le_bytes());
-        }
-
-        // Write hashes
+        // 3. Serialize Hashes (Variable length)
+        let mut hashes_bytes = Vec::new();
         for hash in &xmss_sig.hashes.data {
             for val in &hash.data {
-                bytes.extend_from_slice(&val.to_le_bytes());
+                hashes_bytes.extend_from_slice(&val.to_le_bytes());
             }
         }
 
-        // Pad or truncate to 3112 bytes
-        bytes.resize(3112, 0);
+        // --- STEP 2: CALCULATE OFFSETS ---
 
-        Signature::try_from(bytes.as_slice())
+        // The fixed part contains:
+        // 1. Path Offset (4 bytes)
+        // 2. Rho Data (rho_len bytes)
+        // 3. Hashes Offset (4 bytes)
+        let fixed_part_size = 4 + rho_len + 4;
+
+        // Offset to 'path' starts immediately after the fixed part
+        let offset_path = fixed_part_size as u32;
+
+        // Offset to 'hashes' starts after 'path' data
+        let offset_hashes = offset_path + (path_bytes.len() as u32);
+
+        // --- STEP 3: CONSTRUCT FINAL SSZ BYTES ---
+
+        // Print all offsets and lengths for debugging
+        println!(
+            "SSZ Offsets | offset_path: {} | offset_hashes: {}",
+            offset_path, offset_hashes
+        );
+        println!(
+            "SSZ Lengths | rho_len: {} | path_len: {} | hashes_len: {}",
+            rho_len,
+            path_bytes.len(),
+            hashes_bytes.len()
+        );
+
+        let mut ssz_bytes = Vec::new();
+
+        // 1. Write Offset to Path (u32, Little Endian)
+        ssz_bytes.extend_from_slice(&offset_path.to_le_bytes());
+
+        // 2. Write Rho Data (Fixed)
+        ssz_bytes.extend_from_slice(&rho_bytes);
+
+        // 3. Write Offset to Hashes (u32, Little Endian)
+        ssz_bytes.extend_from_slice(&offset_hashes.to_le_bytes());
+
+        // 4. Write Path Data (Variable)
+        ssz_bytes.extend_from_slice(&path_bytes);
+
+        // 5. Write Hashes Data (Variable)
+        ssz_bytes.extend_from_slice(&hashes_bytes);
+
+        println!("Total SSZ Bytes Length: {}", ssz_bytes.len());
+
+        Signature::try_from(ssz_bytes.as_slice())
             .map_err(|_| D::Error::custom("Failed to create signature"))
     }
 
@@ -183,139 +243,142 @@ pub mod signature {
     }
 }
 
-/// Custom deserializer for BlockSignatures that handles the {"data": [sig, ...]} format
+/// Custom deserializer for AttestationSignatures that handles the {"data": [sig, ...]} format
 /// where each signature can be either hex string or structured XMSS format
-pub mod block_signatures {
+pub mod attestation_signatures {
     use super::*;
-    use crate::block::BlockSignatures;
-    use crate::Signature;
-    use serde_json::Value;
+    use crate::attestation::AttestationSignatures;
+    use crate::AggregatedSignatureProof;
+    use serde::de::Error;
     use ssz::PersistentList;
     use typenum::U4096;
-
-    /// Structured XMSS signature format from test vectors
-    #[derive(Deserialize, Clone)]
-    struct XmssSignature {
-        path: XmssPath,
-        rho: DataWrapper<Vec<u32>>,
-        hashes: DataWrapper<Vec<DataWrapper<Vec<u32>>>>,
-    }
-
-    #[derive(Deserialize, Clone)]
-    struct XmssPath {
-        siblings: DataWrapper<Vec<DataWrapper<Vec<u32>>>>,
-    }
-
-    fn parse_single_signature(value: &Value) -> Result<Signature, String> {
-        // Check if it's a hex string (normal format)
-        if let Value::String(hex_str) = value {
-            let hex_str = hex_str.trim_start_matches("0x");
-            let bytes = hex::decode(hex_str).map_err(|e| format!("Invalid hex string: {}", e))?;
-
-            return Signature::try_from(bytes.as_slice())
-                .map_err(|_| "Invalid signature length".to_string());
-        }
-
-        // Otherwise, parse as structured XMSS signature
-        let xmss_sig: XmssSignature = serde_json::from_value(value.clone())
-            .map_err(|e| format!("Failed to parse XMSS signature: {}", e))?;
-
-        // Serialize the XMSS signature to bytes
-        // Format: siblings (variable length) + rho (28 bytes) + hashes (variable length)
-        let mut bytes = Vec::new();
-
-        // Write siblings
-        for sibling in &xmss_sig.path.siblings.data {
-            for val in &sibling.data {
-                bytes.extend_from_slice(&val.to_le_bytes());
-            }
-        }
-
-        // Write rho (7 u32s = 28 bytes)
-        for val in &xmss_sig.rho.data {
-            bytes.extend_from_slice(&val.to_le_bytes());
-        }
-
-        // Write hashes
-        for hash in &xmss_sig.hashes.data {
-            for val in &hash.data {
-                bytes.extend_from_slice(&val.to_le_bytes());
-            }
-        }
-
-        // Pad or truncate to 3112 bytes
-        bytes.resize(3112, 0);
-
-        Signature::try_from(bytes.as_slice()).map_err(|_| "Failed to create signature".to_string())
-    }
-
-    #[cfg(feature = "devnet1")]
-    pub fn deserialize<'de, D>(
-        deserializer: D,
-    ) -> Result<PersistentList<Signature, U4096>, D::Error>
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<AttestationSignatures, D::Error>
     where
         D: Deserializer<'de>,
+    {
+        let outer: DataWrapper<Vec<AggregatedSignatureProof>> =
+            DataWrapper::deserialize(deserializer)?;
+
+        let mut out: PersistentList<AggregatedSignatureProof, U4096> = PersistentList::default();
+
+        for aggregated_proof in outer.data.into_iter() {
+            out.push(aggregated_proof).map_err(|e| {
+                D::Error::custom(format!(
+                    "AttestationSignatures push aggregated entry failed: {e:?}"
+                ))
+            })?;
+        }
+
+        Ok(out)
+    }
+
+    pub fn serialize<S>(_value: &AttestationSignatures, _serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        // let mut inner: Vec<AggregatedSignatureProof> = Vec::new();
+        //
+        // // inner.push(format!("0x{}", hex::encode(sig.as_bytes())));
+        // for sig in value.into_iter() {
+        //     inner.push(format!("0x{}", hex::encode(sig.as_bytes())));
+        // }
+        //
+        // DataWrapper { data: inner }.serialize(serializer)
+        // TODO: implement serialization
+        Err(serde::ser::Error::custom(
+            "AttestationSignatures serialization not implemented for devnet2",
+        ))
+    }
+}
+
+/// Serde helper for ssz::ByteList - serializes as hex string
+pub mod byte_list {
+    use super::*;
+    use ssz::ByteList;
+    use typenum::Unsigned;
+
+    pub fn deserialize<'de, D, N>(deserializer: D) -> Result<ByteList<N>, D::Error>
+    where
+        D: Deserializer<'de>,
+        N: Unsigned,
     {
         use serde::de::Error;
 
-        // Parse the {"data": [...]} wrapper
-        let wrapper: DataWrapper<Vec<Value>> = DataWrapper::deserialize(deserializer)?;
+        println!("Deserializing ByteList...");
 
-        let mut signatures = PersistentList::default();
+        // First, try to parse as a JSON value to inspect the structure
+        // let value = Value::deserialize(deserializer)?;
+        let wrapper = DataWrapper::<String>::deserialize(deserializer)?;
 
-        for (idx, sig_value) in wrapper.data.into_iter().enumerate() {
-            let sig = parse_single_signature(&sig_value)
-                .map_err(|e| D::Error::custom(format!("Signature {}: {}", idx, e)))?;
-            signatures
-                .push(sig)
-                .map_err(|e| D::Error::custom(format!("Signature {} push failed: {:?}", idx, e)))?;
+        println!("Wrapper data length: {}", wrapper.data.len());
+
+        // Check if it's a hex string (normal format)
+        match wrapper.data {
+            hex_str => {
+                let hex_str = hex_str.trim_start_matches("0x");
+
+                if hex_str.is_empty() {
+                    return Ok(ByteList::default());
+                }
+
+                let bytes = hex::decode(hex_str)
+                    .map_err(|e| D::Error::custom(format!("Invalid hex string: {}", e)))?;
+
+                println!("Decoded ByteList bytes length: {}", bytes.len());
+
+                return ByteList::try_from(bytes)
+                    .map_err(|_| D::Error::custom("ByteList exceeds maximum length"));
+            }
         }
-
-        Ok(signatures)
     }
 
-    #[cfg(feature = "devnet2")]
-    pub fn deserialize<'de, D>(_: D) -> Result<BlockSignatures, D::Error>
+    pub fn serialize<S, N>(value: &ByteList<N>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+        N: Unsigned,
+    {
+        let hex_str = format!("0x{}", hex::encode(value.as_bytes()));
+        hex_str.serialize(serializer)
+    }
+}
+
+/// Custom deserializer for AggregatedAttestations that handles the {"data": [sig, ...]} format
+/// where each signature can be either hex string or structured XMSS format
+pub mod aggregated_attestations {
+    use super::*;
+    use crate::attestation::AggregatedAttestations;
+    use crate::AggregatedAttestation;
+    use serde::de::Error;
+    use ssz::PersistentList;
+    use typenum::U4096;
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<AggregatedAttestations, D::Error>
     where
         D: Deserializer<'de>,
     {
-        Err(serde::de::Error::custom(
-            "BlockSignatures deserialization not implemented for devnet2",
-        ))
-    }
+        let outer: DataWrapper<Vec<AggregatedAttestation>> =
+            DataWrapper::deserialize(deserializer)?;
 
-    #[cfg(feature = "devnet1")]
-    pub fn serialize<S>(
-        value: &PersistentList<Signature, U4096>,
-        serializer: S,
-    ) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        // Collect all signatures as hex strings
-        let mut sigs: Vec<String> = Vec::new();
-        let mut i = 0u64;
-        loop {
-            match value.get(i) {
-                Ok(sig) => {
-                    sigs.push(format!("0x{}", hex::encode(sig.as_bytes())));
-                    i += 1;
-                }
-                Err(_) => break,
-            }
+        let mut out: PersistentList<AggregatedAttestation, U4096> = PersistentList::default();
+
+        for aggregated_attestations in outer.data.into_iter() {
+            out.push(aggregated_attestations).map_err(|e| {
+                D::Error::custom(format!(
+                    "AggregatedAttestations push aggregated entry failed: {e:?}"
+                ))
+            })?;
         }
 
-        let wrapper = DataWrapper { data: sigs };
-        wrapper.serialize(serializer)
+        Ok(out)
     }
 
-    #[cfg(feature = "devnet2")]
-    pub fn serialize<S>(_value: &BlockSignatures, _serializer: S) -> Result<S::Ok, S::Error>
+    pub fn serialize<S>(_value: &AggregatedAttestations, _serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
+        // TODO: implement serialization
         Err(serde::ser::Error::custom(
-            "BlockSignatures serialization not implemented for devnet2",
+            "AttestationSignatures serialization not implemented for devnet2",
         ))
     }
 }

@@ -11,6 +11,7 @@ impl BasisPoint {
             None
         }
     }
+
     #[inline]
     pub fn get(&self) -> u64 {
         self.0

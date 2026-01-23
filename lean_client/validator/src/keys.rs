@@ -96,7 +96,7 @@ impl KeyManager {
                 .into());
             }
 
-            // Convert to ByteVector<U3112> using unsafe pointer copy (same pattern as BlsPublicKey)
+            // Convert to ByteVector<U3112> using unsafe pointer copy (same pattern as PublicKey)
             let mut byte_vec: ByteVector<U3112> = ByteVector::default();
             unsafe {
                 let dest = &mut byte_vec as *mut ByteVector<U3112> as *mut u8;
