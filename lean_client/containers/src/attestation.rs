@@ -175,9 +175,24 @@ impl AggregatedSignatureProof {
         // 1. Extract public keys from validators
         // 2. Convert message bytes to field element format
         // 3. Call lean_multisig::xmss_verify_aggregated_signatures
-        let _ = (validators, message, epoch);
 
-        Ok(())
+        // Extract public keys from validators
+        let mut public_keys = Vec::new();
+        for validator in validators {
+            // Convert PublicKey to lean_multisig::XmssPublicKey
+            let lean_sig_pk = validator.pubkey.as_lean_sig()
+                .map_err(|_| AggregationError::VerificationFailed)?;
+            // TODO: Implement proper conversion from PublicKey bytes to lean_multisig::XmssPublicKey
+            // Once lean-multisig API is clarified, convert pk_bytes to XmssPublicKey
+            todo!("Convert PublicKey to lean_multisig::XmssPublicKey and implement message field conversion");
+        }
+
+        // Convert 32-byte message to 8 field elements
+        // TODO: Implement proper conversion from 32 bytes to 8 field elements
+        let message_fields = todo!("Convert 32-byte message to [lean_multisig::F; 8]");
+
+        // Call verify with extracted keys and converted message
+        self.verify(&public_keys, message_fields, epoch)
     }
 }
 
