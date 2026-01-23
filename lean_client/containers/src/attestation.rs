@@ -44,107 +44,6 @@ pub struct MultisigAggregatedSignature(
     pub ssz::ByteList<U1048576>,
 );
 
-impl MultisigAggregatedSignature {
-    /// Create a new MultisigAggregatedSignature from proof bytes.
-    pub fn new(proof: Vec<u8>) -> Self {
-        Self(ssz::ByteList::try_from(proof).expect("proof exceeds 1 MiB limit"))
-    }
-
-    /// Get the proof bytes.
-    pub fn as_bytes(&self) -> &[u8] {
-        self.0.as_bytes()
-    }
-
-    /// Check if the signature is empty (no proof).
-    pub fn is_empty(&self) -> bool {
-        self.0.as_bytes().is_empty()
-    }
-
-    /// Aggregate individual XMSS signatures into a single proof.
-    ///
-    /// Uses lean-multisig zkVM to combine multiple signatures into a compact proof.
-    ///
-    /// # Arguments
-    /// * `public_keys` - Public keys of the signers
-    /// * `signatures` - Individual XMSS signatures to aggregate
-    /// * `message` - The 32-byte message that was signed (as 8 field elements)
-    /// * `epoch` - The epoch/slot in which signatures were created
-    ///
-    /// # Returns
-    /// Aggregated signature proof, or error if aggregation fails.
-    pub fn aggregate(
-        public_keys: &[lean_multisig::XmssPublicKey],
-        signatures: &[lean_multisig::XmssSignature],
-        message: [lean_multisig::F; 8],
-        epoch: u64,
-    ) -> Result<Self, AggregationError> {
-        if public_keys.is_empty() {
-            return Err(AggregationError::EmptyInput);
-        }
-        if public_keys.len() != signatures.len() {
-            return Err(AggregationError::MismatchedLengths);
-        }
-
-        let proof_bytes =
-            lean_multisig::xmss_aggregate_signatures(public_keys, signatures, message, epoch)
-                .map_err(|_| AggregationError::AggregationFailed)?;
-
-        Ok(Self::new(proof_bytes))
-    }
-
-    /// Verify the aggregated signature proof against the given public keys and message.
-    ///
-    /// Uses lean-multisig zkVM to verify that the aggregated proof is valid
-    /// for all the given public keys signing the same message at the given epoch.
-    ///
-    /// # Returns
-    /// `Ok(())` if the proof is valid, `Err` with the proof error otherwise.
-    pub fn verify(
-        &self,
-        public_keys: &[lean_multisig::XmssPublicKey],
-        message: [lean_multisig::F; 8],
-        epoch: u64,
-    ) -> Result<(), AggregationError> {
-        lean_multisig::xmss_verify_aggregated_signatures(
-            public_keys,
-            message,
-            self.0.as_bytes(),
-            epoch,
-        )
-        .map_err(|_| AggregationError::VerificationFailed)
-    }
-
-    /// Verify the aggregated payload against validators and message.
-    ///
-    /// This is a convenience method that extracts public keys from validators
-    /// and converts the message bytes to the field element format expected by lean-multisig.
-    ///
-    /// # Arguments
-    /// * `validators` - Slice of validator references to extract public keys from
-    /// * `message` - 32-byte message (typically attestation data root)
-    /// * `epoch` - Epoch/slot for proof verification
-    ///
-    /// # Returns
-    /// `Ok(())` if verification succeeds, `Err` otherwise.
-    pub fn verify_aggregated_payload(
-        &self,
-        validators: &[&crate::validator::Validator],
-        message: &[u8; 32],
-        epoch: u64,
-    ) -> Result<(), AggregationError> {
-        // NOTE: This stub matches Python leanSpec behavior (test_mode=True).
-        // Python also uses test_mode=True with TODO: "Remove test_mode once leanVM
-        // supports correct signature encoding."
-        // Once leanVM/lean-multisig supports proper signature encoding:
-        // 1. Extract public keys from validators
-        // 2. Convert message bytes to field element format
-        // 3. Call lean_multisig::xmss_verify_aggregated_signatures
-        let _ = (validators, message, epoch);
-
-        Ok(())
-    }
-}
-
 /// Error types for signature aggregation operations.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AggregationError {
@@ -191,6 +90,94 @@ impl AggregatedSignatureProof {
     /// Get the validator indices covered by this proof.
     pub fn get_participant_indices(&self) -> Vec<u64> {
         self.participants.to_validator_indices()
+    }
+
+    /// Aggregate individual XMSS signatures into a single proof.
+    ///
+    /// Uses lean-multisig zkVM to combine multiple signatures into a compact proof.
+    ///
+    /// # Arguments
+    /// * `public_keys` - Public keys of the signers
+    /// * `signatures` - Individual XMSS signatures to aggregate
+    /// * `message` - The 32-byte message that was signed (as 8 field elements)
+    /// * `epoch` - The epoch/slot in which signatures were created
+    ///
+    /// # Returns
+    /// Aggregated signature proof, or error if aggregation fails.
+    pub fn aggregate(
+        participants: AggregationBits,
+        public_keys: &[lean_multisig::XmssPublicKey],
+        signatures: &[lean_multisig::XmssSignature],
+        message: [lean_multisig::F; 8],
+        epoch: u64,
+    ) -> Result<Self, AggregationError> {
+        if public_keys.is_empty() {
+            return Err(AggregationError::EmptyInput);
+        }
+        if public_keys.len() != signatures.len() {
+            return Err(AggregationError::MismatchedLengths);
+        }
+
+        let proof_bytes =
+            lean_multisig::xmss_aggregate_signatures(public_keys, signatures, message, epoch)
+                .map_err(|_| AggregationError::AggregationFailed)?;
+
+        Ok(Self::new(
+            participants,
+            MultisigAggregatedSignature(ssz::ByteList::try_from(proof_bytes).unwrap()),
+        ))
+    }
+
+    /// Verify the aggregated signature proof against the given public keys and message.
+    ///
+    /// Uses lean-multisig zkVM to verify that the aggregated proof is valid
+    /// for all the given public keys signing the same message at the given epoch.
+    ///
+    /// # Returns
+    /// `Ok(())` if the proof is valid, `Err` with the proof error otherwise.
+    pub fn verify(
+        &self,
+        public_keys: &[lean_multisig::XmssPublicKey],
+        message: [lean_multisig::F; 8],
+        epoch: u64,
+    ) -> Result<(), AggregationError> {
+        lean_multisig::xmss_verify_aggregated_signatures(
+            public_keys,
+            message,
+            self.proof_data.0.as_bytes(),
+            epoch,
+        )
+        .map_err(|_| AggregationError::VerificationFailed)
+    }
+
+    /// Verify the aggregated payload against validators and message.
+    ///
+    /// This is a convenience method that extracts public keys from validators
+    /// and converts the message bytes to the field element format expected by lean-multisig.
+    ///
+    /// # Arguments
+    /// * `validators` - Slice of validator references to extract public keys from
+    /// * `message` - 32-byte message (typically attestation data root)
+    /// * `epoch` - Epoch/slot for proof verification
+    ///
+    /// # Returns
+    /// `Ok(())` if verification succeeds, `Err` otherwise.
+    pub fn verify_aggregated_payload(
+        &self,
+        validators: &[&crate::validator::Validator],
+        message: &[u8; 32],
+        epoch: u64,
+    ) -> Result<(), AggregationError> {
+        // NOTE: This stub matches Python leanSpec behavior (test_mode=True).
+        // Python also uses test_mode=True with TODO: "Remove test_mode once leanVM
+        // supports correct signature encoding."
+        // Once leanVM/lean-multisig supports proper signature encoding:
+        // 1. Extract public keys from validators
+        // 2. Convert message bytes to field element format
+        // 3. Call lean_multisig::xmss_verify_aggregated_signatures
+        let _ = (validators, message, epoch);
+
+        Ok(())
     }
 }
 

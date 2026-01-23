@@ -142,13 +142,16 @@ impl SignedBlockWithAttestation {
         let num_validators = validators.len_u64();
 
         // Verify each aggregated attestation's zkVM proof
-        for (aggregated_attestation, _aggregated_signature_proof) in (&aggregated_attestations)
+        for (aggregated_attestation, aggregated_signature_proof) in (&aggregated_attestations)
             .into_iter()
             .zip((&attestation_signatures).into_iter())
         {
             let validator_ids = aggregated_attestation
                 .aggregation_bits
                 .to_validator_indices();
+
+            let attestation_data_root: [u8; 32] =
+                hash_tree_root(&aggregated_attestation.data).0.into();
 
             // Ensure all validators exist in the active set
             for validator_id in &validator_ids {
@@ -158,21 +161,21 @@ impl SignedBlockWithAttestation {
                 );
             }
 
-            // let attestation_data_root: [u8; 32] =
-            //     hash_tree_root(&aggregated_attestation.data).0.into();
+            // Collect public keys for all participating validators
+            let public_keys: Vec<crate::public_key::PublicKey> = validator_ids
+                .iter()
+                .map(|vid| validators.get(*vid).expect("validator must exist").pubkey)
+                .collect();
 
             // Verify the lean-multisig aggregated proof for this attestation
             //
             // The proof verifies that all validators in aggregation_bits signed
             // the same attestation_data_root at the given epoch (slot).
-            // TODO
+            // TODO: uncomment the following call for actual verification (needs to fix types between our PublicKey and the type expected by lean-multisig)
             // aggregated_signature_proof
-            //     .verify_aggregated_payload(
-            //         &validator_ids
-            //             .iter()
-            //             .map(|vid| validators.get(*vid).expect("validator must exist"))
-            //             .collect::<Vec<_>>(),
-            //         &attestation_data_root,
+            //     .verify(
+            //         &public_keys,
+            //         attestation_data_root,
             //         aggregated_attestation.data.slot.0,
             //     )
             //     .expect("Attestation aggregated signature verification failed");

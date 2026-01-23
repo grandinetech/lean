@@ -1,4 +1,5 @@
 use crate::attestation::{AggregatedAttestation, AggregatedAttestations};
+use crate::public_key::PublicKey;
 use crate::validator::Validator;
 use crate::{
     block::{hash_tree_root, Block, BlockBody, BlockHeader, SignedBlockWithAttestation},
@@ -760,6 +761,7 @@ impl State {
             // Try to collect individual signatures from gossip network
             let mut gossip_ids: Vec<u64> = Vec::new();
             let mut _gossip_sigs_collected: Vec<Signature> = Vec::new();
+            let mut gossip_keys: Vec<PublicKey> = Vec::new();
             let mut remaining: HashSet<u64> = HashSet::new();
 
             if let Some(gossip_sigs) = gossip_signatures {
@@ -768,6 +770,13 @@ impl State {
                     if let Some(sig) = gossip_sigs.get(&key) {
                         gossip_ids.push(*vid);
                         _gossip_sigs_collected.push(sig.clone());
+                        let public_key = self
+                            .validators
+                            .get(*vid as u64)
+                            .map(|v| v.pubkey)
+                            .ok()
+                            .ok_or_else(|| "No pubkey found")?;
+                        gossip_keys.push(public_key);
                     } else {
                         remaining.insert(*vid);
                     }
@@ -777,19 +786,18 @@ impl State {
                 remaining = validator_ids.iter().copied().collect();
             }
 
-            // If we collected any gossip signatures, create an aggregated proof
-            // NOTE: This matches Python leanSpec behavior (test_mode=True).
-            // Python also uses test_mode=True with TODO: "Remove test_mode once leanVM
-            // supports correct signature encoding."
-            // Once lean-multisig is fully integrated, this will call:
-            //   MultisigAggregatedSignature::aggregate(public_keys, signatures, message, epoch)
             if !gossip_ids.is_empty() {
                 let participants = AggregationBits::from_validator_indices(&gossip_ids);
 
-                // Create proof placeholder (matches Python test_mode behavior)
-                // TODO: Call actual aggregation when lean-multisig supports proper encoding
-                let proof_data = crate::MultisigAggregatedSignature::new(Vec::new());
-                let proof = crate::AggregatedSignatureProof::new(participants.clone(), proof_data);
+                // TODO: Implement actual aggregation (uncomment this and remove placeholder)
+                // let proof = crate::AggregatedSignatureProof::aggregate(
+                //     participants,
+                //     gossip_keys,
+                //     _gossip_sigs_collected,
+                //     data_root,
+                //     data.slot,
+                // );
+                let proof = crate::AggregatedSignatureProof::default(); // Placeholder
 
                 results.push((
                     AggregatedAttestation {
