@@ -2,6 +2,7 @@ use containers::{
     attestation::SignedAttestation, block::SignedBlockWithAttestation, checkpoint::Checkpoint,
     config::Config, state::State, Bytes32, Root, Slot, ValidatorIndex,
 };
+use containers::{AggregatedSignatureProof, Signature, SignatureKey};
 use ssz::SszHash;
 use std::collections::HashMap;
 pub type Interval = u64;
@@ -22,6 +23,10 @@ pub struct Store {
     pub latest_known_attestations: HashMap<ValidatorIndex, SignedAttestation>,
     pub latest_new_attestations: HashMap<ValidatorIndex, SignedAttestation>,
     pub blocks_queue: HashMap<Root, Vec<SignedBlockWithAttestation>>,
+
+    pub gossip_signatures: HashMap<SignatureKey, Signature>,
+
+    pub aggregated_payloads: HashMap<SignatureKey, Vec<AggregatedSignatureProof>>,
 }
 
 pub fn get_forkchoice_store(
@@ -62,6 +67,8 @@ pub fn get_forkchoice_store(
         latest_known_attestations: HashMap::new(),
         latest_new_attestations: HashMap::new(),
         blocks_queue: HashMap::new(),
+        gossip_signatures: HashMap::new(),
+        aggregated_payloads: HashMap::new(),
     }
 }
 
@@ -84,9 +91,6 @@ pub fn get_fork_choice_head(
 
     // stage 1: accumulate weights by walking up from each attestation's head
     for attestation in latest_attestations.values() {
-        #[cfg(feature = "devnet1")]
-        let mut curr = attestation.message.data.head.root;
-        #[cfg(feature = "devnet2")]
         let mut curr = attestation.message.head.root;
 
         if let Some(block) = store.blocks.get(&curr) {
@@ -249,4 +253,90 @@ pub fn get_proposal_head(store: &mut Store, slot: Slot) -> Root {
     crate::handlers::on_tick(store, slot_time, true);
     accept_new_attestations(store);
     store.head
+}
+
+/// Produce a block and aggregated signature proofs for the target slot.
+///
+/// The proposer returns the block and `MultisigAggregatedSignature` proofs aligned
+/// with `block.body.attestations` so it can craft `SignedBlockWithAttestation`.
+///
+/// # Algorithm Overview
+/// 1. **Get Proposal Head**: Retrieve current chain head as parent
+/// 2. **Collect Attestations**: Convert known attestations to plain attestations
+/// 3. **Build Block**: Use State.build_block with signature caches
+/// 4. **Store Block**: Insert block and post-state into Store
+///
+/// # Arguments
+/// * `store` - Mutable reference to the fork choice store
+/// * `slot` - Target slot number for block production
+/// * `validator_index` - Index of validator authorized to propose this block
+///
+/// # Returns
+/// Tuple of (block root, finalized Block, attestation signature proofs)
+pub fn produce_block_with_signatures(
+    store: &mut Store,
+    slot: Slot,
+    validator_index: ValidatorIndex,
+) -> Result<
+    (
+        Root,
+        containers::block::Block,
+        Vec<AggregatedSignatureProof>,
+    ),
+    String,
+> {
+    use containers::Attestation;
+
+    // Get parent block head
+    let head_root = get_proposal_head(store, slot);
+    let head_state = store
+        .states
+        .get(&head_root)
+        .ok_or_else(|| "Head state not found".to_string())?
+        .clone();
+
+    // Validate proposer authorization for this slot
+    let num_validators = head_state.validators.len_u64();
+    let expected_proposer = slot.0 % num_validators;
+    if validator_index.0 != expected_proposer {
+        return Err(format!(
+            "Validator {} is not the proposer for slot {} (expected {})",
+            validator_index.0, slot.0, expected_proposer
+        ));
+    }
+
+    // Convert AttestationData to Attestation objects for build_block
+    let available_attestations: Vec<Attestation> = store
+        .latest_known_attestations
+        .iter()
+        .map(|(validator_idx, signed_att)| Attestation {
+            validator_id: containers::Uint64(validator_idx.0),
+            data: signed_att.message.clone(),
+        })
+        .collect();
+
+    // Get known block roots for attestation validation
+    let known_block_roots: std::collections::HashSet<Bytes32> =
+        store.blocks.keys().copied().collect();
+
+    // Build block with fixed-point attestation collection and signature aggregation
+    let (final_block, final_post_state, _aggregated_attestations, signatures) = head_state
+        .build_block(
+            slot,
+            validator_index,
+            head_root,
+            None, // initial_attestations - start with empty, let fixed-point collect
+            Some(available_attestations),
+            Some(&known_block_roots),
+            Some(&store.gossip_signatures),
+            Some(&store.aggregated_payloads),
+        )?;
+
+    // Compute block root
+    let block_root = Bytes32(final_block.hash_tree_root());
+
+    // Store block and state
+    store.states.insert(block_root, final_post_state);
+
+    Ok((block_root, final_block, signatures))
 }

@@ -1,315 +1,258 @@
+//! Vote/attestation unit tests for devnet2
+//!
+//! Tests for vote processing and fork choice weight calculations
+//! using the devnet2 SignedAttestation structure.
+
 use super::common::create_test_store;
 use containers::{
-    attestation::{Attestation, AttestationData, Signature, SignedAttestation},
+    attestation::{AttestationData, SignedAttestation},
+    block::{Block, BlockBody, BlockWithAttestation, SignedBlockWithAttestation},
     checkpoint::Checkpoint,
-    Bytes32, Slot, Uint64, ValidatorIndex,
+    Bytes32, Slot, ValidatorIndex,
 };
-use fork_choice::handlers::on_attestation;
-use fork_choice::store::{accept_new_attestations, INTERVALS_PER_SLOT};
+use fork_choice::store::get_fork_choice_head;
+use ssz::SszHash;
+use std::collections::HashMap;
 
-#[cfg(feature = "devnet1")]
+/// Helper to create a SignedAttestation for devnet2
 fn create_signed_attestation(
     validator_id: u64,
-    slot: Slot,
+    slot: u64,
     head_root: Bytes32,
+    head_slot: u64,
+    target_root: Bytes32,
+    target_slot: u64,
+    source_root: Bytes32,
+    source_slot: u64,
 ) -> SignedAttestation {
     SignedAttestation {
-        message: Attestation {
-            validator_id: Uint64(validator_id),
-            data: AttestationData {
-                slot,
-                head: Checkpoint {
-                    root: head_root,
-                    slot,
-                },
-                target: Checkpoint {
-                    root: head_root,
-                    slot,
-                },
-                source: Checkpoint {
-                    root: Bytes32::default(),
-                    slot: Slot(0),
-                },
+        validator_id,
+        message: AttestationData {
+            slot: Slot(slot),
+            head: Checkpoint {
+                root: head_root,
+                slot: Slot(head_slot),
+            },
+            target: Checkpoint {
+                root: target_root,
+                slot: Slot(target_slot),
+            },
+            source: Checkpoint {
+                root: source_root,
+                slot: Slot(source_slot),
             },
         },
-        signature: Signature::default(),
+        signature: Default::default(),
     }
 }
 
 #[test]
-#[cfg(feature = "devnet1")]
-fn test_accept_new_attestations() {
-    let mut store = create_test_store();
+fn test_single_vote_updates_head() {
+    let store = create_test_store();
+    let genesis_root = store.head;
 
-    // Setup initial known attestations
-    let val1 = ValidatorIndex(1);
-    let val2 = ValidatorIndex(2);
-    let val3 = ValidatorIndex(3);
-
-    store
-        .latest_known_attestations
-        .insert(val1, create_signed_attestation(1, Slot(0), store.head));
-
-    // Val1 updates their attestation to Slot 1
-    store
-        .latest_new_attestations
-        .insert(val1, create_signed_attestation(1, Slot(1), store.head));
-    // Val2 casts a new attestation for Slot 1
-    store
-        .latest_new_attestations
-        .insert(val2, create_signed_attestation(2, Slot(1), store.head));
-    // Val3 casts a new attestation for Slot 2
-    store
-        .latest_new_attestations
-        .insert(val3, create_signed_attestation(3, Slot(2), store.head));
-
-    accept_new_attestations(&mut store);
-
-    assert_eq!(store.latest_new_attestations.len(), 0);
-    assert_eq!(store.latest_known_attestations.len(), 3);
-
-    assert_eq!(
-        store.latest_known_attestations[&val1].message.data.slot,
-        Slot(1)
+    // Create attestation pointing to genesis
+    let attestation = create_signed_attestation(
+        0,            // validator_id
+        1,            // slot
+        genesis_root, // head_root
+        0,            // head_slot
+        genesis_root, // target_root
+        0,            // target_slot
+        genesis_root, // source_root
+        0,            // source_slot
     );
-    assert_eq!(
-        store.latest_known_attestations[&val2].message.data.slot,
-        Slot(1)
-    );
-    assert_eq!(
-        store.latest_known_attestations[&val3].message.data.slot,
-        Slot(2)
-    );
+
+    let mut attestations = HashMap::new();
+    attestations.insert(ValidatorIndex(0), attestation);
+
+    let head = get_fork_choice_head(&store, genesis_root, &attestations, 0);
+
+    // With only one block, head should still be genesis
+    assert_eq!(head, genesis_root);
 }
 
 #[test]
-#[cfg(feature = "devnet1")]
-fn test_accept_new_attestations_multiple() {
-    let mut store = create_test_store();
+fn test_multiple_votes_same_block() {
+    let store = create_test_store();
+    let genesis_root = store.head;
 
+    // Multiple validators vote for same block
+    let mut attestations = HashMap::new();
     for i in 0..5 {
-        store.latest_new_attestations.insert(
+        let attestation =
+            create_signed_attestation(i, 1, genesis_root, 0, genesis_root, 0, genesis_root, 0);
+        attestations.insert(ValidatorIndex(i), attestation);
+    }
+
+    let head = get_fork_choice_head(&store, genesis_root, &attestations, 0);
+
+    // All votes on same block, head unchanged
+    assert_eq!(head, genesis_root);
+}
+
+#[test]
+fn test_competing_votes_different_blocks() {
+    let mut store = create_test_store();
+    let genesis_root = store.head;
+
+    // Create two competing blocks at slot 1
+    let block_a = Block {
+        slot: Slot(1),
+        proposer_index: ValidatorIndex(0),
+        parent_root: genesis_root,
+        state_root: Bytes32::default(),
+        body: BlockBody::default(),
+    };
+    let block_a_root = Bytes32(block_a.hash_tree_root());
+
+    let mut block_b = block_a.clone();
+    block_b.proposer_index = ValidatorIndex(1); // Different proposer to get different root
+    let block_b_root = Bytes32(block_b.hash_tree_root());
+
+    store.blocks.insert(
+        block_a_root,
+        SignedBlockWithAttestation {
+            message: BlockWithAttestation {
+                block: block_a,
+                proposer_attestation: Default::default(),
+            },
+            signature: Default::default(),
+        },
+    );
+
+    store.blocks.insert(
+        block_b_root,
+        SignedBlockWithAttestation {
+            message: BlockWithAttestation {
+                block: block_b,
+                proposer_attestation: Default::default(),
+            },
+            signature: Default::default(),
+        },
+    );
+
+    // 3 votes for block_a, 2 votes for block_b
+    let mut attestations = HashMap::new();
+    for i in 0..3 {
+        attestations.insert(
             ValidatorIndex(i),
-            create_signed_attestation(i, Slot(i), store.head),
+            create_signed_attestation(i, 1, block_a_root, 1, genesis_root, 0, genesis_root, 0),
+        );
+    }
+    for i in 3..5 {
+        attestations.insert(
+            ValidatorIndex(i),
+            create_signed_attestation(i, 1, block_b_root, 1, genesis_root, 0, genesis_root, 0),
         );
     }
 
-    assert_eq!(store.latest_new_attestations.len(), 5);
-    assert_eq!(store.latest_known_attestations.len(), 0);
+    let head = get_fork_choice_head(&store, genesis_root, &attestations, 0);
 
-    accept_new_attestations(&mut store);
-
-    assert_eq!(store.latest_new_attestations.len(), 0);
-    assert_eq!(store.latest_known_attestations.len(), 5);
+    // Block A should win with more votes
+    assert_eq!(head, block_a_root);
 }
 
 #[test]
-fn test_accept_new_attestations_empty() {
+fn test_vote_weight_accumulation() {
     let mut store = create_test_store();
-    let initial_known = store.latest_known_attestations.len();
+    let genesis_root = store.head;
 
-    accept_new_attestations(&mut store);
+    // Create a chain: genesis -> block1 -> block2
+    let block1 = Block {
+        slot: Slot(1),
+        proposer_index: ValidatorIndex(0),
+        parent_root: genesis_root,
+        state_root: Bytes32::default(),
+        body: BlockBody::default(),
+    };
+    let block1_root = Bytes32(block1.hash_tree_root());
 
-    assert_eq!(store.latest_new_attestations.len(), 0);
-    assert_eq!(store.latest_known_attestations.len(), initial_known);
+    let block2 = Block {
+        slot: Slot(2),
+        proposer_index: ValidatorIndex(0),
+        parent_root: block1_root,
+        state_root: Bytes32::default(),
+        body: BlockBody::default(),
+    };
+    let block2_root = Bytes32(block2.hash_tree_root());
+
+    store.blocks.insert(
+        block1_root,
+        SignedBlockWithAttestation {
+            message: BlockWithAttestation {
+                block: block1,
+                proposer_attestation: Default::default(),
+            },
+            signature: Default::default(),
+        },
+    );
+    store.blocks.insert(
+        block2_root,
+        SignedBlockWithAttestation {
+            message: BlockWithAttestation {
+                block: block2,
+                proposer_attestation: Default::default(),
+            },
+            signature: Default::default(),
+        },
+    );
+
+    // Vote for block2 - should accumulate to block1 as well
+    let mut attestations = HashMap::new();
+    attestations.insert(
+        ValidatorIndex(0),
+        create_signed_attestation(0, 2, block2_root, 2, genesis_root, 0, genesis_root, 0),
+    );
+
+    let head = get_fork_choice_head(&store, genesis_root, &attestations, 0);
+
+    // Head should be block2 (the one with votes)
+    assert_eq!(head, block2_root);
 }
 
 #[test]
-#[cfg(feature = "devnet1")]
-fn test_on_attestation_lifecycle() {
-    let mut store = create_test_store();
-    let validator_idx = ValidatorIndex(1);
-    let slot_0 = Slot(0);
-    let slot_1 = Slot(1);
+fn test_duplicate_vote_uses_latest() {
+    let store = create_test_store();
+    let genesis_root = store.head;
 
-    // 1. Attestation from network (gossip)
-    let signed_attestation_gossip = create_signed_attestation(1, slot_0, store.head);
+    // Same validator can only have one vote in the map (latest wins)
+    let mut attestations = HashMap::new();
 
-    on_attestation(&mut store, signed_attestation_gossip.clone(), false)
-        .expect("Gossip attestation valid");
-
-    // Should be in new_attestations, not known_attestations
-    assert!(store.latest_new_attestations.contains_key(&validator_idx));
-    assert!(!store.latest_known_attestations.contains_key(&validator_idx));
-    assert_eq!(
-        store.latest_new_attestations[&validator_idx]
-            .message
-            .data
-            .slot,
-        slot_0
+    // Insert a vote
+    attestations.insert(
+        ValidatorIndex(0),
+        create_signed_attestation(0, 1, genesis_root, 0, genesis_root, 0, genesis_root, 0),
     );
 
-    // 2. Same attestation included in a block
-    on_attestation(&mut store, signed_attestation_gossip, true).expect("Block attestation valid");
-
-    assert!(store.latest_known_attestations.contains_key(&validator_idx));
-    assert_eq!(
-        store.latest_known_attestations[&validator_idx]
-            .message
-            .data
-            .slot,
-        slot_0
+    // "Update" with same validator - only latest is kept
+    attestations.insert(
+        ValidatorIndex(0),
+        create_signed_attestation(0, 2, genesis_root, 0, genesis_root, 0, genesis_root, 0),
     );
 
-    // 3. Newer attestation from network
-    store.time = 1 * INTERVALS_PER_SLOT; // Advance time
-    let signed_attestation_next = create_signed_attestation(1, slot_1, store.head);
+    // Should only have 1 attestation
+    assert_eq!(attestations.len(), 1);
 
-    on_attestation(&mut store, signed_attestation_next, false)
-        .expect("Next gossip attestation valid");
-
-    // Should update new_attestations
-    assert_eq!(
-        store.latest_new_attestations[&validator_idx]
-            .message
-            .data
-            .slot,
-        slot_1
-    );
-    // Known attestations should still be at slot 0 until accepted
-    assert_eq!(
-        store.latest_known_attestations[&validator_idx]
-            .message
-            .data
-            .slot,
-        slot_0
-    );
+    let head = get_fork_choice_head(&store, genesis_root, &attestations, 0);
+    assert_eq!(head, genesis_root);
 }
 
 #[test]
-#[cfg(feature = "devnet1")]
-fn test_on_attestation_future_slot() {
-    let mut store = create_test_store();
-    let future_slot = Slot(100); // Far in the future
+fn test_vote_for_unknown_block_ignored() {
+    let store = create_test_store();
+    let genesis_root = store.head;
+    let unknown_root = Bytes32(ssz::H256::from_slice(&[0xff; 32]));
 
-    let signed_attestation = create_signed_attestation(1, future_slot, store.head);
-
-    let result = on_attestation(&mut store, signed_attestation, false);
-    assert!(result.is_err());
-}
-
-#[test]
-#[cfg(feature = "devnet1")]
-fn test_on_attestation_update_vote() {
-    let mut store = create_test_store();
-    let validator_idx = ValidatorIndex(1);
-
-    // First attestation at slot 0
-    let signed_attestation1 = create_signed_attestation(1, Slot(0), store.head);
-
-    on_attestation(&mut store, signed_attestation1, false).expect("First attestation valid");
-    assert_eq!(
-        store.latest_new_attestations[&validator_idx]
-            .message
-            .data
-            .slot,
-        Slot(0)
+    // Vote for block that doesn't exist
+    let mut attestations = HashMap::new();
+    attestations.insert(
+        ValidatorIndex(0),
+        create_signed_attestation(0, 1, unknown_root, 1, genesis_root, 0, genesis_root, 0),
     );
 
-    // Advance time to allow slot 1
-    store.time = 1 * INTERVALS_PER_SLOT;
+    let head = get_fork_choice_head(&store, genesis_root, &attestations, 0);
 
-    // Second attestation at slot 1
-    let signed_attestation2 = create_signed_attestation(1, Slot(1), store.head);
-
-    on_attestation(&mut store, signed_attestation2, false).expect("Second attestation valid");
-    assert_eq!(
-        store.latest_new_attestations[&validator_idx]
-            .message
-            .data
-            .slot,
-        Slot(1)
-    );
-}
-
-#[test]
-#[cfg(feature = "devnet1")]
-fn test_on_attestation_ignore_old_vote() {
-    let mut store = create_test_store();
-    let validator_idx = ValidatorIndex(1);
-
-    // Advance time
-    store.time = 2 * INTERVALS_PER_SLOT;
-
-    // Newer attestation first
-    let signed_attestation_new = create_signed_attestation(1, Slot(2), store.head);
-
-    on_attestation(&mut store, signed_attestation_new, false).expect("New attestation valid");
-    assert_eq!(
-        store.latest_new_attestations[&validator_idx]
-            .message
-            .data
-            .slot,
-        Slot(2)
-    );
-
-    // Older attestation second
-    let signed_attestation_old = create_signed_attestation(1, Slot(1), store.head);
-
-    on_attestation(&mut store, signed_attestation_old, false)
-        .expect("Old attestation processed but ignored");
-    // Should still be slot 2
-    assert_eq!(
-        store.latest_new_attestations[&validator_idx]
-            .message
-            .data
-            .slot,
-        Slot(2)
-    );
-}
-
-#[test]
-#[cfg(feature = "devnet1")]
-fn test_on_attestation_from_block_supersedes_new() {
-    let mut store = create_test_store();
-    let validator_idx = ValidatorIndex(1);
-
-    // First, add attestation via gossip
-    let signed_attestation1 = create_signed_attestation(1, Slot(0), store.head);
-    on_attestation(&mut store, signed_attestation1, false).expect("Gossip attestation valid");
-
-    assert!(store.latest_new_attestations.contains_key(&validator_idx));
-    assert!(!store.latest_known_attestations.contains_key(&validator_idx));
-
-    // Then, add same attestation via block (on-chain)
-    let signed_attestation2 = create_signed_attestation(1, Slot(0), store.head);
-    on_attestation(&mut store, signed_attestation2, true).expect("Block attestation valid");
-
-    // Should move from new to known
-    assert!(!store.latest_new_attestations.contains_key(&validator_idx));
-    assert!(store.latest_known_attestations.contains_key(&validator_idx));
-}
-
-#[test]
-#[cfg(feature = "devnet1")]
-fn test_on_attestation_newer_from_block_removes_older_new() {
-    let mut store = create_test_store();
-    let validator_idx = ValidatorIndex(1);
-
-    // Add older attestation via gossip
-    let signed_attestation_gossip = create_signed_attestation(1, Slot(0), store.head);
-    on_attestation(&mut store, signed_attestation_gossip, false).expect("Gossip attestation valid");
-
-    assert_eq!(
-        store.latest_new_attestations[&validator_idx]
-            .message
-            .data
-            .slot,
-        Slot(0)
-    );
-
-    // Add newer attestation via block (on-chain)
-    store.time = 1 * INTERVALS_PER_SLOT;
-    let signed_attestation_block = create_signed_attestation(1, Slot(1), store.head);
-    on_attestation(&mut store, signed_attestation_block, true).expect("Block attestation valid");
-
-    // New attestation should be removed (superseded by newer on-chain one)
-    assert!(!store.latest_new_attestations.contains_key(&validator_idx));
-    assert_eq!(
-        store.latest_known_attestations[&validator_idx]
-            .message
-            .data
-            .slot,
-        Slot(1)
-    );
+    // Should still return genesis since unknown block is skipped
+    assert_eq!(head, genesis_root);
 }

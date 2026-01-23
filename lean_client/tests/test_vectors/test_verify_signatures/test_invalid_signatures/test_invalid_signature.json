@@ -1,6 +1,7 @@
 {
     "tests/consensus/devnet/verify_signatures/test_invalid_signatures.py::test_invalid_signature[fork_Devnet][fork_Devnet-verify_signatures_test]": {
         "network": "Devnet",
+        "leanEnv": "prod",
         "anchorState": {
             "config": {
                 "genesisTime": 0
@@ -30,7 +31,7 @@
             "validators": {
                 "data": [
                     {
-                        "pubkey": "0xb40ec9783b56572d99965130ad1cec4f066df43a0fd89d22d420535c62b52711cdaf7f5f696c6b1e4df66a6bab48bb51abcdd77e",
+                        "pubkey": "0x2c7aa65d0b45c01e3ba7155997d3001613775f1e1b85fd1ab65dcd72c65e105f2552c43a311a290af56fa0262dfebe10745ea837",
                         "index": 0
                     }
                 ]
@@ -47,8 +48,8 @@
                 "block": {
                     "slot": 1,
                     "proposerIndex": 0,
-                    "parentRoot": "0x7ee509d36952a8f41f5dc5b4627487f4d523c9333ef7af2a692ae12867eeee16",
-                    "stateRoot": "0xe9dd253c1cff8e8719113e66970f54a44c885997f3e57ba6dc993861eca4f40c",
+                    "parentRoot": "0x438b1cbc01c3c69b14f8853c6463d28b58118798f414f3be472aae4cd77dd572",
+                    "stateRoot": "0x38d7edaf9c08ffb285eb3e1e64456fbe430d4c4a4bab9b0bf29565b74da5c620",
                     "body": {
                         "attestations": {
                             "data": []
@@ -60,52 +61,53 @@
                     "data": {
                         "slot": 1,
                         "head": {
-                            "root": "0xf0c95e7f668652482cc00916c57ab6c84b435a29d030f682b92d95f9f3add62a",
+                            "root": "0x6f2ebcd6e5eb1b34823a5fb5867ee63984905cc670722a01a060894b9b2cec3f",
                             "slot": 1
                         },
                         "target": {
-                            "root": "0xf0c95e7f668652482cc00916c57ab6c84b435a29d030f682b92d95f9f3add62a",
+                            "root": "0x6f2ebcd6e5eb1b34823a5fb5867ee63984905cc670722a01a060894b9b2cec3f",
                             "slot": 1
                         },
                         "source": {
-                            "root": "0x7ee509d36952a8f41f5dc5b4627487f4d523c9333ef7af2a692ae12867eeee16",
+                            "root": "0x438b1cbc01c3c69b14f8853c6463d28b58118798f414f3be472aae4cd77dd572",
                             "slot": 0
                         }
                     }
                 }
             },
             "signature": {
-                "data": [
-                    {
-                        "path": {
-                            "siblings": {
-                                "data": []
-                            }
-                        },
-                        "rho": {
-                            "data": [
-                                0,
-                                0,
-                                0,
-                                0,
-                                0,
-                                0,
-                                0
-                            ]
-                        },
-                        "hashes": {
+                "attestationSignatures": {
+                    "data": []
+                },
+                "proposerSignature": {
+                    "path": {
+                        "siblings": {
                             "data": []
                         }
+                    },
+                    "rho": {
+                        "data": [
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "hashes": {
+                        "data": []
                     }
-                ]
+                }
             }
         },
         "expectException": "AssertionError",
         "_info": {
-            "hash": "0x7befd11b0a26c4bfbd4c40d5b4c21d7a510cc2ed899aa3f494b7c4d9574fd7d3",
+            "hash": "0x8d97e6b6a601e10856ae70720ffad8cd392dab8169fe158054edac0bc0f0e49a",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/verify_signatures/test_invalid_signatures.py::test_invalid_signature[fork_Devnet]",
-            "description": "Test that invalid signatures are properly rejected during verification.\n\n    Scenario\n    --------\n    - Single block at slot 1\n    - Proposer attestation has an invalid signature\n    - No additional attestations (only proposer attestation)\n\n    Expected Behavior\n    -----------------\n    1. Proposer's signature in SignedBlockWithAttestation is rejected\n\n    Why This Matters\n    ----------------\n    This test verifies the negative case:\n    - Signature verification actually validates cryptographic correctness\n      not just structural correctness.\n    - Invalid signatures are caught, not silently accepted",
+            "description": "Test that invalid signatures are properly rejected during verification.\n\nScenario\n--------\n- Single block at slot 1\n- Proposer attestation has an invalid signature\n- No additional attestations (only proposer attestation)\n\nExpected Behavior\n-----------------\n1. Proposer's signature in SignedBlockWithAttestation is rejected\n\nWhy This Matters\n----------------\nThis test verifies the negative case:\n- Signature verification actually validates cryptographic correctness\n  not just structural correctness.\n- Invalid signatures are caught, not silently accepted",
             "fixtureFormat": "verify_signatures_test"
         }
     }

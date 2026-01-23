@@ -1,3 +1,7 @@
+//! State basic tests for devnet2 format
+//!
+//! Tests for genesis generation, proposer selection, slot rules, and hash tree root.
+
 // tests/state_basic.rs
 use containers::{
     block::{hash_tree_root, BlockBody},

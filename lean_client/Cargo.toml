@@ -34,12 +34,13 @@ serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 snap = "1.1"
 ssz = { git = "https://github.com/grandinetech/grandine", package = "ssz", branch = "develop" }
-ssz-derive = { git = "https://github.com/grandinetech/grandine", package = "ssz_derive", branch = "develop" }
+ssz_derive = { git = "https://github.com/grandinetech/grandine", package = "ssz_derive", branch = "develop" }
 ssz-types = "0.3.0"
 tokio = { version = "1.0", features = ["full"] }
 tree-hash = "0.4.0"
 typenum = "1.19"
 sha2 = "0.10"
+rand = "0.9"
 
 [workspace.dev-dependencies]
 rstest = "0.18.2"
@@ -52,10 +53,9 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["devnet2", "xmss-signing"]
+default = ["xmss-signing", "containers/xmss-verify"]
 xmss-signing = ["validator/xmss-signing"]
-devnet1 = ["containers/devnet1", "fork-choice/devnet1", "networking/devnet1", "validator/devnet1"]
-devnet2 = ["containers/devnet2", "fork-choice/devnet2", "networking/devnet2", "validator/devnet2"]
+xmss-verify = ["containers/xmss-verify"]
 
 [dependencies]
 chain = { path = "./chain" }
