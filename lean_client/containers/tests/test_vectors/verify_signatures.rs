@@ -12,10 +12,11 @@ use test_generator::test_resources;
 use super::runner::TestRunner;
 
 #[test_resources("test_vectors/verify_signatures/*/verify_signatures/*/*.json")]
-fn verify_signatures(spec_file: &str) {
+fn verify_signatures(spec_file: &str) -> Result<(), Box<dyn std::error::Error>> {
     let test_path = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("..")
         .join(spec_file);
 
-    TestRunner::run_verify_signatures_test(test_path).unwrap();
+    TestRunner::run_verify_signatures_test(test_path)?;
+    Ok(())
 }

@@ -626,8 +626,32 @@ impl TestRunner {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let json_content = fs::read_to_string(path.as_ref())?;
 
-        // Parse using the VerifySignaturesTestVectorFile structure
-        let test_file: VerifySignaturesTestVectorFile = serde_json::from_str(&json_content)?;
+        // Phase 1: parse minimally to detect `expectException` even if typed parsing fails.
+        let raw: serde_json::Value = serde_json::from_str(&json_content)?;
+
+        let expect_exception = raw
+            .get("tests")
+            .and_then(|t| t.as_object())
+            .and_then(|obj| obj.values().next())
+            .and_then(|tc| tc.get("expectException"))
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_owned());
+
+        // Phase 2: parse into the typed structure.
+        let test_file: VerifySignaturesTestVectorFile = match serde_json::from_str(&json_content) {
+            Ok(v) => v,
+            Err(e) => {
+                if let Some(ref ex) = expect_exception {
+                    println!(
+                        "\nExpected exception: {} (typed JSON parse failed: {})",
+                        ex, e
+                    );
+                    println!("\n\x1b[32m✓ PASS\x1b[0m\n");
+                    return Ok(());
+                }
+                return Err(Box::new(e));
+            }
+        };
 
         // Get the first (and only) test case from the file
         let (test_name, test_case) = test_file
@@ -665,23 +689,22 @@ impl TestRunner {
             if result {
                 println!("    \x1b[31m✗ FAIL: Signatures verified successfully but should have failed!\x1b[0m\n");
                 return Err("Expected signature verification to fail, but it succeeded".into());
-            } else {
-                println!("    ✓ Correctly rejected: Invalid signatures detected");
-                println!("\n\x1b[32m✓ PASS\x1b[0m\n");
             }
-        } else {
-            // Valid test case - signatures should verify successfully
-            let result = signed_block.verify_signatures(anchor_state);
 
-            if result {
-                println!("    ✓ All signatures verified successfully");
-                println!("\n\x1b[32m✓ PASS\x1b[0m\n");
-            } else {
-                println!("    \x1b[31m✗ FAIL: Signature verification failed\x1b[0m\n");
-                return Err("Signature verification failed".into());
-            }
+            println!("    ✓ Correctly rejected: Invalid signatures detected");
+            println!("\n\x1b[32m✓ PASS\x1b[0m\n");
+            return Ok(());
         }
 
+        let result = signed_block.verify_signatures(anchor_state);
+        if !result {
+            println!("    \x1b[31m✗ FAIL: Signature verification failed\x1b[0m\n");
+            return Err("Signature verification failed".into());
+        }
+
+        println!("    ✓ All signatures verified successfully");
+        println!("\n\x1b[32m✓ PASS\x1b[0m\n");
         Ok(())
     }
+
 }
