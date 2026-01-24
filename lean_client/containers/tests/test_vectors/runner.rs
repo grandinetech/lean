@@ -706,5 +706,4 @@ impl TestRunner {
         println!("\n\x1b[32m✓ PASS\x1b[0m\n");
         Ok(())
     }
-
 }
