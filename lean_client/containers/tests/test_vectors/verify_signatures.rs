@@ -4,10 +4,6 @@
 //! NOTE: Without the `xmss-verify` feature, signature verification only checks
 //! structure (attestation count matches signature count, validator indices valid).
 //! Full cryptographic verification requires `--features xmss-verify`.
-//!
-//! IMPORTANT: There is currently a configuration mismatch between leanSpec Python
-//! (HASH_LEN_FE=8, 52-byte pubkeys) and leansig Rust (HASH_LEN_FE=7, 48-byte pubkeys).
-//! Until this is resolved, the xmss-verify tests will fail with "Invalid public key length".
 
 use std::path::Path;
 
