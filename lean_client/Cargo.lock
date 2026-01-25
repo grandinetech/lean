@@ -925,6 +925,7 @@ dependencies = [
  "ssz",
  "ssz_derive",
  "test-generator",
+ "tracing",
  "typenum",
 ]
 

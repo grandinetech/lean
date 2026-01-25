@@ -163,17 +163,20 @@ impl ValidatorService {
             },
         };
 
-        // Collect valid attestations from the NEW attestations pool (gossip attestations
-        // that haven't been included in any block yet).
-        // Do NOT use latest_known_attestations - those have already been included in blocks!
+        // Collect valid attestations from the KNOWN attestations pool.
+        // Note: get_proposal_head() calls accept_new_attestations() which moves attestations
+        // from latest_new_attestations to latest_known_attestations. So we must read from
+        // latest_known_attestations here, not latest_new_attestations.
         // Filter to only include attestations that:
         // 1. Have source matching the parent state's justified checkpoint
         // 2. Have target slot > source slot (valid attestations)
         // 3. Target block must be known
-        let valid_attestations: Vec<AttestationData> = store
-            .latest_new_attestations
-            .values()
-            .filter(|data| {
+        // 4. Target is not already justified in parent state
+        // 5. Source is justified in parent state
+        let valid_attestations: Vec<Attestation> = store
+            .latest_known_attestations
+            .iter()
+            .filter(|(_, data)| {
                 // Source must match the parent state's justified checkpoint (not store's!)
                 let source_matches = data.source == parent_state.latest_justified;
                 // Target must be strictly after source
@@ -181,36 +184,89 @@ impl ValidatorService {
                 // Target block must be known
                 let target_known = store.blocks.contains_key(&data.target.root);
 
-                source_matches && target_after_source && target_known
+                // Check if target is NOT already justified (matching process_single_attestation)
+                let target_slot_idx = data.target.slot.0 as usize;
+                let target_already_justified = parent_state
+                    .justified_slots
+                    .get(target_slot_idx)
+                    .map(|b| *b)
+                    .unwrap_or(false);
+
+                // Check if source is justified
+                let source_slot_idx = data.source.slot.0 as usize;
+                let source_is_justified = parent_state
+                    .justified_slots
+                    .get(source_slot_idx)
+                    .map(|b| *b)
+                    .unwrap_or(false);
+
+                source_matches
+                    && target_after_source
+                    && target_known
+                    && source_is_justified
+                    && !target_already_justified
             })
-            .cloned()
+            .map(|(validator_idx, data)| Attestation {
+                validator_id: Uint64(validator_idx.0),
+                data: data.clone(),
+            })
             .collect();
+
+        // De-duplicate by target slot: only include ONE aggregated attestation per target slot.
+        // This prevents the case where the first attestation justifies a slot and the second
+        // gets rejected (causing state root mismatch).
+        // Group by target slot, keeping attestations with the most common AttestationData.
+        use std::collections::HashMap;
+
+        // First group by target slot
+        let mut target_slot_groups: HashMap<u64, Vec<Attestation>> = HashMap::new();
+        for att in valid_attestations {
+            let target_slot = att.data.target.slot.0;
+            target_slot_groups.entry(target_slot).or_default().push(att);
+        }
+
+        // For each target slot, group by data root and pick the one with most votes
+        let valid_attestations: Vec<Attestation> = target_slot_groups
+            .into_iter()
+            .flat_map(|(_, slot_atts)| {
+                // Group by data root (Bytes32 implements Hash)
+                let mut data_groups: HashMap<containers::Bytes32, Vec<Attestation>> =
+                    HashMap::new();
+                for att in slot_atts {
+                    let data_root = att.data.data_root_bytes();
+                    data_groups.entry(data_root).or_default().push(att);
+                }
+                // Find the data with the most attestations
+                data_groups
+                    .into_iter()
+                    .max_by_key(|(_, atts)| atts.len())
+                    .map(|(_, atts)| atts)
+                    .unwrap_or_default()
+            })
+            .collect();
+
+        let num_attestations = valid_attestations.len();
 
         info!(
             slot = slot.0,
-            valid_attestations = valid_attestations.len(),
-            total_new = store.latest_new_attestations.len(),
-            "Collected new attestations for block"
+            valid_attestations = num_attestations,
+            total_known = store.latest_known_attestations.len(),
+            "Collected attestations for block"
         );
 
-        // Build block with collected attestations (empty body - attestations go to state)
+        // Build block with collected attestations
+        // Pass gossip_signatures and aggregated_payloads from the store so that
+        // compute_aggregated_signatures can find signatures for the attestations
         let (block, _post_state, _collected_atts, sigs) = {
-            let valid_attestations: Vec<Attestation> = valid_attestations
-                .iter()
-                .map(|data| Attestation {
-                    validator_id: Uint64(0), // Placeholder, real validator IDs should be used
-                    data: data.clone(),
-                })
-                .collect();
             parent_state.build_block(
                 slot,
                 proposer_index,
                 parent_root,
                 Some(valid_attestations),
-                None,
-                None,
-                None,
-                None,
+                None,                             // available_attestations
+                None,                             // known_block_roots
+                Some(&store.gossip_signatures),   // gossip_signatures
+                Some(&store.aggregated_payloads), // aggregated_payloads
             )?
         };
 
@@ -221,7 +277,7 @@ impl ValidatorService {
             proposer = block.proposer_index.0,
             parent_root = %format!("0x{:x}", block.parent_root.0),
             state_root = %format!("0x{:x}", block.state_root.0),
-            attestation_sigs = valid_attestations.len(),
+            attestation_sigs = num_attestations,
             "Block built successfully"
         );
 

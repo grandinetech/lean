@@ -16,6 +16,7 @@ env-config = { path = "../env-config", default-features = false }
 ssz = { workspace = true }
 serde = { workspace = true }
 ssz_derive = { workspace = true }
+tracing = "0.1"
 typenum = "1"
 serde_json = "1.0"
 serde_yaml = "0.9"
