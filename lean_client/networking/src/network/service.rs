@@ -584,7 +584,11 @@ where
                 match signed_block_with_attestation.to_ssz() {
                     Ok(bytes) => {
                         if let Err(err) = self.publish_to_topic(GossipsubKind::Block, bytes) {
-                            warn!(slot = slot, ?err, "Publish block with attestation failed");
+                            // Duplicate errors are expected - we receive our own blocks back from peers
+                            let err_str = format!("{:?}", err);
+                            if !err_str.contains("Duplicate") {
+                                warn!(slot = slot, ?err, "Publish block with attestation failed");
+                            }
                         } else {
                             info!(slot = slot, "Broadcasted block with attestation");
                         }
@@ -600,7 +604,11 @@ where
                 match signed_attestation.to_ssz() {
                     Ok(bytes) => {
                         if let Err(err) = self.publish_to_topic(GossipsubKind::Attestation, bytes) {
-                            warn!(slot = slot, ?err, "Publish attestation failed");
+                            // Duplicate errors are expected - we receive our own attestations back from peers
+                            let err_str = format!("{:?}", err);
+                            if !err_str.contains("Duplicate") {
+                                warn!(slot = slot, ?err, "Publish attestation failed");
+                            }
                         } else {
                             info!(slot = slot, "Broadcasted attestation");
                         }

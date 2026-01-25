@@ -399,6 +399,12 @@ impl State {
         let initial_finalized_slot = self.latest_finalized.slot;
         let justified_slots = self.justified_slots.clone();
 
+        tracing::info!(
+            current_justified_slot = latest_justified.slot.0,
+            current_finalized_slot = latest_finalized.slot.0,
+            "Processing attestations in block"
+        );
+
         let mut justified_slots_working = Vec::new();
         for i in 0..justified_slots.len() {
             justified_slots_working.push(justified_slots.get(i).map(|b| *b).unwrap_or(false));
@@ -455,10 +461,21 @@ impl State {
             .copied()
             .unwrap_or(false);
 
+        // Special case for slot 0 (genesis): historical_block_hashes[0] is initialized as 0x0
+        // in genesis, but validators attest with the actual genesis block hash (set in
+        // get_forkchoice_store). Allow any source_root when source is slot 0 and
+        // historical_block_hashes[0] is the zero hash.
         let source_root_matches = self
             .historical_block_hashes
             .get(source_slot_int as u64)
-            .map(|r| *r == source_root)
+            .map(|r| {
+                if source_slot_int == 0 && r.0.is_zero() {
+                    // Genesis slot: accept any root when historical hash is 0x0
+                    true
+                } else {
+                    *r == source_root
+                }
+            })
             .unwrap_or(false);
         let target_root_matches = self
             .historical_block_hashes
@@ -472,7 +489,31 @@ impl State {
             && target_slot > source_slot
             && target_slot.is_justifiable_after(initial_finalized_slot);
 
+        // Debug logging for vote validation
+        tracing::debug!(
+            source_slot = source_slot.0,
+            target_slot = target_slot.0,
+            source_root = %format!("0x{:x}", source_root.0),
+            target_root = %format!("0x{:x}", target_root.0),
+            validator_count = validator_ids.len(),
+            source_is_justified,
+            target_already_justified,
+            source_root_matches,
+            target_root_matches,
+            is_valid_vote,
+            "Processing attestation vote"
+        );
+
         if !is_valid_vote {
+            tracing::warn!(
+                source_slot = source_slot.0,
+                target_slot = target_slot.0,
+                source_is_justified,
+                target_already_justified,
+                source_root_matches,
+                target_root_matches,
+                "Vote rejected"
+            );
             return;
         }
 
@@ -492,7 +533,25 @@ impl State {
         if let Some(votes) = justifications.get(&target_root) {
             let num_validators = self.validators.len_u64() as usize;
             let count = votes.iter().filter(|&&v| v).count();
+            let threshold = (2 * num_validators + 2) / 3; // ceil(2/3)
+
+            tracing::info!(
+                target_slot = target_slot.0,
+                target_root = %format!("0x{:x}", target_root.0),
+                vote_count = count,
+                num_validators,
+                threshold,
+                needs = format!("3*{} >= 2*{} = {} >= {}", count, num_validators, 3*count, 2*num_validators),
+                will_justify = 3 * count >= 2 * num_validators,
+                "Vote count for target"
+            );
+
             if 3 * count >= 2 * num_validators {
+                tracing::info!(
+                    target_slot = target_slot.0,
+                    target_root = %format!("0x{:x}", target_root.0),
+                    "JUSTIFICATION THRESHOLD REACHED!"
+                );
                 *latest_justified = vote.target.clone();
 
                 justified_slots_working.extend(std::iter::repeat_n(
@@ -507,6 +566,7 @@ impl State {
                     .all(|s| !Slot(s as u64).is_justifiable_after(initial_finalized_slot));
 
                 if is_finalizable {
+                    tracing::info!(source_slot = source_slot.0, "FINALIZATION!");
                     *latest_finalized = vote.source.clone();
                 }
             }
@@ -628,11 +688,26 @@ impl State {
                             .map_err(|e| format!("Failed to push attestation: {:?}", e))?;
                     }
 
+                    // IMPORTANT: Recompute post_state using the FINAL attestations.
+                    // The original post_state was computed from candidate_block with ALL attestations,
+                    // but final_attestations_list may have fewer attestations (only those with signatures).
+                    // We must use the same attestations for state computation and the block body.
+                    let final_candidate_block = Block {
+                        slot,
+                        proposer_index,
+                        parent_root,
+                        state_root: Bytes32(ssz::H256::zero()),
+                        body: BlockBody {
+                            attestations: final_attestations_list.clone(),
+                        },
+                    };
+                    let final_post_state = pre_state.process_block(&final_candidate_block)?;
+
                     let final_block = Block {
                         slot,
                         proposer_index,
                         parent_root,
-                        state_root: hash_tree_root(&post_state),
+                        state_root: hash_tree_root(&final_post_state),
                         body: BlockBody {
                             attestations: final_attestations_list,
                         },
@@ -640,7 +715,7 @@ impl State {
 
                     return Ok((
                         final_block,
-                        post_state,
+                        final_post_state,
                         aggregated_attestations,
                         aggregated_proofs,
                     ));
@@ -708,11 +783,26 @@ impl State {
                         .map_err(|e| format!("Failed to push attestation: {:?}", e))?;
                 }
 
+                // IMPORTANT: Recompute post_state using the FINAL attestations.
+                // The original post_state was computed from candidate_block with ALL attestations,
+                // but final_attestations_list may have fewer attestations (only those with signatures).
+                // We must use the same attestations for state computation and the block body.
+                let final_candidate_block = Block {
+                    slot,
+                    proposer_index,
+                    parent_root,
+                    state_root: Bytes32(ssz::H256::zero()),
+                    body: BlockBody {
+                        attestations: final_attestations_list.clone(),
+                    },
+                };
+                let final_post_state = pre_state.process_block(&final_candidate_block)?;
+
                 let final_block = Block {
                     slot,
                     proposer_index,
                     parent_root,
-                    state_root: hash_tree_root(&post_state),
+                    state_root: hash_tree_root(&final_post_state),
                     body: BlockBody {
                         attestations: final_attestations_list,
                     },
@@ -720,7 +810,7 @@ impl State {
 
                 return Ok((
                     final_block,
-                    post_state,
+                    final_post_state,
                     aggregated_attestations,
                     aggregated_proofs,
                 ));
