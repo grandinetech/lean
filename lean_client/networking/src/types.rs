@@ -3,21 +3,73 @@ use std::{collections::HashMap, fmt::Display};
 use anyhow::{Result, anyhow};
 use async_trait::async_trait;
 use containers::{Bytes32, SignedAttestation, SignedBlockWithAttestation};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 
 use crate::serde_utils::quoted_u64;
 
-pub const MESSAGE_DOMAIN_VALID_SNAPPY: &[u8; 4] = &[0x01, 0x00, 0x00, 0x00];
-pub const MESSAGE_DOMAIN_INVALID_SNAPPY: &[u8; 4] = &[0x00, 0x00, 0x00, 0x00];
+/// 1-byte domain for gossip message-id isolation of valid snappy messages.
+/// Per leanSpec, prepended to the message hash when decompression succeeds.
+pub const MESSAGE_DOMAIN_VALID_SNAPPY: &[u8; 1] = &[0x01];
 
+/// 1-byte domain for gossip message-id isolation of invalid snappy messages.
+/// Per leanSpec, prepended to the message hash when decompression fails.
+pub const MESSAGE_DOMAIN_INVALID_SNAPPY: &[u8; 1] = &[0x00];
+
+/// Peer connection state machine per leanSpec.
+///
+/// Tracks the lifecycle of a connection to a peer:
+/// DISCONNECTED -> CONNECTING -> CONNECTED -> DISCONNECTING -> DISCONNECTED
+///
+/// These states map directly to libp2p connection events.
 #[derive(Debug, Serialize, Clone, Copy, PartialEq, Eq, Hash)]
 #[serde(rename_all = "lowercase")]
 pub enum ConnectionState {
-    Connected,
-    Connecting,
+    /// No active connection to this peer.
     Disconnected,
+    /// TCP/QUIC connection in progress.
+    Connecting,
+    /// Transport established, can exchange protocol messages.
+    Connected,
+    /// Graceful shutdown in progress (Goodbye sent/received).
     Disconnecting,
+}
+
+/// Reason codes for the Goodbye request/response message per leanSpec.
+///
+/// Sent when gracefully disconnecting from a peer to indicate why
+/// the connection is being closed.
+///
+/// Official codes (from spec):
+/// - 1: Client shutdown
+/// - 2: Irrelevant network
+/// - 3: Fault/error
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[repr(u64)]
+pub enum GoodbyeReason {
+    /// Node is shutting down normally.
+    ClientShutdown = 1,
+    /// Peer is on a different fork or network.
+    IrrelevantNetwork = 2,
+    /// Generic error detected in peer communication.
+    FaultOrError = 3,
+}
+
+impl GoodbyeReason {
+    /// Convert from u64 code to GoodbyeReason.
+    pub fn from_code(code: u64) -> Option<Self> {
+        match code {
+            1 => Some(GoodbyeReason::ClientShutdown),
+            2 => Some(GoodbyeReason::IrrelevantNetwork),
+            3 => Some(GoodbyeReason::FaultOrError),
+            _ => None,
+        }
+    }
+
+    /// Get the u64 code for this reason.
+    pub fn code(&self) -> u64 {
+        *self as u64
+    }
 }
 
 #[derive(Debug, Serialize, Clone, Copy, PartialEq, Eq)]

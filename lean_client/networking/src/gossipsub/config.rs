@@ -14,7 +14,7 @@ pub struct GossipsubConfig {
 impl GossipsubConfig {
     pub fn new() -> Self {
         let justification_lookback_slots: u64 = 3;
-        let seconds_per_slot: u64 = 12;
+        let seconds_per_slot: u64 = 4;
 
         let seen_ttl_secs = seconds_per_slot * justification_lookback_slots * 2;
 
@@ -61,7 +61,7 @@ pub fn compute_message_id(message: &Message) -> MessageId {
     let topic_len = topic_bytes.len() as u64;
 
     let mut digest_input = Vec::new();
-    // Domain: 4 bytes
+    // Domain: 1 byte
     digest_input.extend_from_slice(MESSAGE_DOMAIN_VALID_SNAPPY);
     // Topic length: 8 bytes (uint64 little-endian)
     digest_input.extend_from_slice(&topic_len.to_le_bytes());

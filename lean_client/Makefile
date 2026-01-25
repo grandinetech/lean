@@ -78,11 +78,12 @@ docker: ./target/x86_64-unknown-linux-gnu/release/lean_client ./target/aarch64-u
 		.
 
 .PHONY: docker-local
-docker-local: ./target/x86_64-unknown-linux-gnu/release/lean_client ./target/aarch64-unknown-linux-gnu/release/lean_client
+# docker-local: ./target/x86_64-unknown-linux-gnu/release/lean_client ./target/aarch64-unknown-linux-gnu/release/lean_client
+docker-local: ./target/x86_64-unknown-linux-gnu/release/lean_client
 	@mkdir -p ./bin/amd64
 	@cp ./target/x86_64-unknown-linux-gnu/release/lean_client ./bin/amd64/lean_client
-	@mkdir -p ./bin/arm64
-	@cp ./target/aarch64-unknown-linux-gnu/release/lean_client ./bin/arm64/lean_client
+#	@mkdir -p ./bin/arm64
+#	@cp ./target/aarch64-unknown-linux-gnu/release/lean_client ./bin/arm64/lean_client
 	docker build \
 		--file Dockerfile \
 		--build-arg COMMIT_SHA=$(COMMIT_SHA) \

@@ -434,7 +434,8 @@ fn verify_checks(
     };
 
     if let Some(expected_slot) = checks.head_slot {
-        let actual_slot = store.blocks[&store.head].message.block.slot.0;
+        // Per devnet-2, store.blocks now contains Block (not SignedBlockWithAttestation)
+        let actual_slot = store.blocks[&store.head].slot.0;
         if actual_slot != expected_slot {
             return Err(format!(
                 "Step {}: Head slot mismatch - expected {}, got {}",
@@ -448,15 +449,12 @@ fn verify_checks(
             .get(label)
             .ok_or_else(|| format!("Step {}: Block label '{}' not found", step_idx, label))?;
         if &store.head != expected_root {
-            let actual_slot = store
-                .blocks
-                .get(&store.head)
-                .map(|b| b.message.block.slot.0)
-                .unwrap_or(0);
+            // Per devnet-2, store.blocks now contains Block (not SignedBlockWithAttestation)
+            let actual_slot = store.blocks.get(&store.head).map(|b| b.slot.0).unwrap_or(0);
             let expected_slot = store
                 .blocks
                 .get(expected_root)
-                .map(|b| b.message.block.slot.0)
+                .map(|b| b.slot.0)
                 .unwrap_or(0);
             return Err(format!(
                 "Step {}: Head root mismatch for label '{}' - expected slot {}, got slot {} (known_attestations: {}, new_attestations: {})",
@@ -479,11 +477,12 @@ fn verify_checks(
                         ));
                     }
                     if let Some(target_slot) = check.target_slot {
-                        let attestation = &store.latest_new_attestations[&validator];
-                        if attestation.message.target.slot.0 != target_slot {
+                        // Per devnet-2, store now holds AttestationData directly (not SignedAttestation)
+                        let attestation_data = &store.latest_new_attestations[&validator];
+                        if attestation_data.target.slot.0 != target_slot {
                             return Err(format!(
                                 "Step {}: Validator {} new attestation target slot mismatch - expected {}, got {}",
-                                step_idx, check.validator, target_slot, attestation.message.target.slot.0
+                                step_idx, check.validator, target_slot, attestation_data.target.slot.0
                             ));
                         }
                     }
