@@ -23,7 +23,7 @@ fn test_get_proposal_head_advances_time() {
 #[test]
 fn test_get_vote_target_chain() {
     use containers::{
-        block::{Block, BlockBody, BlockWithAttestation, SignedBlockWithAttestation},
+        block::{Block, BlockBody},
         Bytes32, ValidatorIndex,
     };
     use ssz::SszHash;
@@ -32,6 +32,7 @@ fn test_get_vote_target_chain() {
     let mut parent_root = store.head;
 
     // Create a chain of 10 blocks
+    // Per leanSpec, store.blocks now contains Block (not SignedBlockWithAttestation)
     for i in 1..=10 {
         let block = Block {
             slot: Slot(i),
@@ -43,15 +44,8 @@ fn test_get_vote_target_chain() {
 
         let block_root = Bytes32(block.hash_tree_root());
 
-        let signed_block = SignedBlockWithAttestation {
-            message: BlockWithAttestation {
-                block: block.clone(),
-                proposer_attestation: Default::default(),
-            },
-            signature: Default::default(),
-        };
-
-        store.blocks.insert(block_root, signed_block);
+        // Insert Block directly per leanSpec
+        store.blocks.insert(block_root, block);
         parent_root = block_root;
     }
 

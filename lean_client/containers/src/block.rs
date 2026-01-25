@@ -158,24 +158,24 @@ impl SignedBlockWithAttestation {
                 );
             }
 
-            // let attestation_data_root: [u8; 32] =
-            //     hash_tree_root(&aggregated_attestation.data).0.into();
+            let attestation_data_root: [u8; 32] =
+                hash_tree_root(&aggregated_attestation.data).0.into();
 
             // Verify the lean-multisig aggregated proof for this attestation
             //
             // The proof verifies that all validators in aggregation_bits signed
             // the same attestation_data_root at the given epoch (slot).
-            // TODO
-            // aggregated_signature_proof
-            //     .verify_aggregated_payload(
-            //         &validator_ids
-            //             .iter()
-            //             .map(|vid| validators.get(*vid).expect("validator must exist"))
-            //             .collect::<Vec<_>>(),
-            //         &attestation_data_root,
-            //         aggregated_attestation.data.slot.0,
-            //     )
-            //     .expect("Attestation aggregated signature verification failed");
+            _aggregated_signature_proof
+                .proof_data
+                .verify_aggregated_payload(
+                    &validator_ids
+                        .iter()
+                        .map(|vid| validators.get(*vid).expect("validator must exist"))
+                        .collect::<Vec<_>>(),
+                    &attestation_data_root,
+                    aggregated_attestation.data.slot.0 as u32,
+                )
+                .expect("Attestation aggregated signature verification failed");
         }
 
         // Verify the proposer attestation signature (outside the attestation loop)
@@ -214,11 +214,12 @@ pub fn verify_xmss_signature(
     signature: &Signature,
 ) -> bool {
     let epoch = slot.0 as u32;
-    let signature = crate::signature::Signature::from(signature.as_bytes());
 
-    signature
-        .verify(&public_key, epoch, message_bytes)
-        .unwrap_or_else(|_| false)
+    // Create Signature from the raw bytes
+    let sig = crate::signature::Signature::from(signature.as_bytes());
+
+    sig.verify(&public_key, epoch, message_bytes)
+        .unwrap_or(false)
 }
 
 #[cfg(not(feature = "xmss-verify"))]

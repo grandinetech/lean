@@ -44,11 +44,8 @@ fn load_node_key(path: &str) -> Result<Keypair, Box<dyn std::error::Error>> {
 fn print_chain_status(store: &Store, connected_peers: u64) {
     let current_slot = store.time / INTERVALS_PER_SLOT;
 
-    let head_slot = store
-        .blocks
-        .get(&store.head)
-        .map(|b| b.message.block.slot.0)
-        .unwrap_or(0);
+    // Per leanSpec, store.blocks now contains Block (not SignedBlockWithAttestation)
+    let head_slot = store.blocks.get(&store.head).map(|b| b.slot.0).unwrap_or(0);
 
     let behind = if current_slot > head_slot {
         current_slot - head_slot
@@ -56,10 +53,11 @@ fn print_chain_status(store: &Store, connected_peers: u64) {
         0
     };
 
+    // Per leanSpec, store.blocks now contains Block (not SignedBlockWithAttestation)
     let (head_root, parent_root, state_root) = if let Some(block) = store.blocks.get(&store.head) {
         let head_root = store.head;
-        let parent_root = block.message.block.parent_root;
-        let state_root = block.message.block.state_root;
+        let parent_root = block.parent_root;
+        let state_root = block.state_root;
         (head_root, parent_root, state_root)
     } else {
         (

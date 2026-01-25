@@ -135,10 +135,11 @@ impl ValidatorService {
 
         let vote_target = get_vote_target(store);
 
-        // Validate that target slot is strictly greater than source slot
-        if vote_target.slot <= store.latest_justified.slot {
+        // Validate that target slot is greater than or equal to source slot
+        // At genesis, both target and source are slot 0, which is valid
+        if vote_target.slot < store.latest_justified.slot {
             return Err(format!(
-                "Invalid attestation: target slot {} must be greater than source slot {}",
+                "Invalid attestation: target slot {} must be >= source slot {}",
                 vote_target.slot.0, store.latest_justified.slot.0
             ));
         }
@@ -149,7 +150,7 @@ impl ValidatorService {
             .ok_or("Head block not found")?;
         let head_checkpoint = Checkpoint {
             root: store.head,
-            slot: head_block.message.block.slot,
+            slot: head_block.slot,
         };
 
         let proposer_attestation = Attestation {
@@ -169,12 +170,10 @@ impl ValidatorService {
         // 1. Have source matching the parent state's justified checkpoint
         // 2. Have target slot > source slot (valid attestations)
         // 3. Target block must be known
-        // Also collect the corresponding signatures
-        let valid_signed_attestations: Vec<&SignedAttestation> = store
+        let valid_attestations: Vec<AttestationData> = store
             .latest_new_attestations
             .values()
-            .filter(|att| {
-                let data = &att.message;
+            .filter(|data| {
                 // Source must match the parent state's justified checkpoint (not store's!)
                 let source_matches = data.source == parent_state.latest_justified;
                 // Target must be strictly after source
@@ -184,11 +183,7 @@ impl ValidatorService {
 
                 source_matches && target_after_source && target_known
             })
-            .collect();
-
-        let valid_attestations: Vec<AttestationData> = valid_signed_attestations
-            .iter()
-            .map(|att| att.message.clone())
+            .cloned()
             .collect();
 
         info!(
@@ -226,7 +221,7 @@ impl ValidatorService {
             proposer = block.proposer_index.0,
             parent_root = %format!("0x{:x}", block.parent_root.0),
             state_root = %format!("0x{:x}", block.state_root.0),
-            attestation_sigs = valid_signed_attestations.len(),
+            attestation_sigs = valid_attestations.len(),
             "Block built successfully"
         );
 
@@ -282,22 +277,20 @@ impl ValidatorService {
     pub fn create_attestations(&self, store: &Store, slot: Slot) -> Vec<SignedAttestation> {
         let vote_target = get_vote_target(store);
 
-        // Skip attestation creation if target slot is not strictly greater than source slot
-        // This prevents creating invalid attestations when the node's view is behind
-        if vote_target.slot <= store.latest_justified.slot {
+        // Skip attestation creation if target slot is less than source slot
+        // At genesis, both target and source are slot 0, which is valid
+        if vote_target.slot < store.latest_justified.slot {
             warn!(
                 target_slot = vote_target.slot.0,
                 source_slot = store.latest_justified.slot.0,
-                "Skipping attestation: target slot must be greater than source slot"
+                "Skipping attestation: target slot must be >= source slot"
             );
             return vec![];
         }
 
-        let get_head_block_info = match store.blocks.get(&store.head) {
+        let head_block = match store.blocks.get(&store.head) {
             Some(b) => b,
             None => {
-                // Pasileiskit, su DEBUG. Kitaip galima pakeist i tiesiog
-                // println!("WARNING: Attestation skipped. (Reason: HEAD BLOCK NOT FOUND)\n");
                 warn!("WARNING: Attestation skipped. (Reason: HEAD BLOCK NOT FOUND)");
                 return vec![];
             }
@@ -305,7 +298,7 @@ impl ValidatorService {
 
         let head_checkpoint = Checkpoint {
             root: store.head,
-            slot: get_head_block_info.message.block.slot,
+            slot: head_block.slot,
         };
 
         self.config

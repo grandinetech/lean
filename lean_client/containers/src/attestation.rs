@@ -1,5 +1,5 @@
 use crate::{Checkpoint, Slot, Uint64};
-use leansig::serialization::Serializable;
+use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
 use ssz::BitList;
 use ssz::ByteVector;
@@ -70,18 +70,18 @@ impl MultisigAggregatedSignature {
     /// Uses lean-multisig zkVM to combine multiple signatures into a compact proof.
     ///
     /// # Arguments
-    /// * `public_keys` - Public keys of the signers
+    /// * `public_keys` - Slice of validator public keys
     /// * `signatures` - Individual XMSS signatures to aggregate
-    /// * `message` - The 32-byte message that was signed (as 8 field elements)
+    /// * `message` - The 32-byte message that was signed
     /// * `epoch` - The epoch/slot in which signatures were created
     ///
     /// # Returns
     /// Aggregated signature proof, or error if aggregation fails.
     pub fn aggregate(
-        public_keys: &[lean_multisig::XmssPublicKey],
-        signatures: &[lean_multisig::XmssSignature],
-        message: [lean_multisig::F; 8],
-        epoch: u64,
+        public_keys: &[crate::public_key::PublicKey],
+        signatures: &[Signature],
+        message: &[u8; 32],
+        epoch: u32,
     ) -> Result<Self, AggregationError> {
         if public_keys.is_empty() {
             return Err(AggregationError::EmptyInput);
@@ -90,10 +90,30 @@ impl MultisigAggregatedSignature {
             return Err(AggregationError::MismatchedLengths);
         }
 
-        let proof_bytes =
-            lean_multisig::xmss_aggregate_signatures(public_keys, signatures, message, epoch)
+        // Convert to lean-multisig types
+        let lean_pks: Vec<_> = public_keys
+            .iter()
+            .map(|pk| pk.as_lean_sig())
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|_| AggregationError::AggregationFailed)?;
+
+        let lean_sigs: Vec<_> = signatures
+            .iter()
+            .map(|sig| {
+                // Convert ByteVector to crate::signature::Signature then to lean-sig
+                let sig_struct = crate::signature::Signature::from(sig.as_bytes());
+                sig_struct.as_lean_sig()
+            })
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|_| AggregationError::AggregationFailed)?;
+
+        let aggregate_sig =
+            lean_multisig::xmss_aggregate_signatures(&lean_pks, &lean_sigs, message, epoch)
                 .map_err(|_| AggregationError::AggregationFailed)?;
 
+        // Serialize the aggregate signature using ethereum_ssz (aliased as eth_ssz)
+        use eth_ssz::Encode;
+        let proof_bytes = aggregate_sig.as_ssz_bytes();
         Self::new(proof_bytes)
     }
 
@@ -106,23 +126,32 @@ impl MultisigAggregatedSignature {
     /// `Ok(())` if the proof is valid, `Err` with the proof error otherwise.
     pub fn verify(
         &self,
-        public_keys: &[lean_multisig::XmssPublicKey],
-        message: [lean_multisig::F; 8],
-        epoch: u64,
+        public_keys: &[crate::public_key::PublicKey],
+        message: &[u8; 32],
+        epoch: u32,
     ) -> Result<(), AggregationError> {
-        lean_multisig::xmss_verify_aggregated_signatures(
-            public_keys,
-            message,
-            self.0.as_bytes(),
-            epoch,
-        )
-        .map_err(|_| AggregationError::VerificationFailed)
+        // Use ethereum_ssz (aliased as eth_ssz) for decoding
+        use eth_ssz::Decode;
+
+        // Decode the aggregated signature from SSZ bytes
+        let aggregate_sig =
+            lean_multisig::Devnet2XmssAggregateSignature::from_ssz_bytes(self.0.as_bytes())
+                .map_err(|_| AggregationError::VerificationFailed)?;
+
+        // Convert public keys to lean-multisig format
+        let lean_pks: Vec<_> = public_keys
+            .iter()
+            .map(|pk| pk.as_lean_sig())
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|_| AggregationError::VerificationFailed)?;
+
+        lean_multisig::xmss_verify_aggregated_signatures(&lean_pks, message, &aggregate_sig, epoch)
+            .map_err(|_| AggregationError::VerificationFailed)
     }
 
     /// Verify the aggregated payload against validators and message.
     ///
-    /// This is a convenience method that extracts public keys from validators
-    /// and converts the message bytes to the field element format expected by lean-multisig.
+    /// This is a convenience method that extracts public keys from validators.
     ///
     /// # Arguments
     /// * `validators` - Slice of validator references to extract public keys from
@@ -135,28 +164,13 @@ impl MultisigAggregatedSignature {
         &self,
         validators: &[&crate::validator::Validator],
         message: &[u8; 32],
-        epoch: u64,
+        epoch: u32,
     ) -> Result<(), AggregationError> {
         // Extract public keys from validators
-        let mut public_keys = Vec::new();
-        for validator in validators {
-            // Convert PublicKey to lean_multisig::XmssPublicKey
-            let lean_sig_pk = validator
-                .pubkey
-                .as_lean_sig()
-                .map_err(|_| AggregationError::VerificationFailed)?;
-            let pk_bytes = lean_sig_pk.to_bytes();
-            // TODO: Implement proper conversion from PublicKey bytes to lean_multisig::XmssPublicKey
-            // Once lean-multisig API is clarified, convert pk_bytes to XmssPublicKey
-            todo!("Convert PublicKey to lean_multisig::XmssPublicKey and implement message field conversion");
-        }
+        let public_keys: Vec<_> = validators.iter().map(|v| v.pubkey).collect();
 
-        // Convert 32-byte message to 8 field elements
-        // TODO: Implement proper conversion from 32 bytes to 8 field elements
-        let message_fields = todo!("Convert 32-byte message to [lean_multisig::F; 8]");
-
-        // Call verify with extracted keys and converted message
-        self.verify(&public_keys, message_fields, epoch)
+        // Call verify with extracted keys
+        self.verify(&public_keys, message, epoch)
     }
 }
 

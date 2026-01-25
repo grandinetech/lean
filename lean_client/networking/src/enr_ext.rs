@@ -217,13 +217,16 @@ impl EnrExt for Enr {
     }
 
     /// Returns a list of multiaddrs if the ENR has an `ip` and a `quic` key **or** an `ip6` and a `quic6`.
+    /// This also appends the `PeerId` into each multiaddr with the `P2p` protocol.
     fn multiaddr_quic(&self) -> Vec<Multiaddr> {
+        let peer_id = self.peer_id();
         let mut multiaddrs: Vec<Multiaddr> = Vec::new();
         if let Some(quic_port) = self.quic4() {
             if let Some(ip) = self.ip4() {
                 let mut multiaddr: Multiaddr = ip.into();
                 multiaddr.push(Protocol::Udp(quic_port));
                 multiaddr.push(Protocol::QuicV1);
+                multiaddr.push(Protocol::P2p(peer_id));
                 multiaddrs.push(multiaddr);
             }
         }
@@ -233,6 +236,7 @@ impl EnrExt for Enr {
                 let mut multiaddr: Multiaddr = ip6.into();
                 multiaddr.push(Protocol::Udp(quic6_port));
                 multiaddr.push(Protocol::QuicV1);
+                multiaddr.push(Protocol::P2p(peer_id));
                 multiaddrs.push(multiaddr);
             }
         }

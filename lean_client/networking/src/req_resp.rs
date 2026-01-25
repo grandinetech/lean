@@ -14,7 +14,7 @@ use snap::write::FrameEncoder;
 pub const MAX_REQUEST_BLOCKS: usize = 1024;
 
 pub const STATUS_PROTOCOL_V1: &str = "/leanconsensus/req/status/1/ssz_snappy";
-pub const BLOCKS_BY_ROOT_PROTOCOL_V1: &str = "/leanconsensus/req/lean_blocks_by_root/1/ssz_snappy";
+pub const BLOCKS_BY_ROOT_PROTOCOL_V1: &str = "/leanconsensus/req/blocks_by_root/1/ssz_snappy";
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct LeanProtocol(pub String);
