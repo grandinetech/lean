@@ -1,4 +1,5 @@
 use crate::store::*;
+use containers::attestation::AttestationData;
 use containers::SignatureKey;
 use containers::{
     attestation::SignedAttestation, block::SignedBlockWithAttestation, Bytes32, ValidatorIndex,
@@ -20,6 +21,106 @@ pub fn on_tick(store: &mut Store, time: u64, has_proposal: bool) {
     }
 }
 
+/// 1. The blocks voted for must exist in our store.
+/// 2. A vote cannot span backwards in time (source > target).
+/// 3. A vote cannot be for a future slot.
+/// 4. Checkpoint slots must match block slots.
+fn validate_attestation_data(store: &Store, data: &AttestationData) -> Result<(), String> {
+    // Cannot count a vote if we haven't seen the blocks involved
+    if !store.blocks.contains_key(&data.source.root) {
+        return Err(format!(
+            "Unknown source block: {:?}",
+            &data.source.root.0.as_bytes()[..8]
+        ));
+    }
+    if !store.blocks.contains_key(&data.target.root) {
+        return Err(format!(
+            "Unknown target block: {:?}",
+            &data.target.root.0.as_bytes()[..8]
+        ));
+    }
+    if !store.blocks.contains_key(&data.head.root) {
+        return Err(format!(
+            "Unknown head block: {:?}",
+            &data.head.root.0.as_bytes()[..8]
+        ));
+    }
+
+    // Source must be older than Target.
+    if data.source.slot > data.target.slot {
+        return Err(format!(
+            "Source checkpoint slot {} must not exceed target slot {}",
+            data.source.slot.0, data.target.slot.0
+        ));
+    }
+
+    // Validate checkpoint slots match block slots
+    // Per devnet-2, store.blocks now contains Block (not SignedBlockWithAttestation)
+    let source_block = &store.blocks[&data.source.root];
+    let target_block = &store.blocks[&data.target.root];
+
+    if source_block.slot != data.source.slot {
+        return Err(format!(
+            "Source checkpoint slot mismatch: checkpoint {} vs block {}",
+            data.source.slot.0, source_block.slot.0
+        ));
+    }
+    if target_block.slot != data.target.slot {
+        return Err(format!(
+            "Target checkpoint slot mismatch: checkpoint {} vs block {}",
+            data.target.slot.0, target_block.slot.0
+        ));
+    }
+
+    // Validate attestation is not too far in the future
+    // We allow a small margin for clock disparity (1 slot), but no further.
+    let current_slot = store.time / INTERVALS_PER_SLOT;
+    if data.slot.0 > current_slot + 1 {
+        return Err(format!(
+            "Attestation too far in future: attestation slot {} > current slot {} + 1",
+            data.slot.0, current_slot
+        ));
+    }
+
+    Ok(())
+}
+
+/// Process a signed attestation received via gossip network
+///
+/// 1. Validates the attestation data
+/// 2. Stores the signature in the gossip signature map
+/// 3. Processes the attestation data via on_attestation
+///
+#[inline]
+pub fn on_gossip_attestation(
+    store: &mut Store,
+    signed_attestation: SignedAttestation,
+) -> Result<(), String> {
+    let validator_id = ValidatorIndex(signed_attestation.validator_id);
+    let attestation_data = signed_attestation.message.clone();
+
+    // Validate the attestation data first
+    validate_attestation_data(store, &attestation_data)?;
+
+    // Store signature for later lookup during block building
+    let data_root = attestation_data.data_root_bytes();
+    let sig_key = SignatureKey::new(signed_attestation.validator_id, data_root);
+    store
+        .gossip_signatures
+        .insert(sig_key, signed_attestation.signature);
+
+    // Process the attestation data (not from block)
+    on_attestation_internal(store, validator_id, attestation_data, false)
+}
+
+/// Process an attestation and place it into the correct attestation stage
+///
+/// Attestation processing logic that updates the attestation
+/// maps used for fork choice. Per devnet-2, we store AttestationData only (not signatures).
+///
+/// Attestations can come from:
+/// - a block body (on-chain, `is_from_block=True`), or
+/// - the gossip network (off-chain, `is_from_block=False`).
 #[inline]
 pub fn on_attestation(
     store: &mut Store,
@@ -27,68 +128,72 @@ pub fn on_attestation(
     is_from_block: bool,
 ) -> Result<(), String> {
     let validator_id = ValidatorIndex(signed_attestation.validator_id);
-    let attestation_slot = signed_attestation.message.slot;
-    let source_slot = signed_attestation.message.source.slot;
-    let target_slot = signed_attestation.message.target.slot;
+    let attestation_data = signed_attestation.message.clone();
 
-    // Validate attestation is not from future
-    let curr_slot = store.time / INTERVALS_PER_SLOT;
-    if attestation_slot.0 > curr_slot {
-        return Err(format!(
-            "Err: (Fork-choice::Handlers::OnAttestation) Attestation for slot {} has not yet occurred, out of sync. (CURRENT SLOT NUMBER: {})",
-            attestation_slot.0, curr_slot
-        ));
+    // Validate attestation data
+    validate_attestation_data(store, &attestation_data)?;
+
+    if !is_from_block {
+        // Store signature for later aggregation during block building
+        let data_root = attestation_data.data_root_bytes();
+        let sig_key = SignatureKey::new(signed_attestation.validator_id, data_root);
+        store
+            .gossip_signatures
+            .insert(sig_key, signed_attestation.signature);
     }
 
-    // Validate source slot does not exceed target slot (per leanSpec validate_attestation)
-    if source_slot > target_slot {
-        return Err(format!(
-            "Err: (Fork-choice::Handlers::OnAttestation) Source slot {} exceeds target slot {}",
-            source_slot.0, target_slot.0
-        ));
-    }
+    on_attestation_internal(store, validator_id, attestation_data, is_from_block)
+}
+
+/// Internal attestation processing - stores AttestationData
+fn on_attestation_internal(
+    store: &mut Store,
+    validator_id: ValidatorIndex,
+    attestation_data: AttestationData,
+    is_from_block: bool,
+) -> Result<(), String> {
+    let attestation_slot = attestation_data.slot;
 
     if is_from_block {
-        // On-chain attestation processing - immediately becomes "known"
+        // On-chain attestation processing
         if store
             .latest_known_attestations
             .get(&validator_id)
-            .map_or(true, |existing| existing.message.slot < attestation_slot)
+            .map_or(true, |existing| existing.slot < attestation_slot)
         {
             store
                 .latest_known_attestations
-                .insert(validator_id, signed_attestation.clone());
+                .insert(validator_id, attestation_data);
         }
 
         // Remove from new attestations if superseded
         if let Some(existing_new) = store.latest_new_attestations.get(&validator_id) {
-            if existing_new.message.slot <= attestation_slot {
+            if existing_new.slot <= attestation_slot {
                 store.latest_new_attestations.remove(&validator_id);
             }
         }
     } else {
         // Network gossip attestation processing - goes to "new" stage
-        // Store signature for later aggregation during block building
-        let data_root = signed_attestation.message.data_root_bytes();
-        let sig_key = SignatureKey::new(signed_attestation.validator_id, data_root);
-        store
-            .gossip_signatures
-            .insert(sig_key, signed_attestation.signature.clone());
-
-        // Track attestation for fork choice
         if store
             .latest_new_attestations
             .get(&validator_id)
-            .map_or(true, |existing| existing.message.slot < attestation_slot)
+            .map_or(true, |existing| existing.slot < attestation_slot)
         {
             store
                 .latest_new_attestations
-                .insert(validator_id, signed_attestation);
+                .insert(validator_id, attestation_data);
         }
     }
     Ok(())
 }
 
+/// Process a new block and update the forkchoice state
+///
+/// 1. Validating the block's parent exists
+/// 2. Computing the post-state via the state transition function
+/// 3. Processing attestations included in the block body (on-chain)
+/// 4. Updating the forkchoice head
+/// 5. Processing the proposer's attestation (as if gossiped)
 pub fn on_block(store: &mut Store, signed_block: SignedBlockWithAttestation) -> Result<(), String> {
     let block_root = Bytes32(signed_block.message.block.hash_tree_root());
 
@@ -122,7 +227,7 @@ fn process_block_internal(
     signed_block: SignedBlockWithAttestation,
     block_root: Bytes32,
 ) -> Result<(), String> {
-    let block = &signed_block.message.block;
+    let block = signed_block.message.block.clone();
 
     // Get parent state for validation
     let state = match store.states.get(&block.parent_root) {
@@ -137,8 +242,8 @@ fn process_block_internal(
     // Execute state transition to get post-state
     let new_state = state.state_transition_with_validation(signed_block.clone(), true, true)?;
 
-    // Store block and state
-    store.blocks.insert(block_root, signed_block.clone());
+    // Store block and state, store the plain Block (not SignedBlockWithAttestation)
+    store.blocks.insert(block_root, block.clone());
     store.states.insert(block_root, new_state.clone());
 
     if new_state.latest_justified.slot > store.latest_justified.slot {
@@ -150,8 +255,7 @@ fn process_block_internal(
 
     // Process block body attestations as on-chain (is_from_block=true)
     let signatures = &signed_block.signature;
-
-    let aggregated_attestations = &signed_block.message.block.body.attestations;
+    let aggregated_attestations = &block.body.attestations;
     let proposer_attestation = &signed_block.message.proposer_attestation;
 
     // Store aggregated proofs for future block building
@@ -177,7 +281,8 @@ fn process_block_internal(
     }
 
     // Process each aggregated attestation's validators for fork choice
-    // Note: Signature verification is done in verify_signatures() before on_block()
+    // Signature verification is done in verify_signatures() before on_block()
+    // Per Devnet-2, we process attestation data directly (not SignedAttestation)
     for aggregated_attestation in aggregated_attestations.into_iter() {
         let validator_ids: Vec<u64> = aggregated_attestation
             .aggregation_bits
@@ -190,15 +295,11 @@ fn process_block_internal(
 
         // Each validator in the aggregation votes for this attestation data
         for validator_id in validator_ids {
-            on_attestation(
+            on_attestation_internal(
                 store,
-                SignedAttestation {
-                    validator_id,
-                    message: aggregated_attestation.data.clone(),
-                    // Use a default signature since verification already happened
-                    signature: containers::Signature::default(),
-                },
-                true,
+                ValidatorIndex(validator_id),
+                aggregated_attestation.data.clone(),
+                true, // is_from_block
             )?;
         }
     }
@@ -206,15 +307,22 @@ fn process_block_internal(
     // Update head BEFORE processing proposer attestation
     update_head(store);
 
-    let proposer_signed_attestation = SignedAttestation {
-        validator_id: proposer_attestation.validator_id.0,
-        message: proposer_attestation.data.clone(),
-        signature: signed_block.signature.proposer_signature,
-    };
+    // Store proposer's signature for later block building
+    let proposer_data_root = proposer_attestation.data.data_root_bytes();
+    let proposer_sig_key =
+        SignatureKey::new(proposer_attestation.validator_id.0, proposer_data_root);
+    store
+        .gossip_signatures
+        .insert(proposer_sig_key, signed_block.signature.proposer_signature);
 
     // Process proposer attestation as if received via gossip (is_from_block=false)
     // This ensures it goes to "new" attestations and doesn't immediately affect fork choice
-    on_attestation(store, proposer_signed_attestation, false)?;
+    on_attestation_internal(
+        store,
+        ValidatorIndex(proposer_attestation.validator_id.0),
+        proposer_attestation.data.clone(),
+        false, // is_from_block
+    )?;
 
     Ok(())
 }

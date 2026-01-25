@@ -21,10 +21,12 @@ serde_json = "1.0"
 serde_yaml = "0.9"
 hex = "0.4.3"
 sha2 = "0.10"
-leansig = { git = "https://github.com/leanEthereum/leanSig", branch = "main" }
-lean-multisig = { git = "https://github.com/leanEthereum/leanMultisig", branch = "main" }
+leansig = { git = "https://github.com/leanEthereum/leanSig", rev = "73bedc26ed961b110df7ac2e234dc11361a4bf25" }
+lean-multisig = { git = "https://github.com/leanEthereum/leanMultisig", rev = "e4474138487eeb1ed7c2e1013674fe80ac9f3165" }
 anyhow = "1.0.100"
 alloy-primitives = "1.5.2"
+# ethereum_ssz for lean-multisig types (aliased to avoid conflict with grandine ssz)
+eth_ssz = { package = "ethereum_ssz", version = "0.10.0" }
 
 [dev-dependencies]
 rstest = "0.18"
