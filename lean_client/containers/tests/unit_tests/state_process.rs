@@ -84,12 +84,17 @@ fn test_process_block_header_valid() {
         new_state.historical_block_hashes.get(0).ok(),
         Some(&genesis_header_root)
     );
-    let justified_slot_0 = new_state
+    // After processing just the block header (no attestations), justified_slots 
+    // uses relative indexing (slot X maps to index X - finalized_slot - 1).
+    // With finalized_slot = 0 and no attestations to justify slot 1, 
+    // justified_slots should be empty or all false.
+    let justified_slot_1_relative = new_state
         .justified_slots
-        .get(0)
+        .get(0) // relative index 0 = slot 1
         .map(|b| *b)
         .unwrap_or(false);
-    assert_eq!(justified_slot_0, true);
+    // Slot 1 is NOT justified yet (no attestations have been processed)
+    assert_eq!(justified_slot_1_relative, false);
     assert_eq!(new_state.latest_block_header.slot, Slot(1));
     assert_eq!(
         new_state.latest_block_header.state_root,

@@ -683,27 +683,30 @@ impl TestRunner {
         if let Some(ref exception) = test_case.expect_exception {
             println!("  Expecting exception: {}", exception);
 
-            // Verify signatures - we expect this to fail (return false)
-            let result = signed_block.verify_signatures(anchor_state);
-
-            if result {
-                println!("    \x1b[31m✗ FAIL: Signatures verified successfully but should have failed!\x1b[0m\n");
-                return Err("Expected signature verification to fail, but it succeeded".into());
+            // Verify signatures - we expect this to fail (return Err)
+            match signed_block.verify_signatures(anchor_state) {
+                Ok(()) => {
+                    println!("    \x1b[31m✗ FAIL: Signatures verified successfully but should have failed!\x1b[0m\n");
+                    return Err("Expected signature verification to fail, but it succeeded".into());
+                }
+                Err(_) => {
+                    println!("    ✓ Correctly rejected: Invalid signatures detected");
+                    println!("\n\x1b[32m✓ PASS\x1b[0m\n");
+                    return Ok(());
+                }
             }
-
-            println!("    ✓ Correctly rejected: Invalid signatures detected");
-            println!("\n\x1b[32m✓ PASS\x1b[0m\n");
-            return Ok(());
         }
 
-        let result = signed_block.verify_signatures(anchor_state);
-        if !result {
-            println!("    \x1b[31m✗ FAIL: Signature verification failed\x1b[0m\n");
-            return Err("Signature verification failed".into());
+        match signed_block.verify_signatures(anchor_state) {
+            Ok(()) => {
+                println!("    ✓ All signatures verified successfully");
+                println!("\n\x1b[32m✓ PASS\x1b[0m\n");
+                Ok(())
+            }
+            Err(e) => {
+                println!("    \x1b[31m✗ FAIL: Signature verification failed: {}\x1b[0m\n", e);
+                Err(format!("Signature verification failed: {}", e).into())
+            }
         }
-
-        println!("    ✓ All signatures verified successfully");
-        println!("\n\x1b[32m✓ PASS\x1b[0m\n");
-        Ok(())
     }
 }
