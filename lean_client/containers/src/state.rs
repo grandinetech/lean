@@ -566,7 +566,7 @@ impl State {
         if let Some(votes) = justifications.get(&target_root) {
             let num_validators = self.validators.len_u64() as usize;
             let count = votes.iter().filter(|&&v| v).count();
-            let threshold = (2 * num_validators + 2) / 3; // ceil(2/3)
+            let threshold = (2 * num_validators).div_ceil(3);
 
             tracing::info!(
                 target_slot = target_slot.0,
@@ -583,7 +583,7 @@ impl State {
                 tracing::info!(
                     target_slot = target_slot.0,
                     target_root = %format!("0x{:x}", target_root.0),
-                    "JUSTIFICATION THRESHOLD REACHED!"
+                    "Justification threshold reached"
                 );
                 *latest_justified = vote.target.clone();
 
