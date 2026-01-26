@@ -2,6 +2,7 @@ use crate::{
     Attestation, Bytes32, MultisigAggregatedSignature, Signature, Slot, State, ValidatorIndex,
 };
 use serde::{Deserialize, Serialize};
+use ssz::SszHash;
 use ssz_derive::Ssz;
 
 use crate::attestation::{AggregatedAttestations, AttestationSignatures};
@@ -78,6 +79,14 @@ pub struct SignedBlock {
 pub fn hash_tree_root<T: ssz::SszHash>(value: &T) -> Bytes32 {
     let h = value.hash_tree_root();
     Bytes32(h)
+}
+
+/// Compute the canonical block root for a Block.
+/// 
+/// This uses the Block's own hash_tree_root, which must be consistent
+/// with how latest_block_header is stored and hashed in state transitions.
+pub fn compute_block_root(block: &Block) -> Bytes32 {
+    Bytes32(block.hash_tree_root())
 }
 
 impl SignedBlockWithAttestation {

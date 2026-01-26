@@ -16,6 +16,8 @@ use libp2p_identity::{Keypair, PeerId};
 use tokio::sync::mpsc;
 use tracing::{debug, info, warn};
 
+use crate::enr_ext::EnrExt;
+
 pub use config::DiscoveryConfig;
 
 /// Discovery service that wraps discv5 for peer discovery.
@@ -127,7 +129,13 @@ impl DiscoveryService {
             .ip4()
             .map(IpAddr::V4)
             .or_else(|| enr.ip6().map(IpAddr::V6))?;
-        let libp2p_port = enr.tcp4().or_else(|| enr.tcp6())?;
+        
+        // Try TCP ports first (lean_client stores QUIC port in TCP field),
+        // then fall back to QUIC ports (genesis tools may use quic field directly)
+        let libp2p_port = enr.tcp4()
+            .or_else(|| enr.tcp6())
+            .or_else(|| enr.quic4())
+            .or_else(|| enr.quic6())?;
 
         let peer_id = enr_to_peer_id(enr)?;
 

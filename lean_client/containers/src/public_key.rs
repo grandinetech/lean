@@ -41,27 +41,20 @@ impl SszSize for PublicKey {
 
 // 2. Define how to write (Serialize)
 impl SszWrite for PublicKey {
-    fn write_fixed(&self, _bytes: &mut [u8]) {
-        panic!("SszWrite::write_fixed must be implemented for fixed-size types");
+    fn write_fixed(&self, bytes: &mut [u8]) {
+        // Write the 52 bytes of the public key
+        bytes[..PUBLIC_KEY_SIZE].copy_from_slice(&self.inner);
     }
 
     fn write_variable(&self, _bytes: &mut Vec<u8>) -> Result<(), WriteError> {
-        panic!("SszWrite::write_variable must be implemented for variable-size types");
+        // PublicKey is fixed-size, this should not be called
+        panic!("PublicKey is fixed-size, write_variable should not be called");
     }
 
     fn to_ssz(&self) -> Result<Vec<u8>, WriteError> {
-        match Self::SIZE {
-            Size::Fixed { size } => {
-                let mut bytes = vec![0; size];
-                self.write_fixed(bytes.as_mut_slice());
-                Ok(bytes)
-            }
-            Size::Variable { minimum_size } => {
-                let mut bytes = Vec::with_capacity(minimum_size);
-                self.write_variable(&mut bytes)?;
-                Ok(bytes)
-            }
-        }
+        let mut bytes = vec![0u8; PUBLIC_KEY_SIZE];
+        self.write_fixed(&mut bytes);
+        Ok(bytes)
     }
 }
 
@@ -100,11 +93,26 @@ impl SszHash for PublicKey {
     type PackingFactor = typenum::U1;
 
     fn hash_tree_root(&self) -> H256 {
-        // Simple implementation: hash the inner bytes directly
+        // SSZ hash_tree_root for fixed-size types > 32 bytes:
+        // 1. Split into 32-byte chunks
+        // 2. Pad last chunk with zeros if needed
+        // 3. Merkleize the chunks
         use sha2::{Digest, Sha256};
+
+        // For 52 bytes: 2 chunks (32 + 20 bytes, second chunk padded to 32)
+        let mut chunk1 = [0u8; 32];
+        let mut chunk2 = [0u8; 32];
+
+        chunk1.copy_from_slice(&self.inner[0..32]);
+        chunk2[..20].copy_from_slice(&self.inner[32..52]);
+        // Remaining 12 bytes of chunk2 are already zeros (padding)
+
+        // Merkleize: hash(chunk1 || chunk2)
         let mut hasher = Sha256::new();
-        hasher.update(&self.inner);
+        hasher.update(&chunk1);
+        hasher.update(&chunk2);
         let result = hasher.finalize();
+
         H256::from_slice(&result)
     }
 }
