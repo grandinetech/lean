@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    fs::File,
     net::IpAddr,
     num::{NonZeroU8, NonZeroUsize},
     sync::Arc,
@@ -8,6 +9,8 @@ use std::{
 
 use anyhow::{Result, anyhow};
 use containers::ssz::SszWrite;
+use derive_more::Display;
+use discv5::Enr;
 use futures::StreamExt;
 use libp2p::{
     Multiaddr, SwarmBuilder,
@@ -19,6 +22,7 @@ use libp2p::{
 };
 use libp2p_identity::{Keypair, PeerId};
 use parking_lot::Mutex;
+use serde::{Deserialize, Serialize};
 use tokio::select;
 use tokio::time::{Duration, MissedTickBehavior, interval};
 use tracing::{debug, info, trace, warn};
@@ -46,6 +50,55 @@ pub struct NetworkServiceConfig {
     bootnodes: StaticBootnodes,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Display)]
+#[serde(untagged)]
+enum Bootnode {
+    Multiaddr(Multiaddr),
+    Enr(Enr),
+}
+
+impl Bootnode {
+    fn addrs(&self) -> Vec<Multiaddr> {
+        match self {
+            Self::Multiaddr(addr) => vec![addr.clone()],
+            Self::Enr(enr) => enr.multiaddr_quic(),
+        }
+    }
+}
+
+fn parse_bootnode_argument(arg: &str) -> Vec<Bootnode> {
+    if let Some(value) = arg.parse::<Multiaddr>().ok() {
+        return vec![Bootnode::Multiaddr(value)];
+    };
+
+    if let Some(rec) = arg.parse::<Enr>().ok() {
+        return vec![Bootnode::Enr(rec)];
+    }
+
+    let Some(file) = File::open(&arg).ok() else {
+        warn!(
+            "value {arg:?} provided as bootnode is not recognized - it is not valid multiaddr nor valid path to file containing bootnodes."
+        );
+
+        return Vec::new();
+    };
+
+    let bootnodes: Vec<Bootnode> = match serde_yaml::from_reader(file) {
+        Ok(value) => value,
+        Err(err) => {
+            warn!("failed to read bootnodes from {arg:?}: {err:?}");
+
+            return Vec::new();
+        }
+    };
+
+    if bootnodes.is_empty() {
+        warn!("provided file with bootnodes {arg:?} is empty");
+    }
+
+    bootnodes
+}
+
 impl NetworkServiceConfig {
     pub fn new(
         gossipsub_config: GossipsubConfig,
@@ -55,7 +108,21 @@ impl NetworkServiceConfig {
         discovery_enabled: bool,
         bootnodes: Vec<String>,
     ) -> Self {
-        let bootnodes = StaticBootnodes::parse(&bootnodes);
+        let bootnodes = StaticBootnodes::new(
+            bootnodes
+                .iter()
+                .flat_map(|addr_str| parse_bootnode_argument(&addr_str))
+                .map(|bootnode| {
+                    if bootnode.addrs().is_empty() {
+                        warn!("bootnode {bootnode} doesn't have valid address to dial");
+                    }
+                    match bootnode {
+                        Bootnode::Multiaddr(addr) => crate::bootnodes::Bootnode::Multiaddr(addr),
+                        Bootnode::Enr(enr) => crate::bootnodes::Bootnode::Enr(enr),
+                    }
+                })
+                .collect::<Vec<_>>(),
+        );
 
         NetworkServiceConfig {
             gossipsub_config,
