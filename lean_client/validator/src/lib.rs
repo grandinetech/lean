@@ -128,6 +128,13 @@ impl ValidatorService {
         );
 
         let parent_root = get_proposal_head(store, slot);
+        
+        info!(
+            parent_root = %format!("0x{:x}", parent_root.0),
+            store_head = %format!("0x{:x}", store.head.0),
+            "Using parent root for block proposal"
+        );
+        
         let parent_state = store
             .states
             .get(&parent_root)
@@ -173,32 +180,39 @@ impl ValidatorService {
         // 3. Target block must be known
         // 4. Target is not already justified in parent state
         // 5. Source is justified in parent state
+        
+        // Helper: check if a slot is justified using RELATIVE indexing
+        // Slots at or before finalized_slot are implicitly justified
+        let finalized_slot = parent_state.latest_finalized.slot.0 as i64;
+        let is_slot_justified = |slot: Slot| -> bool {
+            if (slot.0 as i64) <= finalized_slot {
+                return true; // Implicitly justified (at or before finalized)
+            }
+            let relative_index = (slot.0 as i64 - finalized_slot - 1) as usize;
+            parent_state
+                .justified_slots
+                .get(relative_index)
+                .map(|b| *b)
+                .unwrap_or(false)
+        };
+        
         let valid_attestations: Vec<Attestation> = store
             .latest_known_attestations
             .iter()
             .filter(|(_, data)| {
-                // Source must match the parent state's justified checkpoint (not store's!)
-                let source_matches = data.source == parent_state.latest_justified;
+                // Source must match the store's justified checkpoint
+                // (attestations are created with store.latest_justified as source)
+                let source_matches = data.source == store.latest_justified;
                 // Target must be strictly after source
                 let target_after_source = data.target.slot > data.source.slot;
                 // Target block must be known
                 let target_known = store.blocks.contains_key(&data.target.root);
 
-                // Check if target is NOT already justified (matching process_single_attestation)
-                let target_slot_idx = data.target.slot.0 as usize;
-                let target_already_justified = parent_state
-                    .justified_slots
-                    .get(target_slot_idx)
-                    .map(|b| *b)
-                    .unwrap_or(false);
+                // Check if target is NOT already justified (using relative indexing)
+                let target_already_justified = is_slot_justified(data.target.slot);
 
-                // Check if source is justified
-                let source_slot_idx = data.source.slot.0 as usize;
-                let source_is_justified = parent_state
-                    .justified_slots
-                    .get(source_slot_idx)
-                    .map(|b| *b)
-                    .unwrap_or(false);
+                // Check if source is justified (using relative indexing)
+                let source_is_justified = is_slot_justified(data.source.slot);
 
                 source_matches
                     && target_after_source

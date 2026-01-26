@@ -54,8 +54,10 @@ pub fn get_forkchoice_store(
 ) -> Store {
     // Extract the plain Block from the signed block
     let block = anchor_block.message.block.clone();
-    let block_root = Bytes32(block.hash_tree_root());
     let block_slot = block.slot;
+    
+    // Compute block root using the header hash (canonical block root)
+    let block_root = containers::block::compute_block_root(&block);
 
     let latest_justified = if anchor_state.latest_justified.root.0.is_zero() {
         Checkpoint {
@@ -75,6 +77,9 @@ pub fn get_forkchoice_store(
         anchor_state.latest_finalized.clone()
     };
 
+    // Store the original anchor_state - do NOT modify it
+    // Modifying checkpoints would change its hash_tree_root(), breaking the 
+    // consistency with block.state_root
     Store {
         time: block_slot.0 * INTERVALS_PER_SLOT,
         config,
@@ -338,8 +343,8 @@ pub fn produce_block_with_signatures(
             Some(&store.aggregated_payloads),
         )?;
 
-    // Compute block root
-    let block_root = Bytes32(final_block.hash_tree_root());
+    // Compute block root using the header hash (canonical block root)
+    let block_root = containers::block::compute_block_root(&final_block);
 
     // Store block and state (per devnet-2, we store the plain Block)
     store.blocks.insert(block_root, final_block.clone());

@@ -320,6 +320,16 @@ impl State {
         let latest_header_for_hash = self.latest_block_header.clone();
         let parent_root = hash_tree_root(&latest_header_for_hash);
         if block.parent_root != parent_root {
+            tracing::error!(
+                expected_parent_root = %format!("0x{:x}", parent_root.0),
+                block_parent_root = %format!("0x{:x}", block.parent_root.0),
+                header_slot = self.latest_block_header.slot.0,
+                header_proposer = self.latest_block_header.proposer_index.0,
+                header_parent = %format!("0x{:x}", self.latest_block_header.parent_root.0),
+                header_state_root = %format!("0x{:x}", self.latest_block_header.state_root.0),
+                header_body_root = %format!("0x{:x}", self.latest_block_header.body_root.0),
+                "Block parent root mismatch - debug info"
+            );
             return Err(String::from("Block parent root mismatch"));
         }
 
@@ -332,32 +342,48 @@ impl State {
             .push(parent_root)
             .expect("within limit");
 
-        // Calculate total number of slots to track
+        // Calculate number of empty slots (skipped slots between parent and this block)
         let num_empty_slots = (block.slot.0 - self.latest_block_header.slot.0 - 1) as usize;
-        let new_len = self.justified_slots.len() + 1 + num_empty_slots;
 
-        // Build new BitList with extended length
-        let mut new_justified_slots = JustifiedSlots::new(false, new_len);
-        for i in 0..self.justified_slots.len() {
-            if let Some(bit) = self.justified_slots.get(i) {
-                if *bit {
-                    new_justified_slots.set(i, true);
-                }
-            }
-        }
-        // Set the bit for the latest block header
-        new_justified_slots.set(
-            self.justified_slots.len(),
-            self.latest_block_header.slot == Slot(0),
-        );
-        // Empty slots remain false (already initialized)
-
-        // Add empty slots to historical hashes
+        // Add ZERO_HASH entries for empty slots to historical hashes
         for _ in 0..num_empty_slots {
             new_historical_hashes
                 .push(Bytes32(ssz::H256::zero()))
                 .expect("within limit");
         }
+
+        // Extend justified_slots to cover slots from finalized_slot+1 to last_materialized_slot
+        // per leanSpec: justified_slots is stored RELATIVE to the finalized boundary
+        // The first entry corresponds to slot (finalized_slot + 1)
+        let last_materialized_slot = block.slot.0.saturating_sub(1);
+        let finalized_slot = self.latest_finalized.slot.0;
+
+        let new_justified_slots = if last_materialized_slot > finalized_slot {
+            // Calculate relative index: slot X maps to index (X - finalized_slot - 1)
+            let relative_index = (last_materialized_slot - finalized_slot - 1) as usize;
+            let required_capacity = relative_index + 1;
+            let current_len = self.justified_slots.len();
+
+            if required_capacity > current_len {
+                // Extend the bitlist
+                let mut new_slots = JustifiedSlots::new(false, required_capacity);
+                // Copy existing bits
+                for i in 0..current_len {
+                    if let Some(bit) = self.justified_slots.get(i) {
+                        if *bit {
+                            new_slots.set(i, true);
+                        }
+                    }
+                }
+                // New slots are initialized to false (unjustified)
+                new_slots
+            } else {
+                self.justified_slots.clone()
+            }
+        } else {
+            // last_materialized_slot <= finalized_slot: no extension needed
+            self.justified_slots.clone()
+        };
 
         let body_for_hash = block.body.clone();
         let body_root = hash_tree_root(&body_for_hash);
@@ -434,6 +460,9 @@ impl State {
     }
 
     /// Process a single attestation's votes.
+    /// 
+    /// NOTE: justified_slots uses RELATIVE indexing. Slot X maps to index (X - finalized_slot - 1).
+    /// Slots at or before finalized_slot are implicitly justified (not stored in the bitlist).
     fn process_single_attestation(
         &self,
         vote: &crate::attestation::AttestationData,
@@ -449,33 +478,31 @@ impl State {
         let target_root = vote.target.root;
         let source_root = vote.source.root;
 
-        let target_slot_int = target_slot.0 as usize;
+        let finalized_slot_int = initial_finalized_slot.0 as i64;
+
+        // Helper to check if a slot is justified using RELATIVE indexing
+        // Per leanSpec: slots at or before finalized_slot are implicitly justified
+        let is_slot_justified = |slot: Slot, justified_slots: &[bool]| -> bool {
+            if slot.0 as i64 <= finalized_slot_int {
+                // Slots at or before finalized boundary are implicitly justified
+                return true;
+            }
+            // Calculate relative index: slot X maps to index (X - finalized_slot - 1)
+            let relative_index = (slot.0 as i64 - finalized_slot_int - 1) as usize;
+            justified_slots.get(relative_index).copied().unwrap_or(false)
+        };
+
+        let source_is_justified = is_slot_justified(source_slot, justified_slots_working);
+        let target_already_justified = is_slot_justified(target_slot, justified_slots_working);
+
         let source_slot_int = source_slot.0 as usize;
+        let target_slot_int = target_slot.0 as usize;
 
-        let source_is_justified = justified_slots_working
-            .get(source_slot_int)
-            .copied()
-            .unwrap_or(false);
-        let target_already_justified = justified_slots_working
-            .get(target_slot_int)
-            .copied()
-            .unwrap_or(false);
-
-        // Special case for slot 0 (genesis): historical_block_hashes[0] is initialized as 0x0
-        // in genesis, but validators attest with the actual genesis block hash (set in
-        // get_forkchoice_store). Allow any source_root when source is slot 0 and
-        // historical_block_hashes[0] is the zero hash.
+        // Check root matches using absolute slot for historical_block_hashes lookup
         let source_root_matches = self
             .historical_block_hashes
             .get(source_slot_int as u64)
-            .map(|r| {
-                if source_slot_int == 0 && r.0.is_zero() {
-                    // Genesis slot: accept any root when historical hash is 0x0
-                    true
-                } else {
-                    *r == source_root
-                }
-            })
+            .map(|r| *r == source_root)
             .unwrap_or(false);
         let target_root_matches = self
             .historical_block_hashes
@@ -483,9 +510,15 @@ impl State {
             .map(|r| *r == target_root)
             .unwrap_or(false);
 
+        // Ignore votes that reference zero-hash slots (per leanSpec)
+        if source_root.0.is_zero() || target_root.0.is_zero() {
+            return;
+        }
+
         let is_valid_vote = source_is_justified
             && !target_already_justified
-            && (source_root_matches || target_root_matches)
+            && source_root_matches
+            && target_root_matches
             && target_slot > source_slot
             && target_slot.is_justifiable_after(initial_finalized_slot);
 
@@ -554,11 +587,15 @@ impl State {
                 );
                 *latest_justified = vote.target.clone();
 
-                justified_slots_working.extend(std::iter::repeat_n(
-                    false,
-                    (target_slot_int + 1).saturating_sub(justified_slots_working.len()),
-                ));
-                justified_slots_working[target_slot_int] = true;
+                // Use RELATIVE indexing for justified_slots_working
+                // Calculate relative index for target slot
+                let target_relative_index = (target_slot.0 as i64 - finalized_slot_int - 1) as usize;
+                
+                // Extend the working vec if needed
+                if target_relative_index >= justified_slots_working.len() {
+                    justified_slots_working.resize(target_relative_index + 1, false);
+                }
+                justified_slots_working[target_relative_index] = true;
 
                 justifications.remove(&target_root);
 

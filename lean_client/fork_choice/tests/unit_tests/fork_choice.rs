@@ -42,7 +42,7 @@ fn test_get_vote_target_chain() {
             body: BlockBody::default(),
         };
 
-        let block_root = Bytes32(block.hash_tree_root());
+        let block_root = containers::block::compute_block_root(&block);
 
         // Insert Block directly per leanSpec
         store.blocks.insert(block_root, block);

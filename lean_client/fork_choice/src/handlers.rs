@@ -5,6 +5,7 @@ use containers::{
     attestation::SignedAttestation, block::SignedBlockWithAttestation, Bytes32, ValidatorIndex,
 };
 use ssz::SszHash;
+use tracing::{debug, info};
 
 #[inline]
 pub fn on_tick(store: &mut Store, time: u64, has_proposal: bool) {
@@ -195,7 +196,7 @@ fn on_attestation_internal(
 /// 4. Updating the forkchoice head
 /// 5. Processing the proposer's attestation (as if gossiped)
 pub fn on_block(store: &mut Store, signed_block: SignedBlockWithAttestation) -> Result<(), String> {
-    let block_root = Bytes32(signed_block.message.block.hash_tree_root());
+    let block_root = containers::block::compute_block_root(&signed_block.message.block);
 
     if store.blocks.contains_key(&block_root) {
         return Ok(());
@@ -228,6 +229,7 @@ fn process_block_internal(
     block_root: Bytes32,
 ) -> Result<(), String> {
     let block = signed_block.message.block.clone();
+    let attestations_count = block.body.attestations.len_u64();
 
     // Get parent state for validation
     let state = match store.states.get(&block.parent_root) {
@@ -239,18 +241,61 @@ fn process_block_internal(
         }
     };
 
+    // Debug: Log parent state checkpoints before transition
+    tracing::debug!(
+        block_slot = block.slot.0,
+        attestations_in_block = attestations_count,
+        parent_justified_slot = state.latest_justified.slot.0,
+        parent_finalized_slot = state.latest_finalized.slot.0,
+        justified_slots_len = state.justified_slots.len(),
+        "Processing block - parent state info"
+    );
+
     // Execute state transition to get post-state
     let new_state = state.state_transition_with_validation(signed_block.clone(), true, true)?;
+
+    // Debug: Log new state checkpoints after transition
+    tracing::debug!(
+        block_slot = block.slot.0,
+        new_justified_slot = new_state.latest_justified.slot.0,
+        new_finalized_slot = new_state.latest_finalized.slot.0,
+        new_justified_slots_len = new_state.justified_slots.len(),
+        "Block processed - new state info"
+    );
 
     // Store block and state, store the plain Block (not SignedBlockWithAttestation)
     store.blocks.insert(block_root, block.clone());
     store.states.insert(block_root, new_state.clone());
 
-    if new_state.latest_justified.slot > store.latest_justified.slot {
+    let justified_updated = new_state.latest_justified.slot > store.latest_justified.slot;
+    let finalized_updated = new_state.latest_finalized.slot > store.latest_finalized.slot;
+
+    if justified_updated {
+        tracing::info!(
+            old_justified = store.latest_justified.slot.0,
+            new_justified = new_state.latest_justified.slot.0,
+            "Store justified checkpoint updated!"
+        );
         store.latest_justified = new_state.latest_justified.clone();
     }
-    if new_state.latest_finalized.slot > store.latest_finalized.slot {
+    if finalized_updated {
+        tracing::info!(
+            old_finalized = store.latest_finalized.slot.0,
+            new_finalized = new_state.latest_finalized.slot.0,
+            "Store finalized checkpoint updated!"
+        );
         store.latest_finalized = new_state.latest_finalized.clone();
+    }
+
+    if !justified_updated && !finalized_updated {
+        tracing::debug!(
+            block_slot = block.slot.0,
+            store_justified = store.latest_justified.slot.0,
+            store_finalized = store.latest_finalized.slot.0,
+            state_justified = new_state.latest_justified.slot.0,
+            state_finalized = new_state.latest_finalized.slot.0,
+            "No checkpoint updates from this block"
+        );
     }
 
     // Process block body attestations as on-chain (is_from_block=true)
@@ -331,7 +376,7 @@ fn process_pending_blocks(store: &mut Store, mut roots: Vec<Bytes32>) {
     while let Some(parent_root) = roots.pop() {
         if let Some(purgatory) = store.blocks_queue.remove(&parent_root) {
             for block in purgatory {
-                let block_origins = Bytes32(block.message.block.hash_tree_root());
+                let block_origins = containers::block::compute_block_root(&block.message.block);
                 if let Ok(()) = process_block_internal(store, block, block_origins) {
                     roots.push(block_origins);
                 }

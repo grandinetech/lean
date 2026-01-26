@@ -394,7 +394,7 @@ async fn main() {
 
                                         match vs.build_block_proposal(&mut store, Slot(current_slot), proposer_idx) {
                                             Ok(signed_block) => {
-                                                let block_root = Bytes32(signed_block.message.block.hash_tree_root());
+                                                let block_root = containers::block::compute_block_root(&signed_block.message.block);
                                                 info!(
                                                     slot = current_slot,
                                                     block_root = %format!("0x{:x}", block_root.0),
@@ -482,7 +482,7 @@ async fn main() {
                         } => {
                             let block_slot = signed_block_with_attestation.message.block.slot.0;
                             let proposer = signed_block_with_attestation.message.block.proposer_index.0;
-                            let block_root = Bytes32(signed_block_with_attestation.message.block.hash_tree_root());
+                            let block_root = containers::block::compute_block_root(&signed_block_with_attestation.message.block);
                             let parent_root = signed_block_with_attestation.message.block.parent_root;
 
                             info!(
