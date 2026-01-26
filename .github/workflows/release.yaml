@@ -3,6 +3,7 @@ on:
   push:
     branches: 
       - main
+      - devnet-*
   workflow_dispatch:
     inputs:
       ref:
@@ -36,5 +37,8 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build & push docker images
+        env:
+          DOCKER_TAG: ${{ (github.ref_name == 'main' && 'unstable') || github.ref_name }}
         run: |
-          make docker
+          make docker \
+            DOCKER_TAG=${{ env.DOCKER_TAG }}
