@@ -254,7 +254,7 @@ impl Into<Block> for TestBlock {
             slot: Slot(self.slot),
             proposer_index: ValidatorIndex(self.proposer_index),
             parent_root: parse_root(&self.parent_root),
-            state_root: parse_root(&self.parent_root),
+            state_root: parse_root(&self.state_root),
             body: self.body.into(),
         }
     }
@@ -323,7 +323,7 @@ struct TestAggregatedAttestation {
 impl Into<AggregatedAttestation> for TestAggregatedAttestation {
     fn into(self) -> AggregatedAttestation {
         AggregatedAttestation {
-            aggregation_bits: self.aggregation_bits.data,
+            aggregation_bits: self.aggregation_bits.into(),
             data: self.data.into(),
         }
     }
@@ -331,7 +331,17 @@ impl Into<AggregatedAttestation> for TestAggregatedAttestation {
 
 #[derive(Debug, Deserialize)]
 struct TestAggregationBits {
-    data: AggregationBits,
+    data: Vec<bool>,
+}
+
+impl Into<AggregationBits> for TestAggregationBits {
+    fn into(self) -> AggregationBits {
+        let mut bitlist = ssz::BitList::with_length(self.data.len());
+        for (i, &bit) in self.data.iter().enumerate() {
+            bitlist.set(i, bit);
+        }
+        AggregationBits(bitlist)
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -552,7 +562,7 @@ fn forkchoice(spec_file: &str) {
                             message: block,
                             signature: BlockSignatures::default(),
                         };
-                        let block_root = Bytes32(signed_block.message.block.hash_tree_root());
+                        let block_root = containers::block::compute_block_root(&signed_block.message.block);
 
                         // Advance time to the block's slot to ensure attestations are processable
                         // SECONDS_PER_SLOT is 4 (not 12)
