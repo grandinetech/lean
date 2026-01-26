@@ -107,7 +107,7 @@
             "hash": "0x8d97e6b6a601e10856ae70720ffad8cd392dab8169fe158054edac0bc0f0e49a",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/verify_signatures/test_invalid_signatures.py::test_invalid_signature[fork_Devnet]",
-            "description": "Test that invalid signatures are properly rejected during verification.\n\nScenario\n--------\n- Single block at slot 1\n- Proposer attestation has an invalid signature\n- No additional attestations (only proposer attestation)\n\nExpected Behavior\n-----------------\n1. Proposer's signature in SignedBlockWithAttestation is rejected\n\nWhy This Matters\n----------------\nThis test verifies the negative case:\n- Signature verification actually validates cryptographic correctness\n  not just structural correctness.\n- Invalid signatures are caught, not silently accepted",
+            "description": "Test that invalid signatures are properly rejected during verification.\n\n    Scenario\n    --------\n    - Single block at slot 1\n    - Proposer attestation has an invalid signature\n    - No additional attestations (only proposer attestation)\n\n    Expected Behavior\n    -----------------\n    1. Proposer's signature in SignedBlockWithAttestation is rejected\n\n    Why This Matters\n    ----------------\n    This test verifies the negative case:\n    - Signature verification actually validates cryptographic correctness\n      not just structural correctness.\n    - Invalid signatures are caught, not silently accepted",
             "fixtureFormat": "verify_signatures_test"
         }
     }

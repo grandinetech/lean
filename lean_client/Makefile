@@ -53,7 +53,7 @@ generate-test-vectors:
 		git remote add origin https://github.com/leanEthereum/leanSpec.git && \
 		git fetch --depth 1 origin $(LEAN_SPEC_COMMIT) && \
 		git switch --detach FETCH_HEAD
-	cd spec && uv run fill --clean --fork=devnet
+	cd spec && uv run fill --clean --fork=devnet --scheme prod
 	rm -rf ./test_vectors && mkdir -p ./test_vectors
 	cp -r ./spec/fixtures/consensus/* ./test_vectors/
 

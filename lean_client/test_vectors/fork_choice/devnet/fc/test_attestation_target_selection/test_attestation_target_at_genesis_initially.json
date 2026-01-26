@@ -1,7 +1,7 @@
 {
     "tests/consensus/devnet/fc/test_attestation_target_selection.py::test_attestation_target_at_genesis_initially[fork_Devnet][fork_devnet-fork_choice_test]": {
         "network": "Devnet",
-        "leanEnv": "test",
+        "leanEnv": "prod",
         "anchorState": {
             "config": {
                 "genesisTime": 0
@@ -31,19 +31,19 @@
             "validators": {
                 "data": [
                     {
-                        "pubkey": "0x8fa00001b5b22a073d21cb60c9465b379f80e74fee9baf1d137eb651ed162900a6f3ec32da74ff09265ea62fc9a5055b2e9b7c7b",
+                        "pubkey": "0x2c7aa65d0b45c01e3ba7155997d3001613775f1e1b85fd1ab65dcd72c65e105f2552c43a311a290af56fa0262dfebe10745ea837",
                         "index": 0
                     },
                     {
-                        "pubkey": "0xbc56037ab0485c00441e3205d908e55a016d5450a335144f50ccb034cb253c05a1cbc047b5695a5672697d584656e96a4b94f173",
+                        "pubkey": "0x67047f6113b87f6aea3a0e6c108a8d7dcc4b5e479dda2a1cb79397705340bd6227f1ea63ee39c91fff4599375b749425ae65922e",
                         "index": 1
                     },
                     {
-                        "pubkey": "0x79422d64ecdc3b0bf7c6cc31bbfb9f4eab7950107fe23c6f4f9c94465c81f80d85a1931f1003c50531147f350357805f22fdd70b",
+                        "pubkey": "0x235cec31602fa34e41069453a2a56568d4c3ff62e31066659b90722e595e93255637eb0d42f98542e79c60031c2f05396bc74146",
                         "index": 2
                     },
                     {
-                        "pubkey": "0x575bb17b0f673d76689c9527a21fac68eb5ebd571703a245deb2a8384baea4747be00d5b469ff30f830e234f74453f6e2c20cb26",
+                        "pubkey": "0xc7adde03d418565797f15a5b060ed4073d34856dd5941f77077e1d509952a674df084f0c5b57331e8af15364d8a29914f4a90178",
                         "index": 3
                     }
                 ]
@@ -59,7 +59,7 @@
             "slot": 0,
             "proposerIndex": 0,
             "parentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "stateRoot": "0xe964061dcf66d2772fea43f77cdbf563b6642b7d13130b42890618b16e67c1f2",
+            "stateRoot": "0x1548aed67cff3c3c02bf84906531c1558ecd4492175212f2ee7e8a6754e99d25",
             "body": {
                 "attestations": {
                     "data": []
@@ -78,8 +78,8 @@
                     "block": {
                         "slot": 1,
                         "proposerIndex": 1,
-                        "parentRoot": "0xee3755ec636c6cabd4fbec9791efd12fb38fbad6989e09258a286dcdfa84ca0f",
-                        "stateRoot": "0x976e5f2bf6a9b4c51516e650d3a7c7f0066580fa3d1b185808a5bec483292a2f",
+                        "parentRoot": "0xe8626f2aa0da826506456b41d8bc0abdd09875df71a21c08fae337f17152b23c",
+                        "stateRoot": "0xf880311e5121aee43e1c9a6d696884ab455fd889eab3763c553b96540e4c6a48",
                         "body": {
                             "attestations": {
                                 "data": []
@@ -91,15 +91,15 @@
                         "data": {
                             "slot": 1,
                             "head": {
-                                "root": "0x4d16ec7e8dacf5f60d30ca84cd0a789a022a91ff3dee22975240d617c4236b0d",
+                                "root": "0xb447f7732c577d6e5c7aa205293c8100971c0e68ada9acf0b8e29341737079c7",
                                 "slot": 1
                             },
                             "target": {
-                                "root": "0x4d16ec7e8dacf5f60d30ca84cd0a789a022a91ff3dee22975240d617c4236b0d",
+                                "root": "0xb447f7732c577d6e5c7aa205293c8100971c0e68ada9acf0b8e29341737079c7",
                                 "slot": 1
                             },
                             "source": {
-                                "root": "0xee3755ec636c6cabd4fbec9791efd12fb38fbad6989e09258a286dcdfa84ca0f",
+                                "root": "0xe8626f2aa0da826506456b41d8bc0abdd09875df71a21c08fae337f17152b23c",
                                 "slot": 0
                             }
                         }
@@ -117,8 +117,8 @@
                     "block": {
                         "slot": 2,
                         "proposerIndex": 2,
-                        "parentRoot": "0x4d16ec7e8dacf5f60d30ca84cd0a789a022a91ff3dee22975240d617c4236b0d",
-                        "stateRoot": "0xb7e6a86335a19a6d737b0b3f9f60c18f2eb175206459e84b9d3b3807702acfde",
+                        "parentRoot": "0xb447f7732c577d6e5c7aa205293c8100971c0e68ada9acf0b8e29341737079c7",
+                        "stateRoot": "0xb3699f2b96e988fb2b56a9b763428d595965bf567abc02ab1df3bbb1fc81f3e6",
                         "body": {
                             "attestations": {
                                 "data": []
@@ -130,15 +130,15 @@
                         "data": {
                             "slot": 2,
                             "head": {
-                                "root": "0x64cce9455f0122be56727da4c100f9c842d93bd55c116d36648f312071968d23",
+                                "root": "0xe901f17c0f7efc8cbea86867c49520c19c31e4dce70a37af1c66e750dfae1034",
                                 "slot": 2
                             },
                             "target": {
-                                "root": "0x64cce9455f0122be56727da4c100f9c842d93bd55c116d36648f312071968d23",
+                                "root": "0xe901f17c0f7efc8cbea86867c49520c19c31e4dce70a37af1c66e750dfae1034",
                                 "slot": 2
                             },
                             "source": {
-                                "root": "0x4d16ec7e8dacf5f60d30ca84cd0a789a022a91ff3dee22975240d617c4236b0d",
+                                "root": "0xb447f7732c577d6e5c7aa205293c8100971c0e68ada9acf0b8e29341737079c7",
                                 "slot": 1
                             }
                         }
@@ -148,7 +148,7 @@
         ],
         "maxSlot": 2,
         "_info": {
-            "hash": "0x55931a454acbfd50f0d0ef9f92395af85e7c37f0dcbb87251042c5d4c6e64f39",
+            "hash": "0x7ed6ed6cb6f816bdff8fb63c80379d445bdcf1d2b4812bb98cdfce907eb3e152",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/fc/test_attestation_target_selection.py::test_attestation_target_at_genesis_initially[fork_Devnet]",
             "description": "Attestation target starts at genesis before safe target updates.\n\n    Scenario\n    --------\n    Process two blocks at slots 1 and 2.\n\n    Expected:\n        - After slot 1: target = slot 0 (genesis/finalized)\n        - After slot 2: target = slot 0 (genesis/finalized)\n        - Target root automatically validated against block at slot 0\n\n    Why This Matters\n    ----------------\n    Initially, the safe target is at genesis (slot 0), so the attestation\n    target walks back from head to genesis.\n\n    This conservative behavior ensures validators don't attest too far ahead\n    before there's sufficient attestation weight to advance the safe target.",
