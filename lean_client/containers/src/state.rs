@@ -109,7 +109,7 @@ impl State {
         let mut validators = List::default();
         for i in 0..num_validators.0 {
             let validator = Validator {
-                pubkey: crate::validator::BlsPublicKey::default(),
+                pubkey: crate::validator::PublicKey::default(),
                 index: Uint64(i),
             };
             validators.push(validator).expect("Failed to add validator");

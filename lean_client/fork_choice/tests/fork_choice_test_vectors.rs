@@ -394,7 +394,7 @@ fn initialize_state_from_test(test_state: &TestAnchorState) -> Result<State> {
 
     let mut validators = List::default();
     for test_validator in &test_state.validators.data {
-        let pubkey = containers::validator::BlsPublicKey::from_hex(&test_validator.pubkey)
+        let pubkey = containers::validator::PublicKey::from_hex(&test_validator.pubkey)
             .context("Failed to parse validator pubkey")?;
         let validator = containers::validator::Validator {
             pubkey,
