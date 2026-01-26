@@ -82,9 +82,6 @@ pub fn hash_tree_root<T: ssz::SszHash>(value: &T) -> Bytes32 {
 }
 
 /// Compute the canonical block root for a Block.
-/// 
-/// This uses the Block's own hash_tree_root, which must be consistent
-/// with how latest_block_header is stored and hashed in state transitions.
 pub fn compute_block_root(block: &Block) -> Bytes32 {
     Bytes32(block.hash_tree_root())
 }
@@ -133,7 +130,9 @@ impl SignedBlockWithAttestation {
     /// Verifies all attestation signatures using lean-multisig aggregated proofs.
     /// Each attestation has a single `MultisigAggregatedSignature` proof that covers
     /// all participating validators.
-    pub fn verify_signatures(&self, parent_state: State) -> bool {
+    /// 
+    /// Returns `Ok(())` if all signatures are valid, or an error describing the failure.
+    pub fn verify_signatures(&self, parent_state: State) -> Result<(), String> {
         // Unpack the signed block components
         let block = &self.message.block;
         let signatures = &self.signature;
@@ -141,11 +140,13 @@ impl SignedBlockWithAttestation {
         let attestation_signatures = signatures.attestation_signatures.clone();
 
         // Verify signature count matches aggregated attestation count
-        assert_eq!(
-            aggregated_attestations.len_u64(),
-            attestation_signatures.len_u64(),
-            "Attestation signature groups must align with block body attestations"
-        );
+        if aggregated_attestations.len_u64() != attestation_signatures.len_u64() {
+            return Err(format!(
+                "Attestation signature count mismatch: {} attestations vs {} signatures",
+                aggregated_attestations.len_u64(),
+                attestation_signatures.len_u64()
+            ));
+        }
 
         let validators = &parent_state.validators;
         let num_validators = validators.len_u64();
@@ -161,14 +162,25 @@ impl SignedBlockWithAttestation {
 
             // Ensure all validators exist in the active set
             for validator_id in &validator_ids {
-                assert!(
-                    *validator_id < num_validators,
-                    "Validator index out of range"
-                );
+                if *validator_id >= num_validators {
+                    return Err(format!(
+                        "Validator index {} out of range (max {})",
+                        validator_id, num_validators
+                    ));
+                }
             }
 
             let attestation_data_root: [u8; 32] =
                 hash_tree_root(&aggregated_attestation.data).0.into();
+
+            // Collect validators, returning error if any not found
+            let mut collected_validators = Vec::with_capacity(validator_ids.len());
+            for vid in &validator_ids {
+                let validator = validators
+                    .get(*vid)
+                    .map_err(|_| format!("Validator {} not found in state", vid))?;
+                collected_validators.push(validator);
+            }
 
             // Verify the lean-multisig aggregated proof for this attestation
             //
@@ -177,41 +189,39 @@ impl SignedBlockWithAttestation {
             _aggregated_signature_proof
                 .proof_data
                 .verify_aggregated_payload(
-                    &validator_ids
-                        .iter()
-                        .map(|vid| validators.get(*vid).expect("validator must exist"))
-                        .collect::<Vec<_>>(),
+                    &collected_validators,
                     &attestation_data_root,
                     aggregated_attestation.data.slot.0 as u32,
                 )
-                .expect("Attestation aggregated signature verification failed");
+                .map_err(|e| format!("Attestation aggregated signature verification failed: {:?}", e))?;
         }
 
         // Verify the proposer attestation signature (outside the attestation loop)
         let proposer_attestation = &self.message.proposer_attestation;
         let proposer_signature = &signatures.proposer_signature;
 
-        assert!(
-            proposer_attestation.validator_id.0 < num_validators,
-            "Proposer index out of range"
-        );
+        if proposer_attestation.validator_id.0 >= num_validators {
+            return Err(format!(
+                "Proposer index {} out of range (max {})",
+                proposer_attestation.validator_id.0, num_validators
+            ));
+        }
 
         let proposer = validators
             .get(proposer_attestation.validator_id.0)
-            .expect("proposer must exist");
+            .map_err(|_| format!("Proposer {} not found in state", proposer_attestation.validator_id.0))?;
 
         let proposer_root: [u8; 32] = hash_tree_root(&proposer_attestation.data).0.into();
-        assert!(
-            verify_xmss_signature(
-                proposer.pubkey,
-                proposer_attestation.data.slot,
-                &proposer_root,
-                proposer_signature,
-            ),
-            "Proposer attestation signature verification failed"
-        );
+        if !verify_xmss_signature(
+            proposer.pubkey,
+            proposer_attestation.data.slot,
+            &proposer_root,
+            proposer_signature,
+        ) {
+            return Err("Proposer attestation signature verification failed".to_string());
+        }
 
-        true
+        Ok(())
     }
 }
 
