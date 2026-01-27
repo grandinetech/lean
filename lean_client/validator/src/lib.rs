@@ -128,13 +128,13 @@ impl ValidatorService {
         );
 
         let parent_root = get_proposal_head(store, slot);
-        
+
         info!(
             parent_root = %format!("0x{:x}", parent_root.0),
             store_head = %format!("0x{:x}", store.head.0),
             "Using parent root for block proposal"
         );
-        
+
         let parent_state = store
             .states
             .get(&parent_root)
@@ -180,7 +180,7 @@ impl ValidatorService {
         // 3. Target block must be known
         // 4. Target is not already justified in parent state
         // 5. Source is justified in parent state
-        
+
         // Helper: check if a slot is justified using RELATIVE indexing
         // Slots at or before finalized_slot are implicitly justified
         let finalized_slot = parent_state.latest_finalized.slot.0 as i64;
@@ -195,7 +195,7 @@ impl ValidatorService {
                 .map(|b| *b)
                 .unwrap_or(false)
         };
-        
+
         let valid_attestations: Vec<Attestation> = store
             .latest_known_attestations
             .iter()

@@ -55,7 +55,7 @@ pub fn get_forkchoice_store(
     // Extract the plain Block from the signed block
     let block = anchor_block.message.block.clone();
     let block_slot = block.slot;
-    
+
     // Compute block root using the header hash (canonical block root)
     let block_root = containers::block::compute_block_root(&block);
 
@@ -78,7 +78,7 @@ pub fn get_forkchoice_store(
     };
 
     // Store the original anchor_state - do NOT modify it
-    // Modifying checkpoints would change its hash_tree_root(), breaking the 
+    // Modifying checkpoints would change its hash_tree_root(), breaking the
     // consistency with block.state_root
     Store {
         time: block_slot.0 * INTERVALS_PER_SLOT,

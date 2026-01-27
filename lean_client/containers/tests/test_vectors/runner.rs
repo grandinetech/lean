@@ -704,7 +704,10 @@ impl TestRunner {
                 Ok(())
             }
             Err(e) => {
-                println!("    \x1b[31m✗ FAIL: Signature verification failed: {}\x1b[0m\n", e);
+                println!(
+                    "    \x1b[31m✗ FAIL: Signature verification failed: {}\x1b[0m\n",
+                    e
+                );
                 Err(format!("Signature verification failed: {}", e).into())
             }
         }

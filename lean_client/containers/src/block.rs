@@ -130,7 +130,7 @@ impl SignedBlockWithAttestation {
     /// Verifies all attestation signatures using lean-multisig aggregated proofs.
     /// Each attestation has a single `MultisigAggregatedSignature` proof that covers
     /// all participating validators.
-    /// 
+    ///
     /// Returns `Ok(())` if all signatures are valid, or an error describing the failure.
     pub fn verify_signatures(&self, parent_state: State) -> Result<(), String> {
         // Unpack the signed block components
@@ -193,7 +193,12 @@ impl SignedBlockWithAttestation {
                     &attestation_data_root,
                     aggregated_attestation.data.slot.0 as u32,
                 )
-                .map_err(|e| format!("Attestation aggregated signature verification failed: {:?}", e))?;
+                .map_err(|e| {
+                    format!(
+                        "Attestation aggregated signature verification failed: {:?}",
+                        e
+                    )
+                })?;
         }
 
         // Verify the proposer attestation signature (outside the attestation loop)
@@ -209,7 +214,12 @@ impl SignedBlockWithAttestation {
 
         let proposer = validators
             .get(proposer_attestation.validator_id.0)
-            .map_err(|_| format!("Proposer {} not found in state", proposer_attestation.validator_id.0))?;
+            .map_err(|_| {
+                format!(
+                    "Proposer {} not found in state",
+                    proposer_attestation.validator_id.0
+                )
+            })?;
 
         let proposer_root: [u8; 32] = hash_tree_root(&proposer_attestation.data).0.into();
         if !verify_xmss_signature(
