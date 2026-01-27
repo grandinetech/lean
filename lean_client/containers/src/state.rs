@@ -460,7 +460,7 @@ impl State {
     }
 
     /// Process a single attestation's votes.
-    /// 
+    ///
     /// NOTE: justified_slots uses RELATIVE indexing. Slot X maps to index (X - finalized_slot - 1).
     /// Slots at or before finalized_slot are implicitly justified (not stored in the bitlist).
     fn process_single_attestation(
@@ -489,7 +489,10 @@ impl State {
             }
             // Calculate relative index: slot X maps to index (X - finalized_slot - 1)
             let relative_index = (slot.0 as i64 - finalized_slot_int - 1) as usize;
-            justified_slots.get(relative_index).copied().unwrap_or(false)
+            justified_slots
+                .get(relative_index)
+                .copied()
+                .unwrap_or(false)
         };
 
         let source_is_justified = is_slot_justified(source_slot, justified_slots_working);
@@ -589,8 +592,9 @@ impl State {
 
                 // Use RELATIVE indexing for justified_slots_working
                 // Calculate relative index for target slot
-                let target_relative_index = (target_slot.0 as i64 - finalized_slot_int - 1) as usize;
-                
+                let target_relative_index =
+                    (target_slot.0 as i64 - finalized_slot_int - 1) as usize;
+
                 // Extend the working vec if needed
                 if target_relative_index >= justified_slots_working.len() {
                     justified_slots_working.resize(target_relative_index + 1, false);
