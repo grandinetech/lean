@@ -562,7 +562,8 @@ fn forkchoice(spec_file: &str) {
                             message: block,
                             signature: BlockSignatures::default(),
                         };
-                        let block_root = containers::block::compute_block_root(&signed_block.message.block);
+                        let block_root =
+                            containers::block::compute_block_root(&signed_block.message.block);
 
                         // Advance time to the block's slot to ensure attestations are processable
                         // SECONDS_PER_SLOT is 4 (not 12)
