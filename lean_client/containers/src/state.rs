@@ -148,14 +148,7 @@ impl State {
 
     /// Get the number of validators (since PersistentList doesn't have len())
     pub fn validator_count(&self) -> usize {
-        let mut count: u64 = 0;
-        loop {
-            match self.validators.get(count) {
-                Ok(_) => count += 1,
-                Err(_) => break,
-            }
-        }
-        count as usize
+        self.validators.len_usize()
     }
 
     pub fn get_justifications(&self) -> BTreeMap<Bytes32, Vec<bool>> {
@@ -567,7 +560,7 @@ impl State {
         }
 
         if let Some(votes) = justifications.get(&target_root) {
-            let num_validators = self.validators.len_u64() as usize;
+            let num_validators = self.validators.len_usize();
             let count = votes.iter().filter(|&&v| v).count();
             let threshold = (2 * num_validators).div_ceil(3);
 
