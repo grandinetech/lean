@@ -1,0 +1,15 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Debug lean_client" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+    <option name="channel" value="DEFAULT" />
+    <option name="command" value="run" />
+    <option name="workingDirectory" value="$PROJECT_DIR$/lean_client" />
+    <option name="programArguments" value="--bootnodes /ip4/127.0.0.1/udp/9000/quic-v1/p2p/16Uiu2HAkvi2sxT75Bpq1c7yV2FjnSQJJ432d6jeshbmfdJss1i6f --bootnodes /ip4/127.0.0.1/udp/9001/quic-v1/p2p/16Uiu2HAmPQhkD6Zg5Co2ee8ShshkiY4tDePKFARPpCS2oKSLj1E1 --genesis $PROJECT_DIR$/lean_client/config.yaml" />
+    <envs>
+      <env name="RUST_LOG" value="debug" />
+    </envs>
+    <option name="emulateTerminal" value="false" />
+    <option name="allFeatures" value="false" />
+    <option name="backtrace" value="SHORT" />
+    <method v="2" />
+  </configuration>
+</component>

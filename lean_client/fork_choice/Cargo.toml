@@ -1,0 +1,12 @@
+[package]
+name = "fork-choice"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = []
+
+[dependencies]
+env-config = { path = "../env-config", default-features = false }
+containers = { path = "../containers", default-features = false }
+ssz = { workspace = true }

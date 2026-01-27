@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 data
 *.key
 *.backup
@@ -22,3 +23,9 @@ hosts.yml
 tmp/
 
 ansible-deployment*.log
+=======
+lean_client/target/*
+lean_client/tests/mainnet
+lean_client/bin
+target/*
+>>>>>>> 91e171021ceefda2c12b073e5aa0181787ba476d
