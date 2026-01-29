@@ -1,16 +1,8 @@
+use containers::{Slot, State};
 // tests/state_process.rs
-use containers::{
-    block::{hash_tree_root, Block, BlockBody},
-    checkpoint::Checkpoint,
-    slot::Slot,
-    state::State,
-    types::{Bytes32, Uint64, ValidatorIndex},
-    Attestation, AttestationData,
-};
 use pretty_assertions::assert_eq;
 use rstest::{fixture, rstest};
-use ssz::PersistentList as List;
-use typenum::U4096;
+use ssz::{H256, PersistentList as List, SszHash};
 
 #[path = "common.rs"]
 mod common;
@@ -19,20 +11,17 @@ use common::{create_block, sample_config};
 #[fixture]
 pub fn genesis_state() -> State {
     let config = sample_config();
-    State::generate_genesis(Uint64(config.genesis_time), Uint64(10))
+    State::generate_genesis(config.genesis_time, 10)
 }
 
 #[test]
 fn test_process_slot() {
     let genesis_state = genesis_state();
 
-    assert_eq!(
-        genesis_state.latest_block_header.state_root,
-        Bytes32(ssz::H256::zero())
-    );
+    assert_eq!(genesis_state.latest_block_header.state_root, H256::zero());
 
     let state_after_slot = genesis_state.process_slot();
-    let expected_root = hash_tree_root(&genesis_state);
+    let expected_root = genesis_state.hash_tree_root();
 
     assert_eq!(
         state_after_slot.latest_block_header.state_root,
@@ -56,7 +45,7 @@ fn test_process_slots() {
     assert_eq!(new_state.slot, target_slot);
     assert_eq!(
         new_state.latest_block_header.state_root,
-        hash_tree_root(&genesis_state)
+        genesis_state.hash_tree_root()
     );
 }
 
@@ -73,7 +62,7 @@ fn test_process_slots_backwards() {
 fn test_process_block_header_valid() {
     let genesis_state = genesis_state();
     let mut state_at_slot_1 = genesis_state.process_slots(Slot(1)).unwrap();
-    let genesis_header_root = hash_tree_root(&state_at_slot_1.latest_block_header);
+    let genesis_header_root = state_at_slot_1.latest_block_header.hash_tree_root();
 
     let block = create_block(1, &mut state_at_slot_1.latest_block_header, None).message;
     let new_state = state_at_slot_1.process_block_header(&block.block).unwrap();
@@ -96,32 +85,31 @@ fn test_process_block_header_valid() {
     // Slot 1 is NOT justified yet (no attestations have been processed)
     assert_eq!(justified_slot_1_relative, false);
     assert_eq!(new_state.latest_block_header.slot, Slot(1));
-    assert_eq!(
-        new_state.latest_block_header.state_root,
-        Bytes32(ssz::H256::zero())
-    );
+    assert_eq!(new_state.latest_block_header.state_root, H256::zero());
 }
 
 #[rstest]
-#[case(2, 1, None, "Block slot mismatch")]
-#[case(1, 2, None, "Incorrect block proposer")]
-#[case(1, 1, Some(Bytes32(ssz::H256::from_slice(&[0xde; 32]))), "Block parent root mismatch")]
+#[case(2, 1, None, "block slot mismatch")]
+#[case(1, 2, None, "incorrect block proposer")]
+#[case(1, 1, Some(H256::from_slice(&[0xde; 32])), "block parent root mismatch")]
 fn test_process_block_header_invalid(
     #[case] bad_slot: u64,
     #[case] bad_proposer: u64,
-    #[case] bad_parent_root: Option<Bytes32>,
+    #[case] bad_parent_root: Option<H256>,
     #[case] expected_error: &str,
 ) {
+    use containers::{Block, BlockBody};
+
     let genesis_state = genesis_state();
     let state_at_slot_1 = genesis_state.process_slots(Slot(1)).unwrap();
     let parent_header = &state_at_slot_1.latest_block_header;
-    let parent_root = hash_tree_root(parent_header);
+    let parent_root = parent_header.hash_tree_root();
 
     let block = Block {
         slot: Slot(bad_slot),
-        proposer_index: ValidatorIndex(bad_proposer),
+        proposer_index: bad_proposer,
         parent_root: bad_parent_root.unwrap_or(parent_root),
-        state_root: Bytes32(ssz::H256::zero()),
+        state_root: H256::zero(),
         body: BlockBody {
             attestations: List::default(),
         },
@@ -130,6 +118,9 @@ fn test_process_block_header_invalid(
     let result = state_at_slot_1.process_block_header(&block);
 
     assert!(result.is_err());
-    let err_msg = result.unwrap_err();
-    assert!(err_msg.contains(expected_error));
+    let err_msg = format!("{:?}", result.unwrap_err());
+    assert!(
+        err_msg.contains(expected_error),
+        r#"Expected to receive "{expected_error}", but received "{err_msg}" instead."#
+    );
 }

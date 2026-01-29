@@ -1,5 +1,6 @@
+use ssz::SszHash;
+
 use super::*;
-use containers::block::hash_tree_root;
 use std::fs;
 use std::path::Path;
 
@@ -34,7 +35,7 @@ impl TestRunner {
                 let state_after_slots = state.process_slots(block.slot)?;
 
                 // Compute the parent root from our current latest_block_header
-                let computed_parent_root = hash_tree_root(&state_after_slots.latest_block_header);
+                let computed_parent_root = state_after_slots.latest_block_header.hash_tree_root();
 
                 // Verify the block's parent_root matches what we computed
                 if block.parent_root != computed_parent_root {
@@ -56,7 +57,7 @@ impl TestRunner {
                         state = new_state;
 
                         // Compute the state root after processing
-                        let computed_state_root = hash_tree_root(&state);
+                        let computed_state_root = state.hash_tree_root();
 
                         // Verify the computed state_root matches the expected one from the vector
                         if block.state_root != computed_state_root {
@@ -147,7 +148,7 @@ impl TestRunner {
                 let state_after_slots = state.process_slots(block.slot)?;
 
                 // Compute the parent root from our current latest_block_header
-                let computed_parent_root = hash_tree_root(&state_after_slots.latest_block_header);
+                let computed_parent_root = state_after_slots.latest_block_header.hash_tree_root();
 
                 // Verify the block's parent_root matches what we computed
                 if block.parent_root != computed_parent_root {
@@ -169,7 +170,7 @@ impl TestRunner {
                         state = new_state;
 
                         // Compute the state root after processing
-                        let computed_state_root = hash_tree_root(&state);
+                        let computed_state_root = state.hash_tree_root();
 
                         // Verify the computed state_root matches the expected one from the vector
                         if block.state_root != computed_state_root {
@@ -268,7 +269,7 @@ impl TestRunner {
             let state_after_slots = state.process_slots(block.slot)?;
 
             // Compute the parent root from our current latest_block_header
-            let computed_parent_root = hash_tree_root(&state_after_slots.latest_block_header);
+            let computed_parent_root = state_after_slots.latest_block_header.hash_tree_root();
 
             // Verify the block's parent_root matches what we computed
             if block.parent_root != computed_parent_root {
@@ -289,7 +290,7 @@ impl TestRunner {
                     state = new_state;
 
                     // Compute the state root after processing
-                    let computed_state_root = hash_tree_root(&state);
+                    let computed_state_root = state.hash_tree_root();
 
                     // Verify the computed state_root matches the expected one from the vector
                     if block.state_root != computed_state_root {
@@ -388,7 +389,7 @@ impl TestRunner {
                 let state_after_slots = state.process_slots(block.slot)?;
 
                 // Compute the parent root from our current latest_block_header
-                let computed_parent_root = hash_tree_root(&state_after_slots.latest_block_header);
+                let computed_parent_root = state_after_slots.latest_block_header.hash_tree_root();
 
                 // Verify the block's parent_root matches what we computed
                 if block.parent_root != computed_parent_root {
@@ -418,7 +419,7 @@ impl TestRunner {
                         state = new_state;
 
                         // Compute the state root after processing
-                        let computed_state_root = hash_tree_root(&state);
+                        let computed_state_root = state.hash_tree_root();
 
                         // Verify the computed state_root matches the expected one from the block
                         if block.state_root != computed_state_root {
@@ -539,14 +540,16 @@ impl TestRunner {
                 match result {
                     Ok(new_state) => {
                         // Block processing succeeded, now validate state root
-                        let computed_state_root = hash_tree_root(&new_state);
+                        let computed_state_root = new_state.hash_tree_root();
 
                         if block.state_root != computed_state_root {
                             error_occurred = true;
                             println!("    ✓ Correctly rejected: Invalid block state root");
                             break; // Stop at first error
                         } else {
-                            println!("    \x1b[31m✗ FAIL: Block processed successfully - but should have failed!\x1b[0m\n");
+                            println!(
+                                "    \x1b[31m✗ FAIL: Block processed successfully - but should have failed!\x1b[0m\n"
+                            );
                             return Err(
                                 "Expected block processing to fail, but it succeeded".into()
                             );
@@ -621,44 +624,20 @@ impl TestRunner {
     //
     // NOTE: Disabled until test vector files are regenerated for devnet2 BlockSignatures format.
     // The current JSON test vectors use signature.data array instead of attestation_signatures + proposer_signature.
-    pub fn run_verify_signatures_test<P: AsRef<Path>>(
-        path: P,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        let json_content = fs::read_to_string(path.as_ref())?;
-
-        // Phase 1: parse minimally to detect `expectException` even if typed parsing fails.
-        let raw: serde_json::Value = serde_json::from_str(&json_content)?;
-
-        let expect_exception = raw
-            .get("tests")
-            .and_then(|t| t.as_object())
-            .and_then(|obj| obj.values().next())
-            .and_then(|tc| tc.get("expectException"))
-            .and_then(|v| v.as_str())
-            .map(|s| s.to_owned());
+    pub fn run_verify_signatures_test<P: AsRef<Path>>(path: P) {
+        let json_content = fs::read_to_string(path.as_ref()).unwrap();
 
         // Phase 2: parse into the typed structure.
-        let test_file: VerifySignaturesTestVectorFile = match serde_json::from_str(&json_content) {
-            Ok(v) => v,
-            Err(e) => {
-                if let Some(ref ex) = expect_exception {
-                    println!(
-                        "\nExpected exception: {} (typed JSON parse failed: {})",
-                        ex, e
-                    );
-                    println!("\n\x1b[32m✓ PASS\x1b[0m\n");
-                    return Ok(());
-                }
-                return Err(Box::new(e));
-            }
-        };
+        let test_file: VerifySignaturesTestVectorFile =
+            serde_json::from_str(&json_content).unwrap();
 
         // Get the first (and only) test case from the file
         let (test_name, test_case) = test_file
             .tests
             .into_iter()
             .next()
-            .ok_or("No test case found in JSON")?;
+            .ok_or("No test case found in JSON")
+            .unwrap();
 
         println!("\n{}: {}", test_name, test_case.info.description);
 
@@ -669,14 +648,14 @@ impl TestRunner {
         println!("  Block slot: {}", signed_block.message.block.slot.0);
         println!(
             "  Proposer index: {}",
-            signed_block.message.block.proposer_index.0
+            signed_block.message.block.proposer_index
         );
 
         let attestation_count = signed_block.message.block.body.attestations.len_u64();
         println!("  Attestations in block: {}", attestation_count);
         println!(
             "  Proposer attestation validator: {}",
-            signed_block.message.proposer_attestation.validator_id.0
+            signed_block.message.proposer_attestation.validator_id
         );
 
         // Check if we expect this test to fail
@@ -686,13 +665,15 @@ impl TestRunner {
             // Verify signatures - we expect this to fail (return Err)
             match signed_block.verify_signatures(anchor_state) {
                 Ok(()) => {
-                    println!("    \x1b[31m✗ FAIL: Signatures verified successfully but should have failed!\x1b[0m\n");
-                    return Err("Expected signature verification to fail, but it succeeded".into());
+                    println!(
+                        "    \x1b[31m✗ FAIL: Signatures verified successfully but should have failed!\x1b[0m\n"
+                    );
+                    panic!("Expected signature verification to fail, but it succeeded");
                 }
                 Err(_) => {
                     println!("    ✓ Correctly rejected: Invalid signatures detected");
                     println!("\n\x1b[32m✓ PASS\x1b[0m\n");
-                    return Ok(());
+                    return;
                 }
             }
         }
@@ -701,14 +682,13 @@ impl TestRunner {
             Ok(()) => {
                 println!("    ✓ All signatures verified successfully");
                 println!("\n\x1b[32m✓ PASS\x1b[0m\n");
-                Ok(())
             }
             Err(e) => {
                 println!(
                     "    \x1b[31m✗ FAIL: Signature verification failed: {}\x1b[0m\n",
                     e
                 );
-                Err(format!("Signature verification failed: {}", e).into())
+                panic!("Signature verification failed: {}", e)
             }
         }
     }

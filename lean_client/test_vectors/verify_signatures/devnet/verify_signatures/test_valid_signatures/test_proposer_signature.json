@@ -1264,7 +1264,7 @@
             "hash": "0xfd453261ae39cec510a775702a42457e8aefbf018d4e32cad082b20bede7a8ae",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/verify_signatures/test_valid_signatures.py::test_proposer_signature[fork_Devnet]",
-            "description": "Test valid proposer signature in SignedBlockWithAttestation.\n\n    Scenario\n    --------\n    - Single block at slot 1\n    - No additional attestations (only proposer attestation)\n\n    Expected Behavior\n    -----------------\n    1. Proposer's signature in SignedBlockWithAttestation can be verified against\n       the validator's pubkey in the state\n\n    Why This Matters\n    ----------------\n    This is the most basic signature generation test. It verifies:\n    - XMSS key generation works\n    - Signature aggregation includes proposer signature",
+            "description": "Test valid proposer signature in SignedBlockWithAttestation.\n\nScenario\n--------\n- Single block at slot 1\n- No additional attestations (only proposer attestation)\n\nExpected Behavior\n-----------------\n1. Proposer's signature in SignedBlockWithAttestation can be verified against\n   the validator's pubkey in the state\n\nWhy This Matters\n----------------\nThis is the most basic signature generation test. It verifies:\n- XMSS key generation works\n- Signature aggregation includes proposer signature",
             "fixtureFormat": "verify_signatures_test"
         }
     }

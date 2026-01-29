@@ -1,10 +1,16 @@
 use serde::{Deserialize, Serialize};
-use ssz_derive::Ssz;
+use ssz::{PersistentList, Ssz};
+use typenum::U4096;
+use xmss::PublicKey;
 
-#[derive(Clone, Debug, PartialEq, Eq, Default, Ssz, Serialize, Deserialize)]
+// todo(containers): default implementation doesn't make sense here
+#[derive(Clone, Debug, Ssz, Serialize, Deserialize, Default)]
 pub struct Validator {
-    // This now uses new XMSS PublicKey struct
-    pub pubkey: crate::public_key::PublicKey,
+    pub pubkey: PublicKey,
     #[serde(default)]
-    pub index: crate::Uint64,
+    pub index: u64,
 }
+
+pub type ValidatorRegistryLimit = U4096;
+
+pub type Validators = PersistentList<Validator, ValidatorRegistryLimit>;

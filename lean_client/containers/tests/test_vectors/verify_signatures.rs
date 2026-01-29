@@ -17,5 +17,5 @@ fn verify_signatures(spec_file: &str) {
         .join("..")
         .join(spec_file);
 
-    TestRunner::run_verify_signatures_test(test_path).unwrap();
+    TestRunner::run_verify_signatures_test(test_path);
 }

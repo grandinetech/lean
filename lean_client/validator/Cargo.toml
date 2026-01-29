@@ -1,17 +1,16 @@
 [package]
 name = "validator"
-version = "0.1.0"
-edition = "2021"
-
-[features]
-default = ["xmss-signing"]
-xmss-signing = ["leansig"]
+edition = { workspace = true }
 
 [dependencies]
-env-config = { path = "../env-config", default-features = false }
-serde_yaml = "0.9"
-containers = { path = "../containers" }
-fork-choice = { path = "../fork_choice" }
-tracing = "0.1"
-typenum = "1.17"
-leansig = { git = "https://github.com/leanEthereum/leanSig", branch = "main", optional = true }
+anyhow = { workspace = true }
+containers = { workspace = true }
+env-config = { workspace = true }
+fork_choice = { workspace = true }
+serde_yaml = { workspace = true }
+tracing = { workspace = true }
+typenum = { workspace = true }
+ethereum-types = { workspace = true }
+ssz = { workspace = true }
+xmss = { workspace = true }
+zeroize = { workspace = true }

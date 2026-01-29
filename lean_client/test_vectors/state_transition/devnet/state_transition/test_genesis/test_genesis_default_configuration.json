@@ -86,7 +86,7 @@
             "hash": "0xc27d979939715b6ec3c3c5774f3be86ed351b64c73849d39aecd8985ca878e64",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/state_transition/test_genesis.py::test_genesis_default_configuration[fork_Devnet]",
-            "description": "Test genesis state with default configuration.\n\n    Scenario\n    --------\n    Generate a genesis state with default parameters:\n    - genesis_time = 0\n    - 4 validators with zero pubkeys",
+            "description": "Test genesis state with default configuration.\n\nScenario\n--------\nGenerate a genesis state with default parameters:\n- genesis_time = 0\n- 4 validators with zero pubkeys",
             "fixtureFormat": "state_transition_test"
         }
     }

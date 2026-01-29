@@ -1,235 +1,72 @@
-use crate::{Checkpoint, Slot, Uint64};
-use anyhow::anyhow;
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use ssz::BitList;
-use ssz::ByteVector;
-use ssz::{SszHash, H256};
-use ssz_derive::Ssz;
+use ssz::{BitList, H256, PersistentList, Ssz, SszHash};
 use std::collections::HashSet;
-use typenum::{Prod, Sum, U100, U1024, U12, U31};
+use typenum::{U4096, Unsigned as _};
+use xmss::{AggregatedSignature, PublicKey, Signature};
 
-// Type-level number for 1 MiB (1048576 = 1024 * 1024)
-type U1048576 = Prod<U1024, U1024>;
-
-pub type U3100 = Prod<U31, U100>;
-
-// Type-level number for 3112 bytes
-pub type U3112 = Sum<U3100, U12>;
-
-// Type alias for Signature
-pub type Signature = ByteVector<U3112>;
-
-// Type-level number for 4096 (validator registry limit)
-use typenum::U4096;
+use crate::{Checkpoint, Slot, validator::ValidatorRegistryLimit};
 
 /// List of validator attestations included in a block (without signatures).
 /// Limit is VALIDATOR_REGISTRY_LIMIT (4096).
-pub type Attestations = ssz::PersistentList<Attestation, U4096>;
+pub type Attestations = PersistentList<Attestation, ValidatorRegistryLimit>;
 
-pub type AggregatedAttestations = ssz::PersistentList<AggregatedAttestation, U4096>;
+pub type AggregatedAttestations = PersistentList<AggregatedAttestation, ValidatorRegistryLimit>;
 
-pub type AttestationSignatures = ssz::PersistentList<AggregatedSignatureProof, U4096>;
-
-/// Legacy naive aggregated signature type (list of individual XMSS signatures).
-/// Kept for backwards compatibility but no longer used in wire format.
-pub type NaiveAggregatedSignature = ssz::PersistentList<Signature, U4096>;
-
-/// Aggregated signature proof from lean-multisig zkVM.
-///
-/// This is a variable-length byte list (up to 1 MiB) containing the serialized
-/// proof bytes from `xmss_aggregate_signatures()`. The `#[ssz(transparent)]`
-/// attribute makes this type serialize directly as a ByteList for SSZ wire format.
-#[derive(Clone, Debug, PartialEq, Eq, Default, Ssz, Serialize, Deserialize)]
-#[ssz(transparent)]
-pub struct MultisigAggregatedSignature(
-    /// The serialized zkVM proof bytes from lean-multisig aggregation.
-    #[serde(with = "crate::serde_helpers::byte_list")]
-    pub ssz::ByteList<U1048576>,
-);
-
-impl MultisigAggregatedSignature {
-    /// Create a new MultisigAggregatedSignature from proof bytes.
-    pub fn new(proof: Vec<u8>) -> Result<Self, AggregationError> {
-        ssz::ByteList::try_from(proof)
-            .map(Self)
-            .map_err(|_| AggregationError::AggregationFailed)
-    }
-
-    /// Get the proof bytes.
-    pub fn as_bytes(&self) -> &[u8] {
-        self.0.as_bytes()
-    }
-
-    /// Check if the signature is empty (no proof).
-    pub fn is_empty(&self) -> bool {
-        self.0.as_bytes().is_empty()
-    }
-
-    /// Aggregate individual XMSS signatures into a single proof.
-    ///
-    /// Uses lean-multisig zkVM to combine multiple signatures into a compact proof.
-    ///
-    /// # Arguments
-    /// * `public_keys` - Slice of validator public keys
-    /// * `signatures` - Individual XMSS signatures to aggregate
-    /// * `message` - The 32-byte message that was signed
-    /// * `epoch` - The epoch/slot in which signatures were created
-    ///
-    /// # Returns
-    /// Aggregated signature proof, or error if aggregation fails.
-    pub fn aggregate(
-        public_keys: &[crate::public_key::PublicKey],
-        signatures: &[Signature],
-        message: &[u8; 32],
-        epoch: u32,
-    ) -> Result<Self, AggregationError> {
-        if public_keys.is_empty() {
-            return Err(AggregationError::EmptyInput);
-        }
-        if public_keys.len() != signatures.len() {
-            return Err(AggregationError::MismatchedLengths);
-        }
-
-        // Convert to lean-multisig types
-        let lean_pks: Vec<_> = public_keys
-            .iter()
-            .map(|pk| pk.as_lean_sig())
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|_| AggregationError::AggregationFailed)?;
-
-        let lean_sigs: Vec<_> = signatures
-            .iter()
-            .map(|sig| {
-                // Convert ByteVector to crate::signature::Signature then to lean-sig
-                let sig_struct = crate::signature::Signature::from(sig.as_bytes());
-                sig_struct.as_lean_sig()
-            })
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|_| AggregationError::AggregationFailed)?;
-
-        let aggregate_sig =
-            lean_multisig::xmss_aggregate_signatures(&lean_pks, &lean_sigs, message, epoch)
-                .map_err(|_| AggregationError::AggregationFailed)?;
-
-        // Serialize the aggregate signature using ethereum_ssz (aliased as eth_ssz)
-        use eth_ssz::Encode;
-        let proof_bytes = aggregate_sig.as_ssz_bytes();
-        Self::new(proof_bytes)
-    }
-
-    /// Verify the aggregated signature proof against the given public keys and message.
-    ///
-    /// Uses lean-multisig zkVM to verify that the aggregated proof is valid
-    /// for all the given public keys signing the same message at the given epoch.
-    ///
-    /// # Returns
-    /// `Ok(())` if the proof is valid, `Err` with the proof error otherwise.
-    pub fn verify(
-        &self,
-        public_keys: &[crate::public_key::PublicKey],
-        message: &[u8; 32],
-        epoch: u32,
-    ) -> Result<(), AggregationError> {
-        // Use ethereum_ssz (aliased as eth_ssz) for decoding
-        use eth_ssz::Decode;
-
-        // Decode the aggregated signature from SSZ bytes
-        let aggregate_sig =
-            lean_multisig::Devnet2XmssAggregateSignature::from_ssz_bytes(self.0.as_bytes())
-                .map_err(|_| AggregationError::VerificationFailed)?;
-
-        // Convert public keys to lean-multisig format
-        let lean_pks: Vec<_> = public_keys
-            .iter()
-            .map(|pk| pk.as_lean_sig())
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|_| AggregationError::VerificationFailed)?;
-
-        lean_multisig::xmss_verify_aggregated_signatures(&lean_pks, message, &aggregate_sig, epoch)
-            .map_err(|_| AggregationError::VerificationFailed)
-    }
-
-    /// Verify the aggregated payload against validators and message.
-    ///
-    /// This is a convenience method that extracts public keys from validators.
-    ///
-    /// # Arguments
-    /// * `validators` - Slice of validator references to extract public keys from
-    /// * `message` - 32-byte message (typically attestation data root)
-    /// * `epoch` - Epoch/slot for proof verification
-    ///
-    /// # Returns
-    /// `Ok(())` if verification succeeds, `Err` otherwise.
-    pub fn verify_aggregated_payload(
-        &self,
-        validators: &[&crate::validator::Validator],
-        message: &[u8; 32],
-        epoch: u32,
-    ) -> Result<(), AggregationError> {
-        // Extract public keys from validators
-        let public_keys: Vec<_> = validators.iter().map(|v| v.pubkey).collect();
-
-        // Call verify with extracted keys
-        self.verify(&public_keys, message, epoch)
-    }
-}
-
-/// Error types for signature aggregation operations.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum AggregationError {
-    /// No signatures provided for aggregation.
-    EmptyInput,
-    /// Public keys and signatures arrays have different lengths.
-    MismatchedLengths,
-    /// Aggregation failed in lean-multisig.
-    AggregationFailed,
-    /// Verification of aggregated proof failed.
-    VerificationFailed,
-}
+pub type AttestationSignatures = PersistentList<AggregatedSignatureProof, ValidatorRegistryLimit>;
 
 /// Aggregated signature proof with participant tracking.
 ///
 /// This type combines the participant bitfield with the proof bytes,
 /// matches Python's `AggregatedSignatureProof` container structure.
 /// Used in `aggregated_payloads` to track which validators are covered by each proof.
-#[derive(Clone, Debug, PartialEq, Eq, Default, Ssz, Serialize, Deserialize)]
+#[derive(Clone, Debug, Ssz, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AggregatedSignatureProof {
     /// Bitfield indicating which validators' signatures are included.
-    pub participants: AggregationBits,
+    participants: AggregationBits,
     /// The raw aggregated proof bytes from lean-multisig.
-    pub proof_data: MultisigAggregatedSignature,
+    pub proof_data: AggregatedSignature,
 }
 
 impl AggregatedSignatureProof {
-    /// Create a new AggregatedSignatureProof.
-    pub fn new(participants: AggregationBits, proof_data: MultisigAggregatedSignature) -> Self {
-        Self {
+    pub fn aggregate(
+        participants: AggregationBits,
+        public_keys: impl IntoIterator<Item = PublicKey>,
+        signatures: impl IntoIterator<Item = Signature>,
+        message: H256,
+        epoch: u32,
+    ) -> Result<Self> {
+        Ok(Self {
             participants,
-            proof_data,
-        }
-    }
-
-    pub fn from_aggregation(participant_ids: &[u64], proof: MultisigAggregatedSignature) -> Self {
-        Self {
-            participants: AggregationBits::from_validator_indices(participant_ids),
-            proof_data: proof,
-        }
+            proof_data: AggregatedSignature::aggregate(public_keys, signatures, message, epoch)?,
+        })
     }
 
     /// Get the validator indices covered by this proof.
     pub fn get_participant_indices(&self) -> Vec<u64> {
         self.participants.to_validator_indices()
     }
+
+    pub fn verify(
+        &self,
+        public_keys: impl IntoIterator<Item = PublicKey>,
+        message: H256,
+        epoch: u32,
+    ) -> Result<()> {
+        self.proof_data.verify(public_keys, message, epoch)
+    }
 }
 
 /// Bitlist representing validator participation in an attestation.
 /// Limit is VALIDATOR_REGISTRY_LIMIT (4096).
-#[derive(Clone, Debug, PartialEq, Eq, Default, Ssz, Serialize, Deserialize)]
-pub struct AggregationBits(#[serde(with = "crate::serde_helpers::bitlist")] pub BitList<U4096>);
+#[derive(Clone, Debug, Ssz, Serialize, Deserialize)]
+pub struct AggregationBits(
+    #[serde(with = "crate::serde_helpers::bitlist")] pub BitList<ValidatorRegistryLimit>,
+);
 
 impl AggregationBits {
-    pub const LIMIT: u64 = 4096;
+    pub const LIMIT: u64 = ValidatorRegistryLimit::U64;
 
     pub fn from_validator_indices(indices: &[u64]) -> Self {
         assert!(
@@ -278,7 +115,9 @@ impl AggregationBits {
 pub type AggregatedSignatures = ssz::PersistentList<Signature, U4096>;
 
 /// Attestation content describing the validator's observed chain view.
-#[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
+///
+/// todo(containers): default implementation doesn't make sense here
+#[derive(Clone, Debug, Ssz, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct AttestationData {
     /// The slot for which the attestation is made.
     pub slot: Slot,
@@ -290,27 +129,19 @@ pub struct AttestationData {
     pub source: Checkpoint,
 }
 
-impl AttestationData {
-    /// Compute the data root bytes for signature lookup.
-    /// This is the hash tree root of the attestation data.
-    pub fn data_root_bytes(&self) -> crate::Bytes32 {
-        crate::Bytes32(ssz::SszHash::hash_tree_root(self))
-    }
-}
-
 /// Key for looking up individual validator signatures.
 /// Used to index signature caches by (validator, attestation_data_root) pairs.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct SignatureKey {
     /// The validator who produced the signature.
     pub validator_id: u64,
     /// The hash of the signed attestation data.
-    pub data_root: crate::Bytes32,
+    pub data_root: H256,
 }
 
 impl SignatureKey {
     /// Create a new signature key.
-    pub fn new(validator_id: u64, data_root: crate::Bytes32) -> Self {
+    pub fn new(validator_id: u64, data_root: H256) -> Self {
         Self {
             validator_id,
             data_root,
@@ -319,17 +150,19 @@ impl SignatureKey {
 }
 
 /// Validator specific attestation wrapping shared attestation data.
-#[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
+///
+/// todo(containers): default implementation doesn't make sense here
+#[derive(Clone, Debug, Ssz, Default, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Attestation {
     /// The index of the validator making the attestation.
-    pub validator_id: Uint64,
+    pub validator_id: u64,
     /// The attestation data produced by the validator.
     pub data: AttestationData,
 }
 
 /// Validator attestation bundled with its signature.
-#[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Ssz)]
 pub struct SignedAttestation {
     pub validator_id: u64,
     pub message: AttestationData,
@@ -337,7 +170,7 @@ pub struct SignedAttestation {
 }
 
 /// Aggregated attestation consisting of participation bits and message.
-#[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Ssz, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AggregatedAttestation {
     /// Bitfield indicating which validators participated in the aggregation.
@@ -359,10 +192,10 @@ impl AggregatedAttestation {
                 .iter_mut()
                 .find(|(data, _)| *data == attestation.data)
             {
-                validator_ids.push(attestation.validator_id.0);
+                validator_ids.push(attestation.validator_id);
             } else {
                 // Create a new group
-                groups.push((attestation.data.clone(), vec![attestation.validator_id.0]));
+                groups.push((attestation.data.clone(), vec![attestation.validator_id]));
             }
         }
 
@@ -389,7 +222,7 @@ impl AggregatedAttestation {
 }
 
 /// Aggregated attestation bundled with aggregated signatures.
-#[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Ssz)]
 pub struct SignedAggregatedAttestation {
     /// Aggregated attestation data.
     pub message: AggregatedAttestation,

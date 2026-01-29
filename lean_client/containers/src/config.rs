@@ -1,8 +1,6 @@
 use serde::{Deserialize, Serialize};
-use ssz_derive::Ssz;
-use std::fs::File;
-use std::io::BufReader;
-use std::path::Path;
+use ssz::Ssz;
+use std::{fs::File, io::BufReader, path::Path};
 
 #[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

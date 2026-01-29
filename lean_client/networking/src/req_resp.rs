@@ -2,14 +2,14 @@ use std::io;
 use std::io::{Read, Write};
 
 use async_trait::async_trait;
-use containers::ssz::{SszReadDefault, SszWrite};
-use containers::{Bytes32, SignedBlockWithAttestation, Status};
+use containers::{SignedBlockWithAttestation, Status};
 use futures::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 use libp2p::request_response::{
     Behaviour as RequestResponse, Codec, Config, Event, ProtocolSupport,
 };
 use snap::read::FrameDecoder;
 use snap::write::FrameEncoder;
+use ssz::{H256, SszReadDefault as _, SszWrite as _};
 
 pub const MAX_REQUEST_BLOCKS: usize = 1024;
 
@@ -28,10 +28,10 @@ impl AsRef<str> for LeanProtocol {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum LeanRequest {
     Status(Status),
-    BlocksByRoot(Vec<Bytes32>),
+    BlocksByRoot(Vec<H256>),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub enum LeanResponse {
     Status(Status),
     BlocksByRoot(Vec<SignedBlockWithAttestation>),
@@ -67,7 +67,7 @@ impl LeanCodec {
             LeanRequest::BlocksByRoot(roots) => {
                 let mut bytes = Vec::new();
                 for root in roots {
-                    bytes.extend_from_slice(root.0.as_bytes());
+                    bytes.extend_from_slice(root.as_bytes());
                 }
                 bytes
             }
@@ -96,7 +96,7 @@ impl LeanCodec {
                 if chunk.len() == 32 {
                     let mut root = [0u8; 32];
                     root.copy_from_slice(chunk);
-                    roots.push(Bytes32(containers::ssz::H256::from(root)));
+                    roots.push(H256::from(root));
                 }
             }
             if roots.len() > MAX_REQUEST_BLOCKS {

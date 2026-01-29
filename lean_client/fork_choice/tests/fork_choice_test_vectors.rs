@@ -1,27 +1,20 @@
+use containers::{
+    AggregatedAttestation, AggregationBits, Attestation, AttestationData, Block, BlockBody,
+    BlockHeader, BlockSignatures, BlockWithAttestation, Checkpoint, Config, HistoricalBlockHashes,
+    JustificationRoots, JustificationValidators, JustifiedSlots, SignedBlockWithAttestation, Slot,
+    State, Validator, Validators,
+};
 use fork_choice::{
     handlers::{on_block, on_tick},
-    store::{get_forkchoice_store, Store},
-};
-
-use containers::{
-    attestation::{Attestation, AttestationData},
-    block::{
-        hash_tree_root, Block, BlockBody, BlockHeader, BlockSignatures, BlockWithAttestation,
-        SignedBlockWithAttestation,
-    },
-    checkpoint::Checkpoint,
-    config::Config,
-    public_key::PublicKey,
-    state::State,
-    AggregatedAttestation, AggregationBits, Bytes32, HistoricalBlockHashes, JustificationRoots,
-    JustificationsValidators, JustifiedSlots, Signature, Slot, Uint64, ValidatorIndex, Validators,
+    store::{Store, get_forkchoice_store},
 };
 
 use serde::Deserialize;
-use ssz::{SszHash, H256};
+use ssz::{H256, SszHash};
 use std::{collections::HashMap, fs::File};
 use std::{panic::AssertUnwindSafe, path::Path};
 use test_generator::test_resources;
+use xmss::PublicKey;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -82,7 +75,7 @@ impl Into<State> for TestAnchorState {
         }
 
         let mut justifications_validators =
-            JustificationsValidators::new(false, self.justifications_validators.data.len());
+            JustificationValidators::new(false, self.justifications_validators.data.len());
         for (i, &val) in self.justifications_validators.data.iter().enumerate() {
             if val {
                 justifications_validators.set(i, true);
@@ -91,11 +84,13 @@ impl Into<State> for TestAnchorState {
 
         let mut validators = Validators::default();
         for test_validator in &self.validators.data {
-            let pubkey = PublicKey::from_hex(&test_validator.pubkey)
+            let pubkey: PublicKey = test_validator
+                .pubkey
+                .parse()
                 .expect("Failed to parse validator pubkey");
-            let validator = containers::validator::Validator {
+            let validator = Validator {
                 pubkey,
-                index: containers::Uint64(test_validator.index),
+                index: test_validator.index,
             };
             validators.push(validator).expect("Failed to add validator");
         }
@@ -143,7 +138,7 @@ impl Into<BlockHeader> for TestBlockHeader {
     fn into(self) -> BlockHeader {
         BlockHeader {
             slot: Slot(self.slot),
-            proposer_index: ValidatorIndex(self.proposer_index),
+            proposer_index: self.proposer_index,
             parent_root: parse_root(&self.parent_root),
             state_root: parse_root(&self.state_root),
             body_root: parse_root(&self.body_root),
@@ -202,7 +197,7 @@ impl Into<SignedBlockWithAttestation> for TestAnchorBlock {
 
         let block = Block {
             slot: Slot(self.slot),
-            proposer_index: ValidatorIndex(self.proposer_index),
+            proposer_index: self.proposer_index,
             parent_root: parse_root(&self.parent_root),
             state_root: parse_root(&self.state_root),
             body: BlockBody { attestations },
@@ -210,7 +205,7 @@ impl Into<SignedBlockWithAttestation> for TestAnchorBlock {
 
         // Create proposer attestation
         let proposer_attestation = Attestation {
-            validator_id: Uint64(self.proposer_index),
+            validator_id: self.proposer_index,
             data: AttestationData {
                 slot: Slot(self.slot),
                 head: Checkpoint {
@@ -252,7 +247,7 @@ impl Into<Block> for TestBlock {
     fn into(self) -> Block {
         Block {
             slot: Slot(self.slot),
-            proposer_index: ValidatorIndex(self.proposer_index),
+            proposer_index: self.proposer_index,
             parent_root: parse_root(&self.parent_root),
             state_root: parse_root(&self.state_root),
             body: self.body.into(),
@@ -288,7 +283,7 @@ struct TestAttestation {
 impl Into<Attestation> for TestAttestation {
     fn into(self) -> Attestation {
         Attestation {
-            validator_id: Uint64(self.validator_id),
+            validator_id: self.validator_id,
             data: self.data.into(),
         }
     }
@@ -415,7 +410,7 @@ struct TestInfo {
     fixture_format: String,
 }
 
-fn parse_root(hex_str: &str) -> Bytes32 {
+fn parse_root(hex_str: &str) -> H256 {
     let hex = hex_str.trim_start_matches("0x");
     let mut bytes = [0u8; 32];
 
@@ -428,13 +423,13 @@ fn parse_root(hex_str: &str) -> Bytes32 {
         panic!("Invalid root length: {} (expected 64 hex chars)", hex.len());
     }
 
-    Bytes32(ssz::H256::from(bytes))
+    H256::from(bytes)
 }
 
 fn verify_checks(
     store: &Store,
     checks: &Option<TestChecks>,
-    block_labels: &HashMap<String, Bytes32>,
+    block_labels: &HashMap<String, H256>,
     step_idx: usize,
 ) -> Result<(), String> {
     // If no checks provided, nothing to verify
@@ -468,15 +463,19 @@ fn verify_checks(
                 .unwrap_or(0);
             return Err(format!(
                 "Step {}: Head root mismatch for label '{}' - expected slot {}, got slot {} (known_attestations: {}, new_attestations: {})",
-                step_idx, label, expected_slot, actual_slot,
-                store.latest_known_attestations.len(), store.latest_new_attestations.len()
+                step_idx,
+                label,
+                expected_slot,
+                actual_slot,
+                store.latest_known_attestations.len(),
+                store.latest_new_attestations.len()
             ));
         }
     }
 
     if let Some(att_checks) = &checks.attestation_checks {
         for check in att_checks {
-            let validator = ValidatorIndex(check.validator);
+            let validator = check.validator;
 
             match check.location.as_str() {
                 "new" => {
@@ -492,7 +491,10 @@ fn verify_checks(
                         if attestation_data.target.slot.0 != target_slot {
                             return Err(format!(
                                 "Step {}: Validator {} new attestation target slot mismatch - expected {}, got {}",
-                                step_idx, check.validator, target_slot, attestation_data.target.slot.0
+                                step_idx,
+                                check.validator,
+                                target_slot,
+                                attestation_data.target.slot.0
                             ));
                         }
                     }
@@ -535,7 +537,7 @@ fn forkchoice(spec_file: &str) {
         let mut anchor_state: State = case.anchor_state.into();
         let anchor_block: SignedBlockWithAttestation = case.anchor_block.into();
 
-        let body_root = hash_tree_root(&anchor_block.message.block.body);
+        let body_root = anchor_block.message.block.body.hash_tree_root();
         anchor_state.latest_block_header = BlockHeader {
             slot: anchor_block.message.block.slot,
             proposer_index: anchor_block.message.block.proposer_index,
@@ -545,7 +547,7 @@ fn forkchoice(spec_file: &str) {
         };
 
         let mut store = get_forkchoice_store(anchor_state, anchor_block, config);
-        let mut block_labels: HashMap<String, Bytes32> = HashMap::new();
+        let mut block_labels: HashMap<String, H256> = HashMap::new();
 
         for (step_idx, step) in case.steps.into_iter().enumerate() {
             match step.step_type.as_str() {
@@ -562,8 +564,7 @@ fn forkchoice(spec_file: &str) {
                             message: block,
                             signature: BlockSignatures::default(),
                         };
-                        let block_root =
-                            containers::block::compute_block_root(&signed_block.message.block);
+                        let block_root = signed_block.message.block.hash_tree_root();
 
                         // Advance time to the block's slot to ensure attestations are processable
                         // SECONDS_PER_SLOT is 4 (not 12)
@@ -571,7 +572,7 @@ fn forkchoice(spec_file: &str) {
                             store.config.genesis_time + (signed_block.message.block.slot.0 * 4);
                         on_tick(&mut store, block_time, false);
 
-                        on_block(&mut store, signed_block)?;
+                        on_block(&mut store, signed_block).unwrap();
                         Ok(block_root)
                     }));
 

@@ -2,21 +2,20 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use containers::block::BlockSignatures;
-use containers::ssz;
+use anyhow::{Context, Result, anyhow, bail, ensure};
 use containers::{
-    attestation::{Attestation, AttestationData, Signature, SignedAttestation},
-    block::{hash_tree_root, BlockWithAttestation, SignedBlockWithAttestation},
-    checkpoint::Checkpoint,
-    types::{Uint64, ValidatorIndex},
-    Slot,
+    Attestation, AttestationData, BlockSignatures, BlockWithAttestation, Checkpoint,
+    SignedAttestation, SignedBlockWithAttestation, Slot,
 };
-use fork_choice::store::{get_proposal_head, get_vote_target, Store};
+use ethereum_types::H256;
+use fork_choice::store::{Store, get_proposal_head, get_vote_target};
+use ssz::SszHash;
 use tracing::{info, warn};
 
 pub mod keys;
 
 use keys::KeyManager;
+use xmss::Signature;
 
 pub type ValidatorRegistry = HashMap<String, Vec<u64>>;
 // Node
@@ -101,14 +100,14 @@ impl ValidatorService {
         })
     }
 
-    pub fn get_proposer_for_slot(&self, slot: Slot) -> Option<ValidatorIndex> {
+    pub fn get_proposer_for_slot(&self, slot: Slot) -> Option<u64> {
         if self.num_validators == 0 {
             return None;
         }
         let proposer = slot.0 % self.num_validators;
 
         if self.config.is_assigned(proposer) {
-            Some(ValidatorIndex(proposer))
+            Some(proposer)
         } else {
             None
         }
@@ -119,49 +118,49 @@ impl ValidatorService {
         &self,
         store: &mut Store,
         slot: Slot,
-        proposer_index: ValidatorIndex,
-    ) -> Result<SignedBlockWithAttestation, String> {
+        proposer_index: u64,
+    ) -> Result<SignedBlockWithAttestation> {
         info!(
             slot = slot.0,
-            proposer = proposer_index.0,
+            proposer = proposer_index,
             "Building block proposal"
         );
 
         let parent_root = get_proposal_head(store, slot);
 
         info!(
-            parent_root = %format!("0x{:x}", parent_root.0),
-            store_head = %format!("0x{:x}", store.head.0),
+            parent_root = %format!("0x{:x}", parent_root),
+            store_head = %format!("0x{:x}", store.head),
             "Using parent root for block proposal"
         );
 
         let parent_state = store
             .states
             .get(&parent_root)
-            .ok_or_else(|| format!("Couldn't find parent state {:?}", parent_root))?;
+            .ok_or_else(|| anyhow!("Couldn't find parent state {:?}", parent_root))?;
 
         let vote_target = get_vote_target(store);
 
         // Validate that target slot is greater than or equal to source slot
         // At genesis, both target and source are slot 0, which is valid
-        if vote_target.slot < store.latest_justified.slot {
-            return Err(format!(
-                "Invalid attestation: target slot {} must be >= source slot {}",
-                vote_target.slot.0, store.latest_justified.slot.0
-            ));
-        }
+        ensure!(
+            vote_target.slot >= store.latest_justified.slot,
+            "Invalid attestation: target slot {} must be >= source slot {}",
+            vote_target.slot.0,
+            store.latest_justified.slot.0
+        );
 
         let head_block = store
             .blocks
             .get(&store.head)
-            .ok_or("Head block not found")?;
+            .ok_or(anyhow!("Head block not found"))?;
         let head_checkpoint = Checkpoint {
             root: store.head,
             slot: head_block.slot,
         };
 
         let proposer_attestation = Attestation {
-            validator_id: Uint64(proposer_index.0),
+            validator_id: proposer_index,
             data: AttestationData {
                 slot,
                 head: head_checkpoint,
@@ -221,7 +220,7 @@ impl ValidatorService {
                     && !target_already_justified
             })
             .map(|(validator_idx, data)| Attestation {
-                validator_id: Uint64(validator_idx.0),
+                validator_id: *validator_idx,
                 data: data.clone(),
             })
             .collect();
@@ -244,10 +243,9 @@ impl ValidatorService {
             .into_iter()
             .flat_map(|(_, slot_atts)| {
                 // Group by data root (Bytes32 implements Hash)
-                let mut data_groups: HashMap<containers::Bytes32, Vec<Attestation>> =
-                    HashMap::new();
+                let mut data_groups: HashMap<H256, Vec<Attestation>> = HashMap::new();
                 for att in slot_atts {
-                    let data_root = att.data.data_root_bytes();
+                    let data_root = att.data.hash_tree_root();
                     data_groups.entry(data_root).or_default().push(att);
                 }
                 // Find the data with the most attestations
@@ -288,9 +286,9 @@ impl ValidatorService {
 
         info!(
             slot = block.slot.0,
-            proposer = block.proposer_index.0,
-            parent_root = %format!("0x{:x}", block.parent_root.0),
-            state_root = %format!("0x{:x}", block.state_root.0),
+            proposer = block.proposer_index,
+            parent_root = %format!("0x{:x}", block.parent_root),
+            state_root = %format!("0x{:x}", block.state_root),
             attestation_sigs = num_attestations,
             "Block built successfully"
         );
@@ -300,16 +298,16 @@ impl ValidatorService {
 
         if let Some(ref key_manager) = self.key_manager {
             // Sign proposer attestation with XMSS
-            let message = hash_tree_root(&proposer_attestation);
+            let message = proposer_attestation.hash_tree_root();
             let epoch = slot.0 as u32;
 
-            match key_manager.sign(proposer_index.0, epoch, &message.0.into()) {
+            match key_manager.sign(proposer_index, epoch, message) {
                 Ok(sig) => {
                     proposer_signature = sig;
-                    info!(proposer = proposer_index.0, "Signed proposer attestation");
+                    info!(proposer = proposer_index, "Signed proposer attestation");
                 }
                 Err(e) => {
-                    return Err(format!("Failed to sign proposer attestation: {}", e));
+                    bail!("Failed to sign proposer attestation: {}", e);
                 }
             }
         } else {
@@ -324,7 +322,7 @@ impl ValidatorService {
             let mut list = ssz::PersistentList::default();
             for proof in signatures {
                 list.push(proof)
-                    .map_err(|e| format!("Failed to add attestation signature: {:?}", e))?;
+                    .context("Failed to add attestation signature")?;
             }
             list
         };
@@ -384,10 +382,10 @@ impl ValidatorService {
 
                 let signature = if let Some(ref key_manager) = self.key_manager {
                     // Sign with XMSS
-                    let message = hash_tree_root(&attestation);
+                    let message = attestation.hash_tree_root();
                     let epoch = slot.0 as u32;
 
-                    match key_manager.sign(idx, epoch, &message.0.into()) {
+                    match key_manager.sign(idx, epoch, message) {
                         Ok(sig) => {
                             info!(
                                 slot = slot.0,

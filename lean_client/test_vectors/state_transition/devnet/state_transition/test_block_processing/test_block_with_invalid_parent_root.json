@@ -73,7 +73,7 @@
             "hash": "0xb59ea28148b116cc01bfa07ab28357c75e6b741b4558e402ff35b692310fafdf",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/state_transition/test_block_processing.py::test_block_with_invalid_parent_root[fork_Devnet]",
-            "description": "Test that blocks with wrong parent root are rejected.\n\n    Scenario\n    --------\n    Attempt to process a block where parent root doesn't match\n    hash_tree_root(state.latest block header).\n\n    Expected Behavior\n    -----------------\n    Block processing fails with AssertionError: \"Block parent root mismatch\"\n\n    Why This Matters\n    ----------------\n    Maintains chain integrity:\n    - Blocks must reference correct parent\n    - Prevents chain history forgery\n    - Ensures linear chain continuity\n    - Critical for fork resolution\n\n    Without this check, attackers could create invalid chain branches.",
+            "description": "Test that blocks with wrong parent root are rejected.\n\nScenario\n--------\nAttempt to process a block where parent root doesn't match\nhash_tree_root(state.latest block header).\n\nExpected Behavior\n-----------------\nBlock processing fails with AssertionError: \"Block parent root mismatch\"\n\nWhy This Matters\n----------------\nMaintains chain integrity:\n- Blocks must reference correct parent\n- Prevents chain history forgery\n- Ensures linear chain continuity\n- Critical for fork resolution\n\nWithout this check, attackers could create invalid chain branches.",
             "fixtureFormat": "state_transition_test"
         }
     }

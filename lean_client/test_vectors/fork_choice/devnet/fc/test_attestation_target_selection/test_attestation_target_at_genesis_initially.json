@@ -151,7 +151,7 @@
             "hash": "0x7ed6ed6cb6f816bdff8fb63c80379d445bdcf1d2b4812bb98cdfce907eb3e152",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/fc/test_attestation_target_selection.py::test_attestation_target_at_genesis_initially[fork_Devnet]",
-            "description": "Attestation target starts at genesis before safe target updates.\n\n    Scenario\n    --------\n    Process two blocks at slots 1 and 2.\n\n    Expected:\n        - After slot 1: target = slot 0 (genesis/finalized)\n        - After slot 2: target = slot 0 (genesis/finalized)\n        - Target root automatically validated against block at slot 0\n\n    Why This Matters\n    ----------------\n    Initially, the safe target is at genesis (slot 0), so the attestation\n    target walks back from head to genesis.\n\n    This conservative behavior ensures validators don't attest too far ahead\n    before there's sufficient attestation weight to advance the safe target.",
+            "description": "Attestation target starts at genesis before safe target updates.\n\nScenario\n--------\nProcess two blocks at slots 1 and 2.\n\nExpected:\n    - After slot 1: target = slot 0 (genesis/finalized)\n    - After slot 2: target = slot 0 (genesis/finalized)\n    - Target root automatically validated against block at slot 0\n\nWhy This Matters\n----------------\nInitially, the safe target is at genesis (slot 0), so the attestation\ntarget walks back from head to genesis.\n\nThis conservative behavior ensures validators don't attest too far ahead\nbefore there's sufficient attestation weight to advance the safe target.",
             "fixtureFormat": "fork_choice_test"
         }
     }

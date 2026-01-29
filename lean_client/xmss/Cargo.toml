@@ -1,0 +1,23 @@
+[package]
+name = "xmss"
+edition = { workspace = true }
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+derive_more = { workspace = true }
+eth_ssz = { workspace = true }
+ethereum-types = { workspace = true }
+hex = { workspace = true }
+lean-multisig = { workspace = true }
+leansig = { workspace = true }
+rand = { workspace = true }
+ssz = { workspace = true }
+typenum = { workspace = true }
+serde = { workspace = true }
+zeroize = { workspace = true, features = ["derive"] }
+
+[dev-dependencies]
+rand_chacha = { workspace = true }

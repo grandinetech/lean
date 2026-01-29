@@ -75,7 +75,7 @@
             "hash": "0x6bf12284f3bcd59681e7d859a95364939a7503d532bf5111bdc7f05bbb8792f5",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/state_transition/test_block_processing.py::test_block_at_large_slot_number[fork_Devnet]",
-            "description": "Test block processing at high slot numbers.\n\n    Scenario\n    --------\n    Jump directly from genesis to slot 100, simulating:\n    - Network bootstrap after long downtime\n    - Test environment with artificial time jump\n    - Integer overflow boundary testing\n\n    Expected Behavior\n    -----------------\n    1. Process 99 empty slots: 1\u21922\u2192...\u219299\u2192100\n    2. Block at slot 100 processes correctly\n    3. No integer overflow or wraparound\n    4. State remains consistent",
+            "description": "Test block processing at high slot numbers.\n\nScenario\n--------\nJump directly from genesis to slot 100, simulating:\n- Network bootstrap after long downtime\n- Test environment with artificial time jump\n- Integer overflow boundary testing\n\nExpected Behavior\n-----------------\n1. Process 99 empty slots: 1\u21922\u2192...\u219299\u2192100\n2. Block at slot 100 processes correctly\n3. No integer overflow or wraparound\n4. State remains consistent",
             "fixtureFormat": "state_transition_test"
         }
     }

@@ -132,7 +132,7 @@
             "hash": "0x23e331f7f0993188ff0a6dbaeb775f1d132bb748751e8069175659710d5c7860",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/state_transition/test_block_processing.py::test_empty_blocks[fork_Devnet]",
-            "description": "Test processing blocks with empty body (no attestations).\n\n    Scenario\n    --------\n    Build chain of blocks with empty body:\n    - Slot 1: Block, Empty body\n    - Slot 2: Block, Empty body\n    - Slot 3: Block, Empty body\n    - Slot 4: Block, Empty body\n    - Slot 5: Block, Empty body\n    - Slot 6: Block, Empty body\n\n    Expected Behavior\n    -----------------\n    1. Blocks process as expected\n    2. State advances to slot 6",
+            "description": "Test processing blocks with empty body (no attestations).\n\nScenario\n--------\nBuild chain of blocks with empty body:\n- Slot 1: Block, Empty body\n- Slot 2: Block, Empty body\n- Slot 3: Block, Empty body\n- Slot 4: Block, Empty body\n- Slot 5: Block, Empty body\n- Slot 6: Block, Empty body\n\nExpected Behavior\n-----------------\n1. Blocks process as expected\n2. State advances to slot 6",
             "fixtureFormat": "state_transition_test"
         }
     }

@@ -119,7 +119,7 @@
             "hash": "0xd4848a8416440d7de78e8b422c84061940a6efb0efafa4379f30a1f7a3a2227e",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/state_transition/test_block_processing.py::test_linear_chain_multiple_blocks[fork_Devnet]",
-            "description": "Test building a linear chain of multiple blocks.\n\n    Scenario\n    --------\n    Build a 5-block linear chain:\n    genesis \u2192 block1 \u2192 block2 \u2192 block3 \u2192 block4 \u2192 block5\n\n    Expected Behavior\n    -----------------\n    1. Each block processes in sequence\n    2. Parent linkage maintained throughout\n    3. State advances monotonically\n    4. Historical roots accumulate\n    5. Final state at slot 5",
+            "description": "Test building a linear chain of multiple blocks.\n\nScenario\n--------\nBuild a 5-block linear chain:\ngenesis \u2192 block1 \u2192 block2 \u2192 block3 \u2192 block4 \u2192 block5\n\nExpected Behavior\n-----------------\n1. Each block processes in sequence\n2. Parent linkage maintained throughout\n3. State advances monotonically\n4. Historical roots accumulate\n5. Final state at slot 5",
             "fixtureFormat": "state_transition_test"
         }
     }

@@ -2,23 +2,19 @@
 //!
 //! Tests for genesis generation, proposer selection, slot rules, and hash tree root.
 
+use containers::{Block, BlockBody, Slot, State};
 // tests/state_basic.rs
-use containers::{
-    block::{hash_tree_root, BlockBody},
-    state::State,
-    types::Uint64,
-    ValidatorIndex,
-};
 use pretty_assertions::assert_eq;
 
 #[path = "common.rs"]
 mod common;
 use common::sample_config;
+use ssz::{H256, SszHash};
 
 #[test]
 fn test_generate_genesis() {
     let config = sample_config();
-    let state = State::generate_genesis(Uint64(config.genesis_time), Uint64(4));
+    let state = State::generate_genesis(config.genesis_time, 4);
 
     assert_eq!(state.config, config);
     assert_eq!(state.slot.0, 0);
@@ -28,7 +24,7 @@ fn test_generate_genesis() {
     };
     assert_eq!(
         state.latest_block_header.body_root,
-        hash_tree_root(&empty_body)
+        empty_body.hash_tree_root()
     );
 
     // Check that collections are empty by trying to get the first element
@@ -40,14 +36,12 @@ fn test_generate_genesis() {
 
 #[test]
 fn test_proposer_round_robin() {
-    let state = State::generate_genesis(Uint64(0), Uint64(4));
-    assert!(state.is_proposer(containers::types::ValidatorIndex(0)));
+    let state = State::generate_genesis(0, 4);
+    assert!(state.is_proposer(0));
 }
 
 #[test]
 fn test_slot_justifiability_rules() {
-    use containers::slot::Slot;
-
     assert!(Slot(1).is_justifiable_after(Slot(0)));
     assert!(Slot(9).is_justifiable_after(Slot(0))); // perfect square
     assert!(Slot(6).is_justifiable_after(Slot(0))); // pronic (2*3)
@@ -58,14 +52,14 @@ fn test_hash_tree_root() {
     let body = BlockBody {
         attestations: ssz::PersistentList::default(),
     };
-    let block = containers::block::Block {
-        slot: containers::slot::Slot(1),
-        proposer_index: ValidatorIndex(0),
-        parent_root: containers::types::Bytes32(ssz::H256::zero()),
-        state_root: containers::types::Bytes32(ssz::H256::zero()),
+    let block = Block {
+        slot: Slot(1),
+        proposer_index: 0,
+        parent_root: H256::zero(),
+        state_root: H256::zero(),
         body,
     };
 
-    let root = hash_tree_root(&block);
-    assert_ne!(root, containers::types::Bytes32(ssz::H256::zero()));
+    let root = block.hash_tree_root();
+    assert_ne!(root, H256::zero());
 }

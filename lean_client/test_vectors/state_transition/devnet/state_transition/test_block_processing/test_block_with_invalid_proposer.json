@@ -73,7 +73,7 @@
             "hash": "0xb45434f975584f6530884cf438a3021c2f609ccb0e32dfa468912ac537384d07",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/state_transition/test_block_processing.py::test_block_with_invalid_proposer[fork_Devnet]",
-            "description": "Test that blocks from wrong proposer are rejected.\n\n    Scenario\n    --------\n    Attempt to process a block where proposer index doesn't match\n    the expected proposer for that slot.\n\n    Expected Behavior\n    -----------------\n    Block processing fails with AssertionError: \"Incorrect block proposer\"\n\n    Why This Matters\n    ----------------\n    Prevents unauthorized block production:\n    - Only designated proposer can produce blocks\n    - Prevents validator impersonation\n    - Maintains protocol security\n    - Essential for consensus integrity\n\n    Without this check, any validator could produce blocks for any slot.",
+            "description": "Test that blocks from wrong proposer are rejected.\n\nScenario\n--------\nAttempt to process a block where proposer index doesn't match\nthe expected proposer for that slot.\n\nExpected Behavior\n-----------------\nBlock processing fails with AssertionError: \"Incorrect block proposer\"\n\nWhy This Matters\n----------------\nPrevents unauthorized block production:\n- Only designated proposer can produce blocks\n- Prevents validator impersonation\n- Maintains protocol security\n- Essential for consensus integrity\n\nWithout this check, any validator could produce blocks for any slot.",
             "fixtureFormat": "state_transition_test"
         }
     }

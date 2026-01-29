@@ -8,7 +8,6 @@ use std::{
 };
 
 use anyhow::{Result, anyhow};
-use containers::ssz::SszWrite;
 use derive_more::Display;
 use discv5::Enr;
 use futures::StreamExt;
@@ -22,7 +21,9 @@ use libp2p::{
 };
 use libp2p_identity::{Keypair, PeerId};
 use parking_lot::Mutex;
+use rand::seq::IndexedRandom;
 use serde::{Deserialize, Serialize};
+use ssz::{H256, SszWrite as _};
 use tokio::select;
 use tokio::time::{Duration, MissedTickBehavior, interval};
 use tracing::{debug, info, trace, warn};
@@ -643,8 +644,7 @@ where
         if peers.is_empty() {
             None
         } else {
-            use rand::seq::SliceRandom;
-            peers.choose(&mut rand::thread_rng()).copied()
+            peers.choose(&mut rand::rng()).copied()
         }
     }
 
@@ -742,11 +742,7 @@ where
             .send_request(&peer_id, request);
     }
 
-    pub fn send_blocks_by_root_request(
-        &mut self,
-        peer_id: PeerId,
-        roots: Vec<containers::Bytes32>,
-    ) {
+    pub fn send_blocks_by_root_request(&mut self, peer_id: PeerId, roots: Vec<H256>) {
         if roots.is_empty() {
             return;
         }

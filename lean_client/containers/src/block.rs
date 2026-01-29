@@ -1,9 +1,8 @@
-use crate::{
-    Attestation, Bytes32, MultisigAggregatedSignature, Signature, Slot, State, ValidatorIndex,
-};
+use crate::{Attestation, Slot, State};
+use anyhow::{Context, Result, anyhow, ensure};
 use serde::{Deserialize, Serialize};
-use ssz::SszHash;
-use ssz_derive::Ssz;
+use ssz::{H256, Ssz, SszHash};
+use xmss::Signature;
 
 use crate::attestation::{AggregatedAttestations, AttestationSignatures};
 
@@ -11,34 +10,35 @@ use crate::attestation::{AggregatedAttestations, AttestationSignatures};
 ///
 /// Attestations are stored WITHOUT signatures. Signatures are aggregated
 /// separately in BlockSignatures to match the spec architecture.
-#[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
+// todo(containers): default implementation doesn't make sense here.
+#[derive(Clone, Debug, Ssz, Serialize, Deserialize, Default)]
 pub struct BlockBody {
     #[serde(with = "crate::serde_helpers::aggregated_attestations")]
     pub attestations: AggregatedAttestations,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Ssz, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BlockHeader {
     pub slot: Slot,
-    pub proposer_index: ValidatorIndex,
-    pub parent_root: Bytes32,
-    pub state_root: Bytes32,
-    pub body_root: Bytes32,
+    pub proposer_index: u64,
+    pub parent_root: H256,
+    pub state_root: H256,
+    pub body_root: H256,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Ssz, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Block {
     pub slot: Slot,
-    pub proposer_index: ValidatorIndex,
-    pub parent_root: Bytes32,
-    pub state_root: Bytes32,
+    pub proposer_index: u64,
+    pub parent_root: H256,
+    pub state_root: H256,
     pub body: BlockBody,
 }
 
 /// Bundle containing a block and the proposer's attestation.
-#[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Ssz, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BlockWithAttestation {
     /// The proposed block message.
@@ -47,17 +47,17 @@ pub struct BlockWithAttestation {
     pub proposer_attestation: Attestation,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Ssz, Deserialize, Default)]
+// todo(containers): default implementation doesn't make sense here
+#[derive(Debug, Clone, Ssz, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct BlockSignatures {
     #[serde(with = "crate::serde_helpers::attestation_signatures")]
     pub attestation_signatures: AttestationSignatures,
-    #[serde(with = "crate::serde_helpers::signature")]
     pub proposer_signature: Signature,
 }
 
 /// Envelope carrying a block, an attestation from proposer, and aggregated signatures.
-#[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Ssz, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SignedBlockWithAttestation {
     /// The block plus an attestation from proposer being signed.
@@ -69,21 +69,10 @@ pub struct SignedBlockWithAttestation {
 }
 
 /// Legacy signed block structure (kept for backwards compatibility).
-#[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Ssz)]
 pub struct SignedBlock {
     pub message: Block,
     pub signature: Signature,
-}
-
-/// Compute the SSZ hash tree root for any type implementing `SszHash`.
-pub fn hash_tree_root<T: ssz::SszHash>(value: &T) -> Bytes32 {
-    let h = value.hash_tree_root();
-    Bytes32(h)
-}
-
-/// Compute the canonical block root for a Block.
-pub fn compute_block_root(block: &Block) -> Bytes32 {
-    Bytes32(block.hash_tree_root())
 }
 
 impl SignedBlockWithAttestation {
@@ -132,29 +121,28 @@ impl SignedBlockWithAttestation {
     /// all participating validators.
     ///
     /// Returns `Ok(())` if all signatures are valid, or an error describing the failure.
-    pub fn verify_signatures(&self, parent_state: State) -> Result<(), String> {
+    pub fn verify_signatures(&self, parent_state: State) -> Result<()> {
         // Unpack the signed block components
         let block = &self.message.block;
         let signatures = &self.signature;
-        let aggregated_attestations = block.body.attestations.clone();
-        let attestation_signatures = signatures.attestation_signatures.clone();
+        let aggregated_attestations = &block.body.attestations;
+        let attestation_signatures = &signatures.attestation_signatures;
 
         // Verify signature count matches aggregated attestation count
-        if aggregated_attestations.len_u64() != attestation_signatures.len_u64() {
-            return Err(format!(
-                "Attestation signature count mismatch: {} attestations vs {} signatures",
-                aggregated_attestations.len_u64(),
-                attestation_signatures.len_u64()
-            ));
-        }
+        ensure!(
+            aggregated_attestations.len_u64() == attestation_signatures.len_u64(),
+            "attestation signature count mismatch: {} attestations vs {} signatures",
+            aggregated_attestations.len_u64(),
+            attestation_signatures.len_u64()
+        );
 
         let validators = &parent_state.validators;
         let num_validators = validators.len_u64();
 
         // Verify each aggregated attestation's zkVM proof
-        for (aggregated_attestation, _aggregated_signature_proof) in (&aggregated_attestations)
+        for (aggregated_attestation, aggregated_signature) in aggregated_attestations
             .into_iter()
-            .zip((&attestation_signatures).into_iter())
+            .zip(attestation_signatures.into_iter())
         {
             let validator_ids = aggregated_attestation
                 .aggregation_bits
@@ -162,101 +150,63 @@ impl SignedBlockWithAttestation {
 
             // Ensure all validators exist in the active set
             for validator_id in &validator_ids {
-                if *validator_id >= num_validators {
-                    return Err(format!(
-                        "Validator index {} out of range (max {})",
-                        validator_id, num_validators
-                    ));
-                }
+                ensure!(
+                    *validator_id < num_validators,
+                    "validator index {validator_id} out of range (max {num_validators})"
+                );
             }
 
-            let attestation_data_root: [u8; 32] =
-                hash_tree_root(&aggregated_attestation.data).0.into();
+            let attestation_data_root = aggregated_attestation.data.hash_tree_root();
 
             // Collect validators, returning error if any not found
-            let mut collected_validators = Vec::with_capacity(validator_ids.len());
-            for vid in &validator_ids {
-                let validator = validators
-                    .get(*vid)
-                    .map_err(|_| format!("Validator {} not found in state", vid))?;
-                collected_validators.push(validator);
-            }
+            let public_keys = validator_ids
+                .into_iter()
+                .map(|id| {
+                    validators
+                        .get(id)
+                        .map(|validator| validator.pubkey.clone())
+                        .map_err(Into::into)
+                })
+                .collect::<Result<Vec<_>>>()?;
 
             // Verify the lean-multisig aggregated proof for this attestation
             //
             // The proof verifies that all validators in aggregation_bits signed
             // the same attestation_data_root at the given epoch (slot).
-            _aggregated_signature_proof
-                .proof_data
-                .verify_aggregated_payload(
-                    &collected_validators,
-                    &attestation_data_root,
+            aggregated_signature
+                .verify(
+                    public_keys,
+                    attestation_data_root,
                     aggregated_attestation.data.slot.0 as u32,
                 )
-                .map_err(|e| {
-                    format!(
-                        "Attestation aggregated signature verification failed: {:?}",
-                        e
-                    )
-                })?;
+                .context("attestation aggregated signature verification failed")?;
         }
 
         // Verify the proposer attestation signature (outside the attestation loop)
         let proposer_attestation = &self.message.proposer_attestation;
         let proposer_signature = &signatures.proposer_signature;
 
-        if proposer_attestation.validator_id.0 >= num_validators {
-            return Err(format!(
-                "Proposer index {} out of range (max {})",
-                proposer_attestation.validator_id.0, num_validators
-            ));
-        }
+        ensure!(
+            proposer_attestation.validator_id < num_validators,
+            "proposer index {} out of range (max {num_validators})",
+            proposer_attestation.validator_id
+        );
 
         let proposer = validators
-            .get(proposer_attestation.validator_id.0)
-            .map_err(|_| {
-                format!(
-                    "Proposer {} not found in state",
-                    proposer_attestation.validator_id.0
-                )
-            })?;
+            .get(proposer_attestation.validator_id)
+            .context(format!(
+                "proposer {} not found in state",
+                proposer_attestation.validator_id
+            ))?;
 
-        let proposer_root: [u8; 32] = hash_tree_root(&proposer_attestation.data).0.into();
-        if !verify_xmss_signature(
-            proposer.pubkey,
-            proposer_attestation.data.slot,
-            &proposer_root,
-            proposer_signature,
-        ) {
-            return Err("Proposer attestation signature verification failed".to_string());
-        }
+        proposer_signature
+            .verify(
+                &proposer.pubkey,
+                proposer_attestation.data.slot.0 as u32,
+                proposer_attestation.data.hash_tree_root(),
+            )
+            .context("Proposer signature verification failed")?;
 
         Ok(())
     }
-}
-
-#[cfg(feature = "xmss-verify")]
-pub fn verify_xmss_signature(
-    public_key: crate::public_key::PublicKey,
-    slot: Slot,
-    message_bytes: &[u8; 32],
-    signature: &Signature,
-) -> bool {
-    let epoch = slot.0 as u32;
-
-    // Create Signature from the raw bytes
-    let sig = crate::signature::Signature::from(signature.as_bytes());
-
-    sig.verify(&public_key, epoch, message_bytes)
-        .unwrap_or(false)
-}
-
-#[cfg(not(feature = "xmss-verify"))]
-pub fn verify_xmss_signature(
-    _public_key: crate::public_key::PublicKey,
-    _slot: Slot,
-    _message_bytes: &[u8; 32],
-    _signature: &Signature,
-) -> bool {
-    true
 }

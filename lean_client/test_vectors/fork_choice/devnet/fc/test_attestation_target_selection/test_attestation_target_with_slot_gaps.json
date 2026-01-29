@@ -190,7 +190,7 @@
             "hash": "0x3c5e09193b89f78bfbe3f1829a0e67edef275c0c44d2514da6e5400bd3c5b958",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/fc/test_attestation_target_selection.py::test_attestation_target_with_slot_gaps[fork_Devnet]",
-            "description": "Attestation target handles missed slots correctly.\n\n    Scenario\n    --------\n    Process blocks at slots 1, 3, 5 (skipping even slots).\n\n    Expected:\n        - Targets advance despite gaps\n        - Targets remain justifiable\n        - Safe target stays valid\n\n    Why This Matters\n    ----------------\n    Missed slots are common when proposers fail or network partitions occur.\n\n    The target selection must handle sparse block production gracefully,\n    ensuring validators can still make progress even with gaps in the chain.",
+            "description": "Attestation target handles missed slots correctly.\n\nScenario\n--------\nProcess blocks at slots 1, 3, 5 (skipping even slots).\n\nExpected:\n    - Targets advance despite gaps\n    - Targets remain justifiable\n    - Safe target stays valid\n\nWhy This Matters\n----------------\nMissed slots are common when proposers fail or network partitions occur.\n\nThe target selection must handle sparse block production gracefully,\nensuring validators can still make progress even with gaps in the chain.",
             "fixtureFormat": "fork_choice_test"
         }
     }
