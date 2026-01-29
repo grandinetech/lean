@@ -15,6 +15,8 @@ COMMIT_SHA := $(shell git rev-parse HEAD)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 # Build date. Used for docker image metadata.
 BUILD_DATE := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
+# Currently supported devnet. Used to publish devnet tag, along with `latest`.
+CURRENT_DEVNET := devnet-1
 
 # Temporary variable, which constructs `--tag` arguments, to be passed into 
 #   docker build command. It is used as intermediatery step, not as config 
@@ -22,6 +24,7 @@ BUILD_DATE := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 DOCKER_TAGS := --tag $(DOCKER_REPO):$(DOCKER_TAG)
 ifeq ($(DOCKER_TAG),unstable)
     DOCKER_TAGS += --tag $(DOCKER_REPO):latest
+	DOCKER_TAGS += --tag $(DOCKER_REPO):$(CURRENT_DEVNET)
 endif
 
 all: build check-format test
