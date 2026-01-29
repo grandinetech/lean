@@ -1,37 +1,32 @@
 use clap::Parser;
-use containers::block::BlockSignatures;
-use containers::ssz::{PersistentList, SszHash};
 use containers::{
-    attestation::{Attestation, AttestationData},
-    block::{Block, BlockBody, BlockWithAttestation, SignedBlockWithAttestation},
-    checkpoint::Checkpoint,
-    config::Config,
-    ssz,
-    state::State,
-    types::{Bytes32, Uint64, ValidatorIndex},
-    Signature, Slot,
+    Attestation, AttestationData, Block, BlockBody, BlockSignatures, BlockWithAttestation,
+    Checkpoint, Config, SignedBlockWithAttestation, Slot, State, Validator,
 };
+use ethereum_types::H256;
 use fork_choice::{
     handlers::{on_attestation, on_block, on_tick},
-    store::{get_forkchoice_store, Store, INTERVALS_PER_SLOT},
+    store::{INTERVALS_PER_SLOT, Store, get_forkchoice_store},
 };
 use libp2p_identity::Keypair;
 use networking::gossipsub::config::GossipsubConfig;
 use networking::gossipsub::topic::get_topics;
 use networking::network::{NetworkService, NetworkServiceConfig};
 use networking::types::{ChainMessage, OutboundP2pRequest};
+use ssz::{PersistentList, SszHash};
 use std::net::IpAddr;
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::{
     sync::mpsc,
     task,
-    time::{interval, Duration},
+    time::{Duration, interval},
 };
 use tracing::level_filters::LevelFilter;
 use tracing::{debug, info, warn};
 use validator::{ValidatorConfig, ValidatorService};
+use xmss::{PublicKey, Signature};
 
 fn load_node_key(path: &str) -> Result<Keypair, Box<dyn std::error::Error>> {
     let hex_str = std::fs::read_to_string(path)?.trim().to_string();
@@ -60,11 +55,7 @@ fn print_chain_status(store: &Store, connected_peers: u64) {
         let state_root = block.state_root;
         (head_root, parent_root, state_root)
     } else {
-        (
-            Bytes32(ssz::H256::zero()),
-            Bytes32(ssz::H256::zero()),
-            Bytes32(ssz::H256::zero()),
-        )
+        (H256::zero(), H256::zero(), H256::zero())
     };
 
     // Read from store's checkpoints (updated by on_block, reflects highest seen)
@@ -81,9 +72,9 @@ fn print_chain_status(store: &Store, connected_peers: u64) {
     println!("+---------------------------------------------------------------+");
     println!("  Connected Peers:    {}", connected_peers);
     println!("+---------------------------------------------------------------+");
-    println!("  Head Block Root:    0x{:x}", head_root.0);
-    println!("  Parent Block Root:  0x{:x}", parent_root.0);
-    println!("  State Root:         0x{:x}", state_root.0);
+    println!("  Head Block Root:    0x{:x}", head_root);
+    println!("  Parent Block Root:  0x{:x}", parent_root);
+    println!("  State Root:         0x{:x}", state_root);
     println!(
         "  Timely:             {}",
         if timely { "YES" } else { "NO" }
@@ -91,11 +82,11 @@ fn print_chain_status(store: &Store, connected_peers: u64) {
     println!("+---------------------------------------------------------------+");
     println!(
         "  Latest Justified:   Slot {:>5} | Root: 0x{:x}",
-        justified.slot.0, justified.root.0
+        justified.slot.0, justified.root
     );
     println!(
         "  Latest Finalized:   Slot {:>5} | Root: 0x{:x}",
-        finalized.slot.0, finalized.root.0
+        finalized.slot.0, finalized.root
     );
     println!("+===============================================================+\n");
 }
@@ -157,16 +148,15 @@ async fn main() {
         let genesis_config = containers::GenesisConfig::load_from_file(genesis_path)
             .expect("Failed to load genesis config");
 
-        let validators: Vec<containers::validator::Validator> = genesis_config
+        let validators: Vec<Validator> = genesis_config
             .genesis_validators
             .iter()
             .enumerate()
             .map(|(i, v_str)| {
-                let pubkey = containers::public_key::PublicKey::from_hex(v_str)
-                    .expect("Invalid genesis validator pubkey");
-                containers::validator::Validator {
+                let pubkey: PublicKey = v_str.parse().expect("Invalid genesis validator pubkey");
+                Validator {
                     pubkey,
-                    index: Uint64(i as u64),
+                    index: i as u64,
                 }
             })
             .collect();
@@ -175,40 +165,40 @@ async fn main() {
     } else {
         let num_validators = 3;
         let validators = (0..num_validators)
-            .map(|i| containers::validator::Validator {
-                pubkey: containers::public_key::PublicKey::default(),
-                index: Uint64(i as u64),
+            .map(|i| Validator {
+                pubkey: PublicKey::default(),
+                index: i as u64,
             })
             .collect();
         (1763757427, validators)
     };
 
-    let genesis_state = State::generate_genesis_with_validators(Uint64(genesis_time), validators);
+    let genesis_state = State::generate_genesis_with_validators(genesis_time, validators);
 
     let genesis_block = Block {
         slot: Slot(0),
-        proposer_index: ValidatorIndex(0),
-        parent_root: Bytes32(ssz::H256::zero()),
-        state_root: Bytes32(genesis_state.hash_tree_root()),
+        proposer_index: 0,
+        parent_root: H256::zero(),
+        state_root: genesis_state.hash_tree_root(),
         body: BlockBody {
             attestations: Default::default(),
         },
     };
 
     let genesis_proposer_attestation = Attestation {
-        validator_id: Uint64(0),
+        validator_id: 0,
         data: AttestationData {
             slot: Slot(0),
             head: Checkpoint {
-                root: Bytes32(ssz::H256::zero()),
+                root: H256::zero(),
                 slot: Slot(0),
             },
             target: Checkpoint {
-                root: Bytes32(ssz::H256::zero()),
+                root: H256::zero(),
                 slot: Slot(0),
             },
             source: Checkpoint {
-                root: Bytes32(ssz::H256::zero()),
+                root: H256::zero(),
                 slot: Slot(0),
             },
         },
@@ -388,16 +378,16 @@ async fn main() {
                                     if let Some(proposer_idx) = vs.get_proposer_for_slot(Slot(current_slot)) {
                                         info!(
                                             slot = current_slot,
-                                            proposer = proposer_idx.0,
+                                            proposer = proposer_idx,
                                             "Our turn to propose block!"
                                         );
 
                                         match vs.build_block_proposal(&mut store, Slot(current_slot), proposer_idx) {
                                             Ok(signed_block) => {
-                                                let block_root = containers::block::compute_block_root(&signed_block.message.block);
+                                                let block_root = signed_block.message.block.hash_tree_root();
                                                 info!(
                                                     slot = current_slot,
-                                                    block_root = %format!("0x{:x}", block_root.0),
+                                                    block_root = %format!("0x{:x}", block_root),
                                                     "Built block, processing and gossiping"
                                                 );
 
@@ -480,14 +470,14 @@ async fn main() {
                             should_gossip,
                             ..
                         } => {
-                            let block_slot = signed_block_with_attestation.message.block.slot.0;
-                            let proposer = signed_block_with_attestation.message.block.proposer_index.0;
-                            let block_root = containers::block::compute_block_root(&signed_block_with_attestation.message.block);
+                            let block_slot = signed_block_with_attestation.message.block.slot;
+                            let proposer = signed_block_with_attestation.message.block.proposer_index;
+                            let block_root = signed_block_with_attestation.message.block.hash_tree_root();
                             let parent_root = signed_block_with_attestation.message.block.parent_root;
 
                             info!(
-                                slot = block_slot,
-                                block_root = %format!("0x{:x}", block_root.0),
+                                slot = block_slot.0,
+                                block_root = %format!("0x{:x}", block_root),
                                 "Processing block built by Validator {}",
                                 proposer
                             );
@@ -509,21 +499,21 @@ async fn main() {
                                         ) {
                                             warn!("Failed to gossip block: {}", e);
                                         } else {
-                                            info!(slot = block_slot, "Broadcasted block");
+                                            info!(slot = block_slot.0, "Broadcasted block");
                                         }
                                     }
                                 }
-                                Err(e) if e.starts_with("Err: (Fork-choice::Handlers::OnBlock) Block queued") => {
+                                Err(e) if format!("{e:?}").starts_with("Err: (Fork-choice::Handlers::OnBlock) Block queued") => {
                                     debug!("Block queued, requesting missing parent: {}", e);
 
                                     // Request missing parent block from peers
-                                    if !parent_root.0.is_zero() {
+                                    if !parent_root.is_zero() {
                                         if let Err(req_err) = outbound_p2p_sender.send(
                                             OutboundP2pRequest::RequestBlocksByRoot(vec![parent_root])
                                         ) {
                                             warn!("Failed to request missing parent block: {}", req_err);
                                         } else {
-                                            debug!("Requested missing parent block: 0x{:x}", parent_root.0);
+                                            debug!("Requested missing parent block: 0x{:x}", parent_root);
                                         }
                                     }
                                 }

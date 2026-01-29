@@ -8,7 +8,7 @@ pub mod genesis;
 pub mod runner;
 pub mod verify_signatures;
 
-use containers::{block::Block, block::SignedBlockWithAttestation, state::State, Slot};
+use containers::{Block, SignedBlockWithAttestation, Slot, State};
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;

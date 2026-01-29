@@ -1,6 +1,7 @@
 use super::common::create_test_store;
-use containers::Slot;
+use containers::{Block, BlockBody, Slot};
 use fork_choice::store::{get_proposal_head, get_vote_target};
+use ssz::{H256, SszHash};
 
 #[test]
 fn test_get_proposal_head_basic() {
@@ -22,12 +23,6 @@ fn test_get_proposal_head_advances_time() {
 
 #[test]
 fn test_get_vote_target_chain() {
-    use containers::{
-        block::{Block, BlockBody},
-        Bytes32, ValidatorIndex,
-    };
-    use ssz::SszHash;
-
     let mut store = create_test_store();
     let mut parent_root = store.head;
 
@@ -36,13 +31,13 @@ fn test_get_vote_target_chain() {
     for i in 1..=10 {
         let block = Block {
             slot: Slot(i),
-            proposer_index: ValidatorIndex(0),
+            proposer_index: 0,
             parent_root,
-            state_root: Bytes32::default(),
+            state_root: H256::default(),
             body: BlockBody::default(),
         };
 
-        let block_root = containers::block::compute_block_root(&block);
+        let block_root = block.hash_tree_root();
 
         // Insert Block directly per leanSpec
         store.blocks.insert(block_root, block);

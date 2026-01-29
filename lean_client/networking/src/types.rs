@@ -2,8 +2,9 @@ use std::{collections::HashMap, fmt::Display};
 
 use anyhow::{Result, anyhow};
 use async_trait::async_trait;
-use containers::{Bytes32, SignedAttestation, SignedBlockWithAttestation};
+use containers::{SignedAttestation, SignedBlockWithAttestation};
 use serde::{Deserialize, Serialize};
+use ssz::H256;
 use tokio::sync::mpsc;
 
 use crate::serde_utils::quoted_u64;
@@ -107,7 +108,7 @@ impl PeerCount {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub enum ChainMessage {
     ProcessBlock {
         signed_block_with_attestation: SignedBlockWithAttestation,
@@ -167,11 +168,11 @@ impl Display for ChainMessage {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub enum OutboundP2pRequest {
     GossipBlockWithAttestation(SignedBlockWithAttestation),
     GossipAttestation(SignedAttestation),
-    RequestBlocksByRoot(Vec<Bytes32>),
+    RequestBlocksByRoot(Vec<H256>),
 }
 
 #[async_trait]

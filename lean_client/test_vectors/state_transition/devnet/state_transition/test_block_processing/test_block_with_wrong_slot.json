@@ -74,7 +74,7 @@
             "hash": "0x4d79e8bd893bd5e8d42ff3247ba12692b98a5c2cfb2a2c155c9959058f992683",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/state_transition/test_block_processing.py::test_block_with_wrong_slot[fork_Devnet]",
-            "description": "Test that blocks with mismatched slot are rejected.\n\n    Scenario\n    --------\n    Attempt to process a block at slot 1, but the block claims to be\n    at slot 2.\n\n    Expected Behavior\n    -----------------\n    Block processing fails with AssertionError: \"Block slot mismatch\"\n\n    Why This Matters\n    ----------------\n    Ensures temporal consistency:\n    - Blocks can't lie about their slot\n    - Prevents time manipulation attacks\n    - Maintains protocol timing integrity\n    - Essential for slot-based consensus",
+            "description": "Test that blocks with mismatched slot are rejected.\n\nScenario\n--------\nAttempt to process a block at slot 1, but the block claims to be\nat slot 2.\n\nExpected Behavior\n-----------------\nBlock processing fails with AssertionError: \"Block slot mismatch\"\n\nWhy This Matters\n----------------\nEnsures temporal consistency:\n- Blocks can't lie about their slot\n- Prevents time manipulation attacks\n- Maintains protocol timing integrity\n- Essential for slot-based consensus",
             "fixtureFormat": "state_transition_test"
         }
     }

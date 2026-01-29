@@ -1,11 +1,8 @@
-use crate::store::*;
-use containers::attestation::AttestationData;
-use containers::SignatureKey;
-use containers::{
-    attestation::SignedAttestation, block::SignedBlockWithAttestation, Bytes32, ValidatorIndex,
-};
-use ssz::SszHash;
-use tracing::{debug, info};
+use anyhow::{Result, anyhow, bail, ensure};
+use containers::{AttestationData, SignatureKey, SignedAttestation, SignedBlockWithAttestation};
+use ssz::{H256, SszHash};
+
+use crate::store::{INTERVALS_PER_SLOT, SECONDS_PER_INTERVAL, Store, tick_interval, update_head};
 
 #[inline]
 pub fn on_tick(store: &mut Store, time: u64, has_proposal: bool) {
@@ -26,62 +23,63 @@ pub fn on_tick(store: &mut Store, time: u64, has_proposal: bool) {
 /// 2. A vote cannot span backwards in time (source > target).
 /// 3. A vote cannot be for a future slot.
 /// 4. Checkpoint slots must match block slots.
-fn validate_attestation_data(store: &Store, data: &AttestationData) -> Result<(), String> {
+fn validate_attestation_data(store: &Store, data: &AttestationData) -> Result<()> {
     // Cannot count a vote if we haven't seen the blocks involved
-    if !store.blocks.contains_key(&data.source.root) {
-        return Err(format!(
-            "Unknown source block: {:?}",
-            &data.source.root.0.as_bytes()[..8]
-        ));
-    }
-    if !store.blocks.contains_key(&data.target.root) {
-        return Err(format!(
-            "Unknown target block: {:?}",
-            &data.target.root.0.as_bytes()[..8]
-        ));
-    }
-    if !store.blocks.contains_key(&data.head.root) {
-        return Err(format!(
-            "Unknown head block: {:?}",
-            &data.head.root.0.as_bytes()[..8]
-        ));
-    }
+    ensure!(
+        store.blocks.contains_key(&data.source.root),
+        "Unknown source block: {:?}",
+        data.source.root
+    );
+
+    ensure!(
+        store.blocks.contains_key(&data.target.root),
+        "Unknown target block: {:?}",
+        &data.target.root
+    );
+
+    ensure!(
+        store.blocks.contains_key(&data.head.root),
+        "Unknown head block: {:?}",
+        &data.head.root
+    );
 
     // Source must be older than Target.
-    if data.source.slot > data.target.slot {
-        return Err(format!(
-            "Source checkpoint slot {} must not exceed target slot {}",
-            data.source.slot.0, data.target.slot.0
-        ));
-    }
+    ensure!(
+        data.source.slot <= data.target.slot,
+        "Source checkpoint slot {} must not exceed target slot {}",
+        data.source.slot.0,
+        data.target.slot.0
+    );
 
     // Validate checkpoint slots match block slots
     // Per devnet-2, store.blocks now contains Block (not SignedBlockWithAttestation)
     let source_block = &store.blocks[&data.source.root];
     let target_block = &store.blocks[&data.target.root];
 
-    if source_block.slot != data.source.slot {
-        return Err(format!(
-            "Source checkpoint slot mismatch: checkpoint {} vs block {}",
-            data.source.slot.0, source_block.slot.0
-        ));
-    }
-    if target_block.slot != data.target.slot {
-        return Err(format!(
-            "Target checkpoint slot mismatch: checkpoint {} vs block {}",
-            data.target.slot.0, target_block.slot.0
-        ));
-    }
+    ensure!(
+        source_block.slot == data.source.slot,
+        "Source checkpoint slot mismatch: checkpoint {} vs block {}",
+        data.source.slot.0,
+        source_block.slot.0
+    );
+
+    ensure!(
+        target_block.slot == data.target.slot,
+        "Target checkpoint slot mismatch: checkpoint {} vs block {}",
+        data.target.slot.0,
+        target_block.slot.0
+    );
 
     // Validate attestation is not too far in the future
     // We allow a small margin for clock disparity (1 slot), but no further.
     let current_slot = store.time / INTERVALS_PER_SLOT;
-    if data.slot.0 > current_slot + 1 {
-        return Err(format!(
-            "Attestation too far in future: attestation slot {} > current slot {} + 1",
-            data.slot.0, current_slot
-        ));
-    }
+
+    ensure!(
+        data.slot.0 <= current_slot + 1,
+        "Attestation too far in future: attestation slot {} > current slot {} + 1",
+        data.slot.0,
+        current_slot
+    );
 
     Ok(())
 }
@@ -96,15 +94,15 @@ fn validate_attestation_data(store: &Store, data: &AttestationData) -> Result<()
 pub fn on_gossip_attestation(
     store: &mut Store,
     signed_attestation: SignedAttestation,
-) -> Result<(), String> {
-    let validator_id = ValidatorIndex(signed_attestation.validator_id);
+) -> Result<()> {
+    let validator_id = signed_attestation.validator_id;
     let attestation_data = signed_attestation.message.clone();
 
     // Validate the attestation data first
     validate_attestation_data(store, &attestation_data)?;
 
     // Store signature for later lookup during block building
-    let data_root = attestation_data.data_root_bytes();
+    let data_root = attestation_data.hash_tree_root();
     let sig_key = SignatureKey::new(signed_attestation.validator_id, data_root);
     store
         .gossip_signatures
@@ -127,8 +125,8 @@ pub fn on_attestation(
     store: &mut Store,
     signed_attestation: SignedAttestation,
     is_from_block: bool,
-) -> Result<(), String> {
-    let validator_id = ValidatorIndex(signed_attestation.validator_id);
+) -> Result<()> {
+    let validator_id = signed_attestation.validator_id;
     let attestation_data = signed_attestation.message.clone();
 
     // Validate attestation data
@@ -136,7 +134,7 @@ pub fn on_attestation(
 
     if !is_from_block {
         // Store signature for later aggregation during block building
-        let data_root = attestation_data.data_root_bytes();
+        let data_root = attestation_data.hash_tree_root();
         let sig_key = SignatureKey::new(signed_attestation.validator_id, data_root);
         store
             .gossip_signatures
@@ -149,10 +147,10 @@ pub fn on_attestation(
 /// Internal attestation processing - stores AttestationData
 fn on_attestation_internal(
     store: &mut Store,
-    validator_id: ValidatorIndex,
+    validator_id: u64,
     attestation_data: AttestationData,
     is_from_block: bool,
-) -> Result<(), String> {
+) -> Result<()> {
     let attestation_slot = attestation_data.slot;
 
     if is_from_block {
@@ -195,8 +193,8 @@ fn on_attestation_internal(
 /// 3. Processing attestations included in the block body (on-chain)
 /// 4. Updating the forkchoice head
 /// 5. Processing the proposer's attestation (as if gossiped)
-pub fn on_block(store: &mut Store, signed_block: SignedBlockWithAttestation) -> Result<(), String> {
-    let block_root = containers::block::compute_block_root(&signed_block.message.block);
+pub fn on_block(store: &mut Store, signed_block: SignedBlockWithAttestation) -> Result<()> {
+    let block_root = signed_block.message.block.hash_tree_root();
 
     if store.blocks.contains_key(&block_root) {
         return Ok(());
@@ -204,17 +202,17 @@ pub fn on_block(store: &mut Store, signed_block: SignedBlockWithAttestation) -> 
 
     let parent_root = signed_block.message.block.parent_root;
 
-    if !store.states.contains_key(&parent_root) && !parent_root.0.is_zero() {
+    if !store.states.contains_key(&parent_root) && !parent_root.is_zero() {
         store
             .blocks_queue
             .entry(parent_root)
             .or_insert_with(Vec::new)
             .push(signed_block);
-        return Err(format!(
+        bail!(
             "Err: (Fork-choice::Handlers::OnBlock) Block queued: parent {:?} not yet available (pending: {} blocks)",
-            &parent_root.0.as_bytes()[..4],
+            &parent_root.as_bytes()[..4],
             store.blocks_queue.values().map(|v| v.len()).sum::<usize>()
-        ));
+        );
     }
 
     process_block_internal(store, signed_block, block_root)?;
@@ -226,20 +224,16 @@ pub fn on_block(store: &mut Store, signed_block: SignedBlockWithAttestation) -> 
 fn process_block_internal(
     store: &mut Store,
     signed_block: SignedBlockWithAttestation,
-    block_root: Bytes32,
-) -> Result<(), String> {
+    block_root: H256,
+) -> Result<()> {
     let block = signed_block.message.block.clone();
     let attestations_count = block.body.attestations.len_u64();
 
     // Get parent state for validation
-    let state = match store.states.get(&block.parent_root) {
-        Some(state) => state,
-        None => {
-            return Err(
-                "Err: (Fork-choice::Handlers::ProcessBlockInternal) No parent state.".to_string(),
-            );
-        }
-    };
+    let state = store
+        .states
+        .get(&block.parent_root)
+        .ok_or(anyhow!("no parent state"))?;
 
     // Debug: Log parent state checkpoints before transition
     tracing::debug!(
@@ -306,7 +300,7 @@ fn process_block_internal(
     // Store aggregated proofs for future block building
     // Each attestation_signature proof is indexed by (validator_id, data_root) for each participating validator
     for (att_idx, aggregated_attestation) in aggregated_attestations.into_iter().enumerate() {
-        let data_root = aggregated_attestation.data.data_root_bytes();
+        let data_root = aggregated_attestation.data.hash_tree_root();
 
         // Get the corresponding proof from attestation_signatures
         if let Ok(proof_data) = signatures.attestation_signatures.get(att_idx as u64) {
@@ -342,7 +336,7 @@ fn process_block_internal(
         for validator_id in validator_ids {
             on_attestation_internal(
                 store,
-                ValidatorIndex(validator_id),
+                validator_id,
                 aggregated_attestation.data.clone(),
                 true, // is_from_block
             )?;
@@ -353,9 +347,8 @@ fn process_block_internal(
     update_head(store);
 
     // Store proposer's signature for later block building
-    let proposer_data_root = proposer_attestation.data.data_root_bytes();
-    let proposer_sig_key =
-        SignatureKey::new(proposer_attestation.validator_id.0, proposer_data_root);
+    let proposer_data_root = proposer_attestation.data.hash_tree_root();
+    let proposer_sig_key = SignatureKey::new(proposer_attestation.validator_id, proposer_data_root);
     store
         .gossip_signatures
         .insert(proposer_sig_key, signed_block.signature.proposer_signature);
@@ -364,7 +357,7 @@ fn process_block_internal(
     // This ensures it goes to "new" attestations and doesn't immediately affect fork choice
     on_attestation_internal(
         store,
-        ValidatorIndex(proposer_attestation.validator_id.0),
+        proposer_attestation.validator_id,
         proposer_attestation.data.clone(),
         false, // is_from_block
     )?;
@@ -372,11 +365,11 @@ fn process_block_internal(
     Ok(())
 }
 
-fn process_pending_blocks(store: &mut Store, mut roots: Vec<Bytes32>) {
+fn process_pending_blocks(store: &mut Store, mut roots: Vec<H256>) {
     while let Some(parent_root) = roots.pop() {
         if let Some(purgatory) = store.blocks_queue.remove(&parent_root) {
             for block in purgatory {
-                let block_origins = containers::block::compute_block_root(&block.message.block);
+                let block_origins = block.message.block.hash_tree_root();
                 if let Ok(()) = process_block_internal(store, block, block_origins) {
                     roots.push(block_origins);
                 }

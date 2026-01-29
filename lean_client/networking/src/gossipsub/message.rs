@@ -2,8 +2,8 @@ use crate::gossipsub::topic::GossipsubKind;
 use crate::gossipsub::topic::GossipsubTopic;
 use containers::SignedAttestation;
 use containers::SignedBlockWithAttestation;
-use containers::ssz::SszReadDefault;
 use libp2p::gossipsub::TopicHash;
+use ssz::SszReadDefault as _;
 
 pub enum GossipsubMessage {
     Block(SignedBlockWithAttestation),

@@ -1,14 +1,12 @@
-use containers::{
-    attestation::{AttestationData, SignedAttestation},
-    block::{Block, SignedBlockWithAttestation},
-    checkpoint::Checkpoint,
-    config::Config,
-    state::State,
-    Bytes32, Root, Slot, ValidatorIndex,
-};
-use containers::{AggregatedSignatureProof, Signature, SignatureKey};
-use ssz::SszHash;
 use std::collections::HashMap;
+
+use anyhow::{Error, Result, anyhow, ensure};
+use containers::{
+    AggregatedSignatureProof, Attestation, AttestationData, Block, Checkpoint, Config,
+    SignatureKey, SignedBlockWithAttestation, Slot, State,
+};
+use ssz::{H256, SszHash};
+use xmss::Signature;
 
 pub type Interval = u64;
 pub const INTERVALS_PER_SLOT: Interval = 4;
@@ -23,23 +21,23 @@ pub struct Store {
 
     pub config: Config,
 
-    pub head: Root,
+    pub head: H256,
 
-    pub safe_target: Root,
+    pub safe_target: H256,
 
     pub latest_justified: Checkpoint,
 
     pub latest_finalized: Checkpoint,
 
-    pub blocks: HashMap<Root, Block>,
+    pub blocks: HashMap<H256, Block>,
 
-    pub states: HashMap<Root, State>,
+    pub states: HashMap<H256, State>,
 
-    pub latest_known_attestations: HashMap<ValidatorIndex, AttestationData>,
+    pub latest_known_attestations: HashMap<u64, AttestationData>,
 
-    pub latest_new_attestations: HashMap<ValidatorIndex, AttestationData>,
+    pub latest_new_attestations: HashMap<u64, AttestationData>,
 
-    pub blocks_queue: HashMap<Root, Vec<SignedBlockWithAttestation>>,
+    pub blocks_queue: HashMap<H256, Vec<SignedBlockWithAttestation>>,
 
     pub gossip_signatures: HashMap<SignatureKey, Signature>,
 
@@ -57,9 +55,9 @@ pub fn get_forkchoice_store(
     let block_slot = block.slot;
 
     // Compute block root using the header hash (canonical block root)
-    let block_root = containers::block::compute_block_root(&block);
+    let block_root = block.hash_tree_root();
 
-    let latest_justified = if anchor_state.latest_justified.root.0.is_zero() {
+    let latest_justified = if anchor_state.latest_justified.root.is_zero() {
         Checkpoint {
             root: block_root,
             slot: block_slot,
@@ -68,7 +66,7 @@ pub fn get_forkchoice_store(
         anchor_state.latest_justified.clone()
     };
 
-    let latest_finalized = if anchor_state.latest_finalized.root.0.is_zero() {
+    let latest_finalized = if anchor_state.latest_finalized.root.is_zero() {
         Checkpoint {
             root: block_root,
             slot: block_slot,
@@ -99,11 +97,11 @@ pub fn get_forkchoice_store(
 
 pub fn get_fork_choice_head(
     store: &Store,
-    mut root: Root,
-    latest_attestations: &HashMap<ValidatorIndex, AttestationData>,
+    mut root: H256,
+    latest_attestations: &HashMap<u64, AttestationData>,
     min_votes: usize,
-) -> Root {
-    if root.0.is_zero() {
+) -> H256 {
+    if root.is_zero() {
         root = store
             .blocks
             .iter()
@@ -111,7 +109,7 @@ pub fn get_fork_choice_head(
             .map(|(r, _)| *r)
             .expect("Error: Empty block.");
     }
-    let mut vote_weights: HashMap<Root, usize> = HashMap::new();
+    let mut vote_weights: HashMap<H256, usize> = HashMap::new();
     let root_slot = store.blocks[&root].slot;
 
     // stage 1: accumulate weights by walking up from each attestation's head
@@ -126,7 +124,7 @@ pub fn get_fork_choice_head(
 
                 if let Some(parent_block) = store.blocks.get(&curr) {
                     curr = parent_block.parent_root;
-                    if curr.0.is_zero() {
+                    if curr.is_zero() {
                         break;
                     }
                     if let Some(next_block) = store.blocks.get(&curr) {
@@ -142,9 +140,9 @@ pub fn get_fork_choice_head(
     }
 
     // stage 2: build adjacency tree (parent -> children)
-    let mut child_map: HashMap<Root, Vec<Root>> = HashMap::new();
+    let mut child_map: HashMap<H256, Vec<H256>> = HashMap::new();
     for (block_hash, block) in &store.blocks {
-        if !block.parent_root.0.is_zero() {
+        if !block.parent_root.is_zero() {
             if vote_weights.get(block_hash).copied().unwrap_or(0) >= min_votes {
                 child_map
                     .entry(block.parent_root)
@@ -174,7 +172,7 @@ pub fn get_fork_choice_head(
     }
 }
 
-pub fn get_latest_justified(states: &HashMap<Root, State>) -> Option<&Checkpoint> {
+pub fn get_latest_justified(states: &HashMap<H256, State>) -> Option<&Checkpoint> {
     states
         .values()
         .map(|state| &state.latest_justified)
@@ -257,7 +255,7 @@ pub fn get_vote_target(store: &Store) -> Checkpoint {
 }
 
 #[inline]
-pub fn get_proposal_head(store: &mut Store, slot: Slot) -> Root {
+pub fn get_proposal_head(store: &mut Store, slot: Slot) -> H256 {
     let slot_time = store.config.genesis_time + (slot.0 * SECONDS_PER_SLOT);
 
     crate::handlers::on_tick(store, slot_time, true);
@@ -286,34 +284,26 @@ pub fn get_proposal_head(store: &mut Store, slot: Slot) -> Root {
 pub fn produce_block_with_signatures(
     store: &mut Store,
     slot: Slot,
-    validator_index: ValidatorIndex,
-) -> Result<
-    (
-        Root,
-        containers::block::Block,
-        Vec<AggregatedSignatureProof>,
-    ),
-    String,
-> {
-    use containers::Attestation;
-
+    validator_index: u64,
+) -> Result<(H256, Block, Vec<AggregatedSignatureProof>)> {
     // Get parent block head
     let head_root = get_proposal_head(store, slot);
     let head_state = store
         .states
         .get(&head_root)
-        .ok_or_else(|| "Head state not found".to_string())?
+        .ok_or_else(|| anyhow!("Head state not found"))?
         .clone();
 
     // Validate proposer authorization for this slot
     let num_validators = head_state.validators.len_u64();
     let expected_proposer = slot.0 % num_validators;
-    if validator_index.0 != expected_proposer {
-        return Err(format!(
-            "Validator {} is not the proposer for slot {} (expected {})",
-            validator_index.0, slot.0, expected_proposer
-        ));
-    }
+    ensure!(
+        validator_index == expected_proposer,
+        "Validator {} is not the proposer for slot {} (expected {})",
+        validator_index,
+        slot.0,
+        expected_proposer
+    );
 
     // Convert AttestationData to Attestation objects for build_block
     // Per devnet-2, store now holds AttestationData directly
@@ -321,14 +311,13 @@ pub fn produce_block_with_signatures(
         .latest_known_attestations
         .iter()
         .map(|(validator_idx, attestation_data)| Attestation {
-            validator_id: containers::Uint64(validator_idx.0),
+            validator_id: *validator_idx,
             data: attestation_data.clone(),
         })
         .collect();
 
     // Get known block roots for attestation validation
-    let known_block_roots: std::collections::HashSet<Bytes32> =
-        store.blocks.keys().copied().collect();
+    let known_block_roots: std::collections::HashSet<H256> = store.blocks.keys().copied().collect();
 
     // Build block with fixed-point attestation collection and signature aggregation
     let (final_block, final_post_state, _aggregated_attestations, signatures) = head_state
@@ -344,7 +333,7 @@ pub fn produce_block_with_signatures(
         )?;
 
     // Compute block root using the header hash (canonical block root)
-    let block_root = containers::block::compute_block_root(&final_block);
+    let block_root = final_block.hash_tree_root();
 
     // Store block and state (per devnet-2, we store the plain Block)
     store.blocks.insert(block_root, final_block.clone());

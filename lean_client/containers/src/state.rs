@@ -1,23 +1,28 @@
-use crate::attestation::{AggregatedAttestation, AggregatedAttestations};
-use crate::validator::Validator;
-use crate::{
-    block::{hash_tree_root, Block, BlockBody, BlockHeader, SignedBlockWithAttestation},
-    Attestation, Bytes32, Checkpoint, Config, Signature, Slot, Uint64, ValidatorIndex,
-};
-use crate::{
-    HistoricalBlockHashes, JustificationRoots, JustificationsValidators, JustifiedSlots, Validators,
-};
+use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
-use ssz::PersistentList as List;
-use ssz_derive::Ssz;
-use std::collections::BTreeMap;
+use ssz::{BitList, H256, PersistentList, Ssz, SszHash};
+use std::collections::{BTreeMap, HashMap, HashSet};
+use try_from_iterator::TryFromIterator;
+use typenum::{Prod, U262144};
+use xmss::{PublicKey, Signature};
 
-pub const VALIDATOR_REGISTRY_LIMIT: usize = 1 << 12; // 4096
-pub const JUSTIFICATION_ROOTS_LIMIT: usize = 1 << 18; // 262144
-pub const JUSTIFICATIONS_VALIDATORS_MAX: usize =
-    VALIDATOR_REGISTRY_LIMIT * JUSTIFICATION_ROOTS_LIMIT;
+use crate::{
+    AggregatedSignatureProof, Attestation, AttestationData, Checkpoint, Config, SignatureKey, Slot,
+    attestation::{AggregatedAttestation, AggregatedAttestations, AggregationBits},
+    block::{Block, BlockBody, BlockHeader, SignedBlockWithAttestation},
+    validator::{Validator, ValidatorRegistryLimit, Validators},
+};
 
-#[derive(Clone, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]
+type HistoricalRootsLimit = U262144; // 2^18
+
+type JustificationValidatorsLimit = Prod<ValidatorRegistryLimit, HistoricalRootsLimit>;
+
+pub type HistoricalBlockHashes = PersistentList<H256, U262144>;
+pub type JustifiedSlots = BitList<HistoricalRootsLimit>;
+pub type JustificationValidators = BitList<JustificationValidatorsLimit>;
+pub type JustificationRoots = PersistentList<H256, HistoricalRootsLimit>;
+
+#[derive(Clone, Debug, Ssz, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct State {
     // --- configuration (spec-local) ---
@@ -46,121 +51,102 @@ pub struct State {
     #[serde(with = "crate::serde_helpers")]
     pub justifications_roots: JustificationRoots,
     #[serde(with = "crate::serde_helpers::bitlist")]
-    pub justifications_validators: JustificationsValidators,
+    pub justifications_validators: JustificationValidators,
 }
 
 impl State {
-    pub fn generate_genesis_with_validators(
-        genesis_time: Uint64,
-        validators: Vec<Validator>,
-    ) -> Self {
+    pub fn generate_genesis_with_validators(genesis_time: u64, validators: Vec<Validator>) -> Self {
         let body_for_root = BlockBody {
             attestations: Default::default(),
         };
         let genesis_header = BlockHeader {
             slot: Slot(0),
-            proposer_index: ValidatorIndex(0),
-            parent_root: Bytes32(ssz::H256::zero()),
-            state_root: Bytes32(ssz::H256::zero()),
-            body_root: hash_tree_root(&body_for_root),
+            proposer_index: 0,
+            parent_root: H256::zero(),
+            state_root: H256::zero(),
+            body_root: body_for_root.hash_tree_root(),
         };
 
-        let mut validator_list = List::default();
+        let mut validator_list = PersistentList::default();
         for v in validators {
             validator_list.push(v).expect("Failed to add validator");
         }
 
         Self {
-            config: Config {
-                genesis_time: genesis_time.0,
-            },
+            config: Config { genesis_time },
             slot: Slot(0),
             latest_block_header: genesis_header,
             latest_justified: Checkpoint {
-                root: Bytes32(ssz::H256::zero()),
+                root: H256::zero(),
                 slot: Slot(0),
             },
             latest_finalized: Checkpoint {
-                root: Bytes32(ssz::H256::zero()),
+                root: H256::zero(),
                 slot: Slot(0),
             },
             historical_block_hashes: HistoricalBlockHashes::default(),
             justified_slots: JustifiedSlots::default(),
             validators: validator_list,
             justifications_roots: JustificationRoots::default(),
-            justifications_validators: JustificationsValidators::default(),
+            justifications_validators: JustificationValidators::default(),
         }
     }
 
-    pub fn generate_genesis(genesis_time: Uint64, num_validators: Uint64) -> Self {
+    pub fn generate_genesis(genesis_time: u64, num_validators: u64) -> Self {
         let body_for_root = BlockBody {
             attestations: Default::default(),
         };
         let header = BlockHeader {
             slot: Slot(0),
-            proposer_index: ValidatorIndex(0),
-            parent_root: Bytes32(ssz::H256::zero()),
-            state_root: Bytes32(ssz::H256::zero()),
-            body_root: hash_tree_root(&body_for_root),
+            proposer_index: 0,
+            parent_root: H256::zero(),
+            state_root: H256::zero(),
+            body_root: body_for_root.hash_tree_root(),
         };
 
         //TEMP: Create validators list with dummy validators
-        let mut validators = List::default();
-        for i in 0..num_validators.0 {
+        let mut validators = PersistentList::default();
+        for i in 0..num_validators {
             let validator = Validator {
-                pubkey: crate::public_key::PublicKey::default(),
-                index: Uint64(i),
+                pubkey: PublicKey::default(),
+                index: i,
             };
             validators.push(validator).expect("Failed to add validator");
         }
 
         Self {
-            config: Config {
-                genesis_time: genesis_time.0,
-            },
+            config: Config { genesis_time },
             slot: Slot(0),
             latest_block_header: header,
             latest_justified: Checkpoint {
-                root: Bytes32(ssz::H256::zero()),
+                root: H256::zero(),
                 slot: Slot(0),
             },
             latest_finalized: Checkpoint {
-                root: Bytes32(ssz::H256::zero()),
+                root: H256::zero(),
                 slot: Slot(0),
             },
             historical_block_hashes: HistoricalBlockHashes::default(),
             justified_slots: JustifiedSlots::default(),
             validators,
             justifications_roots: JustificationRoots::default(),
-            justifications_validators: JustificationsValidators::default(),
+            justifications_validators: JustificationValidators::default(),
         }
     }
 
     /// Simple RR proposer rule (round-robin).
-    pub fn is_proposer(&self, index: ValidatorIndex) -> bool {
+    pub fn is_proposer(&self, index: u64) -> bool {
         let num_validators = self.validators.len_u64();
 
         if num_validators == 0 {
             return false; // No validators
         }
-        (self.slot.0 % num_validators) == (index.0 % num_validators)
+        (self.slot.0 % num_validators) == (index % num_validators)
     }
 
-    /// Get the number of validators (since PersistentList doesn't have len())
-    pub fn validator_count(&self) -> usize {
-        let mut count: u64 = 0;
-        loop {
-            match self.validators.get(count) {
-                Ok(_) => count += 1,
-                Err(_) => break,
-            }
-        }
-        count as usize
-    }
-
-    pub fn get_justifications(&self) -> BTreeMap<Bytes32, Vec<bool>> {
+    pub fn get_justifications(&self) -> BTreeMap<H256, Vec<bool>> {
         // Use actual validator count, matching leanSpec
-        let num_validators = self.validator_count();
+        let num_validators = self.validators.len_usize();
         (&self.justifications_roots)
             .into_iter()
             .enumerate()
@@ -181,9 +167,9 @@ impl State {
             .collect()
     }
 
-    pub fn with_justifications(mut self, map: BTreeMap<Bytes32, Vec<bool>>) -> Self {
+    pub fn with_justifications(mut self, map: BTreeMap<H256, Vec<bool>>) -> Self {
         // Use actual validator count, matching leanSpec
-        let num_validators = self.validator_count();
+        let num_validators = self.validators.len_usize();
         let mut roots: Vec<_> = map.keys().cloned().collect();
         roots.sort();
 
@@ -196,7 +182,7 @@ impl State {
         // Build BitList: create with length, then set bits
         // Each root has num_validators votes (matching leanSpec)
         let total_bits = roots.len() * num_validators;
-        let mut new_validators = JustificationsValidators::new(false, total_bits);
+        let mut new_validators = JustificationValidators::new(false, total_bits);
 
         for (i, r) in roots.iter().enumerate() {
             let v = map.get(r).expect("root present");
@@ -218,7 +204,7 @@ impl State {
         self
     }
 
-    pub fn with_historical_hashes(mut self, hashes: Vec<Bytes32>) -> Self {
+    pub fn with_historical_hashes(mut self, hashes: Vec<H256>) -> Self {
         let mut new_hashes = HistoricalBlockHashes::default();
         for h in hashes {
             new_hashes.push(h).expect("within limit");
@@ -227,25 +213,21 @@ impl State {
         self
     }
 
-    // updated for fork choice tests
     pub fn state_transition(
         &self,
         signed_block: SignedBlockWithAttestation,
         valid_signatures: bool,
-    ) -> Result<Self, String> {
+    ) -> Result<Self> {
         self.state_transition_with_validation(signed_block, valid_signatures, true)
     }
 
-    // updated for fork choice tests
     pub fn state_transition_with_validation(
         &self,
         signed_block: SignedBlockWithAttestation,
         valid_signatures: bool,
         validate_state_root: bool,
-    ) -> Result<Self, String> {
-        if !valid_signatures {
-            return Err("Block signatures must be valid".to_string());
-        }
+    ) -> Result<Self> {
+        ensure!(valid_signatures, "invalid block signatures");
 
         let block = &signed_block.message.block;
         let mut state = self.process_slots(block.slot)?;
@@ -253,19 +235,16 @@ impl State {
 
         if validate_state_root {
             let state_for_hash = state.clone();
-            let state_root = hash_tree_root(&state_for_hash);
-            if block.state_root != state_root {
-                return Err("Invalid block state root".to_string());
-            }
+            let state_root = state_for_hash.hash_tree_root();
+
+            ensure!(block.state_root == state_root, "invalid block state root");
         }
 
         Ok(state)
     }
 
-    pub fn process_slots(&self, target_slot: Slot) -> Result<Self, String> {
-        if self.slot >= target_slot {
-            return Err("Target slot must be in the future".to_string());
-        }
+    pub fn process_slots(&self, target_slot: Slot) -> Result<Self> {
+        ensure!(self.slot < target_slot, "target slot must be in the future");
 
         let mut state = self.clone();
 
@@ -280,9 +259,9 @@ impl State {
     pub fn process_slot(&self) -> Self {
         // Cache the state root in the header if not already set (matches leanSpec)
         // Per spec: leanSpec/src/lean_spec/subspecs/containers/state/state.py lines 173-176
-        if self.latest_block_header.state_root == Bytes32(ssz::H256::zero()) {
+        if self.latest_block_header.state_root.is_zero() {
             let state_for_hash = self.clone();
-            let previous_state_root = hash_tree_root(&state_for_hash);
+            let previous_state_root = state_for_hash.hash_tree_root();
 
             let mut new_header = self.latest_block_header.clone();
             new_header.state_root = previous_state_root;
@@ -295,61 +274,50 @@ impl State {
         self.clone()
     }
 
-    pub fn process_block(&self, block: &Block) -> Result<Self, String> {
+    pub fn process_block(&self, block: &Block) -> Result<Self> {
         let state = self.process_block_header(block)?;
 
-        if AggregatedAttestation::has_duplicate_data(&block.body.attestations) {
-            return Err("Block contains duplicate AttestationData".to_string());
-        }
+        ensure!(
+            !AggregatedAttestation::has_duplicate_data(&block.body.attestations),
+            "block contains duplicate attestation data"
+        );
 
         Ok(state.process_attestations(&block.body.attestations))
     }
 
-    pub fn process_block_header(&self, block: &Block) -> Result<Self, String> {
-        if !(block.slot == self.slot) {
-            return Err(String::from("Block slot mismatch"));
-        }
-        if !(block.slot > self.latest_block_header.slot) {
-            return Err(String::from("Block is older than latest header"));
-        }
-        if !self.is_proposer(block.proposer_index) {
-            return Err(String::from("Incorrect block proposer"));
-        }
+    pub fn process_block_header(&self, block: &Block) -> Result<Self> {
+        ensure!(block.slot == self.slot, "block slot mismatch");
+        ensure!(
+            block.slot > self.latest_block_header.slot,
+            "block is older than latest header"
+        );
+        ensure!(
+            self.is_proposer(block.proposer_index),
+            "incorrect block proposer"
+        );
 
         // Create a mutable clone for hash computation
         let latest_header_for_hash = self.latest_block_header.clone();
-        let parent_root = hash_tree_root(&latest_header_for_hash);
-        if block.parent_root != parent_root {
-            tracing::error!(
-                expected_parent_root = %format!("0x{:x}", parent_root.0),
-                block_parent_root = %format!("0x{:x}", block.parent_root.0),
-                header_slot = self.latest_block_header.slot.0,
-                header_proposer = self.latest_block_header.proposer_index.0,
-                header_parent = %format!("0x{:x}", self.latest_block_header.parent_root.0),
-                header_state_root = %format!("0x{:x}", self.latest_block_header.state_root.0),
-                header_body_root = %format!("0x{:x}", self.latest_block_header.body_root.0),
-                "Block parent root mismatch - debug info"
-            );
-            return Err(String::from("Block parent root mismatch"));
-        }
+        let parent_root = latest_header_for_hash.hash_tree_root();
+
+        ensure!(
+            block.parent_root == parent_root,
+            "block parent root mismatch"
+        );
 
         // Build new PersistentList for historical hashes
         let mut new_historical_hashes = HistoricalBlockHashes::default();
         for hash in &self.historical_block_hashes {
-            new_historical_hashes.push(*hash).expect("within limit");
+            new_historical_hashes.push(*hash)?;
         }
-        new_historical_hashes
-            .push(parent_root)
-            .expect("within limit");
+        new_historical_hashes.push(parent_root)?;
 
         // Calculate number of empty slots (skipped slots between parent and this block)
         let num_empty_slots = (block.slot.0 - self.latest_block_header.slot.0 - 1) as usize;
 
         // Add ZERO_HASH entries for empty slots to historical hashes
         for _ in 0..num_empty_slots {
-            new_historical_hashes
-                .push(Bytes32(ssz::H256::zero()))
-                .expect("within limit");
+            new_historical_hashes.push(H256::zero())?;
         }
 
         // Extend justified_slots to cover slots from finalized_slot+1 to last_materialized_slot
@@ -386,14 +354,14 @@ impl State {
         };
 
         let body_for_hash = block.body.clone();
-        let body_root = hash_tree_root(&body_for_hash);
+        let body_root = body_for_hash.hash_tree_root();
 
         let new_latest_block_header = BlockHeader {
             slot: block.slot,
             proposer_index: block.proposer_index,
             parent_root: block.parent_root,
             body_root,
-            state_root: Bytes32(ssz::H256::zero()),
+            state_root: H256::zero(),
         };
 
         let mut new_latest_justified = self.latest_justified.clone();
@@ -465,9 +433,9 @@ impl State {
     /// Slots at or before finalized_slot are implicitly justified (not stored in the bitlist).
     fn process_single_attestation(
         &self,
-        vote: &crate::attestation::AttestationData,
+        vote: &AttestationData,
         validator_ids: &[u64],
-        justifications: &mut BTreeMap<Bytes32, Vec<bool>>,
+        justifications: &mut BTreeMap<H256, Vec<bool>>,
         latest_justified: &mut Checkpoint,
         latest_finalized: &mut Checkpoint,
         justified_slots_working: &mut Vec<bool>,
@@ -514,7 +482,7 @@ impl State {
             .unwrap_or(false);
 
         // Ignore votes that reference zero-hash slots (per leanSpec)
-        if source_root.0.is_zero() || target_root.0.is_zero() {
+        if source_root.is_zero() || target_root.is_zero() {
             return;
         }
 
@@ -529,8 +497,8 @@ impl State {
         tracing::debug!(
             source_slot = source_slot.0,
             target_slot = target_slot.0,
-            source_root = %format!("0x{:x}", source_root.0),
-            target_root = %format!("0x{:x}", target_root.0),
+            source_root = %format!("0x{:x}", source_root),
+            target_root = %format!("0x{:x}", target_root),
             validator_count = validator_ids.len(),
             source_is_justified,
             target_already_justified,
@@ -554,7 +522,7 @@ impl State {
         }
 
         if !justifications.contains_key(&target_root) {
-            justifications.insert(target_root, vec![false; self.validator_count()]);
+            justifications.insert(target_root, vec![false; self.validators.len_usize()]);
         }
 
         for &validator_id in validator_ids {
@@ -569,11 +537,11 @@ impl State {
         if let Some(votes) = justifications.get(&target_root) {
             let num_validators = self.validators.len_u64() as usize;
             let count = votes.iter().filter(|&&v| v).count();
-            let threshold = (2 * num_validators).div_ceil(3);
+            let threshold = (2usize * num_validators).div_ceil(3);
 
             tracing::info!(
                 target_slot = target_slot.0,
-                target_root = %format!("0x{:x}", target_root.0),
+                target_root = %format!("0x{:x}", target_root),
                 vote_count = count,
                 num_validators,
                 threshold,
@@ -585,7 +553,7 @@ impl State {
             if 3 * count >= 2 * num_validators {
                 tracing::info!(
                     target_slot = target_slot.0,
-                    target_root = %format!("0x{:x}", target_root.0),
+                    target_root = %format!("0x{:x}", target_root),
                     "Justification threshold reached"
                 );
                 *latest_justified = vote.target.clone();
@@ -616,7 +584,7 @@ impl State {
 
     fn finalize_attestation_processing(
         &self,
-        justifications: BTreeMap<Bytes32, Vec<bool>>,
+        justifications: BTreeMap<H256, Vec<bool>>,
         latest_justified: Checkpoint,
         latest_finalized: Checkpoint,
         justified_slots_working: Vec<bool>,
@@ -659,148 +627,84 @@ impl State {
     pub fn build_block(
         &self,
         slot: Slot,
-        proposer_index: ValidatorIndex,
-        parent_root: Bytes32,
+        proposer_index: u64,
+        parent_root: H256,
         initial_attestations: Option<Vec<Attestation>>,
         available_attestations: Option<Vec<Attestation>>,
-        known_block_roots: Option<&std::collections::HashSet<Bytes32>>,
-        gossip_signatures: Option<&std::collections::HashMap<crate::SignatureKey, Signature>>,
-        aggregated_payloads: Option<
-            &std::collections::HashMap<crate::SignatureKey, Vec<crate::AggregatedSignatureProof>>,
-        >,
-    ) -> Result<
-        (
-            Block,
-            Self,
-            Vec<crate::AggregatedAttestation>,
-            Vec<crate::AggregatedSignatureProof>,
-        ),
-        String,
-    > {
-        use crate::attestation::{AggregatedAttestation, SignatureKey};
-
+        known_block_roots: Option<&HashSet<H256>>,
+        gossip_signatures: Option<&HashMap<SignatureKey, Signature>>,
+        aggregated_payloads: Option<&HashMap<SignatureKey, Vec<AggregatedSignatureProof>>>,
+    ) -> Result<(
+        Block,
+        Self,
+        Vec<AggregatedAttestation>,
+        Vec<AggregatedSignatureProof>,
+    )> {
         // Initialize attestation set
         let mut attestations = initial_attestations.unwrap_or_default();
-
-        // Advance state to target slot
-        let pre_state = self.process_slots(slot)?;
 
         // Fixed-point attestation collection loop
         // Iteratively add valid attestations until no new ones can be added
         loop {
             // Create candidate block with current attestation set
             let aggregated = AggregatedAttestation::aggregate_by_data(&attestations);
-            let mut attestations_list = AggregatedAttestations::default();
-            for att in &aggregated {
-                attestations_list
-                    .push(att.clone())
-                    .map_err(|e| format!("Failed to push attestation: {:?}", e))?;
-            }
 
             let candidate_block = Block {
                 slot,
                 proposer_index,
                 parent_root,
-                state_root: Bytes32(ssz::H256::zero()),
+                state_root: H256::zero(),
                 body: BlockBody {
-                    attestations: attestations_list,
+                    attestations: AggregatedAttestations::try_from_iter(aggregated.into_iter())?,
                 },
             };
 
             // Apply state transition to get the post-block state
-            let post_state = pre_state.process_block(&candidate_block)?;
+            let post_state = self.process_slots(slot)?.process_block(&candidate_block)?;
 
-            // If no available attestations pool, skip fixed-point iteration
-            let available = match &available_attestations {
-                Some(avail) => avail,
-                None => {
-                    // No fixed-point: compute signatures and return
-                    let (aggregated_attestations, aggregated_proofs) = self
-                        .compute_aggregated_signatures(
-                            &attestations,
-                            gossip_signatures,
-                            aggregated_payloads,
-                        )?;
-
-                    let mut final_attestations_list = AggregatedAttestations::default();
-                    for att in &aggregated_attestations {
-                        final_attestations_list
-                            .push(att.clone())
-                            .map_err(|e| format!("Failed to push attestation: {:?}", e))?;
-                    }
-
-                    // IMPORTANT: Recompute post_state using the FINAL attestations.
-                    // The original post_state was computed from candidate_block with ALL attestations,
-                    // but final_attestations_list may have fewer attestations (only those with signatures).
-                    // We must use the same attestations for state computation and the block body.
-                    let final_candidate_block = Block {
-                        slot,
-                        proposer_index,
-                        parent_root,
-                        state_root: Bytes32(ssz::H256::zero()),
-                        body: BlockBody {
-                            attestations: final_attestations_list.clone(),
-                        },
-                    };
-                    let final_post_state = pre_state.process_block(&final_candidate_block)?;
-
-                    let final_block = Block {
-                        slot,
-                        proposer_index,
-                        parent_root,
-                        state_root: hash_tree_root(&final_post_state),
-                        body: BlockBody {
-                            attestations: final_attestations_list,
-                        },
-                    };
-
-                    return Ok((
-                        final_block,
-                        final_post_state,
-                        aggregated_attestations,
-                        aggregated_proofs,
-                    ));
-                }
+            let Some(ref available_attestations) = available_attestations else {
+                // No attestation source provided: done after computing post_state
+                break;
             };
 
-            // Find new valid attestations from available pool
-            let mut new_attestations: Vec<Attestation> = Vec::new();
-            let current_data_roots: std::collections::HashSet<_> = attestations
-                .iter()
-                .map(|a| a.data.data_root_bytes())
-                .collect();
+            let Some(known_block_roots) = known_block_roots else {
+                // No attestation source provided: done after computing post_state
+                break;
+            };
 
-            for attestation in available {
-                // Skip if already included
-                if current_data_roots.contains(&attestation.data.data_root_bytes()) {
+            //  Find new valid attestations matching post-state justification
+            let mut new_attestations = Vec::new();
+
+            for attestation in available_attestations {
+                let data = &attestation.data;
+                let validator_id = attestation.validator_id;
+                let data_root = data.hash_tree_root();
+                let sig_key = SignatureKey::new(validator_id, data_root);
+
+                // Skip if target block is unknown
+                if !known_block_roots.contains(&data.head.root) {
                     continue;
                 }
 
-                // Validate attestation against post-state
-                // Source must match post-state's justified checkpoint
-                if attestation.data.source != post_state.latest_justified {
+                // Skip if attestation source does not match post-state's latest justified
+                if data.source != post_state.latest_justified {
                     continue;
                 }
 
-                // Target must be after source
-                if attestation.data.target.slot <= attestation.data.source.slot {
+                // Avoid adding duplicates of attestations already in the candidate set
+                if attestations.contains(attestation) {
                     continue;
                 }
 
-                // Target block must be known (if known_block_roots provided)
-                if let Some(known_roots) = known_block_roots {
-                    if !known_roots.contains(&attestation.data.target.root) {
-                        continue;
-                    }
-                }
-
-                // Check if we have a signature for this attestation
-                let data_root = attestation.data.data_root_bytes();
-                let sig_key = SignatureKey::new(attestation.validator_id.0, data_root);
+                // We can only include an attestation if we have some way to later provide
+                // an aggregated proof for its group:
+                // - either a per validator XMSS signature from gossip, or
+                // - at least one aggregated proof learned from a block that references
+                //   this validator+data.
                 let has_gossip_sig =
-                    gossip_signatures.map_or(false, |gs| gs.contains_key(&sig_key));
+                    gossip_signatures.is_some_and(|sigs| sigs.contains_key(&sig_key));
                 let has_block_proof =
-                    aggregated_payloads.map_or(false, |ap| ap.contains_key(&sig_key));
+                    aggregated_payloads.is_some_and(|payloads| payloads.contains_key(&sig_key));
 
                 if has_gossip_sig || has_block_proof {
                     new_attestations.push(attestation.clone());
@@ -809,98 +713,79 @@ impl State {
 
             // Fixed point reached: no new attestations found
             if new_attestations.is_empty() {
-                // Compute aggregated signatures
-                let (aggregated_attestations, aggregated_proofs) = self
-                    .compute_aggregated_signatures(
-                        &attestations,
-                        gossip_signatures,
-                        aggregated_payloads,
-                    )?;
-
-                let mut final_attestations_list = AggregatedAttestations::default();
-                for att in &aggregated_attestations {
-                    final_attestations_list
-                        .push(att.clone())
-                        .map_err(|e| format!("Failed to push attestation: {:?}", e))?;
-                }
-
-                // IMPORTANT: Recompute post_state using the FINAL attestations.
-                // The original post_state was computed from candidate_block with ALL attestations,
-                // but final_attestations_list may have fewer attestations (only those with signatures).
-                // We must use the same attestations for state computation and the block body.
-                let final_candidate_block = Block {
-                    slot,
-                    proposer_index,
-                    parent_root,
-                    state_root: Bytes32(ssz::H256::zero()),
-                    body: BlockBody {
-                        attestations: final_attestations_list.clone(),
-                    },
-                };
-                let final_post_state = pre_state.process_block(&final_candidate_block)?;
-
-                let final_block = Block {
-                    slot,
-                    proposer_index,
-                    parent_root,
-                    state_root: hash_tree_root(&final_post_state),
-                    body: BlockBody {
-                        attestations: final_attestations_list,
-                    },
-                };
-
-                return Ok((
-                    final_block,
-                    final_post_state,
-                    aggregated_attestations,
-                    aggregated_proofs,
-                ));
+                break;
             }
 
             // Add new attestations and continue iteration
             attestations.extend(new_attestations);
         }
+
+        let (aggregated_attestations, aggregated_signatures) = self.compute_aggregated_signatures(
+            &attestations,
+            gossip_signatures,
+            aggregated_payloads,
+        )?;
+
+        let mut final_block = Block {
+            slot,
+            proposer_index,
+            parent_root,
+            state_root: H256::zero(),
+            body: BlockBody {
+                attestations: AggregatedAttestations::try_from_iter(
+                    aggregated_attestations.clone(),
+                )?,
+            },
+        };
+
+        let post_state = self.process_slots(slot)?.process_block(&final_block)?;
+
+        final_block.state_root = post_state.hash_tree_root();
+
+        Ok((
+            final_block,
+            post_state,
+            aggregated_attestations,
+            aggregated_signatures,
+        ))
     }
 
     pub fn compute_aggregated_signatures(
         &self,
         attestations: &[Attestation],
-        gossip_signatures: Option<&std::collections::HashMap<crate::SignatureKey, Signature>>,
-        aggregated_payloads: Option<
-            &std::collections::HashMap<crate::SignatureKey, Vec<crate::AggregatedSignatureProof>>,
-        >,
-    ) -> Result<
-        (
-            Vec<crate::AggregatedAttestation>,
-            Vec<crate::AggregatedSignatureProof>,
-        ),
-        String,
-    > {
-        use crate::attestation::{AggregatedAttestation, AggregationBits, SignatureKey};
-        use std::collections::HashSet;
-
-        let mut results: Vec<(AggregatedAttestation, crate::AggregatedSignatureProof)> = Vec::new();
+        gossip_signatures: Option<&HashMap<SignatureKey, Signature>>,
+        aggregated_payloads: Option<&HashMap<SignatureKey, Vec<AggregatedSignatureProof>>>,
+    ) -> Result<(Vec<AggregatedAttestation>, Vec<AggregatedSignatureProof>)> {
+        let mut results: Vec<(AggregatedAttestation, AggregatedSignatureProof)> = Vec::new();
 
         // Group individual attestations by data
         for aggregated in AggregatedAttestation::aggregate_by_data(attestations) {
             let data = &aggregated.data;
-            let data_root = data.data_root_bytes();
+            let data_root = data.hash_tree_root();
             let validator_ids = aggregated.aggregation_bits.to_validator_indices();
 
             // Phase 1: Gossip Collection
             // Try to collect individual signatures from gossip network
-            let mut gossip_ids: Vec<u64> = Vec::new();
-            let mut _gossip_sigs_collected: Vec<Signature> = Vec::new();
-            let mut remaining: HashSet<u64> = HashSet::new();
+            let mut gossip_sigs = Vec::new();
+            let mut gossip_keys = Vec::new();
+            let mut gossip_ids = Vec::new();
 
-            if let Some(gossip_sigs) = gossip_signatures {
-                for vid in &validator_ids {
-                    let key = SignatureKey::new(*vid, data_root);
-                    if let Some(sig) = gossip_sigs.get(&key) {
-                        gossip_ids.push(*vid);
-                        _gossip_sigs_collected.push(sig.clone());
+            let mut remaining = HashSet::new();
+
+            if let Some(gossip_signatures) = gossip_signatures {
+                for vid in validator_ids {
+                    let key = SignatureKey::new(vid, data_root);
+                    if let Some(sig) = gossip_signatures.get(&key) {
+                        gossip_sigs.push(sig.clone());
+                        gossip_keys.push(
+                            self.validators
+                                .get(vid)
+                                .map(|v| v.pubkey.clone())
+                                .context(format!("invalid validator id {vid}"))?,
+                        );
+                        gossip_ids.push(vid);
                     } else {
-                        remaining.insert(*vid);
+                        remaining.insert(vid);
                     }
                 }
             } else {
@@ -917,11 +802,13 @@ impl State {
             if !gossip_ids.is_empty() {
                 let participants = AggregationBits::from_validator_indices(&gossip_ids);
 
-                // Create proof placeholder (matches Python test_mode behavior)
-                // TODO: Call actual aggregation when lean-multisig supports proper encoding
-                let proof_data = crate::MultisigAggregatedSignature::new(Vec::new())
-                    .expect("Empty proof should always be valid");
-                let proof = crate::AggregatedSignatureProof::new(participants.clone(), proof_data);
+                let proof = AggregatedSignatureProof::aggregate(
+                    participants.clone(),
+                    gossip_keys,
+                    gossip_sigs,
+                    data_root,
+                    data.slot.0 as u32,
+                )?;
 
                 results.push((
                     AggregatedAttestation {
@@ -934,20 +821,27 @@ impl State {
 
             // Phase 2: Fallback to block proofs using greedy set-cover
             // Goal: Cover remaining validators with minimum number of proofs
-            while !remaining.is_empty() {
-                let payloads = match aggregated_payloads {
-                    Some(p) => p,
-                    None => break,
+            loop {
+                let Some(payloads) = aggregated_payloads else {
+                    break;
                 };
 
                 // Pick any remaining validator to find candidate proofs
-                let target_id = *remaining.iter().next().unwrap();
+                let Some(target_id) = remaining.iter().next().copied() else {
+                    break;
+                };
+
                 let key = SignatureKey::new(target_id, data_root);
 
-                let candidates = match payloads.get(&key) {
-                    Some(proofs) if !proofs.is_empty() => proofs,
-                    _ => break, // No proofs found for this validator
+                let Some(candidates) = payloads.get(&key) else {
+                    // No proofs found for this validator
+                    break;
                 };
+
+                if candidates.is_empty() {
+                    // Same as before, no proofs found for this validator
+                    break;
+                }
 
                 // Greedy selection: find proof covering most remaining validators
                 // For each candidate proof, compute intersection with remaining validators
@@ -961,7 +855,7 @@ impl State {
                         (proof, intersection)
                     })
                     .max_by_key(|(_, intersection)| intersection.len())
-                    .expect("candidates is non-empty");
+                    .context("greedy algoritm failure: candidates were empty")?;
 
                 // Guard: If best proof has zero overlap, stop
                 if covered_set.is_empty() {

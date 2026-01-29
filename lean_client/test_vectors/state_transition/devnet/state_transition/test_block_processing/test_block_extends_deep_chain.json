@@ -284,7 +284,7 @@
             "hash": "0x44fac8af1f01ab97fcd1e350bb4906fa7d44bf57121fbf6e7100dd7ed4a37ea9",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/state_transition/test_block_processing.py::test_block_extends_deep_chain[fork_Devnet]",
-            "description": "Test that blocks can extend already-deep chains.\n\n    Scenario\n    --------\n    Build a 20-block chain to simulate a mature blockchain state,\n    then verify new blocks can still extend it correctly.\n\n    Expected Behavior\n    -----------------\n    1. All 20 blocks process successfully\n    2. Parent linkage maintained throughout\n    3. State advances to slot 20\n    4. Historical roots accumulate correctly\n    5. No degradation in processing",
+            "description": "Test that blocks can extend already-deep chains.\n\nScenario\n--------\nBuild a 20-block chain to simulate a mature blockchain state,\nthen verify new blocks can still extend it correctly.\n\nExpected Behavior\n-----------------\n1. All 20 blocks process successfully\n2. Parent linkage maintained throughout\n3. State advances to slot 20\n4. Historical roots accumulate correctly\n5. No degradation in processing",
             "fixtureFormat": "state_transition_test"
         }
     }

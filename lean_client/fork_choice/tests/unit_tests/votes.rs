@@ -4,24 +4,19 @@
 //! using the devnet2 AttestationData structure per leanSpec.
 
 use super::common::create_test_store;
-use containers::{
-    attestation::AttestationData,
-    block::{Block, BlockBody},
-    checkpoint::Checkpoint,
-    Bytes32, Slot, ValidatorIndex,
-};
+use containers::{AttestationData, Block, BlockBody, Checkpoint, Slot};
 use fork_choice::store::get_fork_choice_head;
-use ssz::SszHash;
+use ssz::{H256, SszHash};
 use std::collections::HashMap;
 
 /// Helper to create an AttestationData for devnet2 (per leanSpec)
 fn create_attestation_data(
     slot: u64,
-    head_root: Bytes32,
+    head_root: H256,
     head_slot: u64,
-    target_root: Bytes32,
+    target_root: H256,
     target_slot: u64,
-    source_root: Bytes32,
+    source_root: H256,
     source_slot: u64,
 ) -> AttestationData {
     AttestationData {
@@ -58,7 +53,7 @@ fn test_single_vote_updates_head() {
     );
 
     let mut attestations = HashMap::new();
-    attestations.insert(ValidatorIndex(0), attestation);
+    attestations.insert(0, attestation);
 
     let head = get_fork_choice_head(&store, genesis_root, &attestations, 0);
 
@@ -76,7 +71,7 @@ fn test_multiple_votes_same_block() {
     for i in 0..5 {
         let attestation =
             create_attestation_data(1, genesis_root, 0, genesis_root, 0, genesis_root, 0);
-        attestations.insert(ValidatorIndex(i), attestation);
+        attestations.insert(i, attestation);
     }
 
     let head = get_fork_choice_head(&store, genesis_root, &attestations, 0);
@@ -93,16 +88,16 @@ fn test_competing_votes_different_blocks() {
     // Create two competing blocks at slot 1
     let block_a = Block {
         slot: Slot(1),
-        proposer_index: ValidatorIndex(0),
+        proposer_index: 0,
         parent_root: genesis_root,
-        state_root: Bytes32::default(),
+        state_root: H256::default(),
         body: BlockBody::default(),
     };
-    let block_a_root = Bytes32(block_a.hash_tree_root());
+    let block_a_root = block_a.hash_tree_root();
 
     let mut block_b = block_a.clone();
-    block_b.proposer_index = ValidatorIndex(1); // Different proposer to get different root
-    let block_b_root = Bytes32(block_b.hash_tree_root());
+    block_b.proposer_index = 1; // Different proposer to get different root
+    let block_b_root = block_b.hash_tree_root();
 
     // Per leanSpec, store.blocks contains Block directly
     store.blocks.insert(block_a_root, block_a);
@@ -112,13 +107,13 @@ fn test_competing_votes_different_blocks() {
     let mut attestations = HashMap::new();
     for i in 0..3 {
         attestations.insert(
-            ValidatorIndex(i),
+            i,
             create_attestation_data(1, block_a_root, 1, genesis_root, 0, genesis_root, 0),
         );
     }
     for i in 3..5 {
         attestations.insert(
-            ValidatorIndex(i),
+            i,
             create_attestation_data(1, block_b_root, 1, genesis_root, 0, genesis_root, 0),
         );
     }
@@ -137,21 +132,21 @@ fn test_vote_weight_accumulation() {
     // Create a chain: genesis -> block1 -> block2
     let block1 = Block {
         slot: Slot(1),
-        proposer_index: ValidatorIndex(0),
+        proposer_index: 0,
         parent_root: genesis_root,
-        state_root: Bytes32::default(),
+        state_root: H256::default(),
         body: BlockBody::default(),
     };
-    let block1_root = Bytes32(block1.hash_tree_root());
+    let block1_root = block1.hash_tree_root();
 
     let block2 = Block {
         slot: Slot(2),
-        proposer_index: ValidatorIndex(0),
+        proposer_index: 0,
         parent_root: block1_root,
-        state_root: Bytes32::default(),
+        state_root: H256::default(),
         body: BlockBody::default(),
     };
-    let block2_root = Bytes32(block2.hash_tree_root());
+    let block2_root = block2.hash_tree_root();
 
     // Per leanSpec, store.blocks contains Block directly
     store.blocks.insert(block1_root, block1);
@@ -160,7 +155,7 @@ fn test_vote_weight_accumulation() {
     // Vote for block2 - should accumulate to block1 as well
     let mut attestations = HashMap::new();
     attestations.insert(
-        ValidatorIndex(0),
+        0,
         create_attestation_data(2, block2_root, 2, genesis_root, 0, genesis_root, 0),
     );
 
@@ -180,13 +175,13 @@ fn test_duplicate_vote_uses_latest() {
 
     // Insert a vote
     attestations.insert(
-        ValidatorIndex(0),
+        0,
         create_attestation_data(1, genesis_root, 0, genesis_root, 0, genesis_root, 0),
     );
 
     // "Update" with same validator - only latest is kept
     attestations.insert(
-        ValidatorIndex(0),
+        0,
         create_attestation_data(2, genesis_root, 0, genesis_root, 0, genesis_root, 0),
     );
 
@@ -201,12 +196,12 @@ fn test_duplicate_vote_uses_latest() {
 fn test_vote_for_unknown_block_ignored() {
     let store = create_test_store();
     let genesis_root = store.head;
-    let unknown_root = Bytes32(ssz::H256::from_slice(&[0xff; 32]));
+    let unknown_root = H256::from_slice(&[0xff; 32]);
 
     // Vote for block that doesn't exist
     let mut attestations = HashMap::new();
     attestations.insert(
-        ValidatorIndex(0),
+        0,
         create_attestation_data(1, unknown_root, 1, genesis_root, 0, genesis_root, 0),
     );
 

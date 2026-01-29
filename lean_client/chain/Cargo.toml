@@ -1,10 +1,5 @@
 [package]
 name = "chain"
-version = "0.1.0"
-edition = "2021"
-
-[lib]
-name = "chain"
-path = "src/lib.rs"
+edition = { workspace = true }
 
 [dependencies]

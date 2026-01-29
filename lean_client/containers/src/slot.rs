@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use ssz_derive::Ssz;
+use ssz::Ssz;
 use std::cmp::Ordering;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Ssz, Default, Serialize, Deserialize)]

@@ -1,26 +1,22 @@
 use containers::{
-    attestation::Attestation,
-    block::{Block, BlockBody, BlockWithAttestation, SignedBlockWithAttestation},
-    config::Config,
-    state::State,
-    validator::Validator,
-    Bytes32, Slot, Uint64, ValidatorIndex,
+    Attestation, Block, BlockBody, BlockWithAttestation, Config, SignedBlockWithAttestation, Slot,
+    State, Validator,
 };
-use fork_choice::store::{get_forkchoice_store, Store};
-use ssz::SszHash;
+use fork_choice::store::{Store, get_forkchoice_store};
+use ssz::{H256, SszHash};
 
 pub fn create_test_store() -> Store {
     let config = Config { genesis_time: 1000 };
 
     let validators = vec![Validator::default(); 10];
 
-    let state = State::generate_genesis_with_validators(Uint64(1000), validators);
+    let state = State::generate_genesis_with_validators(1000, validators);
 
     let block = Block {
         slot: Slot(0),
-        proposer_index: ValidatorIndex(0),
-        parent_root: Bytes32::default(),
-        state_root: Bytes32(state.hash_tree_root()),
+        proposer_index: 0,
+        parent_root: H256::default(),
+        state_root: state.hash_tree_root(),
         body: BlockBody::default(),
     };
 

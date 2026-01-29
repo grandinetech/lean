@@ -3,14 +3,14 @@
 //! Tests for justification get/set operations and roundtrip verification.
 
 // tests/state_justifications.rs
-use containers::{state::State, types::Bytes32, Config};
+use containers::{Config, State};
 use pretty_assertions::assert_eq;
 use rstest::{fixture, rstest};
-use ssz::PersistentList as List;
+use ssz::{H256, PersistentList as List};
 
 #[path = "common.rs"]
 mod common;
-use common::{base_state, create_attestations, sample_config, TEST_VALIDATOR_COUNT};
+use common::{TEST_VALIDATOR_COUNT, base_state, create_attestations, sample_config};
 
 #[fixture]
 fn config() -> Config {
@@ -36,7 +36,7 @@ fn test_get_justifications_empty() {
 #[test]
 fn test_get_justifications_single_root() {
     let mut state = state(sample_config());
-    let root1 = Bytes32(ssz::H256::from_slice(&[1u8; 32]));
+    let root1 = H256::from_slice(&[1u8; 32]);
 
     let mut votes1 = vec![false; TEST_VALIDATOR_COUNT];
     votes1[2] = true;
@@ -64,9 +64,9 @@ fn test_get_justifications_single_root() {
 #[test]
 fn test_get_justifications_multiple_roots() {
     let mut state = state(sample_config());
-    let root1 = Bytes32(ssz::H256::from_slice(&[1u8; 32]));
-    let root2 = Bytes32(ssz::H256::from_slice(&[2u8; 32]));
-    let root3 = Bytes32(ssz::H256::from_slice(&[3u8; 32]));
+    let root1 = H256::from_slice(&[1u8; 32]);
+    let root2 = H256::from_slice(&[2u8; 32]);
+    let root3 = H256::from_slice(&[3u8; 32]);
 
     let limit = TEST_VALIDATOR_COUNT;
 
@@ -111,9 +111,7 @@ fn test_with_justifications_empty() {
     let mut initial_state = base_state(config.clone());
 
     let mut roots_list = List::default();
-    roots_list
-        .push(Bytes32(ssz::H256::from_slice(&[1u8; 32])))
-        .unwrap();
+    roots_list.push(H256::from_slice(&[1u8; 32])).unwrap();
     initial_state.justifications_roots = roots_list;
 
     let mut bitlist = ssz::BitList::with_length(TEST_VALIDATOR_COUNT);
@@ -135,8 +133,8 @@ fn test_with_justifications_empty() {
 #[test]
 fn test_with_justifications_deterministic_order() {
     let state = state(sample_config());
-    let root1 = Bytes32(ssz::H256::from_slice(&[1u8; 32]));
-    let root2 = Bytes32(ssz::H256::from_slice(&[2u8; 32]));
+    let root1 = H256::from_slice(&[1u8; 32]);
+    let root2 = H256::from_slice(&[2u8; 32]);
 
     let limit = TEST_VALIDATOR_COUNT;
     let votes1 = vec![false; limit];
@@ -168,7 +166,7 @@ fn test_with_justifications_deterministic_order() {
 #[should_panic(expected = "vote vector must match validator count")]
 fn test_with_justifications_invalid_length() {
     let state = state(sample_config());
-    let root1 = Bytes32(ssz::H256::from_slice(&[1u8; 32]));
+    let root1 = H256::from_slice(&[1u8; 32]);
 
     let invalid_votes = vec![true; TEST_VALIDATOR_COUNT - 1];
     let mut justifications = std::collections::BTreeMap::new();
@@ -181,30 +179,30 @@ fn test_with_justifications_invalid_length() {
 #[case::empty_justifications(std::collections::BTreeMap::new())]
 #[case::single_root({
     let mut map = std::collections::BTreeMap::new();
-    map.insert(Bytes32(ssz::H256::from_slice(&[1u8; 32])), create_attestations(&[0]));
+    map.insert(H256::from_slice(&[1u8; 32]), create_attestations(&[0]));
     map
 })]
 #[case::multiple_roots_sorted({
     let mut map = std::collections::BTreeMap::new();
-    map.insert(Bytes32(ssz::H256::from_slice(&[1u8; 32])), create_attestations(&[0]));
-    map.insert(Bytes32(ssz::H256::from_slice(&[2u8; 32])), create_attestations(&[1, 2]));
+    map.insert(H256::from_slice(&[1u8; 32]), create_attestations(&[0]));
+    map.insert(H256::from_slice(&[2u8; 32]), create_attestations(&[1, 2]));
     map
 })]
 #[case::multiple_roots_unsorted({
     let mut map = std::collections::BTreeMap::new();
-    map.insert(Bytes32(ssz::H256::from_slice(&[2u8; 32])), create_attestations(&[1, 2]));
-    map.insert(Bytes32(ssz::H256::from_slice(&[1u8; 32])), create_attestations(&[0]));
+    map.insert(H256::from_slice(&[2u8; 32]), create_attestations(&[1, 2]));
+    map.insert(H256::from_slice(&[1u8; 32]), create_attestations(&[0]));
     map
 })]
 #[case::complex_unsorted({
     let mut map = std::collections::BTreeMap::new();
-    map.insert(Bytes32(ssz::H256::from_slice(&[3u8; 32])), vec![true; TEST_VALIDATOR_COUNT]);
-    map.insert(Bytes32(ssz::H256::from_slice(&[1u8; 32])), create_attestations(&[0]));
-    map.insert(Bytes32(ssz::H256::from_slice(&[2u8; 32])), create_attestations(&[1, 2]));
+    map.insert(H256::from_slice(&[3u8; 32]), vec![true; TEST_VALIDATOR_COUNT]);
+    map.insert(H256::from_slice(&[1u8; 32]), create_attestations(&[0]));
+    map.insert(H256::from_slice(&[2u8; 32]), create_attestations(&[1, 2]));
     map
 })]
 fn test_justifications_roundtrip(
-    #[case] justifications_map: std::collections::BTreeMap<Bytes32, Vec<bool>>,
+    #[case] justifications_map: std::collections::BTreeMap<H256, Vec<bool>>,
 ) {
     let state = state(sample_config());
 

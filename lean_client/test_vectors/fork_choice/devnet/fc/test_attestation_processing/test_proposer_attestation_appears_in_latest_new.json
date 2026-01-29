@@ -121,7 +121,7 @@
             "hash": "0x0cfd631610f67a5a5e80a51d3407ca9429e0ffeee888cbf761b379482cc9ef76",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/fc/test_attestation_processing.py::test_proposer_attestation_appears_in_latest_new[fork_Devnet]",
-            "description": "Proposer attestation appears in latest_new after block processing.\n\n    Scenario\n    --------\n    Process one block at slot 1 (proposer: validator 1).\n\n    Expected:\n        - validator 1's attestation has correct slot and checkpoint slots\n\n    Why This Matters\n    ----------------\n    New proposer attestations enter the pipeline through `latest_new_attestations`,\n    not directly into `latest_known_attestations`.\n\n    This baseline test verifies the entry point of the attestation pipeline.\n    All new attestations must enter through the \"new\" stage before graduating to \"known\".",
+            "description": "Proposer attestation appears in latest_new after block processing.\n\nScenario\n--------\nProcess one block at slot 1 (proposer: validator 1).\n\nExpected:\n    - validator 1's attestation has correct slot and checkpoint slots\n\nWhy This Matters\n----------------\nNew proposer attestations enter the pipeline through `latest_new_attestations`,\nnot directly into `latest_known_attestations`.\n\nThis baseline test verifies the entry point of the attestation pipeline.\nAll new attestations must enter through the \"new\" stage before graduating to \"known\".",
             "fixtureFormat": "fork_choice_test"
         }
     }

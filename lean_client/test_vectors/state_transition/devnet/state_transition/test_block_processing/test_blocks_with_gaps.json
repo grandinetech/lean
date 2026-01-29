@@ -100,7 +100,7 @@
             "hash": "0x2bfb5aa59d5cd8287998214476bdf6a689465949bb78e5fd3cba871d3e256588",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/state_transition/test_block_processing.py::test_blocks_with_gaps[fork_Devnet]",
-            "description": "Test blocks separated by empty slots.\n\n    Scenario\n    --------\n    Build chain with gaps:\n    - Slot 1: Block\n    - Slots 2-3: Empty\n    - Slot 4: Block\n    - Slots 5-7: Empty\n    - Slot 8: Block\n\n    Expected Behavior\n    -----------------\n    1. Blocks process at specified slots\n    2. Empty slots handled automatically\n    3. Parent linkage spans gaps correctly\n    4. State advances to slot 8\n\n    Why This Matters\n    ----------------\n    Missed proposals are common:\n    - Validators offline\n    - Network partitions\n    - Missed attestations\n\n    This validates resilience to gaps.",
+            "description": "Test blocks separated by empty slots.\n\nScenario\n--------\nBuild chain with gaps:\n- Slot 1: Block\n- Slots 2-3: Empty\n- Slot 4: Block\n- Slots 5-7: Empty\n- Slot 8: Block\n\nExpected Behavior\n-----------------\n1. Blocks process at specified slots\n2. Empty slots handled automatically\n3. Parent linkage spans gaps correctly\n4. State advances to slot 8\n\nWhy This Matters\n----------------\nMissed proposals are common:\n- Validators offline\n- Network partitions\n- Missed attestations\n\nThis validates resilience to gaps.",
             "fixtureFormat": "state_transition_test"
         }
     }

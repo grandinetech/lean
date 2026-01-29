@@ -73,7 +73,7 @@
             "hash": "0xea6849fca98ce01ecd1544f9e0101d6930aaf8e3fe874cd632f2f70a39a9b8d7",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/state_transition/test_block_processing.py::test_block_with_invalid_state_root[fork_Devnet]",
-            "description": "Test that blocks with wrong state root commitment are rejected.\n\n    Scenario\n    --------\n    Create a block with state root that doesn't match the actual\n    post-state hash.\n\n    Expected Behavior\n    -----------------\n    Block processing fails with AssertionError: \"Invalid block state root\"\n\n    Why This Matters\n    ----------------\n    Cryptographic state commitment is fundamental:\n    - Proves correct state execution\n    - Prevents state manipulation\n\n    This is a critical validation - without it, proposers could claim any arbitrary state.",
+            "description": "Test that blocks with wrong state root commitment are rejected.\n\nScenario\n--------\nCreate a block with state root that doesn't match the actual\npost-state hash.\n\nExpected Behavior\n-----------------\nBlock processing fails with AssertionError: \"Invalid block state root\"\n\nWhy This Matters\n----------------\nCryptographic state commitment is fundamental:\n- Proves correct state execution\n- Prevents state manipulation\n\nThis is a critical validation - without it, proposers could claim any arbitrary state.",
             "fixtureFormat": "state_transition_test"
         }
     }

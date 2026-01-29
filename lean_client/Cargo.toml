@@ -1,19 +1,236 @@
 [workspace]
-members = ["chain", "containers", "env-config", "fork_choice", "networking", "validator"]
-resolver = "2"
+members = ["chain", "containers", "env-config", "fork_choice", "networking", "validator", "xmss"]
+resolver = "3"
 
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
-authors = ["TODO"]
+authors = ["Grandine Team"]
 license = "MIT OR Apache-2.0"
 
+# Lints are copied from [main grandine repo](https://github.com/grandinetech/grandine.git).
+[workspace.lints.rust]
+unsafe_code = 'forbid'
+
+# A subset of `rustc` lints that are allowed by default.
+# A few notable ones that we do not enable:
+#
+# - `elided_lifetimes_in_paths`
+#   It hurts readability and doesn't provide a clear benefit.
+#
+# - `missing_copy_implementations`
+#   This would be more useful if it only triggered for types that are `Clone` but not `Copy`.
+#
+# - `variant_size_differences`
+#   `clippy::large_enum_variant` does nearly the same thing and is enabled by default.
+#
+# See the output of `rustc --warn help` for a full list of lints available in the current version.
+# They are documented at <https://doc.rust-lang.org/rustc/lints/listing/allowed-by-default.html>.
+absolute_paths_not_starting_with_crate = 'warn'
+anonymous_parameters                   = 'warn'
+deprecated_in_future                   = 'warn'
+deprecated_safe                        = { level = 'warn', priority = -1 }
+let_underscore_drop                    = 'warn'
+macro_use_extern_crate                 = 'warn'
+meta_variable_misuse                   = 'warn'
+missing_unsafe_on_extern               = 'warn'
+non_ascii_idents                       = 'warn'
+non_local_definitions                  = 'warn'
+redundant_lifetimes                    = 'warn'
+trivial_casts                          = 'warn'
+trivial_numeric_casts                  = 'warn'
+unit_bindings                          = 'warn'
+unused_crate_dependencies              = 'warn'
+unused_extern_crates                   = 'warn'
+unused_import_braces                   = 'warn'
+unused_lifetimes                       = 'warn'
+unused_macro_rules                     = 'warn'
+unused_qualifications                  = 'warn'
+
+# These are almost never helpful and require boilerplate.
+unstable_name_collisions               = 'allow'
+
+[workspace.lints.clippy]
+# Additional Clippy lint groups.
+nursery  = 'warn'
+pedantic = 'warn'
+
+# A subset of the `clippy::cargo` group.
+negative_feature_names  = 'warn'
+redundant_feature_names = 'warn'
+wildcard_dependencies   = 'warn'
+
+# A subset of the `clippy::restriction` group.
+# Some notable lints from it that we do not enable:
+#
+# - `clippy::absolute_paths`
+#   It is triggered by functions, which contradicts the Rust convention of qualifying them.
+#
+# - `clippy::arithmetic_side_effects`
+#   It's the static equivalent of `overflow-checks` in `Cargo.toml`, but it hurts readability.
+#
+# - `clippy::error_impl_error`
+#   It's unidiomatic.
+#
+# - `clippy::infinite_loop`
+#   It is triggered by functions that return `core::convert::Infallible` or
+#   types parameterized with it like `anyhow::Result<core::convert::Infallible>`.
+#
+# - `clippy::integer_division_remainder_used`
+#   Most of our code is not cryptographic.
+#
+# - `clippy::iter_over_hash_type`
+#   Iteration order often does not matter.
+#   `HashMap`s and `HashSet`s tend to be faster than their ordered counterparts.
+#   On the other hand, enabling this produces surprisingly few warnings.
+#   We could easily rewrite the offending code to pass.
+#
+# - `clippy::min_ident_chars`
+#   It's unidiomatic.
+#   It's even triggered by identifiers imported from other crates.
+#
+# - `clippy::mem_forget`
+#   Setting it to deny (as opposed to forbid) makes no sense.
+#   `core::mem::forget` is impossible to use by mistake.
+#
+# - `clippy::renamed_function_params`
+#   It's unidiomatic.
+#
+# - `clippy::single_call_fn`.
+#   It's unidiomatic and conflicts with lints like `clippy::too_many_lines`.
+#   Public functions are not exempt from it if `avoid-breaking-exported-api` is `false`.
+#
+# - `clippy::std_instead_of_alloc`
+#   It would require adding `extern crate alloc;` everywhere.
+#
+# - `clippy::tests_outside_test_module`
+#   It is triggered by integration tests.
+#
+# - `clippy::unimplemented`
+#   It's useful to leave some trait methods unimplemented.
+alloc_instead_of_core             = 'warn'
+allow_attributes                  = 'warn'
+assertions_on_result_states       = 'warn'
+cfg_not_test                      = 'warn'
+clone_on_ref_ptr                  = 'warn'
+dbg_macro                         = 'warn'
+decimal_literal_representation    = 'warn'
+empty_drop                        = 'warn'
+empty_enum_variants_with_brackets = 'warn'
+empty_structs_with_brackets       = 'warn'
+filetype_is_file                  = 'warn'
+float_arithmetic                  = 'warn'
+float_cmp_const                   = 'warn'
+format_push_string                = 'warn'
+get_unwrap                        = 'warn'
+host_endian_bytes                 = 'warn'
+if_then_some_else_none            = 'warn'
+lossy_float_literal               = 'warn'
+missing_asserts_for_indexing      = 'warn'
+mixed_read_write_in_expression    = 'warn'
+multiple_inherent_impl            = 'warn'
+mutex_atomic                      = 'warn'
+needless_raw_strings              = 'warn'
+partial_pub_fields                = 'warn'
+print_stderr                      = 'warn'
+print_stdout                      = 'warn'
+pub_without_shorthand             = 'warn'
+rc_buffer                         = 'warn'
+rc_mutex                          = 'warn'
+redundant_type_annotations        = 'warn'
+rest_pat_in_fully_bound_structs   = 'warn'
+same_name_method                  = 'warn'
+semicolon_inside_block            = 'warn'
+std_instead_of_core               = 'warn'
+str_to_string                     = 'warn'
+string_add                        = 'warn'
+string_lit_chars_any              = 'warn'
+string_slice                      = 'warn'
+todo                              = 'warn'
+# Enable `clippy::undocumented_unsafe_blocks` in case we ever change our stance on unsafe code.
+undocumented_unsafe_blocks        = 'warn'
+unnecessary_self_imports          = 'warn'
+unwrap_used                       = 'warn'
+verbose_file_reads                = 'warn'
+
+# These are almost never helpful.
+assertions_on_constants = { level = 'allow', priority = 1 }
+map_unwrap_or           = { level = 'allow', priority = 1 }
+option_if_let_else      = { level = 'allow', priority = 1 }
+single_match_else       = { level = 'allow', priority = 1 }
+struct_field_names      = { level = 'allow', priority = 1 }
+
+# These are almost never helpful and require boilerplate.
+into_iter_without_iter = { level = 'allow', priority = 1 }
+len_without_is_empty   = { level = 'allow', priority = 1 }
+
+# `derivative::Derivative` and `fixed_hash::construct_fixed_hash!` generate code that triggers these.
+# It is not just a bug in the macros.
+# `clippy::expl_impl_clone_on_copy` produces false positives for types with type parameters.
+# See <https://github.com/rust-lang/rust-clippy/issues/1254>.
+# <https://github.com/rust-lang/rust-clippy/pull/6993> did not fix the issue.
+# `clippy::incorrect_clone_impl_on_copy_type` does not have the same problem.
+# `derivative` has open issues for 2 of the lints:
+# - <https://github.com/mcarton/rust-derivative/issues/112>
+# - <https://github.com/mcarton/rust-derivative/issues/115>
+expl_impl_clone_on_copy        = { level = 'allow', priority = 1 }
+non_canonical_clone_impl       = { level = 'allow', priority = 1 }
+non_canonical_partial_ord_impl = { level = 'allow', priority = 1 }
+
+# `clippy::implicit_hasher` has next to no benefit and sometimes requires nonlocal changes to code.
+implicit_hasher = { level = 'allow', priority = 1 }
+
+# `clippy::semicolon_if_nothing_returned` can lead to return values accidentally being left unused.
+semicolon_if_nothing_returned = { level = 'allow', priority = 1 }
+
+# `clippy::significant_drop_in_scrutinee` produces mostly false positives. See:
+# - <https://github.com/rust-lang/rust-clippy/issues/8963>
+# - <https://github.com/rust-lang/rust-clippy/issues/8987>
+# - <https://github.com/rust-lang/rust-clippy/issues/9072>
+significant_drop_in_scrutinee = { level = 'allow', priority = 1 }
+
+# `clippy::significant_drop_tightening` often produces false positives.
+# See <https://github.com/rust-lang/rust-clippy/issues/10413>.
+significant_drop_tightening = { level = 'allow', priority = 1 }
+
+# Some functions in the codebase trigger `clippy::large_stack_frames`, but the lint does not
+# report which ones, making it nearly useless. The lint does report which crates they are in,
+# but only after checking other crates, which suggests it is triggered by generic functions.
+large_stack_frames = { level = 'allow', priority = 1 }
+
+# This does not improve performance in any of our benchmarks. See discussions at:
+# - <https://github.com/rust-lang/rust/issues/52274>
+# - <https://github.com/rust-lang/rust-clippy/issues/4499>
+large_types_passed_by_value = { level = 'allow', priority = 1 }
+
+missing_errors_doc = { level = 'allow', priority = 1 }
+missing_panics_doc = { level = 'allow', priority = 1 }
+
+[workspace.lints.rustdoc]
+private_intra_doc_links = 'allow'
+
 [workspace.dependencies]
+xmss = { path = "./xmss" }
+env-config = { path = "./env-config" }
 chain = { path = "./chain" }
 containers = { path = "./containers" }
 fork_choice = { path = "./fork_choice" }
 networking = { path = "./networking" }
 validator = { path = "./validator" }
+
+anyhow = "1.0.100"
+async-trait = "0.1"
+clap = { version = "4", features = ["derive"] }
+derive_more = "2.1.1"
+discv5 = "0.10.2"
+enr = { version = "0.13", features = ["k256"] }
+eth_ssz = { package = "ethereum_ssz", version = "0.10.0" }
+ethereum-types = "0.14"
+futures = "0.3"
+hex = "0.4.3"
+k256 = "0.13"
+lean-multisig = { git = "https://github.com/leanEthereum/leanMultisig", rev = "e4474138487eeb1ed7c2e1013674fe80ac9f3165" }
+leansig = { git = "https://github.com/leanEthereum/leanSig", rev = "73bedc26ed961b110df7ac2e234dc11361a4bf25" }
 libp2p = { version = "0.56.0", default-features = false, features = [
     'dns',
     'gossipsub',
@@ -26,47 +243,51 @@ libp2p = { version = "0.56.0", default-features = false, features = [
     'tokio',
     'yamux'
 ] }
-alloy-consensus = "1.0.38"
-alloy-primitives = "1.4.0"
-anyhow = "1.0"
+libp2p-identity = { version = "0.2", features = ["secp256k1"] }
+libp2p-mplex = "0.39"
+num-bigint = "0.4"
+num-traits = "0.2"
+parking_lot = "0.12"
 paste = "1.0.15"
-serde = { version = "1.0", features = ["derive"] }
-serde_yaml = "0.9"
-snap = "1.1"
-ssz = { git = "https://github.com/grandinetech/grandine", package = "ssz", branch = "develop" }
-ssz_derive = { git = "https://github.com/grandinetech/grandine", package = "ssz_derive", branch = "develop" }
-ssz-types = "0.3.0"
-tokio = { version = "1.0", features = ["full"] }
-tree-hash = "0.4.0"
-typenum = "1.19"
-sha2 = "0.10"
+pretty_assertions = "1.4"
 rand = "0.9"
+rand_chacha = "0.9"
+rstest = "0.18"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+sha2 = "0.10"
+snap = "1.1"
+ssz = { git = "https://github.com/grandinetech/grandine", package = "ssz", rev = "64afdee3c6be79fceffb66933dcb69a943f3f1ae" }
+ssz-types = "0.3.0"
 test-generator = "0.3.1"
-
-[workspace.dev-dependencies]
-rstest = "0.18.2"
-pretty_assertions = "1.4.0"
-serde_json = "1.0.107"
+tiny-keccak = "2.0.2"
+tokio = { version = "1.0", features = ["full"] }
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
+tree-hash = "0.4.0"
+try_from_iterator = { git = "https://github.com/grandinetech/grandine", package = "try_from_iterator", rev = "64afdee3c6be79fceffb66933dcb69a943f3f1ae" }
+typenum = "1.19"
+yamux = "0.12"
+zeroize = "1.8"
 
 [package]
 name = "lean_client"
 version = "0.1.0"
-edition = "2021"
-
-[features]
-default = ["xmss-signing", "containers/xmss-verify"]
-xmss-signing = ["validator/xmss-signing"]
-xmss-verify = ["containers/xmss-verify"]
+edition = { workspace = true }
 
 [dependencies]
-chain = { path = "./chain" }
-containers = { path = "./containers" }
-fork-choice = { path = "./fork_choice" }
-networking = { path = "./networking" }
-validator = { path = "./validator" }
-tokio = { version = "1.0", features = ["full"] }
-clap = { version = "4", features = ["derive"] }
-tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
-tracing = "0.1.41"
-hex = "0.4"
-libp2p-identity = { version = "0.2", features = ["secp256k1"] }
+chain = { workspace = true }
+clap = { workspace = true }
+containers = { workspace = true }
+ethereum-types = { workspace = true }
+fork_choice = { workspace = true }
+hex = { workspace = true }
+libp2p-identity = { workspace = true }
+networking = { workspace = true }
+ssz = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+validator = { workspace = true }
+xmss = { workspace = true }

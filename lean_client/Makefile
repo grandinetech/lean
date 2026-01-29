@@ -2,7 +2,7 @@
 
 # Commit of lean specification. Allows to specify which spec version to use, 
 #   when generating test vectors. Currently set to devnet-2 spec version.
-LEAN_SPEC_COMMIT ?= c187aab89e0ecc6ce9c1fd9304fd708312ea7106
+LEAN_SPEC_COMMIT ?= 4edcf7bc9271e6a70ded8aff17710d68beac4266
 # Docker image name. Used for both release (with publish) and local builds.
 DOCKER_REPO ?= sifrai/lean
 # Image tag.
@@ -42,7 +42,7 @@ check-format:
 
 .PHONY: test
 test:
-	cargo test --workspace --all-features --no-fail-fast
+	cargo test --workspace --all-features --no-fail-fast --release
 
 .PHONY: generate-test-vectors
 generate-test-vectors:
