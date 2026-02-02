@@ -16,7 +16,7 @@ GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 # Build date. Used for docker image metadata.
 BUILD_DATE := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 # Currently supported devnet. Used to publish devnet tag, along with `latest`.
-CURRENT_DEVNET := devnet-1
+CURRENT_DEVNET := devnet-2
 
 # Temporary variable, which constructs `--tag` arguments, to be passed into 
 #   docker build command. It is used as intermediatery step, not as config 
