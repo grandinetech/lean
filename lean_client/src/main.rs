@@ -12,7 +12,7 @@ use fork_choice::{
 };
 use http_api::HttpServerConfig;
 use libp2p_identity::Keypair;
-use metrics::{METRICS, Metrics, MetricsServerConfig};
+use metrics::{METRICS, Metrics};
 use networking::gossipsub::config::GossipsubConfig;
 use networking::gossipsub::topic::get_topics;
 use networking::network::{NetworkService, NetworkServiceConfig};
@@ -377,9 +377,11 @@ async fn main() -> Result<()> {
 
     let chain_outbound_sender = outbound_p2p_sender.clone();
 
-    let http_handle = task::spawn(async move {
-        if let Err(err) = http_api::run_server(args.http_config).await {
-            error!("HTTP Server failed with error: {err:?}");
+    task::spawn(async move {
+        if args.http_config.metrics_enabled() {
+            if let Err(err) = http_api::run_server(args.http_config).await {
+                error!("HTTP Server failed with error: {err:?}");
+            }
         }
     });
 
@@ -605,9 +607,6 @@ async fn main() -> Result<()> {
         }
         _ = chain_handle => {
             info!("Chain service finished.");
-        }
-        _ = http_handle => {
-            info!("Http service finished.");
         }
     }
 
