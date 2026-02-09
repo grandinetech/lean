@@ -233,6 +233,7 @@ xmss = { path = "./xmss" }
 anyhow = "1.0.100"
 async-trait = "0.1"
 axum = "0.8.8"
+bitvec = "1.0.1"
 bls = { git = "https://github.com/grandinetech/grandine", package = "bls", features = ["blst"], rev = "64afdee3c6be79fceffb66933dcb69a943f3f1ae" }
 clap = { version = "4", features = ["derive"] }
 derive_more = "2.1.1"

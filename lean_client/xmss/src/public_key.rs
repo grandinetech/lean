@@ -7,17 +7,54 @@ use core::{
 use anyhow::{Error, anyhow};
 use leansig::{serialization::Serializable, signature::SignatureScheme, signature::generalized_xmss::instantiations_poseidon_top_level::lifetime_2_to_the_32::hashing_optimized::SIGTopLevelTargetSumLifetime32Dim64Base8};
 use serde::{Deserialize, Serialize, de::{self, Visitor}};
-use ssz::{ByteVector, Ssz};
+use ssz::{BytesToDepth, MerkleTree, SszHash, SszRead, SszSize, SszWrite};
 use eth_ssz::DecodeError;
-use typenum::U52;
+use typenum::{U52, U1, Unsigned};
 
 type PublicKeySize = U52;
 
 type LeanSigPublicKey = <SIGTopLevelTargetSumLifetime32Dim64Base8 as SignatureScheme>::PublicKey;
 
+#[derive(Clone, PartialEq, Eq)]
+pub struct PublicKey([u8; PublicKeySize::USIZE]);
+
 // todo(xmss): default implementation doesn't make sense here
-#[derive(Clone, Ssz, Default, PartialEq, Eq)]
-pub struct PublicKey(ByteVector<PublicKeySize>);
+impl Default for PublicKey {
+    fn default() -> Self {
+        Self([0u8; PublicKeySize::USIZE])
+    }
+}
+
+impl SszSize for PublicKey {
+    const SIZE: ssz::Size = ssz::Size::Fixed {
+        size: PublicKeySize::USIZE,
+    };
+}
+
+impl<C> SszRead<C> for PublicKey {
+    #[inline]
+    fn from_ssz_unchecked(_context: &C, bytes: &[u8]) -> Result<Self, ssz::ReadError> {
+        Ok(Self(
+            bytes.try_into().expect("byte length should be checked"),
+        ))
+    }
+}
+
+impl SszWrite for PublicKey {
+    #[inline]
+    fn write_fixed(&self, bytes: &mut [u8]) {
+        bytes.copy_from_slice(&self.0);
+    }
+}
+
+impl SszHash for PublicKey {
+    type PackingFactor = U1;
+
+    #[inline]
+    fn hash_tree_root(&self) -> ssz::H256 {
+        MerkleTree::<BytesToDepth<PublicKeySize>>::merkleize_bytes(self.0)
+    }
+}
 
 impl PublicKey {
     pub fn new(bytes: &[u8]) -> Result<Self, DecodeError> {
@@ -38,20 +75,19 @@ impl PublicKey {
     }
 
     pub(crate) fn as_lean(&self) -> LeanSigPublicKey {
-        LeanSigPublicKey::from_bytes(self.0.as_bytes())
-            .expect("PublicKey was instantiated incorrectly")
+        LeanSigPublicKey::from_bytes(&self.0).expect("PublicKey was instantiated incorrectly")
     }
 }
 
 impl Debug for PublicKey {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "0x{}", hex::encode(self.0.as_bytes()))
+        write!(f, "0x{}", hex::encode(&self.0))
     }
 }
 
 impl Display for PublicKey {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "0x{}", hex::encode(self.0.as_bytes()))
+        write!(f, "0x{}", hex::encode(&self.0))
     }
 }
 

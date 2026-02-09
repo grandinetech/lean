@@ -17,6 +17,10 @@ impl Ord for Slot {
 }
 
 impl Slot {
+    pub fn justified_index_after(self, finalized_slot: Slot) -> Option<u64> {
+        self.0.checked_sub(finalized_slot.0 + 1)
+    }
+
     /// Checks if this slot is a valid candidate for justification after a given finalized slot.
     ///
     /// According to the 3SF-mini specification, a slot is justifiable if its

@@ -61,6 +61,7 @@ impl AggregatedSignatureProof {
 /// Bitlist representing validator participation in an attestation.
 /// Limit is VALIDATOR_REGISTRY_LIMIT (4096).
 #[derive(Clone, Debug, Ssz, Serialize, Deserialize)]
+#[ssz(transparent)]
 pub struct AggregationBits(
     #[serde(with = "crate::serde_helpers::bitlist")] pub BitList<ValidatorRegistryLimit>,
 );

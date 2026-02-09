@@ -308,19 +308,19 @@ fn process_block_internal(
         attestations_in_block = attestations_count,
         parent_justified_slot = state.latest_justified.slot.0,
         parent_finalized_slot = state.latest_finalized.slot.0,
-        justified_slots_len = state.justified_slots.len(),
+        justified_slots_len = state.justified_slots.0.len(),
         "Processing block - parent state info"
     );
 
     // Execute state transition to get post-state
-    let new_state = state.state_transition_with_validation(signed_block.clone(), true, true)?;
+    let new_state = state.state_transition(signed_block.clone(), true)?;
 
     // Debug: Log new state checkpoints after transition
     tracing::debug!(
         block_slot = block.slot.0,
         new_justified_slot = new_state.latest_justified.slot.0,
         new_finalized_slot = new_state.latest_finalized.slot.0,
-        new_justified_slots_len = new_state.justified_slots.len(),
+        new_justified_slots_len = new_state.justified_slots.0.len(),
         "Block processed - new state info"
     );
 

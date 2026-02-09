@@ -4,6 +4,7 @@ edition = { workspace = true }
 
 [dependencies]
 anyhow = { workspace = true }
+bls = { workspace = true }
 containers = { workspace = true }
 env-config = { workspace = true }
 metrics = { workspace = true }

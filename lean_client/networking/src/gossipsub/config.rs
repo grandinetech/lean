@@ -19,6 +19,9 @@ impl GossipsubConfig {
         let seen_ttl_secs = seconds_per_slot * justification_lookback_slots * 2;
 
         let config = ConfigBuilder::default()
+            // for now, increased to 16 mb. in the future, should be handled in config
+            // TODO(p2p): compute transmit size
+            .max_transmit_size(16 * 1024 * 1024)
             // leanSpec: heartbeat_interval_secs = 0.7
             .heartbeat_interval(Duration::from_millis(700))
             // leanSpec: fanout_ttl_secs = 60

@@ -2,16 +2,18 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use anyhow::{Context, Result, anyhow, bail, ensure};
+use anyhow::{Context, Result, anyhow, bail};
 use containers::{
-    Attestation, AttestationData, BlockSignatures, BlockWithAttestation, Checkpoint,
-    SignedAttestation, SignedBlockWithAttestation, Slot,
+    AggregatedSignatureProof, Attestation, AttestationData, AttestationSignatures, Block,
+    BlockSignatures, BlockWithAttestation, Checkpoint, SignedAttestation,
+    SignedBlockWithAttestation, Slot,
 };
 use ethereum_types::H256;
-use fork_choice::store::{Store, get_proposal_head, get_vote_target};
-use metrics::METRICS;
+use fork_choice::store::{Store, get_proposal_head, produce_block_with_signatures};
+use metrics::{METRICS, stop_and_discard, stop_and_record};
 use ssz::SszHash;
 use tracing::{info, warn};
+use try_from_iterator::TryFromIterator as _;
 
 pub mod keys;
 
@@ -137,230 +139,66 @@ impl ValidatorService {
             "Building block proposal"
         );
 
-        let parent_root = get_proposal_head(store, slot);
+        let (_, block, signatures) = produce_block_with_signatures(store, slot, proposer_index)
+            .context("failed to produce block")?;
 
-        info!(
-            parent_root = %format!("0x{:x}", parent_root),
-            store_head = %format!("0x{:x}", store.head),
-            "Using parent root for block proposal"
-        );
+        let signed_block = self.sign_block(store, block, proposer_index, signatures)?;
 
-        let parent_state = store
-            .states
-            .get(&parent_root)
-            .ok_or_else(|| anyhow!("Couldn't find parent state {:?}", parent_root))?;
+        Ok(signed_block)
+    }
 
-        let vote_target = get_vote_target(store);
-
-        // Validate that target slot is greater than or equal to source slot
-        // At genesis, both target and source are slot 0, which is valid
-        ensure!(
-            vote_target.slot >= store.latest_justified.slot,
-            "Invalid attestation: target slot {} must be >= source slot {}",
-            vote_target.slot.0,
-            store.latest_justified.slot.0
-        );
-
-        let head_block = store
-            .blocks
-            .get(&store.head)
-            .ok_or(anyhow!("Head block not found"))?;
-        let head_checkpoint = Checkpoint {
-            root: store.head,
-            slot: head_block.slot,
-        };
+    fn sign_block(
+        &self,
+        store: &Store,
+        block: Block,
+        validator_index: u64,
+        attestation_signatures: Vec<AggregatedSignatureProof>,
+    ) -> Result<SignedBlockWithAttestation> {
+        let proposer_attestation_data = store.produce_attestation_data(block.slot)?;
 
         let proposer_attestation = Attestation {
-            validator_id: proposer_index,
-            data: AttestationData {
-                slot,
-                head: head_checkpoint,
-                target: vote_target.clone(),
-                source: store.latest_justified.clone(),
-            },
+            validator_id: validator_index,
+            data: proposer_attestation_data,
         };
 
-        // Collect valid attestations from the KNOWN attestations pool.
-        // Note: get_proposal_head() calls accept_new_attestations() which moves attestations
-        // from latest_new_attestations to latest_known_attestations. So we must read from
-        // latest_known_attestations here, not latest_new_attestations.
-        // Filter to only include attestations that:
-        // 1. Have source matching the parent state's justified checkpoint
-        // 2. Have target slot > source slot (valid attestations)
-        // 3. Target block must be known
-        // 4. Target is not already justified in parent state
-        // 5. Source is justified in parent state
-
-        // Helper: check if a slot is justified using RELATIVE indexing
-        // Slots at or before finalized_slot are implicitly justified
-        let finalized_slot = parent_state.latest_finalized.slot.0 as i64;
-        let is_slot_justified = |slot: Slot| -> bool {
-            if (slot.0 as i64) <= finalized_slot {
-                return true; // Implicitly justified (at or before finalized)
-            }
-            let relative_index = (slot.0 as i64 - finalized_slot - 1) as usize;
-            parent_state
-                .justified_slots
-                .get(relative_index)
-                .map(|b| *b)
-                .unwrap_or(false)
+        let Some(key_manager) = self.key_manager.as_ref() else {
+            bail!("unable to sign block - keymanager not configured");
         };
 
-        let valid_attestations: Vec<Attestation> = store
-            .latest_known_attestations
-            .iter()
-            .filter(|(_, data)| {
-                // Source must match the store's justified checkpoint
-                // (attestations are created with store.latest_justified as source)
-                let source_matches = data.source == store.latest_justified;
-                // Target must be strictly after source
-                let target_after_source = data.target.slot > data.source.slot;
-                // Target block must be known
-                let target_known = store.blocks.contains_key(&data.target.root);
-
-                // Check if target is NOT already justified (using relative indexing)
-                let target_already_justified = is_slot_justified(data.target.slot);
-
-                // Check if source is justified (using relative indexing)
-                let source_is_justified = is_slot_justified(data.source.slot);
-
-                source_matches
-                    && target_after_source
-                    && target_known
-                    && source_is_justified
-                    && !target_already_justified
-            })
-            .map(|(validator_idx, data)| Attestation {
-                validator_id: *validator_idx,
-                data: data.clone(),
-            })
-            .collect();
-
-        // De-duplicate by target slot: only include ONE aggregated attestation per target slot.
-        // This prevents the case where the first attestation justifies a slot and the second
-        // gets rejected (causing state root mismatch).
-        // Group by target slot, keeping attestations with the most common AttestationData.
-        use std::collections::HashMap;
-
-        // First group by target slot
-        let mut target_slot_groups: HashMap<u64, Vec<Attestation>> = HashMap::new();
-        for att in valid_attestations {
-            let target_slot = att.data.target.slot.0;
-            target_slot_groups.entry(target_slot).or_default().push(att);
-        }
-
-        // For each target slot, group by data root and pick the one with most votes
-        let valid_attestations: Vec<Attestation> = target_slot_groups
-            .into_iter()
-            .flat_map(|(_, slot_atts)| {
-                // Group by data root (Bytes32 implements Hash)
-                let mut data_groups: HashMap<H256, Vec<Attestation>> = HashMap::new();
-                for att in slot_atts {
-                    let data_root = att.data.hash_tree_root();
-                    data_groups.entry(data_root).or_default().push(att);
-                }
-                // Find the data with the most attestations
-                data_groups
-                    .into_iter()
-                    .max_by_key(|(_, atts)| atts.len())
-                    .map(|(_, atts)| atts)
-                    .unwrap_or_default()
-            })
-            .collect();
-
-        let num_attestations = valid_attestations.len();
-
-        info!(
-            slot = slot.0,
-            valid_attestations = num_attestations,
-            total_known = store.latest_known_attestations.len(),
-            "Collected attestations for block"
-        );
-
-        // Build block with collected attestations
-        // Pass gossip_signatures and aggregated_payloads from the store so that
-        // compute_aggregated_signatures can find signatures for the attestations
-        let (block, _post_state, _collected_atts, sigs) = {
-            parent_state.build_block(
-                slot,
-                proposer_index,
-                parent_root,
-                Some(valid_attestations),
-                None,                             // available_attestations
-                None,                             // known_block_roots
-                Some(&store.gossip_signatures),   // gossip_signatures
-                Some(&store.aggregated_payloads), // aggregated_payloads
-            )?
-        };
-
-        let signatures = sigs;
-
-        info!(
-            slot = block.slot.0,
-            proposer = block.proposer_index,
-            parent_root = %format!("0x{:x}", block.parent_root),
-            state_root = %format!("0x{:x}", block.state_root),
-            attestation_sigs = num_attestations,
-            "Block built successfully"
-        );
-
-        // Sign the proposer attestation
-        let proposer_signature: Signature;
-
-        if let Some(ref key_manager) = self.key_manager {
-            let _timer = METRICS.get().map(|metrics| {
+        let proposer_signature = {
+            let sign_timer = METRICS.get().map(|metrics| {
                 metrics
                     .lean_pq_signature_attestation_signing_time_seconds
                     .start_timer()
             });
 
-            // Sign proposer attestation with XMSS
-            let message = proposer_attestation.hash_tree_root();
-            let epoch = slot.0 as u32;
-
-            match key_manager.sign(proposer_index, epoch, message) {
-                Ok(sig) => {
-                    proposer_signature = sig;
-                    info!(proposer = proposer_index, "Signed proposer attestation");
-                }
-                Err(e) => {
-                    bail!("Failed to sign proposer attestation: {}", e);
-                }
-            }
-        } else {
-            // No key manager - use zero signature
-            warn!("Building block with zero signature (no key manager)");
-            proposer_signature = Signature::default();
-        }
-
-        // Convert signatures to PersistentList for BlockSignatures
-        // Extract proof_data from AggregatedSignatureProof for wire format
-        let attestation_signatures = {
-            let mut list = ssz::PersistentList::default();
-            for proof in signatures {
-                list.push(proof)
-                    .context("Failed to add attestation signature")?;
-            }
-            list
+            key_manager
+                .sign(
+                    validator_index,
+                    block.slot.0 as u32,
+                    proposer_attestation.data.hash_tree_root(),
+                )
+                .context("failed to sign block")
+                .inspect_err(|_| stop_and_discard(sign_timer))?
         };
 
-        let signed_block = SignedBlockWithAttestation {
-            message: BlockWithAttestation {
-                block,
-                proposer_attestation,
-            },
-            signature: BlockSignatures {
-                attestation_signatures,
-                proposer_signature,
-            },
+        let message = BlockWithAttestation {
+            block,
+            proposer_attestation,
         };
 
-        Ok(signed_block)
+        let signature = BlockSignatures {
+            attestation_signatures: AttestationSignatures::try_from_iter(attestation_signatures)
+                .context("invalid attestation signatures")?,
+            proposer_signature,
+        };
+
+        Ok(SignedBlockWithAttestation { message, signature })
     }
 
     /// Create attestations for all our validators for the given slot
     pub fn create_attestations(&self, store: &Store, slot: Slot) -> Vec<SignedAttestation> {
-        let vote_target = get_vote_target(store);
+        let vote_target = store.get_attestation_target();
 
         // Skip attestation creation if target slot is less than source slot
         // At genesis, both target and source are slot 0, which is valid
@@ -408,6 +246,11 @@ impl ValidatorService {
                     let message = attestation.hash_tree_root();
                     let epoch = slot.0 as u32;
 
+                    let _timer = METRICS.get().map(|metrics| {
+                        metrics
+                            .lean_pq_signature_attestation_signing_time_seconds
+                            .start_timer()
+                    });
                     match key_manager.sign(idx, epoch, message) {
                         Ok(sig) => {
                             info!(

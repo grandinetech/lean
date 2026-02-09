@@ -27,7 +27,7 @@ use metrics::{DisconnectReason, METRICS};
 use parking_lot::Mutex;
 use rand::seq::IndexedRandom;
 use serde::{Deserialize, Serialize};
-use ssz::{H256, SszWrite as _};
+use ssz::{H256, SszHash, SszWrite as _};
 use tokio::select;
 use tokio::time::{Duration, MissedTickBehavior, interval};
 use tracing::{debug, info, trace, warn};
@@ -478,6 +478,8 @@ where
             Event::Message { message, .. } => {
                 match GossipsubMessage::decode(&message.topic, &message.data) {
                     Ok(GossipsubMessage::Block(signed_block_with_attestation)) => {
+                        info!(block_root = %signed_block_with_attestation.message.block.hash_tree_root(), "received block via gossip");
+
                         let slot = signed_block_with_attestation.message.block.slot.0;
 
                         if let Err(err) = self
@@ -495,6 +497,11 @@ where
                         }
                     }
                     Ok(GossipsubMessage::Attestation(signed_attestation)) => {
+                        info!(
+                            validator = %signed_attestation.validator_id,
+                            slot = %signed_attestation.message.slot.0,
+                            "received attestation via gossip"
+                        );
                         let slot = signed_attestation.message.slot.0;
 
                         if let Err(err) = self

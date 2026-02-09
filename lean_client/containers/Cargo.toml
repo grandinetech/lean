@@ -4,6 +4,8 @@ edition = { workspace = true }
 
 [dependencies]
 anyhow = { workspace = true }
+bitvec = { workspace = true }
+bls = { workspace = true }
 env-config = { workspace = true }
 hex = { workspace = true }
 metrics = { workspace = true }

@@ -10,7 +10,7 @@ use fork_choice::{
 };
 
 use serde::Deserialize;
-use ssz::{H256, SszHash};
+use ssz::{BitList, H256, SszHash};
 use std::{collections::HashMap, fs::File};
 use std::{panic::AssertUnwindSafe, path::Path};
 use test_generator::test_resources;
@@ -60,10 +60,11 @@ impl Into<State> for TestAnchorState {
                 .expect("within limit");
         }
 
-        let mut justified_slots = JustifiedSlots::new(false, self.justified_slots.data.len());
+        let mut justified_slots =
+            JustifiedSlots(BitList::new(false, self.justified_slots.data.len()));
         for (i, &val) in self.justified_slots.data.iter().enumerate() {
             if val {
-                justified_slots.set(i, true);
+                justified_slots.0.set(i, true);
             }
         }
 

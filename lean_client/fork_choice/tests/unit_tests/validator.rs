@@ -9,9 +9,7 @@ use containers::{
     Attestation, AttestationData, Block, BlockBody, BlockWithAttestation, Checkpoint, Config,
     SignatureKey, SignedBlockWithAttestation, Slot, State, Validator,
 };
-use fork_choice::store::{
-    Store, get_forkchoice_store, get_vote_target, produce_block_with_signatures, update_head,
-};
+use fork_choice::store::{Store, get_forkchoice_store, produce_block_with_signatures, update_head};
 use rand::SeedableRng;
 use rand_chacha::ChaChaRng;
 use ssz::{H256, SszHash};
@@ -51,25 +49,6 @@ fn create_test_store_with_signers() -> (Store, HashMap<u64, SecretKey>) {
 
     (get_forkchoice_store(state, signed_block, config), keys)
 }
-
-/// Build AttestationData matching the current store state for a given slot.
-///
-/// Equivalent of Python `store.produce_attestation_data(slot)`.
-fn produce_attestation_data(store: &Store, slot: Slot) -> AttestationData {
-    let head_block = &store.blocks[&store.head];
-    let head_checkpoint = Checkpoint {
-        root: store.head,
-        slot: head_block.slot,
-    };
-    let vote_target = get_vote_target(store);
-    AttestationData {
-        slot,
-        head: head_checkpoint,
-        target: vote_target,
-        source: store.latest_justified.clone(),
-    }
-}
-
 // ---------------------------------------------------------------------------
 // TestBlockProduction
 // ---------------------------------------------------------------------------
@@ -120,7 +99,7 @@ fn test_produce_block_with_attestations() {
         root: store.head,
         slot: head_block.slot,
     };
-    let target = get_vote_target(&store);
+    let target = store.get_attestation_target();
 
     // Add attestations for validators 5 and 6
     for vid in [5u64, 6] {
@@ -257,7 +236,7 @@ fn test_produce_block_state_consistency() {
         root: store.head,
         slot: head_block.slot,
     };
-    let target = get_vote_target(&store);
+    let target = store.get_attestation_target();
     let data = AttestationData {
         slot: head_block.slot,
         head: head_checkpoint,
@@ -339,7 +318,9 @@ fn test_block_production_then_attestation() {
 
     // Other validator creates attestation for slot 2
     let attestor_idx = 7;
-    let attestation_data = produce_attestation_data(&store, Slot(2));
+    let attestation_data = store
+        .produce_attestation_data(Slot(2))
+        .expect("failed to produce attestation data");
     let attestation = Attestation {
         validator_id: attestor_idx,
         data: attestation_data,
@@ -366,7 +347,9 @@ fn test_multiple_validators_coordination() {
     // These will be based on the current forkchoice head (genesis)
     let mut attestations = Vec::new();
     for i in 2..6u64 {
-        let data = produce_attestation_data(&store, Slot(2));
+        let data = store
+            .produce_attestation_data(Slot(2))
+            .expect("failed to produce attestation data");
         let attestation = Attestation {
             validator_id: i,
             data,
@@ -423,7 +406,9 @@ fn test_validator_edge_cases() {
     assert_eq!(block.proposer_index, max_validator);
 
     // Should be able to produce attestation
-    let attestation_data = produce_attestation_data(&store, Slot(10));
+    let attestation_data = store
+        .produce_attestation_data(Slot(10))
+        .expect("failed to produce attestation data");
     let attestation = Attestation {
         validator_id: max_validator,
         data: attestation_data,
@@ -463,7 +448,9 @@ fn test_validator_operations_empty_store() {
     // Should be able to produce block and attestation
     let (_root, block, _sig) =
         produce_block_with_signatures(&mut store, Slot(1), 1).expect("block should succeed");
-    let attestation_data = produce_attestation_data(&store, Slot(1));
+    let attestation_data = store
+        .produce_attestation_data(Slot(1))
+        .expect("failed to produce attestation data");
     let attestation = Attestation {
         validator_id: 2,
         data: attestation_data,
@@ -532,7 +519,9 @@ fn test_validator_operations_invalid_parameters() {
     let _: bool = result;
 
     // Attestation can be created for any validator
-    let attestation_data = produce_attestation_data(&store, Slot(1));
+    let attestation_data = store
+        .produce_attestation_data(Slot(1))
+        .expect("failed to produce attestation data");
     let attestation = Attestation {
         validator_id: large_validator,
         data: attestation_data,

@@ -15,27 +15,6 @@ pub fn genesis_state() -> State {
 }
 
 #[test]
-fn test_process_slot() {
-    let genesis_state = genesis_state();
-
-    assert_eq!(genesis_state.latest_block_header.state_root, H256::zero());
-
-    let state_after_slot = genesis_state.process_slot();
-    let expected_root = genesis_state.hash_tree_root();
-
-    assert_eq!(
-        state_after_slot.latest_block_header.state_root,
-        expected_root
-    );
-
-    let state_after_second_slot = state_after_slot.process_slot();
-    assert_eq!(
-        state_after_second_slot.latest_block_header.state_root,
-        expected_root
-    );
-}
-
-#[test]
 fn test_process_slots() {
     let genesis_state = genesis_state();
     let target_slot = Slot(5);
@@ -79,6 +58,7 @@ fn test_process_block_header_valid() {
     // justified_slots should be empty or all false.
     let justified_slot_1_relative = new_state
         .justified_slots
+        .0
         .get(0) // relative index 0 = slot 1
         .map(|b| *b)
         .unwrap_or(false);
@@ -89,9 +69,9 @@ fn test_process_block_header_valid() {
 }
 
 #[rstest]
-#[case(2, 1, None, "block slot mismatch")]
-#[case(1, 2, None, "incorrect block proposer")]
-#[case(1, 1, Some(H256::from_slice(&[0xde; 32])), "block parent root mismatch")]
+#[case(2, 1, None, "Block slot mismatch")]
+#[case(1, 2, None, "Incorrect block proposer")]
+#[case(1, 1, Some(H256::from_slice(&[0xde; 32])), "Block parent root mismatch")]
 fn test_process_block_header_invalid(
     #[case] bad_slot: u64,
     #[case] bad_proposer: u64,

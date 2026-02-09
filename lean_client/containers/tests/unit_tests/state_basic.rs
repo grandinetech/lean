@@ -29,15 +29,9 @@ fn test_generate_genesis() {
 
     // Check that collections are empty by trying to get the first element
     assert!(state.historical_block_hashes.get(0).is_err());
-    assert!(state.justified_slots.get(0).is_none());
+    assert!(state.justified_slots.0.get(0).is_none());
     assert!(state.justifications_roots.get(0).is_err());
     assert!(state.justifications_validators.get(0).is_none());
-}
-
-#[test]
-fn test_proposer_round_robin() {
-    let state = State::generate_genesis(0, 4);
-    assert!(state.is_proposer(0));
 }
 
 #[test]

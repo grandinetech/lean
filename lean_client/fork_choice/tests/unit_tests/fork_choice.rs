@@ -1,6 +1,6 @@
 use super::common::create_test_store;
 use containers::{Block, BlockBody, Slot};
-use fork_choice::store::{get_proposal_head, get_vote_target};
+use fork_choice::store::get_proposal_head;
 use ssz::{H256, SszHash};
 
 #[test]
@@ -49,7 +49,7 @@ fn test_get_vote_target_chain() {
     // With head at 10 and safe_target at 0:
     // 1. Walk back 3 slots from head -> 7
     // 2. Walk back until justifiable from finalized (0) -> 6
-    let target = get_vote_target(&store);
+    let target = store.get_attestation_target();
 
     assert_eq!(target.slot, Slot(6));
 }

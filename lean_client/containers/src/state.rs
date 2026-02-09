@@ -1,14 +1,16 @@
-use anyhow::{Context, Result, ensure};
+use anyhow::{Context, Result, anyhow, ensure};
+use bitvec::{bitvec, order::Lsb0, vec::BitVec};
 use metrics::METRICS;
 use serde::{Deserialize, Serialize};
 use ssz::{BitList, H256, PersistentList, Ssz, SszHash};
 use std::collections::{BTreeMap, HashMap, HashSet};
+use tracing::{info, trace};
 use try_from_iterator::TryFromIterator;
 use typenum::{Prod, U262144};
 use xmss::{PublicKey, Signature};
 
 use crate::{
-    AggregatedSignatureProof, Attestation, AttestationData, Checkpoint, Config, SignatureKey, Slot,
+    AggregatedSignatureProof, Attestation, Checkpoint, Config, SignatureKey, Slot,
     attestation::{AggregatedAttestation, AggregatedAttestations, AggregationBits},
     block::{Block, BlockBody, BlockHeader, SignedBlockWithAttestation},
     validator::{Validator, ValidatorRegistryLimit, Validators},
@@ -19,9 +21,87 @@ type HistoricalRootsLimit = U262144; // 2^18
 type JustificationValidatorsLimit = Prod<ValidatorRegistryLimit, HistoricalRootsLimit>;
 
 pub type HistoricalBlockHashes = PersistentList<H256, U262144>;
-pub type JustifiedSlots = BitList<HistoricalRootsLimit>;
 pub type JustificationValidators = BitList<JustificationValidatorsLimit>;
 pub type JustificationRoots = PersistentList<H256, HistoricalRootsLimit>;
+
+#[derive(Debug, Clone, Serialize, Deserialize, Ssz, Default)]
+#[ssz(transparent)]
+pub struct JustifiedSlots(
+    #[serde(with = "crate::serde_helpers::bitlist")] pub BitList<HistoricalRootsLimit>,
+);
+
+impl JustifiedSlots {
+    fn is_slot_justified(&self, finalized_slot: Slot, target_slot: Slot) -> Result<bool> {
+        let Some(relative_index) = target_slot.justified_index_after(finalized_slot) else {
+            return Ok(true);
+        };
+
+        self.0
+            .get(relative_index as usize)
+            .map(|v| *v)
+            .ok_or(anyhow!("Slot {target_slot:?} is outside the tracked range"))
+    }
+
+    fn with_justified(
+        mut self,
+        finalized_slot: Slot,
+        target_slot: Slot,
+        value: bool,
+    ) -> Result<Self> {
+        let Some(relative_index) = target_slot.justified_index_after(finalized_slot) else {
+            return Ok(self);
+        };
+
+        self.0
+            .get_mut(relative_index as usize)
+            .map(|mut bit| bit.set(value))
+            .map(|_| self)
+            .ok_or(anyhow!("Slot {target_slot:?} is outside the tracked range"))
+    }
+
+    fn shift_window(self, delta: u64) -> Self {
+        if delta == 0 {
+            return self;
+        };
+
+        // todo(stf): this probably can be optimized to use something like
+        // this. However, BitList::from_bit_box is private, so it is not
+        // possible now.
+        // let bits = &self.0[(delta as usize)..];
+
+        // Ok(Self(BitList::from_bit_box(
+        //     bits.to_bitvec().into_boxed_bitslice(),
+        // )))
+
+        let bits = &self.0[(delta as usize)..];
+        let mut output = BitList::with_length(bits.len());
+
+        for (i, val) in bits.iter().enumerate() {
+            output.set(i, *val);
+        }
+
+        Self(output)
+    }
+
+    fn extend_to_slot(self, finalized_slot: Slot, target_slot: Slot) -> Self {
+        let Some(relative_index) = target_slot.justified_index_after(finalized_slot) else {
+            return self;
+        };
+
+        let required_capacity = relative_index + 1;
+        let Some(gap_size) = required_capacity.checked_sub(self.0.len() as u64) else {
+            return self;
+        };
+
+        let mut list = BitList::with_length(required_capacity as usize);
+
+        for (index, bit) in self.0.iter().enumerate() {
+            list.set(index, *bit);
+        }
+
+        Self(list)
+    }
+}
 
 #[derive(Clone, Debug, Ssz, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -42,7 +122,6 @@ pub struct State {
     pub historical_block_hashes: HistoricalBlockHashes,
 
     // --- flattened justification tracking ---
-    #[serde(with = "crate::serde_helpers::bitlist")]
     pub justified_slots: JustifiedSlots,
 
     // Validators registry
@@ -135,16 +214,6 @@ impl State {
         }
     }
 
-    /// Simple RR proposer rule (round-robin).
-    pub fn is_proposer(&self, index: u64) -> bool {
-        let num_validators = self.validators.len_u64();
-
-        if num_validators == 0 {
-            return false; // No validators
-        }
-        (self.slot.0 % num_validators) == (index % num_validators)
-    }
-
     pub fn get_justifications(&self) -> BTreeMap<H256, Vec<bool>> {
         // Use actual validator count, matching leanSpec
         let num_validators = self.validators.len_usize();
@@ -219,15 +288,6 @@ impl State {
         signed_block: SignedBlockWithAttestation,
         valid_signatures: bool,
     ) -> Result<Self> {
-        self.state_transition_with_validation(signed_block, valid_signatures, true)
-    }
-
-    pub fn state_transition_with_validation(
-        &self,
-        signed_block: SignedBlockWithAttestation,
-        valid_signatures: bool,
-        validate_state_root: bool,
-    ) -> Result<Self> {
         ensure!(valid_signatures, "invalid block signatures");
 
         let _timer = METRICS
@@ -237,12 +297,13 @@ impl State {
         let mut state = self.process_slots(block.slot)?;
         state = state.process_block(block)?;
 
-        if validate_state_root {
-            let state_for_hash = state.clone();
-            let state_root = state_for_hash.hash_tree_root();
+        let state_root = state.hash_tree_root();
 
-            ensure!(block.state_root == state_root, "invalid block state root");
-        }
+        ensure!(
+            block.state_root == state_root,
+            "invalid block state root (block.state_root={}, actual={state_root})",
+            block.state_root
+        );
 
         Ok(state)
     }
@@ -259,7 +320,9 @@ impl State {
         let mut state = self.clone();
 
         while state.slot < target_slot {
-            state = state.process_slot();
+            if state.latest_block_header.state_root.is_zero() {
+                state.latest_block_header.state_root = state.hash_tree_root();
+            }
             state.slot = Slot(state.slot.0 + 1);
 
             METRICS
@@ -270,25 +333,7 @@ impl State {
         Ok(state)
     }
 
-    pub fn process_slot(&self) -> Self {
-        // Cache the state root in the header if not already set (matches leanSpec)
-        // Per spec: leanSpec/src/lean_spec/subspecs/containers/state/state.py lines 173-176
-        if self.latest_block_header.state_root.is_zero() {
-            let state_for_hash = self.clone();
-            let previous_state_root = state_for_hash.hash_tree_root();
-
-            let mut new_header = self.latest_block_header.clone();
-            new_header.state_root = previous_state_root;
-
-            let mut new_state = self.clone();
-            new_state.latest_block_header = new_header;
-            return new_state;
-        }
-
-        self.clone()
-    }
-
-    pub fn process_block(&self, block: &Block) -> Result<Self> {
+    pub fn process_block(self, block: &Block) -> Result<Self> {
         let _timer = METRICS.get().map(|metrics| {
             metrics
                 .lean_state_transition_block_processing_time_seconds
@@ -302,334 +347,255 @@ impl State {
             "block contains duplicate attestation data"
         );
 
-        Ok(state.process_attestations(&block.body.attestations))
+        state.process_attestations(&block.body.attestations)
     }
 
-    pub fn process_block_header(&self, block: &Block) -> Result<Self> {
-        ensure!(block.slot == self.slot, "block slot mismatch");
+    pub fn process_block_header(mut self, block: &Block) -> Result<Self> {
+        let parent_header = self.latest_block_header;
+        let parent_root = parent_header.hash_tree_root();
+
+        ensure!(block.slot == self.slot, "Block slot mismatch");
+
         ensure!(
-            block.slot > self.latest_block_header.slot,
-            "block is older than latest header"
-        );
-        ensure!(
-            self.is_proposer(block.proposer_index),
-            "incorrect block proposer"
+            block.slot > parent_header.slot,
+            "Block is older than latest header"
         );
 
-        // Create a mutable clone for hash computation
-        let latest_header_for_hash = self.latest_block_header.clone();
-        let parent_root = latest_header_for_hash.hash_tree_root();
+        ensure!(
+            is_proposer_for(block.proposer_index, self.slot, self.validators.len_u64()),
+            "Incorrect block proposer"
+        );
 
         ensure!(
             block.parent_root == parent_root,
-            "block parent root mismatch"
+            "Block parent root mismatch"
         );
 
-        // Build new PersistentList for historical hashes
-        let mut new_historical_hashes = HistoricalBlockHashes::default();
-        for hash in &self.historical_block_hashes {
-            new_historical_hashes.push(*hash)?;
-        }
-        new_historical_hashes.push(parent_root)?;
+        let is_genesis_parent = parent_header.slot.0 == 0;
 
-        // Calculate number of empty slots (skipped slots between parent and this block)
-        let num_empty_slots = (block.slot.0 - self.latest_block_header.slot.0 - 1) as usize;
-
-        // Add ZERO_HASH entries for empty slots to historical hashes
-        for _ in 0..num_empty_slots {
-            new_historical_hashes.push(H256::zero())?;
-        }
-
-        // Extend justified_slots to cover slots from finalized_slot+1 to last_materialized_slot
-        // per leanSpec: justified_slots is stored RELATIVE to the finalized boundary
-        // The first entry corresponds to slot (finalized_slot + 1)
-        let last_materialized_slot = block.slot.0.saturating_sub(1);
-        let finalized_slot = self.latest_finalized.slot.0;
-
-        let new_justified_slots = if last_materialized_slot > finalized_slot {
-            // Calculate relative index: slot X maps to index (X - finalized_slot - 1)
-            let relative_index = (last_materialized_slot - finalized_slot - 1) as usize;
-            let required_capacity = relative_index + 1;
-            let current_len = self.justified_slots.len();
-
-            if required_capacity > current_len {
-                // Extend the bitlist
-                let mut new_slots = JustifiedSlots::new(false, required_capacity);
-                // Copy existing bits
-                for i in 0..current_len {
-                    if let Some(bit) = self.justified_slots.get(i) {
-                        if *bit {
-                            new_slots.set(i, true);
-                        }
-                    }
-                }
-                // New slots are initialized to false (unjustified)
-                new_slots
-            } else {
-                self.justified_slots.clone()
-            }
+        let (new_latest_justified, new_latest_finalized) = if is_genesis_parent {
+            (
+                Checkpoint {
+                    root: parent_root,
+                    slot: Slot(0),
+                },
+                Checkpoint {
+                    root: parent_root,
+                    slot: Slot(0),
+                },
+            )
         } else {
-            // last_materialized_slot <= finalized_slot: no extension needed
-            self.justified_slots.clone()
+            (self.latest_justified.clone(), self.latest_finalized.clone())
         };
 
-        let body_for_hash = block.body.clone();
-        let body_root = body_for_hash.hash_tree_root();
+        let num_empty_slots = block.slot.0 - parent_header.slot.0 - 1;
 
-        let new_latest_block_header = BlockHeader {
+        self.historical_block_hashes.push(parent_root)?;
+        for _ in 0..num_empty_slots {
+            self.historical_block_hashes.push(H256::zero())?;
+        }
+
+        let last_materialized_slot = block.slot.0 - 1;
+        self.justified_slots = self
+            .justified_slots
+            .extend_to_slot(self.latest_finalized.slot, Slot(last_materialized_slot));
+
+        let new_header = BlockHeader {
             slot: block.slot,
             proposer_index: block.proposer_index,
             parent_root: block.parent_root,
-            body_root,
+            body_root: block.body.hash_tree_root(),
             state_root: H256::zero(),
         };
 
-        let mut new_latest_justified = self.latest_justified.clone();
-        let mut new_latest_finalized = self.latest_finalized.clone();
-
-        if self.latest_block_header.slot == Slot(0) {
-            new_latest_justified.root = parent_root;
-            new_latest_finalized.root = parent_root;
-        }
-
-        Ok(Self {
-            config: self.config.clone(),
-            slot: self.slot,
-            latest_block_header: new_latest_block_header,
-            latest_justified: new_latest_justified,
-            latest_finalized: new_latest_finalized,
-            historical_block_hashes: new_historical_hashes,
-            justified_slots: new_justified_slots,
-            validators: self.validators.clone(),
-            justifications_roots: self.justifications_roots.clone(),
-            justifications_validators: self.justifications_validators.clone(),
-        })
+        self.latest_justified = new_latest_justified;
+        self.latest_finalized = new_latest_finalized;
+        self.latest_block_header = new_header;
+        Ok(self)
     }
 
-    pub fn process_attestations(&self, attestations: &AggregatedAttestations) -> Self {
+    pub fn process_attestations(&self, attestations: &AggregatedAttestations) -> Result<Self> {
         let _timer = METRICS.get().map(|metrics| {
             metrics
                 .lean_state_transition_attestations_processing_time_seconds
                 .start_timer()
         });
 
-        let mut justifications = self.get_justifications();
-        let mut latest_justified = self.latest_justified.clone();
-        let mut latest_finalized = self.latest_finalized.clone();
-        let initial_finalized_slot = self.latest_finalized.slot;
-        let justified_slots = self.justified_slots.clone();
-
-        tracing::info!(
-            current_justified_slot = latest_justified.slot.0,
-            current_finalized_slot = latest_finalized.slot.0,
-            "Processing attestations in block"
+        ensure!(
+            self.justifications_roots
+                .into_iter()
+                .all(|root| !root.is_zero()),
+            "zero hash is not allowed in justification roots"
         );
 
-        let mut justified_slots_working = Vec::new();
-        for i in 0..justified_slots.len() {
-            justified_slots_working.push(justified_slots.get(i).map(|b| *b).unwrap_or(false));
+        let mut justifications = self
+            .justifications_roots
+            .into_iter()
+            .enumerate()
+            .map(|(i, root)| {
+                (
+                    root.clone(),
+                    self.justifications_validators
+                        [i * self.validators.len_usize()..(i + 1) * self.validators.len_usize()]
+                        .to_bitvec(),
+                )
+            })
+            .collect::<HashMap<_, BitVec<u8>>>();
+
+        let mut latest_justified = self.latest_justified.clone();
+        let mut latest_finalized = self.latest_finalized.clone();
+        let mut finalized_slot = latest_finalized.slot;
+        let mut justified_slots = self.justified_slots.clone();
+
+        let mut root_to_slot = HashMap::new();
+        let start_slot = finalized_slot.0 + 1;
+        let end_slot = self.historical_block_hashes.len_u64();
+        for i in start_slot..end_slot {
+            let root = self.historical_block_hashes.get(i)?;
+
+            root_to_slot
+                .entry(root.clone())
+                .and_modify(|slot: &mut Slot| {
+                    if i > slot.0 {
+                        *slot = Slot(i);
+                    }
+                })
+                .or_insert(Slot(i));
         }
 
-        for aggregated_attestation in attestations {
+        for attestation in attestations {
             METRICS.get().map(|metrics| {
                 metrics
                     .lean_state_transition_attestations_processed_total
                     .inc()
             });
-            let validator_ids = aggregated_attestation
-                .aggregation_bits
-                .to_validator_indices();
-            self.process_single_attestation(
-                &aggregated_attestation.data,
-                &validator_ids,
-                &mut justifications,
-                &mut latest_justified,
-                &mut latest_finalized,
-                &mut justified_slots_working,
-                initial_finalized_slot,
-            );
+
+            let source = attestation.data.source.clone();
+            let target = attestation.data.target.clone();
+
+            if !justified_slots.is_slot_justified(finalized_slot, source.slot)? {
+                info!("skipping attestation, source slot is not justified");
+                continue;
+            }
+
+            if justified_slots.is_slot_justified(finalized_slot, target.slot)? {
+                info!("skipping attestation, target slot is already justified");
+                continue;
+            }
+
+            if source.root.is_zero() || target.root.is_zero() {
+                info!("skipping attestation, source or target slots are zero");
+                continue;
+            }
+
+            if &source.root != self.historical_block_hashes.get(source.slot.0)?
+                || &target.root != self.historical_block_hashes.get(target.slot.0)?
+            {
+                info!(
+                    "skipping attestation, source or target roots not found in historical block hashes"
+                );
+                continue;
+            }
+
+            if target.slot <= source.slot {
+                info!("skipping attestation, target slot is before source slot");
+                continue;
+            }
+
+            if !target.slot.is_justifiable_after(self.latest_finalized.slot) {
+                info!("skipping attestation, target slot is not yet justifiable");
+                continue;
+            }
+
+            if !justifications.contains_key(&target.root) {
+                justifications.insert(
+                    target.root.clone(),
+                    bitvec![u8, Lsb0; 0; self.validators.len_usize()],
+                );
+            }
+
+            for validator_id in attestation.aggregation_bits.to_validator_indices() {
+                let mut vote = justifications
+                    .get_mut(&target.root)
+                    .ok_or(anyhow!("unknown target root"))?
+                    .get_mut(validator_id as usize)
+                    .ok_or(anyhow!("validator index is out of range"))?;
+
+                vote.set(true);
+            }
+
+            let count = justifications[&target.root]
+                .iter()
+                .map(|v| *v as u64)
+                .sum::<u64>();
+
+            if 3 * count >= 2 * self.validators.len_u64() {
+                info!("justifying slot {target:?}");
+                latest_justified = target.clone();
+                justified_slots =
+                    justified_slots.with_justified(finalized_slot, target.slot, true)?;
+
+                justifications.remove(&target.root);
+
+                if !(source.slot.0 + 1..target.slot.0)
+                    .any(|slot| Slot(slot).is_justifiable_after(self.latest_finalized.slot))
+                {
+                    info!("finalizing {source:?}");
+                    let old_finalized_slot = finalized_slot;
+                    latest_finalized = source;
+                    finalized_slot = latest_finalized.slot;
+                    let delta = finalized_slot.0.checked_sub(old_finalized_slot.0);
+
+                    if let Some(delta) = delta
+                        && delta > 0
+                    {
+                        justified_slots = justified_slots.shift_window(delta);
+
+                        ensure!(
+                            justifications
+                                .keys()
+                                .all(|root| root_to_slot.contains_key(root)),
+                            "Justification root missing from root_to_slot"
+                        );
+                        justifications.retain(|root, _| root_to_slot[root].0 > finalized_slot.0);
+                    }
+                }
+                // justified_slots = justified_slots
+            }
         }
 
-        self.finalize_attestation_processing(
-            justifications,
-            latest_justified,
-            latest_finalized,
-            justified_slots_working,
-        )
-    }
-
-    /// Process a single attestation's votes.
-    ///
-    /// NOTE: justified_slots uses RELATIVE indexing. Slot X maps to index (X - finalized_slot - 1).
-    /// Slots at or before finalized_slot are implicitly justified (not stored in the bitlist).
-    fn process_single_attestation(
-        &self,
-        vote: &AttestationData,
-        validator_ids: &[u64],
-        justifications: &mut BTreeMap<H256, Vec<bool>>,
-        latest_justified: &mut Checkpoint,
-        latest_finalized: &mut Checkpoint,
-        justified_slots_working: &mut Vec<bool>,
-        initial_finalized_slot: Slot,
-    ) {
-        let target_slot = vote.target.slot;
-        let source_slot = vote.source.slot;
-        let target_root = vote.target.root;
-        let source_root = vote.source.root;
-
-        let finalized_slot_int = initial_finalized_slot.0 as i64;
-
-        // Helper to check if a slot is justified using RELATIVE indexing
-        // Per leanSpec: slots at or before finalized_slot are implicitly justified
-        let is_slot_justified = |slot: Slot, justified_slots: &[bool]| -> bool {
-            if slot.0 as i64 <= finalized_slot_int {
-                // Slots at or before finalized boundary are implicitly justified
-                return true;
-            }
-            // Calculate relative index: slot X maps to index (X - finalized_slot - 1)
-            let relative_index = (slot.0 as i64 - finalized_slot_int - 1) as usize;
-            justified_slots
-                .get(relative_index)
-                .copied()
-                .unwrap_or(false)
+        let sorted_roots = {
+            let mut roots = justifications.keys().copied().collect::<Vec<_>>();
+            roots.sort();
+            roots
         };
 
-        let source_is_justified = is_slot_justified(source_slot, justified_slots_working);
-        let target_already_justified = is_slot_justified(target_slot, justified_slots_working);
+        let mut output = self.clone();
+        output.justifications_roots = JustificationRoots::try_from_iter(sorted_roots.clone())?;
 
-        let source_slot_int = source_slot.0 as usize;
-        let target_slot_int = target_slot.0 as usize;
+        // TODO(stf): this can be optimized by using something like concatenate.
+        // However, currently not possible as BitList doesn't allow constructing
+        // from structure.
+        output.justifications_validators = {
+            let bits = sorted_roots
+                .iter()
+                .flat_map(|root| justifications[root].clone())
+                .collect::<Vec<_>>();
 
-        // Check root matches using absolute slot for historical_block_hashes lookup
-        let source_root_matches = self
-            .historical_block_hashes
-            .get(source_slot_int as u64)
-            .map(|r| *r == source_root)
-            .unwrap_or(false);
-        let target_root_matches = self
-            .historical_block_hashes
-            .get(target_slot_int as u64)
-            .map(|r| *r == target_root)
-            .unwrap_or(false);
+            let mut output = BitList::with_length(bits.len());
 
-        // Ignore votes that reference zero-hash slots (per leanSpec)
-        if source_root.is_zero() || target_root.is_zero() {
-            return;
-        }
-
-        let is_valid_vote = source_is_justified
-            && !target_already_justified
-            && source_root_matches
-            && target_root_matches
-            && target_slot > source_slot
-            && target_slot.is_justifiable_after(initial_finalized_slot);
-
-        // Debug logging for vote validation
-        tracing::debug!(
-            source_slot = source_slot.0,
-            target_slot = target_slot.0,
-            source_root = %format!("0x{:x}", source_root),
-            target_root = %format!("0x{:x}", target_root),
-            validator_count = validator_ids.len(),
-            source_is_justified,
-            target_already_justified,
-            source_root_matches,
-            target_root_matches,
-            is_valid_vote,
-            "Processing attestation vote"
-        );
-
-        if !is_valid_vote {
-            tracing::warn!(
-                source_slot = source_slot.0,
-                target_slot = target_slot.0,
-                source_is_justified,
-                target_already_justified,
-                source_root_matches,
-                target_root_matches,
-                "Vote rejected"
-            );
-            return;
-        }
-
-        if !justifications.contains_key(&target_root) {
-            justifications.insert(target_root, vec![false; self.validators.len_usize()]);
-        }
-
-        for &validator_id in validator_ids {
-            let vid = validator_id as usize;
-            if let Some(votes) = justifications.get_mut(&target_root) {
-                if vid < votes.len() && !votes[vid] {
-                    votes[vid] = true;
-                }
+            for (i, val) in bits.into_iter().enumerate() {
+                output.set(i, val);
             }
-        }
 
-        if let Some(votes) = justifications.get(&target_root) {
-            let num_validators = self.validators.len_u64() as usize;
-            let count = votes.iter().filter(|&&v| v).count();
-            let threshold = (2usize * num_validators).div_ceil(3);
+            output
+        };
 
-            tracing::info!(
-                target_slot = target_slot.0,
-                target_root = %format!("0x{:x}", target_root),
-                vote_count = count,
-                num_validators,
-                threshold,
-                needs = format!("3*{} >= 2*{} = {} >= {}", count, num_validators, 3*count, 2*num_validators),
-                will_justify = 3 * count >= 2 * num_validators,
-                "Vote count for target"
-            );
+        output.justified_slots = justified_slots;
+        output.latest_justified = latest_justified;
+        output.latest_finalized = latest_finalized;
 
-            if 3 * count >= 2 * num_validators {
-                tracing::info!(
-                    target_slot = target_slot.0,
-                    target_root = %format!("0x{:x}", target_root),
-                    "Justification threshold reached"
-                );
-                *latest_justified = vote.target.clone();
-
-                // Use RELATIVE indexing for justified_slots_working
-                // Calculate relative index for target slot
-                let target_relative_index =
-                    (target_slot.0 as i64 - finalized_slot_int - 1) as usize;
-
-                // Extend the working vec if needed
-                if target_relative_index >= justified_slots_working.len() {
-                    justified_slots_working.resize(target_relative_index + 1, false);
-                }
-                justified_slots_working[target_relative_index] = true;
-
-                justifications.remove(&target_root);
-
-                let is_finalizable = (source_slot_int + 1..target_slot_int)
-                    .all(|s| !Slot(s as u64).is_justifiable_after(initial_finalized_slot));
-
-                if is_finalizable {
-                    tracing::info!(source_slot = source_slot.0, "FINALIZATION!");
-                    *latest_finalized = vote.source.clone();
-                }
-            }
-        }
-    }
-
-    fn finalize_attestation_processing(
-        &self,
-        justifications: BTreeMap<H256, Vec<bool>>,
-        latest_justified: Checkpoint,
-        latest_finalized: Checkpoint,
-        justified_slots_working: Vec<bool>,
-    ) -> Self {
-        let mut new_state = self.clone().with_justifications(justifications);
-        new_state.latest_justified = latest_justified;
-        new_state.latest_finalized = latest_finalized;
-
-        let mut new_justified_slots = JustifiedSlots::with_length(justified_slots_working.len());
-        for (i, &val) in justified_slots_working.iter().enumerate() {
-            new_justified_slots.set(i, val);
-        }
-        new_state.justified_slots = new_justified_slots;
-        new_state
+        Ok(output)
     }
 
     /// Build a valid block on top of this state.
@@ -934,4 +900,8 @@ impl State {
 
         Ok((aggregated_attestations, aggregated_proofs))
     }
+}
+
+fn is_proposer_for(validator_index: u64, slot: Slot, num_validators: u64) -> bool {
+    slot.0 % num_validators == validator_index
 }

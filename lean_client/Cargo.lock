@@ -1076,6 +1076,8 @@ name = "containers"
 version = "0.0.0"
 dependencies = [
  "anyhow",
+ "bitvec",
+ "bls",
  "env-config",
  "hex",
  "metrics",
@@ -1866,6 +1868,7 @@ name = "fork_choice"
 version = "0.0.0"
 dependencies = [
  "anyhow",
+ "bls",
  "containers",
  "env-config",
  "metrics",
@@ -6522,6 +6525,7 @@ dependencies = [
  "serde_yaml",
  "ssz",
  "tracing",
+ "try_from_iterator",
  "typenum",
  "xmss",
  "zeroize",

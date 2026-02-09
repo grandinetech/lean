@@ -11,7 +11,7 @@ use lean_multisig::{
 };
 use metrics::{METRICS, stop_and_discard};
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
-use ssz::{ByteList, Ssz};
+use ssz::{ByteList, Ssz, SszRead};
 use typenum::U1048576;
 
 /// Max size currently is 1MiB by spec.
@@ -27,6 +27,7 @@ type AggregatedSignatureSizeLimit = U1048576;
 /// todo(xmss): deriving Ssz not particularly good there, as this won't validate
 /// if it actually has valid proof structure, so `.as_lean()` method may panic.
 #[derive(Debug, Clone, Ssz)]
+#[ssz(transparent)]
 pub struct AggregatedSignature(ByteList<AggregatedSignatureSizeLimit>);
 
 fn setup_prover() {

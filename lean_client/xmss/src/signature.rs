@@ -21,7 +21,8 @@ type SignatureSize = U3112;
 type LeanSigSignature = <SIGTopLevelTargetSumLifetime32Dim64Base8 as SignatureScheme>::Signature;
 
 // todo(xmss): default implementation doesn't make sense here, and is needed only for tests
-#[derive(Ssz, Clone, Default)]
+#[derive(Clone, Default, Ssz)]
+#[ssz(transparent)]
 pub struct Signature(ByteVector<SignatureSize>);
 
 impl Signature {

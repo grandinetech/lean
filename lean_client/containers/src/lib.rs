@@ -10,8 +10,8 @@ mod validator;
 
 pub use attestation::{
     AggregatedAttestation, AggregatedSignatureProof, AggregatedSignatures, AggregationBits,
-    Attestation, AttestationData, Attestations, SignatureKey, SignedAggregatedAttestation,
-    SignedAttestation,
+    Attestation, AttestationData, AttestationSignatures, Attestations, SignatureKey,
+    SignedAggregatedAttestation, SignedAttestation,
 };
 pub use block::{
     Block, BlockBody, BlockHeader, BlockSignatures, BlockWithAttestation, SignedBlock,

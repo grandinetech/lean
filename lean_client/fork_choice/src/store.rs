@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use anyhow::{Error, Result, anyhow, ensure};
+use anyhow::{Result, anyhow, ensure};
 use containers::{
     AggregatedSignatureProof, Attestation, AttestationData, Block, Checkpoint, Config,
     SignatureKey, SignedBlockWithAttestation, Slot, State,
@@ -43,6 +43,56 @@ pub struct Store {
     pub gossip_signatures: HashMap<SignatureKey, Signature>,
 
     pub aggregated_payloads: HashMap<SignatureKey, Vec<AggregatedSignatureProof>>,
+}
+
+const JUSTIFICATION_LOOKBACK_SLOTS: u64 = 3;
+
+impl Store {
+    pub fn produce_attestation_data(&self, slot: Slot) -> Result<AttestationData> {
+        let head_checkpoint = Checkpoint {
+            root: self.head,
+            slot: self
+                .blocks
+                .get(&self.head)
+                .ok_or(anyhow!("head block is not known"))?
+                .slot,
+        };
+
+        let target_checkpoint = self.get_attestation_target();
+
+        Ok(AttestationData {
+            slot,
+            head: head_checkpoint,
+            target: target_checkpoint,
+            source: self.latest_justified.clone(),
+        })
+    }
+
+    pub fn get_attestation_target(&self) -> Checkpoint {
+        let mut target = self.head;
+
+        let safe_slot = self.blocks[&self.safe_target].slot;
+
+        // Walk back toward safe target
+        for _ in 0..JUSTIFICATION_LOOKBACK_SLOTS {
+            if self.blocks[&target].slot > safe_slot {
+                target = self.blocks[&target].parent_root;
+            } else {
+                break;
+            }
+        }
+
+        let final_slot = self.latest_finalized.slot;
+        while !self.blocks[&target].slot.is_justifiable_after(final_slot) {
+            target = self.blocks[&target].parent_root;
+        }
+
+        let block_target = &self.blocks[&target];
+        Checkpoint {
+            root: target,
+            slot: block_target.slot,
+        }
+    }
 }
 
 /// Initialize forkchoice store from an anchor state and block
@@ -246,37 +296,6 @@ pub fn tick_interval(store: &mut Store, has_proposal: bool) {
         2 => update_safe_target(store),
         3 => accept_new_attestations(store),
         _ => {}
-    }
-}
-
-/// Algorithm:
-/// 1. Start at Head: Begin with the current head block
-/// 2. Walk Toward Safe: Move backward (up to JUSTIFICATION_LOOKBACK_SLOTS steps)
-///    if safe target is newer
-/// 3. Ensure Justifiable: Continue walking back until slot is justifiable
-/// 4. Return Checkpoint: Create checkpoint from selected block
-pub fn get_vote_target(store: &Store) -> Checkpoint {
-    let mut target = store.head;
-    let safe_slot = store.blocks[&store.safe_target].slot;
-
-    // Walk back toward safe target
-    for _ in 0..3 {
-        if store.blocks[&target].slot > safe_slot {
-            target = store.blocks[&target].parent_root;
-        } else {
-            break;
-        }
-    }
-
-    let final_slot = store.latest_finalized.slot;
-    while !store.blocks[&target].slot.is_justifiable_after(final_slot) {
-        target = store.blocks[&target].parent_root;
-    }
-
-    let block_target = &store.blocks[&target];
-    Checkpoint {
-        root: target,
-        slot: block_target.slot,
     }
 }
 
