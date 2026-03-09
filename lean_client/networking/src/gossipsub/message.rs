@@ -8,7 +8,10 @@ use ssz::SszReadDefault as _;
 pub enum GossipsubMessage {
     Block(SignedBlockWithAttestation),
     /// Attestation from a specific subnet (devnet-3)
-    AttestationSubnet { subnet_id: u64, attestation: SignedAttestation },
+    AttestationSubnet {
+        subnet_id: u64,
+        attestation: SignedAttestation,
+    },
     /// Aggregated attestation (devnet-3)
     Aggregation(SignedAggregatedAttestation),
 }

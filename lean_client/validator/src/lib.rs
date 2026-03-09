@@ -4,14 +4,13 @@ use std::path::Path;
 
 use anyhow::{Context, Result, anyhow, bail};
 use containers::{
-    AggregatedSignatureProof, AggregationBits,
-    Attestation, AttestationData, AttestationSignatures, Block, BlockSignatures,
-    BlockWithAttestation, Checkpoint, SignedAggregatedAttestation, SignedAttestation,
-    SignedBlockWithAttestation, Slot, SignatureKey,
+    AggregatedSignatureProof, AggregationBits, Attestation, AttestationData, AttestationSignatures,
+    Block, BlockSignatures, BlockWithAttestation, Checkpoint, SignatureKey,
+    SignedAggregatedAttestation, SignedAttestation, SignedBlockWithAttestation, Slot,
 };
 use fork_choice::store::{Store, produce_block_with_signatures};
-use ssz::H256;
 use metrics::{METRICS, stop_and_discard, stop_and_record};
+use ssz::H256;
 use ssz::SszHash;
 use tracing::{info, warn};
 use try_from_iterator::TryFromIterator as _;
@@ -66,7 +65,11 @@ impl ValidatorService {
         Self::new_with_aggregator(config, num_validators, false)
     }
 
-    pub fn new_with_aggregator(config: ValidatorConfig, num_validators: u64, is_aggregator: bool) -> Self {
+    pub fn new_with_aggregator(
+        config: ValidatorConfig,
+        num_validators: u64,
+        is_aggregator: bool,
+    ) -> Self {
         info!(
             node_id = %config.node_id,
             indices = ?config.validator_indices,
@@ -156,7 +159,11 @@ impl ValidatorService {
     /// Perform aggregation duty if this node is an aggregator (devnet-3)
     /// Collects signatures from gossip_signatures and creates aggregated attestations
     /// Returns None if not an aggregator or no signatures to aggregate
-    pub fn maybe_aggregate(&self, store: &Store, slot: Slot) -> Option<Vec<SignedAggregatedAttestation>> {
+    pub fn maybe_aggregate(
+        &self,
+        store: &Store,
+        slot: Slot,
+    ) -> Option<Vec<SignedAggregatedAttestation>> {
         if !self.is_aggregator_for_slot(slot) {
             return None;
         }
@@ -186,7 +193,8 @@ impl ValidatorService {
             // Look up attestation data by its hash (data_root)
             // This ensures we get the exact attestation that was signed,
             // matching ream's attestation_data_by_root_provider approach
-            let Some(attestation_data) = store.attestation_data_by_root.get(&data_root).cloned() else {
+            let Some(attestation_data) = store.attestation_data_by_root.get(&data_root).cloned()
+            else {
                 warn!(
                     data_root = %format!("0x{:x}", data_root),
                     "Could not find attestation data for aggregation group"
@@ -307,7 +315,7 @@ impl ValidatorService {
         let proposer_signature = {
             let sign_timer = METRICS.get().map(|metrics| {
                 metrics
-                    .lean_pq_signature_attestation_signing_time_seconds
+                    .lean_pq_sig_attestation_signing_time_seconds
                     .start_timer()
             });
 
@@ -377,7 +385,7 @@ impl ValidatorService {
                 let signature = if let Some(ref key_manager) = self.key_manager {
                     let _timer = METRICS.get().map(|metrics| {
                         metrics
-                            .lean_pq_signature_attestation_signing_time_seconds
+                            .lean_pq_sig_attestation_signing_time_seconds
                             .start_timer()
                     });
 
@@ -387,7 +395,7 @@ impl ValidatorService {
 
                     let _timer = METRICS.get().map(|metrics| {
                         metrics
-                            .lean_pq_signature_attestation_signing_time_seconds
+                            .lean_pq_sig_attestation_signing_time_seconds
                             .start_timer()
                     });
                     match key_manager.sign(idx, epoch, message) {

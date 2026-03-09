@@ -496,7 +496,10 @@ where
                             );
                         }
                     }
-                    Ok(GossipsubMessage::AttestationSubnet { subnet_id, attestation }) => {
+                    Ok(GossipsubMessage::AttestationSubnet {
+                        subnet_id,
+                        attestation,
+                    }) => {
                         info!(
                             validator = %attestation.validator_id,
                             slot = %attestation.message.slot.0,
@@ -514,7 +517,9 @@ where
                             })
                             .await
                         {
-                            warn!("failed to send subnet attestation for slot {slot} to chain: {err:?}");
+                            warn!(
+                                "failed to send subnet attestation for slot {slot} to chain: {err:?}"
+                            );
                         }
                     }
                     Ok(GossipsubMessage::Aggregation(signed_aggregated_attestation)) => {
@@ -751,7 +756,12 @@ where
                         // Devnet-3: Publish to subnet-specific topic only
                         let topic_kind = GossipsubKind::AttestationSubnet(subnet_id);
                         if let Err(err) = self.publish_to_topic(topic_kind, bytes) {
-                            warn!(slot = slot, subnet_id = subnet_id, ?err, "Publish attestation to subnet failed");
+                            warn!(
+                                slot = slot,
+                                subnet_id = subnet_id,
+                                ?err,
+                                "Publish attestation to subnet failed"
+                            );
                         } else {
                             info!(
                                 slot = slot,

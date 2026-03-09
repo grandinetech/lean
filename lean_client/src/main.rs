@@ -295,7 +295,11 @@ async fn main() -> Result<()> {
                                     "Failed to load XMSS keys: {}, falling back to zero signatures",
                                     e
                                 );
-                                Some(ValidatorService::new_with_aggregator(config, num_validators, args.is_aggregator))
+                                Some(ValidatorService::new_with_aggregator(
+                                    config,
+                                    num_validators,
+                                    args.is_aggregator,
+                                ))
                             }
                         }
                     } else {
@@ -303,7 +307,11 @@ async fn main() -> Result<()> {
                             "Hash-sig key directory not found: {:?}, using zero signatures",
                             keys_path
                         );
-                        Some(ValidatorService::new_with_aggregator(config, num_validators, args.is_aggregator))
+                        Some(ValidatorService::new_with_aggregator(
+                            config,
+                            num_validators,
+                            args.is_aggregator,
+                        ))
                     }
                 } else {
                     info!(
@@ -312,7 +320,11 @@ async fn main() -> Result<()> {
                         aggregator = args.is_aggregator,
                         "Validator mode enabled (no --hash-sig-key-dir specified - using zero signatures)"
                     );
-                    Some(ValidatorService::new_with_aggregator(config, num_validators, args.is_aggregator))
+                    Some(ValidatorService::new_with_aggregator(
+                        config,
+                        num_validators,
+                        args.is_aggregator,
+                    ))
                 }
             }
             Err(e) => {
@@ -395,7 +407,7 @@ async fn main() -> Result<()> {
 
     task::spawn(async move {
         if args.http_config.metrics_enabled() {
-            if let Err(err) = http_api::run_server(args.http_config).await {
+            if let Err(err) = http_api::run_server(args.http_config, genesis_time).await {
                 error!("HTTP Server failed with error: {err:?}");
             }
         }

@@ -18,10 +18,10 @@ pub struct Metrics {
 
     // PQ Signature metrics
     /// Time taken to sign an attestation
-    pub lean_pq_signature_attestation_signing_time_seconds: Histogram,
+    pub lean_pq_sig_attestation_signing_time_seconds: Histogram,
 
     /// Time taken to verify an attestation signature
-    pub lean_pq_signature_attestation_verification_time_seconds: Histogram,
+    pub lean_pq_sig_attestation_verification_time_seconds: Histogram,
 
     /// Total number of aggregated signatures
     pub lean_pq_sig_aggregated_signatures_total: IntCounter,
@@ -46,7 +46,7 @@ pub struct Metrics {
     pub lean_head_slot: IntGauge,
 
     /// Current slot of the lean chain
-    lean_current_slot: IntGauge,
+    pub lean_current_slot: IntGauge,
 
     /// Safe target slot
     pub lean_safe_target_slot: IntGauge,
@@ -125,16 +125,14 @@ impl Metrics {
             )?,
 
             // PQ Signature metrics
-            lean_pq_signature_attestation_signing_time_seconds: Histogram::with_opts(
+            lean_pq_sig_attestation_signing_time_seconds: Histogram::with_opts(histogram_opts!(
+                "lean_pq_sig_attestation_signing_time_seconds",
+                "Time taken to sign an attestation",
+                vec![0.005, 0.01, 0.025, 0.05, 0.1, 1.0],
+            ))?,
+            lean_pq_sig_attestation_verification_time_seconds: Histogram::with_opts(
                 histogram_opts!(
-                    "lean_pq_signature_attestation_signing_time_seconds",
-                    "Time taken to sign an attestation",
-                    vec![0.005, 0.01, 0.025, 0.05, 0.1, 1.0],
-                ),
-            )?,
-            lean_pq_signature_attestation_verification_time_seconds: Histogram::with_opts(
-                histogram_opts!(
-                    "lean_pq_signature_attestation_verification_time_seconds",
+                    "lean_pq_sig_attestation_verification_time_seconds",
                     "Time taken to verify an attestation signature",
                     vec![0.005, 0.01, 0.025, 0.05, 0.1, 1.0],
                 ),
@@ -296,11 +294,10 @@ impl Metrics {
         default_registry.register(Box::new(self.lean_node_info.clone()))?;
         default_registry.register(Box::new(self.lean_node_start_time_seconds.clone()))?;
         default_registry.register(Box::new(
-            self.lean_pq_signature_attestation_signing_time_seconds
-                .clone(),
+            self.lean_pq_sig_attestation_signing_time_seconds.clone(),
         ))?;
         default_registry.register(Box::new(
-            self.lean_pq_signature_attestation_verification_time_seconds
+            self.lean_pq_sig_attestation_verification_time_seconds
                 .clone(),
         ))?;
         default_registry.register(Box::new(

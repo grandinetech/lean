@@ -202,7 +202,7 @@ impl SignedBlockWithAttestation {
 
         let _timer = METRICS.get().map(|metrics| {
             metrics
-                .lean_pq_signature_attestation_verification_time_seconds
+                .lean_pq_sig_attestation_verification_time_seconds
                 .start_timer()
         });
 

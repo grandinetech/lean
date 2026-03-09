@@ -1,6 +1,8 @@
 use super::common::create_test_store;
 use fork_choice::handlers::on_tick;
-use fork_choice::store::{INTERVALS_PER_SLOT, MILLIS_PER_INTERVAL, SECONDS_PER_SLOT, tick_interval};
+use fork_choice::store::{
+    INTERVALS_PER_SLOT, MILLIS_PER_INTERVAL, SECONDS_PER_SLOT, tick_interval,
+};
 
 #[test]
 fn test_on_tick_basic() {
@@ -32,7 +34,8 @@ fn test_on_tick_already_current() {
     let initial_time = store.time;
     // on_tick now expects milliseconds (devnet-3)
     // Convert initial_time (in intervals) to seconds, then to milliseconds
-    let current_target_millis = (store.config.genesis_time * 1000) + (initial_time * MILLIS_PER_INTERVAL);
+    let current_target_millis =
+        (store.config.genesis_time * 1000) + (initial_time * MILLIS_PER_INTERVAL);
 
     // Try to advance to current time
     on_tick(&mut store, current_target_millis, true);
@@ -47,7 +50,8 @@ fn test_on_tick_small_increment() {
     let initial_time = store.time;
     // on_tick now expects milliseconds (devnet-3)
     // Advance by just 1 second (1000ms)
-    let target_time_millis = (store.config.genesis_time * 1000) + (initial_time * MILLIS_PER_INTERVAL) + 1000;
+    let target_time_millis =
+        (store.config.genesis_time * 1000) + (initial_time * MILLIS_PER_INTERVAL) + 1000;
 
     on_tick(&mut store, target_time_millis, false);
 
@@ -177,7 +181,10 @@ fn test_millis_per_interval() {
     assert_eq!(MILLIS_PER_INTERVAL, 800);
 
     // Verify no integer truncation: 4 * 1000 = 5 * 800
-    assert_eq!(SECONDS_PER_SLOT * 1000, MILLIS_PER_INTERVAL * INTERVALS_PER_SLOT);
+    assert_eq!(
+        SECONDS_PER_SLOT * 1000,
+        MILLIS_PER_INTERVAL * INTERVALS_PER_SLOT
+    );
 }
 
 #[test]

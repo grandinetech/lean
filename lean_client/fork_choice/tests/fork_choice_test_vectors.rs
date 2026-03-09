@@ -569,8 +569,9 @@ fn forkchoice(spec_file: &str) {
 
                         // Advance time to the block's slot to ensure attestations are processable
                         // SECONDS_PER_SLOT is 4. Convert to milliseconds for devnet-3
-                        let block_time_millis =
-                            (store.config.genesis_time + (signed_block.message.block.slot.0 * 4)) * 1000;
+                        let block_time_millis = (store.config.genesis_time
+                            + (signed_block.message.block.slot.0 * 4))
+                            * 1000;
                         on_tick(&mut store, block_time_millis, false);
 
                         on_block(&mut store, signed_block).unwrap();

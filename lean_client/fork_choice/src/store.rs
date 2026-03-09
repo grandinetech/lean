@@ -341,8 +341,10 @@ pub fn update_safe_target(store: &mut Store) {
     }
 
     // Extract per-validator attestations from merged payloads
-    let attestations =
-        extract_attestations_from_aggregated_payloads(&all_payloads, &store.attestation_data_by_root);
+    let attestations = extract_attestations_from_aggregated_payloads(
+        &all_payloads,
+        &store.attestation_data_by_root,
+    );
 
     // Run LMD-GHOST with 2/3 threshold to find safe target
     let new_safe_target = get_fork_choice_head(store, root, &attestations, min_score);
@@ -380,10 +382,10 @@ pub fn tick_interval(store: &mut Store, has_proposal: bool) {
 
     match curr_interval {
         0 if has_proposal => accept_new_attestations(store), // Interval 0: Block proposal
-        1 => {}                                               // Interval 1: Attestation phase
-        2 => {}                                               // Interval 2: Aggregation phase (handled in main.rs)
-        3 => update_safe_target(store),                       // Interval 3: Safe target update
-        4 => accept_new_attestations(store),                  // Interval 4: Accept attestations
+        1 => {}                                              // Interval 1: Attestation phase
+        2 => {}                         // Interval 2: Aggregation phase (handled in main.rs)
+        3 => update_safe_target(store), // Interval 3: Safe target update
+        4 => accept_new_attestations(store), // Interval 4: Accept attestations
         _ => {}
     }
 }

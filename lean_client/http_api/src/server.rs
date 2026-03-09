@@ -6,8 +6,8 @@ use tracing::info;
 
 use crate::{config::HttpServerConfig, routing::normal_routes};
 
-pub async fn run_server(config: HttpServerConfig) -> Result<()> {
-    let router = normal_routes(&config);
+pub async fn run_server(config: HttpServerConfig, genesis_time: u64) -> Result<()> {
+    let router = normal_routes(&config, genesis_time);
 
     let listener = config
         .listener()
