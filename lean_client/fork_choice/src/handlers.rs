@@ -515,6 +515,9 @@ fn process_block_internal(
     store
         .gossip_signatures
         .insert(proposer_sig_key, signed_block.signature.proposer_signature);
+    store
+        .attestation_data_by_root
+        .insert(proposer_data_root, proposer_attestation.data.clone());
 
     // Process proposer attestation as if received via gossip (is_from_block=false)
     // This ensures it goes to "new" attestations and doesn't immediately affect fork choice
