@@ -708,7 +708,8 @@ async fn main() -> Result<()> {
                                             "Our turn to propose block!"
                                         );
 
-                                        match vs.build_block_proposal(&mut *store.write(), Slot(current_slot), proposer_idx) {
+                                        let result = {vs.build_block_proposal(&mut *store.write(), Slot(current_slot), proposer_idx)};
+                                        match result {
                                             Ok(signed_block) => {
                                                 let block_root = signed_block.message.block.hash_tree_root();
                                                 info!(
@@ -864,8 +865,9 @@ async fn main() -> Result<()> {
                                 }
                                 continue;
                             }
-
-                            match on_block(&mut *store.write(), signed_block_with_attestation.clone()) {
+                            
+                            let result = {on_block(&mut *store.write(), signed_block_with_attestation.clone())};
+                            match result {
                                 Ok(()) => {
                                     info!("Block processed successfully");
 
