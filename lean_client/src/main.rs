@@ -865,7 +865,7 @@ async fn main() -> Result<()> {
                                 }
                                 continue;
                             }
-                            
+
                             let result = {on_block(&mut *store.write(), signed_block_with_attestation.clone())};
                             match result {
                                 Ok(()) => {
