@@ -1,29 +1,3 @@
-# ==============================================================================
-# Stage 1: Builder
-# ==============================================================================
-FROM rustlang/rust:nightly-bookworm AS builder
-
-# Install build dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    pkg-config \
-    libssl-dev \
-    libclang-dev \
-    cmake \
-    git \
-    && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-
-# Copy source code
-COPY . .
-
-# Build release binary
-RUN cargo build --release
-
-# ==============================================================================
-# Stage 2: Runtime
-# ==============================================================================
 FROM ubuntu:22.04
 
 ARG COMMIT_SHA
@@ -39,13 +13,8 @@ LABEL org.opencontainers.image.revision=$COMMIT_SHA
 LABEL org.opencontainers.image.ref.name=$GIT_BRANCH
 LABEL org.opencontainers.image.created=$BUILD_DATE
 
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y \
-    ca-certificates \
-    libssl3 \
-    && rm -rf /var/lib/apt/lists/*
+ARG TARGETARCH
 
-# Copy binary from builder stage
-COPY --from=builder /app/target/release/lean_client /usr/local/bin/lean_client
+COPY ./bin/$TARGETARCH/lean_client /usr/local/bin/lean_client
 
 ENTRYPOINT ["lean_client"]
