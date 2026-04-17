@@ -1,0 +1,27 @@
+{
+    "tests/consensus/devnet/networking/test_enr_and_peer_id.py::test_enr_high_seq[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "enr",
+        "input": {
+            "enrString": "enr:-Hm4QIijml7AMdlciWFY1S7qh7egBawTx_IqvFhHI4xQh6jdDEJv9Slx_lVGPznU65wh0BzwxMGkbEpzuzO2K7Z_xfSE_____4JpZIJ2NIlzZWNwMjU2azGhA8pjTK4NSay0Adikxrb-jFW3DRFb9AB2nMFADzJYzTE4"
+        },
+        "output": {
+            "rlp": "0xf879b84088a39a5ec031d95c896158d52eea87b7a005ac13c7f22abc5847238c5087a8dd0c426ff52971fe55463f39d4eb9c21d01cf0c4c1a46c4a73bb33b62bb67fc5f484ffffffff82696482763489736563703235366b31a103ca634cae0d49acb401d8a4c6b6fe8c55b70d115bf400769cc1400f3258cd3138",
+            "seq": 4294967295,
+            "identityScheme": "v4",
+            "nodeId": "0xa448f24c6d18e575453db13171562b71999873db5b286df957af199ec94617f7",
+            "publicKey": "0x03ca634cae0d49acb401d8a4c6b6fe8c55b70d115bf400769cc1400f3258cd3138",
+            "isAggregator": false,
+            "signatureValid": true,
+            "isValid": true
+        },
+        "_info": {
+            "hash": "0xf1faef54bed91c1fba345f852f0b670b03846f9cc5c673f0645ebc194daeb94d",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_enr_and_peer_id.py::test_enr_high_seq[fork_Devnet]",
+            "description": "ENR with high sequence number (2^32 - 1). Verifies large seq parsing.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

@@ -1,0 +1,24 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_uint64_vector4_typical[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "SampleUint64Vector4",
+        "value": {
+            "data": [
+                1,
+                4294967296,
+                9223372036854775808,
+                18446744073709551615
+            ]
+        },
+        "serialized": "0x010000000000000000000000010000000000000000000080ffffffffffffffff",
+        "root": "0x010000000000000000000000010000000000000000000080ffffffffffffffff",
+        "_info": {
+            "hash": "0xe6eeaf8c4a60141c9f91cc03dd22e6687b4c9d138c90cd722550ce90b31a7e19",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_uint64_vector4_typical[fork_Devnet]",
+            "description": "4-element Uint64 vector spanning the full value range per element.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

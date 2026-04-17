@@ -1,0 +1,30 @@
+{
+    "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_message_all_fields[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "gossipsub_rpc",
+        "input": {
+            "subscriptions": [],
+            "publish": [
+                {
+                    "fromPeer": "0x0101010101010101010101010101010101010101010101010101010101010101",
+                    "data": "0xdeadbeef",
+                    "seqno": "0x0000000000000001",
+                    "topic": "/leanconsensus/0x12345678/block/ssz_snappy",
+                    "signature": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+                    "key": "0x020202020202020202020202020202020202020202020202020202020202020202"
+                }
+            ]
+        },
+        "output": {
+            "encoded": "0x12c3010a2001010101010101010101010101010101010101010101010101010101010101011204deadbeef1a080000000000000001222a2f6c65616e636f6e73656e7375732f307831323334353637382f626c6f636b2f73737a5f736e617070792a40ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3221020202020202020202020202020202020202020202020202020202020202020202"
+        },
+        "_info": {
+            "hash": "0x913181dbf7167125d49aac8f545ac7e6ca1ce5a4f1b038bb905ffebbe46b15dc",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_message_all_fields[fork_Devnet]",
+            "description": "Published message with every optional field populated.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

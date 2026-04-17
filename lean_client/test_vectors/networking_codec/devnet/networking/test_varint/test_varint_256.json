@@ -1,0 +1,21 @@
+{
+    "tests/consensus/devnet/networking/test_varint.py::test_varint_256[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "varint",
+        "input": {
+            "value": 256
+        },
+        "output": {
+            "encoded": "0x8002",
+            "byteLength": 2
+        },
+        "_info": {
+            "hash": "0xfad89555c103191101ae6aefacc0216e5de9114735f5635fd908a389aa35b45d",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_varint.py::test_varint_256[fork_Devnet]",
+            "description": "Varint 256. First value past Uint8 range.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

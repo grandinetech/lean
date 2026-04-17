@@ -1,0 +1,17 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_fp_max[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "Fp",
+        "value": "2130706432",
+        "serialized": "0x0000007f",
+        "root": "0x0000007f00000000000000000000000000000000000000000000000000000000",
+        "_info": {
+            "hash": "0xd6a29b7fe5abbaec98aaa82429fac515a7bf92b7a902e2c1f6e6b8fffe7e578e",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_fp_max[fork_Devnet]",
+            "description": "Field element p-1. The largest valid element in the field.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

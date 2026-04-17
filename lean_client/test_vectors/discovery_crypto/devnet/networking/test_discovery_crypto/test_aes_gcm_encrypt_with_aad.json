@@ -1,0 +1,23 @@
+{
+    "tests/consensus/devnet/networking/test_discovery_crypto.py::test_aes_gcm_encrypt_with_aad[fork_Devnet][fork_devnet-discovery_crypto]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "operation": "aes_gcm_encrypt",
+        "input": {
+            "key": "0x9f2d77db7004bf8a1a85107ac686990b",
+            "nonce": "0x27b5af763c446acd2749fe8e",
+            "plaintext": "0x01c20101",
+            "aad": "0x0102030405060708090a0b0c0d0e0f10"
+        },
+        "output": {
+            "ciphertext": "0xa5d12a2daaff57e9e7110d8f5e43aa32301b71bd"
+        },
+        "_info": {
+            "hash": "0xe736f9be9973b10141ad7208f30adf4d35d740e2f3d1ca2e25536a3c933a0e71",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_discovery_crypto.py::test_aes_gcm_encrypt_with_aad[fork_Devnet]",
+            "description": "AES-GCM with additional authenticated data (packet header).",
+            "fixtureFormat": "discovery_crypto"
+        }
+    }
+}

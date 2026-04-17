@@ -1,0 +1,31 @@
+{
+    "tests/consensus/devnet/ssz/test_xmss_containers.py::test_aggregated_signature_proof_multiple_participants[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "AggregatedSignatureProof",
+        "value": {
+            "participants": {
+                "data": [
+                    true,
+                    true,
+                    true,
+                    false,
+                    true,
+                    true
+                ]
+            },
+            "proofData": {
+                "data": "0x0102030405060708"
+            }
+        },
+        "serialized": "0x0800000009000000770102030405060708",
+        "root": "0x421f78610833d5886c2a670e956047e3a8a82947e0bb4f7d48d66cac57f3c351",
+        "_info": {
+            "hash": "0x2b7a4d9f3bce5f1f80107763bb40fe1767b48e04e617e425770ae59a458188ba",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_xmss_containers.py::test_aggregated_signature_proof_multiple_participants[fork_Devnet]",
+            "description": "SSZ roundtrip for AggregatedSignatureProof with five of six participants active.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

@@ -1,0 +1,26 @@
+{
+    "tests/consensus/devnet/chain/test_slot_clock.py::test_from_unix_time_one_slot[fork_Devnet][fork_devnet-slot_clock]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "operation": "from_unix_time",
+        "input": {
+            "unixSeconds": 1700000004,
+            "genesisTime": 1700000000
+        },
+        "output": {
+            "config": {
+                "secondsPerSlot": 4,
+                "intervalsPerSlot": 5,
+                "millisecondsPerInterval": 800
+            },
+            "interval": 5
+        },
+        "_info": {
+            "hash": "0x85ab6c2a49eb2346acfc8da22e61f6dd195db5ea953b0b9de5c85f9ee211f55f",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/chain/test_slot_clock.py::test_from_unix_time_one_slot[fork_Devnet]",
+            "description": "One slot = 4 seconds = 4000 ms. 4000 / 800 = 5 intervals.",
+            "fixtureFormat": "slot_clock"
+        }
+    }
+}

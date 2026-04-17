@@ -1,0 +1,24 @@
+{
+    "tests/consensus/devnet/networking/test_discv5_messages.py::test_pong_ipv4[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "discv5_message",
+        "input": {
+            "type": "pong",
+            "requestId": "0x01",
+            "enrSeq": 1,
+            "recipientIp": "0x7f000001",
+            "recipientPort": 30303
+        },
+        "output": {
+            "encoded": "0x02ca0101847f00000182765f"
+        },
+        "_info": {
+            "hash": "0x1fb5be235cd59955d1018061ce8b12faf441edc203f2f0a222075ac8f04c5d3f",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_discv5_messages.py::test_pong_ipv4[fork_Devnet]",
+            "description": "PONG with IPv4 127.0.0.1 and port 30303.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

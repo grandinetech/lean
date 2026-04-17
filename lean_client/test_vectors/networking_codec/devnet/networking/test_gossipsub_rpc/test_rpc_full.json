@@ -1,0 +1,45 @@
+{
+    "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_rpc_full[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "gossipsub_rpc",
+        "input": {
+            "subscriptions": [
+                {
+                    "subscribe": true,
+                    "topicId": "/leanconsensus/0x12345678/block/ssz_snappy"
+                }
+            ],
+            "publish": [
+                {
+                    "topic": "/leanconsensus/0x12345678/block/ssz_snappy",
+                    "data": "0xdeadbeef"
+                }
+            ],
+            "control": {
+                "graft": [
+                    {
+                        "topicId": "/leanconsensus/0x12345678/aggregation/ssz_snappy"
+                    }
+                ],
+                "idontwant": [
+                    {
+                        "messageIds": [
+                            "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                        ]
+                    }
+                ]
+            }
+        },
+        "output": {
+            "encoded": "0x0a2e0801122a2f6c65616e636f6e73656e7375732f307831323334353637382f626c6f636b2f73737a5f736e6170707912321204deadbeef222a2f6c65616e636f6e73656e7375732f307831323334353637382f626c6f636b2f73737a5f736e617070791a4c1a320a302f6c65616e636f6e73656e7375732f307831323334353637382f6167677265676174696f6e2f73737a5f736e617070792a160a14aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "_info": {
+            "hash": "0xe25a58fcac37223a0e80d737d5a7c5d151c5a0cfc92481084c171a3c9cd649e5",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_rpc_full[fork_Devnet]",
+            "description": "RPC with subscriptions, published messages, and control all present.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

@@ -1,0 +1,23 @@
+{
+    "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_message_empty[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "gossipsub_rpc",
+        "input": {
+            "subscriptions": [],
+            "publish": [
+                {}
+            ]
+        },
+        "output": {
+            "encoded": "0x1200"
+        },
+        "_info": {
+            "hash": "0xafb67908349eb71f72d89091afeb49637540635c196d89f3bea75cf750a0365a",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_message_empty[fork_Devnet]",
+            "description": "Published message with no fields set. Encodes as zero bytes.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

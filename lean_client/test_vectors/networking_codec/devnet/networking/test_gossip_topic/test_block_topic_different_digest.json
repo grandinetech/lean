@@ -1,0 +1,21 @@
+{
+    "tests/consensus/devnet/networking/test_gossip_topic.py::test_block_topic_different_digest[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "gossip_topic",
+        "input": {
+            "kind": "block",
+            "forkDigest": "aabbccdd"
+        },
+        "output": {
+            "topicString": "/leanconsensus/aabbccdd/block/ssz_snappy"
+        },
+        "_info": {
+            "hash": "0xe0bf3381ea8fa516db12b49660f19e244ef8bd99539f6313642d2cc98d2d9f6a",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossip_topic.py::test_block_topic_different_digest[fork_Devnet]",
+            "description": "Block topic with a different fork digest to verify digest embedding.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

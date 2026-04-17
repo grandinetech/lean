@@ -1,0 +1,27 @@
+{
+    "tests/consensus/devnet/networking/test_enr_and_peer_id.py::test_enr_minimal_seq_zero[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "enr",
+        "input": {
+            "enrString": "enr:-HW4QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgmlkgnY0iXNlY3AyNTZrMaEDymNMrg1JrLQB2KTGtv6MVbcNEVv0AHacwUAPMljNMTg"
+        },
+        "output": {
+            "rlp": "0xf875b840000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008082696482763489736563703235366b31a103ca634cae0d49acb401d8a4c6b6fe8c55b70d115bf400769cc1400f3258cd3138",
+            "seq": 0,
+            "identityScheme": "v4",
+            "nodeId": "0xa448f24c6d18e575453db13171562b71999873db5b286df957af199ec94617f7",
+            "publicKey": "0x03ca634cae0d49acb401d8a4c6b6fe8c55b70d115bf400769cc1400f3258cd3138",
+            "isAggregator": false,
+            "signatureValid": false,
+            "isValid": true
+        },
+        "_info": {
+            "hash": "0x795aa61b891037471a020a3a335503a53f95309f37db16289cbbe995393aa0cc",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_enr_and_peer_id.py::test_enr_minimal_seq_zero[fork_Devnet]",
+            "description": "Minimal ENR with seq=0. Only required keys (id + secp256k1).",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

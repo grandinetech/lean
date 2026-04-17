@@ -1,0 +1,46 @@
+{
+    "tests/consensus/devnet/ssz/test_consensus_containers.py::test_signed_aggregated_attestation_typical[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "SignedAggregatedAttestation",
+        "value": {
+            "data": {
+                "slot": 100,
+                "head": {
+                    "root": "0x0101010101010101010101010101010101010101010101010101010101010101",
+                    "slot": 100
+                },
+                "target": {
+                    "root": "0x0202020202020202020202020202020202020202020202020202020202020202",
+                    "slot": 99
+                },
+                "source": {
+                    "root": "0x0303030303030303030303030303030303030303030303030303030303030303",
+                    "slot": 50
+                }
+            },
+            "proof": {
+                "participants": {
+                    "data": [
+                        true,
+                        false,
+                        true,
+                        true
+                    ]
+                },
+                "proofData": {
+                    "data": "0xcafebabedead"
+                }
+            }
+        },
+        "serialized": "0x64000000000000000101010101010101010101010101010101010101010101010101010101010101640000000000000002020202020202020202020202020202020202020202020202020202020202026300000000000000030303030303030303030303030303030303030303030303030303030303030332000000000000008400000008000000090000001dcafebabedead",
+        "root": "0xbfbc203359729077273f6a787a7476d0259f5a4b267be658231b4bf7ed62dc17",
+        "_info": {
+            "hash": "0x666b6852ed9fecdc51ad06c7835b3973883638bc5e31a63e0cad3bb67adbe947",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_consensus_containers.py::test_signed_aggregated_attestation_typical[fork_Devnet]",
+            "description": "SSZ roundtrip for SignedAggregatedAttestation with mixed participation bits.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

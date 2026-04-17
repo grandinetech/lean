@@ -1,0 +1,19 @@
+{
+    "tests/consensus/devnet/state_transition/test_justifiability.py::test_delta_15_not_justifiable[fork_Devnet][fork_devnet-justifiability]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "slot": 15,
+        "finalizedSlot": 0,
+        "output": {
+            "delta": 15,
+            "isJustifiable": false
+        },
+        "_info": {
+            "hash": "0xe738fda16da01084a92ce77dadb66817d078e19f5bb6d95edc4e8d48a8974839",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/state_transition/test_justifiability.py::test_delta_15_not_justifiable[fork_Devnet]",
+            "description": "Delta 15: between pronic 12 and square 16.",
+            "fixtureFormat": "justifiability"
+        }
+    }
+}

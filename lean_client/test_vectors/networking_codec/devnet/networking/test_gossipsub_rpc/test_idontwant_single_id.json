@@ -1,0 +1,30 @@
+{
+    "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_idontwant_single_id[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "gossipsub_rpc",
+        "input": {
+            "subscriptions": [],
+            "publish": [],
+            "control": {
+                "idontwant": [
+                    {
+                        "messageIds": [
+                            "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                        ]
+                    }
+                ]
+            }
+        },
+        "output": {
+            "encoded": "0x1a182a160a14aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "_info": {
+            "hash": "0xa7ad8de75a53d1afd2fb7d2a7beba792a5cf471c29bd5be46ead76e27a132a11",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_idontwant_single_id[fork_Devnet]",
+            "description": "IDONTWANT declining one message. Gossipsub v1.2 extension.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

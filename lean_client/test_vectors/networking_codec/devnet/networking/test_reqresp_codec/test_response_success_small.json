@@ -1,0 +1,21 @@
+{
+    "tests/consensus/devnet/networking/test_reqresp_codec.py::test_response_success_small[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "reqresp_response",
+        "input": {
+            "responseCode": 0,
+            "sszData": "0x01020304"
+        },
+        "output": {
+            "encoded": "0x0004ff060000734e6150705901080000393d6bbc01020304"
+        },
+        "_info": {
+            "hash": "0xb9e3c69677df12efa9030c90a0318b74ec645b79a492dee674ae22f83d7d6cb8",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_reqresp_codec.py::test_response_success_small[fork_Devnet]",
+            "description": "SUCCESS response with 4-byte SSZ payload.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

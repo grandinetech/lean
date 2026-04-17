@@ -1,0 +1,17 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_uint32_max[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "Uint32",
+        "value": "4294967295",
+        "serialized": "0xffffffff",
+        "root": "0xffffffff00000000000000000000000000000000000000000000000000000000",
+        "_info": {
+            "hash": "0xd41317cb5440b3e7a58fbc867b07f2b5e89464cd3a97f1dbeef65a09a9782b14",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_uint32_max[fork_Devnet]",
+            "description": "Uint32 upper bound (2^32 - 1).",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

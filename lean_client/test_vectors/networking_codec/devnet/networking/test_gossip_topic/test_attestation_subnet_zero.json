@@ -1,0 +1,22 @@
+{
+    "tests/consensus/devnet/networking/test_gossip_topic.py::test_attestation_subnet_zero[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "gossip_topic",
+        "input": {
+            "kind": "attestation",
+            "forkDigest": "12345678",
+            "subnetId": 0
+        },
+        "output": {
+            "topicString": "/leanconsensus/12345678/attestation_0/ssz_snappy"
+        },
+        "_info": {
+            "hash": "0x885acf9442d9a9e99aa3bcbf950ac83548594afb3740aaac2e6f5cb98f20df4b",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossip_topic.py::test_attestation_subnet_zero[fork_Devnet]",
+            "description": "Attestation subnet 0. First subnet ID.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

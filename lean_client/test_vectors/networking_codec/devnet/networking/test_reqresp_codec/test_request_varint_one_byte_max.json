@@ -1,0 +1,20 @@
+{
+    "tests/consensus/devnet/networking/test_reqresp_codec.py::test_request_varint_one_byte_max[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "reqresp_request",
+        "input": {
+            "sszData": "0xababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab"
+        },
+        "output": {
+            "encoded": "0x7fff060000734e61507059000d00008cf8a7277f00abfe0100f60300"
+        },
+        "_info": {
+            "hash": "0x9e3f3a1ab2defa4e596e35ae6b1c00a0eda2270eb6be8c438a06d4517c5c64cf",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_reqresp_codec.py::test_request_varint_one_byte_max[fork_Devnet]",
+            "description": "Request with 127-byte payload. Largest single-byte varint prefix.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

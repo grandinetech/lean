@@ -1,0 +1,20 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_union_none_uint16_arm[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "SampleUnionNone",
+        "value": {
+            "selector": 1,
+            "value": 1000
+        },
+        "serialized": "0x01e803",
+        "root": "0x2a201a84a888b19cd8ba4e6ad914d6830926e88f6ec3a2e48bae3998159ba208",
+        "_info": {
+            "hash": "0x2d12e3eaf77a6303e5801279bbd7f1c093d6fac377d31e55bb9c7e01b61364d3",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_union_none_uint16_arm[fork_Devnet]",
+            "description": "Union selecting the Uint16 arm (selector 1) from a None-capable union.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

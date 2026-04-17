@@ -1,0 +1,24 @@
+{
+    "tests/consensus/devnet/api/test_api_endpoints.py::test_health[fork_Devnet][fork_devnet-api_endpoint]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "endpoint": "/lean/v0/health",
+        "genesisParams": {
+            "numValidators": 4,
+            "genesisTime": 0
+        },
+        "expectedStatusCode": 200,
+        "expectedContentType": "application/json",
+        "expectedBody": {
+            "status": "healthy",
+            "service": "lean-rpc-api"
+        },
+        "_info": {
+            "hash": "0xde9ad15a93299a23397a0fd4c8300527f00d699e4661fb4ec0b4012f823f7c72",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/api/test_api_endpoints.py::test_health[fork_Devnet]",
+            "description": "Health returns a fixed payload independent of consensus state.",
+            "fixtureFormat": "api_endpoint"
+        }
+    }
+}

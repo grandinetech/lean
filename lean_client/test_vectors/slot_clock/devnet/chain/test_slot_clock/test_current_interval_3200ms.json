@@ -1,0 +1,26 @@
+{
+    "tests/consensus/devnet/chain/test_slot_clock.py::test_current_interval_3200ms[fork_Devnet][fork_devnet-slot_clock]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "operation": "current_interval",
+        "input": {
+            "genesisTime": 1700000000,
+            "currentTimeMs": 1700000003200
+        },
+        "output": {
+            "config": {
+                "secondsPerSlot": 4,
+                "intervalsPerSlot": 5,
+                "millisecondsPerInterval": 800
+            },
+            "interval": 4
+        },
+        "_info": {
+            "hash": "0x7fa939b81cc1e9c0ac1cc900e9d036d6c140a6a6ac7b5b6830d07e2e6e6f0ec6",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/chain/test_slot_clock.py::test_current_interval_3200ms[fork_Devnet]",
+            "description": "3200 ms into slot: interval 4.",
+            "fixtureFormat": "slot_clock"
+        }
+    }
+}

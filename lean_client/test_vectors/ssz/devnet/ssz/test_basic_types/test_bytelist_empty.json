@@ -1,0 +1,19 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_bytelist_empty[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "ByteListMiB",
+        "value": {
+            "data": "0x"
+        },
+        "serialized": "0x",
+        "root": "0x6c78c0273b0b3dfbb221adb19ed9fcd8eac9e995c2210795a0580442e70bab0a",
+        "_info": {
+            "hash": "0xe581adef6de71fb451135aedb407c19e97b8f2b132072930c0aa25b18cd37753",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_bytelist_empty[fork_Devnet]",
+            "description": "Empty byte list. Zero-length content with length mix-in of zero.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

@@ -1,0 +1,26 @@
+{
+    "tests/consensus/devnet/chain/test_slot_clock.py::test_current_slot_before_genesis[fork_Devnet][fork_devnet-slot_clock]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "operation": "current_slot",
+        "input": {
+            "genesisTime": 1700000000,
+            "currentTimeMs": 1699999990000
+        },
+        "output": {
+            "config": {
+                "secondsPerSlot": 4,
+                "intervalsPerSlot": 5,
+                "millisecondsPerInterval": 800
+            },
+            "slot": 0
+        },
+        "_info": {
+            "hash": "0x921f99d2a9dac5f57bb65211f773f9a92803069a54fc51def2cd620f85805d96",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/chain/test_slot_clock.py::test_current_slot_before_genesis[fork_Devnet]",
+            "description": "Before genesis: clamped to slot 0.",
+            "fixtureFormat": "slot_clock"
+        }
+    }
+}

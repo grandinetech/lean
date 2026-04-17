@@ -1,0 +1,21 @@
+{
+    "tests/consensus/devnet/networking/test_gossip_topic.py::test_aggregation_topic[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "gossip_topic",
+        "input": {
+            "kind": "aggregation",
+            "forkDigest": "12345678"
+        },
+        "output": {
+            "topicString": "/leanconsensus/12345678/aggregation/ssz_snappy"
+        },
+        "_info": {
+            "hash": "0xe4da62464186382de9d67f558ed16158772d404e220bb815eaee8f3c71b80ca1",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossip_topic.py::test_aggregation_topic[fork_Devnet]",
+            "description": "Committee aggregation topic.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

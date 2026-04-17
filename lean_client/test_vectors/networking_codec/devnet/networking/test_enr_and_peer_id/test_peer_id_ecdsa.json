@@ -1,0 +1,22 @@
+{
+    "tests/consensus/devnet/networking/test_enr_and_peer_id.py::test_peer_id_ecdsa[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "peer_id",
+        "input": {
+            "keyType": "ecdsa",
+            "publicKey": "0x3059301306072a8648ce3d020106082a8648ce3d03010703420004de3d300fa36ae0e8f5d530899d83abab44abf3161f162a4bc901d8e6ecda020e8b6d5f8da30525e71d6851510c098e5c47c646a597fb4dcec034e9f77c409e62"
+        },
+        "output": {
+            "protobufEncoded": "0x0803125b3059301306072a8648ce3d020106082a8648ce3d03010703420004de3d300fa36ae0e8f5d530899d83abab44abf3161f162a4bc901d8e6ecda020e8b6d5f8da30525e71d6851510c098e5c47c646a597fb4dcec034e9f77c409e62",
+            "peerId": "QmVMT29id3TUASyfZZ6k9hmNyc2nYabCo4uMSpDw4zrgDk"
+        },
+        "_info": {
+            "hash": "0xcfa734fe5a48b3ee17467bc9ecba04e0670033dd8dee1b23cc75a809527977ba",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_enr_and_peer_id.py::test_peer_id_ecdsa[fork_Devnet]",
+            "description": "ECDSA PeerId from libp2p spec. 91-byte key, SHA256 multihash (over 42 bytes).",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

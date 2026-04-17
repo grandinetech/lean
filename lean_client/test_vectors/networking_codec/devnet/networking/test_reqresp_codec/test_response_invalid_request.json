@@ -1,0 +1,21 @@
+{
+    "tests/consensus/devnet/networking/test_reqresp_codec.py::test_response_invalid_request[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "reqresp_response",
+        "input": {
+            "responseCode": 1,
+            "sszData": "0x6261642072657175657374"
+        },
+        "output": {
+            "encoded": "0x010bff060000734e61507059010f00008a23d9c16261642072657175657374"
+        },
+        "_info": {
+            "hash": "0xf7815090906f751c681434ae9025fabaa8c5b139f4c4eb01e495b74cd2d45516",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_reqresp_codec.py::test_response_invalid_request[fork_Devnet]",
+            "description": "INVALID_REQUEST response with UTF-8 error message.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

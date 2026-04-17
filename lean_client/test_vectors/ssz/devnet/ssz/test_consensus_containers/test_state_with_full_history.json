@@ -1,0 +1,91 @@
+{
+    "tests/consensus/devnet/ssz/test_consensus_containers.py::test_state_with_full_history[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "State",
+        "value": {
+            "config": {
+                "genesisTime": 1700000000
+            },
+            "slot": 500,
+            "latestBlockHeader": {
+                "slot": 499,
+                "proposerIndex": 7,
+                "parentRoot": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "stateRoot": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "bodyRoot": "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+            },
+            "latestJustified": {
+                "root": "0xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                "slot": 480
+            },
+            "latestFinalized": {
+                "root": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                "slot": 450
+            },
+            "historicalBlockHashes": {
+                "data": [
+                    "0x1010101010101010101010101010101010101010101010101010101010101010",
+                    "0x1111111111111111111111111111111111111111111111111111111111111111",
+                    "0x1212121212121212121212121212121212121212121212121212121212121212",
+                    "0x1313131313131313131313131313131313131313131313131313131313131313",
+                    "0x1414141414141414141414141414141414141414141414141414141414141414"
+                ]
+            },
+            "justifiedSlots": {
+                "data": [
+                    true,
+                    true,
+                    false,
+                    true,
+                    false,
+                    true,
+                    true,
+                    true
+                ]
+            },
+            "validators": {
+                "data": [
+                    {
+                        "attestationPubkey": "0x01010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101",
+                        "proposalPubkey": "0x01010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101",
+                        "index": 0
+                    },
+                    {
+                        "attestationPubkey": "0x02020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202",
+                        "proposalPubkey": "0x02020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202",
+                        "index": 1
+                    }
+                ]
+            },
+            "justificationsRoots": {
+                "data": [
+                    "0x2020202020202020202020202020202020202020202020202020202020202020",
+                    "0x2121212121212121212121212121212121212121212121212121212121212121",
+                    "0x2222222222222222222222222222222222222222222222222222222222222222"
+                ]
+            },
+            "justificationsValidators": {
+                "data": [
+                    true,
+                    true,
+                    false,
+                    true,
+                    true,
+                    false,
+                    true,
+                    false
+                ]
+            }
+        },
+        "serialized": "0x00f1536500000000f401000000000000f3010000000000000700000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddde001000000000000eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec201000000000000e4000000840100008601000066020000c602000010101010101010101010101010101010101010101010101010101010101010101111111111111111111111111111111111111111111111111111111111111111121212121212121212121212121212121212121212121212121212121212121213131313131313131313131313131313131313131313131313131313131313131414141414141414141414141414141414141414141414141414141414141414eb0101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010000000000000000020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020201000000000000002020202020202020202020202020202020202020202020202020202020202020212121212121212121212121212121212121212121212121212121212121212122222222222222222222222222222222222222222222222222222222222222225b01",
+        "root": "0x46d581e860e51c10eea40c37bae584c81e30767ddce7e3d0269fd9b03c44b2af",
+        "_info": {
+            "hash": "0x79ac763c37a5ba32326c40c95b68ea5d928b01ed796dbd89a0cc58001aa405d0",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_consensus_containers.py::test_state_with_full_history[fork_Devnet]",
+            "description": "SSZ roundtrip for State with five block hashes, eight justification bits, and three roots.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

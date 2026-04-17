@@ -1,0 +1,26 @@
+{
+    "tests/consensus/devnet/chain/test_slot_clock.py::test_from_unix_time_two_seconds[fork_Devnet][fork_devnet-slot_clock]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "operation": "from_unix_time",
+        "input": {
+            "unixSeconds": 1700000002,
+            "genesisTime": 1700000000
+        },
+        "output": {
+            "config": {
+                "secondsPerSlot": 4,
+                "intervalsPerSlot": 5,
+                "millisecondsPerInterval": 800
+            },
+            "interval": 2
+        },
+        "_info": {
+            "hash": "0xfdb4b27199b432f56c4e89364f4d233f16cbc102b43f5b79d73f3b3f093cfa18",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/chain/test_slot_clock.py::test_from_unix_time_two_seconds[fork_Devnet]",
+            "description": "Two seconds = 2000 ms. floor(2000 / 800) = 2 intervals.",
+            "fixtureFormat": "slot_clock"
+        }
+    }
+}

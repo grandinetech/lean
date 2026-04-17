@@ -1,0 +1,17 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_bytes4_typical[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "Bytes4",
+        "value": "0xdeadbeef",
+        "serialized": "0xdeadbeef",
+        "root": "0xdeadbeef00000000000000000000000000000000000000000000000000000000",
+        "_info": {
+            "hash": "0xf46da785bfbaff23d375650b06a5d2d0083e552f4ca5cd653a26b0c5984dcc2d",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_bytes4_typical[fork_Devnet]",
+            "description": "Bytes4 with nonzero content (0xDEADBEEF).",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

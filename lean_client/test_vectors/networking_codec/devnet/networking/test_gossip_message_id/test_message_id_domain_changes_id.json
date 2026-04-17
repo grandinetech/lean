@@ -1,0 +1,22 @@
+{
+    "tests/consensus/devnet/networking/test_gossip_message_id.py::test_message_id_domain_changes_id[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "gossip_message_id",
+        "input": {
+            "topic": "0x746573742d746f706963",
+            "data": "0x68656c6c6f20776f726c64",
+            "domain": "0x00000000"
+        },
+        "output": {
+            "messageId": "0x144f143f82dbaf88cf586116efe027443750b97c"
+        },
+        "_info": {
+            "hash": "0xa435453c5fff81f553ed93655f72f02da9e99955170799901a43e8290a2b2571",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossip_message_id.py::test_message_id_domain_changes_id[fork_Devnet]",
+            "description": "Same topic and data with invalid-snappy domain produces a different ID.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

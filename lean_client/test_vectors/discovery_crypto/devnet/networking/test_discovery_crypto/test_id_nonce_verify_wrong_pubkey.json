@@ -1,0 +1,24 @@
+{
+    "tests/consensus/devnet/networking/test_discovery_crypto.py::test_id_nonce_verify_wrong_pubkey[fork_Devnet][fork_devnet-discovery_crypto]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "operation": "id_nonce_verify",
+        "input": {
+            "signature": "0xe622b72727fd64529187b6e4f7241caadac052f840122474d91de305f7bb5cc45d0457b5f6ba72c8bbc82480dea2e2cd3eabca6984f6bd7bd3b54a80fe749fa6",
+            "challengeData": "0x000000000000000000000000000000006469736376350001010102030405060708090a0b0c00180102030405060708090a0b0c0d0e0f100000000000000000",
+            "ephemeralPubkey": "0x039961e4c2356d61bedb83052c115d311acb3a96f5777296dcf297351130266231",
+            "destNodeId": "0xbbbb9d047f0488c0b5a93c1c3f2d8bafc7c8ff337024a55434a0d0555de64db9",
+            "publicKey": "0x0317931e6e0840220642f230037d285d122bc59063221ef3226b1f403ddc69ca91"
+        },
+        "output": {
+            "valid": false
+        },
+        "_info": {
+            "hash": "0x721cdbc47a6f4b19f0ebe07d09e13a2dfbb114fe1e1c248a8a3d217cb4b84f08",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_discovery_crypto.py::test_id_nonce_verify_wrong_pubkey[fork_Devnet]",
+            "description": "Verification fails with wrong public key (Node B instead of A).",
+            "fixtureFormat": "discovery_crypto"
+        }
+    }
+}

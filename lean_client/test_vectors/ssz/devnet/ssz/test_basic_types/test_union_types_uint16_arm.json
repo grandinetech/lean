@@ -1,0 +1,20 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_union_types_uint16_arm[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "SampleUnionTypes",
+        "value": {
+            "selector": 1,
+            "value": 65535
+        },
+        "serialized": "0x01ffff",
+        "root": "0xdfb2fdb7aa3ec8212d7c3c2963a532a0c4307bff7e5231bd7e374c118e5af76c",
+        "_info": {
+            "hash": "0xeb7d260b8147fab2e9a1adf471c07571388feee5ef4b629fa41caa62d058f741",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_union_types_uint16_arm[fork_Devnet]",
+            "description": "Union selecting the Uint16 arm (selector 1) with maximum value.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

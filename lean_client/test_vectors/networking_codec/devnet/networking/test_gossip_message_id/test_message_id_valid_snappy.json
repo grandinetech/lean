@@ -1,0 +1,22 @@
+{
+    "tests/consensus/devnet/networking/test_gossip_message_id.py::test_message_id_valid_snappy[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "gossip_message_id",
+        "input": {
+            "topic": "0x2f6c65616e636f6e73656e7375732f31323334353637382f626c6f636b2f73737a5f736e61707079",
+            "data": "0xdeadbeef",
+            "domain": "0x01000000"
+        },
+        "output": {
+            "messageId": "0x8505fa518a9a5bb8376e4aba7bce5eae12a3dd48"
+        },
+        "_info": {
+            "hash": "0xce1485efe66eb67e05be03220047ed188316725c431d6a3319f57ef845401fdb",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossip_message_id.py::test_message_id_valid_snappy[fork_Devnet]",
+            "description": "Message ID with valid-snappy domain and typical block data.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

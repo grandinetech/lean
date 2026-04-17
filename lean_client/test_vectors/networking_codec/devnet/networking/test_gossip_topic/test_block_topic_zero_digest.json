@@ -1,0 +1,21 @@
+{
+    "tests/consensus/devnet/networking/test_gossip_topic.py::test_block_topic_zero_digest[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "gossip_topic",
+        "input": {
+            "kind": "block",
+            "forkDigest": "00000000"
+        },
+        "output": {
+            "topicString": "/leanconsensus/00000000/block/ssz_snappy"
+        },
+        "_info": {
+            "hash": "0x192aa05b634dd1abd02b9760b42de5f5c8384ef572ba53dc4dc78a0048f57322",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossip_topic.py::test_block_topic_zero_digest[fork_Devnet]",
+            "description": "Block topic with all-zero fork digest.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

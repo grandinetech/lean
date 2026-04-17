@@ -19,8 +19,9 @@
             }
         },
         "serialized": "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "root": "0xca909c56a34abf66a9ab8fe87b09a6a35d973564d1a32e462b2ffd9ee097a300",
         "_info": {
-            "hash": "0xbd89a153296f43403e48fca543ca3b9ed2185eb7d1106f3a35d7bbfb3d345957",
+            "hash": "0x0878983f8afbbee633a1131e11fe1c41b25e7a7fb202e4b36fe13fd74c1aaa3b",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/ssz/test_consensus_containers.py::test_attestation_data_zero[fork_Devnet]",
             "description": "SSZ roundtrip for AttestationData with zero values.",

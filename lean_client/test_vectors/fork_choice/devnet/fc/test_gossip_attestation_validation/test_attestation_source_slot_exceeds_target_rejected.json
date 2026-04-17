@@ -1,0 +1,166 @@
+{
+    "tests/consensus/devnet/fc/test_gossip_attestation_validation.py::test_attestation_source_slot_exceeds_target_rejected[fork_Devnet][fork_devnet-fork_choice_test]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "anchorState": {
+            "config": {
+                "genesisTime": 0
+            },
+            "slot": 0,
+            "latestBlockHeader": {
+                "slot": 0,
+                "proposerIndex": 0,
+                "parentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "stateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "bodyRoot": "0xdba9671bac9513c9482f1416a53aabd2c6ce90d5a5f865ce5a55c775325c9136"
+            },
+            "latestJustified": {
+                "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "slot": 0
+            },
+            "latestFinalized": {
+                "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "slot": 0
+            },
+            "historicalBlockHashes": {
+                "data": []
+            },
+            "justifiedSlots": {
+                "data": []
+            },
+            "validators": {
+                "data": [
+                    {
+                        "attestationPubkey": "0x1865a50c6478a3173882ff01f2b7904a2b96b64a8ad63d04ea53b34a539bfd672ffffd40f2e93c2900311f068cf9641b81fd364d",
+                        "proposalPubkey": "0xef30711e272be66f8850f13c393f5c7dc302f6112d3d04672b715b0caef8b823cccac138b5ab9644845cc6262dd8076f49bacf3d",
+                        "index": 0
+                    },
+                    {
+                        "attestationPubkey": "0xce45954436b2b4038330ba17071d9c482f56e43cfd3c21414a0f326635cc6132523b995e346e4e2df535e6742a5bb506e0c91365",
+                        "proposalPubkey": "0x2fdc4e5caacbdf3117a6687b09e7f46a132bd54f0e9b8730d3e57c655a60557a488ae4078e248244fadeab6d506a79355b563142",
+                        "index": 1
+                    },
+                    {
+                        "attestationPubkey": "0xa6cece462ea48c5e5a31d1576d6d7c7367fdf851a94dd738442c93570f88556ca04991462fedb17191054f65eeb9eb3777a8d27c",
+                        "proposalPubkey": "0xcfe9915524913f40da7ad5649bf69f450d72b952d2296627072e50524f7e8b775c61c17c36283b210521db7517ef097ca996de10",
+                        "index": 2
+                    },
+                    {
+                        "attestationPubkey": "0xa9536c0b365edf64b9f2a50b7e0c84157697d444bcfeaa72f966070ca539090b00ac6d5e154aa3279c5f624bfa96fd025b66ba09",
+                        "proposalPubkey": "0x951ee23a3065d322d64174463ac89b4fa863ed648a44c02e331e7511da875b4c4fb27c3c2689272634fed634d67b256868f3be59",
+                        "index": 3
+                    }
+                ]
+            },
+            "justificationsRoots": {
+                "data": []
+            },
+            "justificationsValidators": {
+                "data": []
+            }
+        },
+        "anchorBlock": {
+            "slot": 0,
+            "proposerIndex": 0,
+            "parentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "stateRoot": "0xde06920f4007f9d3925ba77bfdc1e0fa970537181be1d99a96e7c3880c7d4c3f",
+            "body": {
+                "attestations": {
+                    "data": []
+                }
+            }
+        },
+        "steps": [
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 1
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 1,
+                    "proposerIndex": 1,
+                    "parentRoot": "0xd123d3d19ba32a08df9b3bf9e55e4447d1a3a3b4f905583d013b8f05c77d585e",
+                    "stateRoot": "0xf9adceb604bbff70c983cb92794e97000925712faa73c1fd33818d3ad6488b7b",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    },
+                    "blockRootLabel": "block_1"
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 2
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 2,
+                    "proposerIndex": 2,
+                    "parentRoot": "0x6214b969cc3f585a85432ed9dcd3884d4842fb561a3b303a35a771475d58aa88",
+                    "stateRoot": "0x326030ed14199de4db3fcc7d9daae64fbbd00deb176d7dee3ea13ddab89f8ffd",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    },
+                    "blockRootLabel": "block_2"
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 3
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 3,
+                    "proposerIndex": 3,
+                    "parentRoot": "0x6b7c8df5d3628c2425caf72e487418f09c4b34b2693dcccddcba29e28219d5ab",
+                    "stateRoot": "0x933d754121aa8e8e34f0eddbfc2d6fc152126b5d6483c5c10746888d4ef09fe1",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    },
+                    "blockRootLabel": "block_3"
+                }
+            },
+            {
+                "valid": false,
+                "expectedError": "Source checkpoint slot must not exceed target",
+                "stepType": "attestation",
+                "attestation": {
+                    "validatorId": 1,
+                    "data": {
+                        "slot": 3,
+                        "head": {
+                            "root": "0x6b7c8df5d3628c2425caf72e487418f09c4b34b2693dcccddcba29e28219d5ab",
+                            "slot": 2
+                        },
+                        "target": {
+                            "root": "0x6b7c8df5d3628c2425caf72e487418f09c4b34b2693dcccddcba29e28219d5ab",
+                            "slot": 2
+                        },
+                        "source": {
+                            "root": "0x58fed81517132bb2c1eacd474215d3e01298e12d6022946e516e3585cbc20104",
+                            "slot": 3
+                        }
+                    },
+                    "signature": "0x240000000a28a424c886813793b54b5a1b54b50b226763584edce0789b08f76d2804000004000000efcba50e7fba6c1d6b2f224da9ad9813c6c57313b224e001aefe71052669cb084e51025a129de5703bb88508badcd13aa7fcac594fb9ae2cb280ec1cbf78373f5133065a009f4e576338de6754669c1232898a56b94bd220b0221e2d8669e6731b65c9494366f870e3d48b5dfaa30c4065bbd625b989f21f2229cc7297ad2713459c547c6b43676804e8091b6033cb00caf3b222934fc7740cf61c5b5e748049a8f13e524c591b619776e60da8b5023f5b00772523b8482ed6a98e327e970d0fe915a3577d7f5f350bd13f0ef73a182cbc10877e9064db2ae7630c0c90cbd961a9b7044393392902c0e4de6587ec1155f441790faa97c405f6f25021afaef021143adc728329c93ee432872e37192845fa34ad647d44f86131a9a20dad3f0056540f301570925b441b8ce01d25fc5c4457bc0c51d60f9a1328ce9e316b03e30980579762939f221841fa522852c2921cf81f87161b55f74e9507e9629e98c457a983a83d44f44f20dcd57f4c207887251e478733a9fd6e2b2988b060ace72e49a0166d13edbdc01ef61df16ec8bf072c2578b808d2df224f129ff204e932be586ede116fde6d4275f60f643e3a2a034c8500b16b1bdee52961469d6a5717f23e46519f44d78abf2cbb150e647d84196f0d09fe4acb230f13665d622e4919ea5d8362171f4ceba83a189932764621895db6319e6315a2ed6707b7ae65a9f0016863cdd618cc7b8d3c8060b9322fbb4b554c21da37e988822191303c6d940383016b82c96739972a2490e2831c2cc37f4782cd064393eecc2309e9e9595d37882fb030563e92e3c54ab101907da8f2483c27b26c3459c5524a7efe981a5149103023bc0e215a60c342806d491a9d20587b05a788220a1ffb63ec332a236f8d6c0bb53c8b726799cf5ee9402b3f00b6a365e7bbbd15092b4f6cbc63a421f9cf391ca4702d441b85e4014f0e5720e4629208188dcd6ed6474a33ad05e43444376828c19fbe5fed3314275f46cb4e1fc3e479cc57121c315a8e07f1c3e124cc58ad29863f4a0657cdb42add4b974301f07129037c4430a2409309e89c886e88b96121f2d3c11415cf5e0ea0aec224f3d229192d1b754a1580e17cfff0b21810f49748cd896255029b2361f022115bfae0f714d033582e6b6ce7393371943de88c836e17a22c44ea38ce4ea822bf65d6c9124101cfb8154f75de2ab52494200bbb0a65b8d8cb6a942d135aa0f3bd6d947fee005720a8280d59e272798f404889889240bee25c051d20526b1e0e2e45a3dd0d11053c6c489eafa61f8e5d2f7a0c8c7b20ed889f63b26d687af3600e7854a39d457bbd002ee368164943418a2b5a13fb013b79a9038ef0b00d5faf155ff5894762d07247205649e8617c554d2ea618fa778effcb3e6b7fe4792396ec0f7e8a18470a5c727278e79d09c27a366021423c6b634ca95c9eae370ec154c560541760248deaa51f43c0f111a625a83a74fad500a928081b82a048615b62717367a0772282e2c02cb86d6838093e8c5bef8fcb4cb186b819f91bbc50b97bb11a753e116b327e0b79e81ca308aabe4329f68bce698cbcb76cb9eeda6d831f31276e65cd654c1857224ac1ef53bab57b2364d768339e2b3421ddb69d1729b13c109f95b6551e20b35e7e04c62e55f30d148f98c80896d04b6e72e4d73582d88d1ba9c9f877dfbc8548164c541317aea951f1d7d33670e97a5d260ee371087b476ed8d9fb7c6215e53900550a7c66091b6e462f82286006dd08003d29176ee2d46afdcf83083d0ee531aad8d61fe363177c5bc37a3f85fc166b1f8595773ed6120d27efa56802dbc37c5e15e250495c207e82dd2e3cd3a7e646df2b021f33cd5d1d98f8fe0106e43e7b5db9f9468ed0787ba877391683b5a51237bb306d0fb91519b1ac220aed85fa011112e85a2275d82c7faf56432d951b5b63aab949e168b04e7888fa4f88c4591bb99faf77f61ebd2c1e6b4a330c5d6034abe74114caf3be25550acb7c3ec79500f4e085034524654bb7067b5e85caa0484cbc331d29c39e56b135a218fd611d28dbc76e63ec209e52ddab055055a9366ca8679e6e10c5b71c3f4d145c137dfb666b5f2d57422b45637821322fbb2d3c4c896a621005176f3763c3252fccdf7a6bc1e5d8702f3bcd61a0e137127e7f7126f6fd601aff29147a14408578a1143572a2c4b45d22dfd517efa69436dbf6b0542b3d2b011ac0d568307f216b91b56b3b4acddd6e90b74b28825e5b22b3e94278f437372295492978672d4e50020c2c5ec7bb103b7a23386549f22956530b342303c3183c5da8eb3de8b0bc210c6d3f391b6b4c44e890427a0e001b149836c7647a7ed26765c4fb5a035a8b714fd9160d0b08e409190cf67c232449713b97b41cee634272284b233cdbe8f11245ae8565b4a96623c08b31439c4bf968c02cc663a859c350e1cb744be7248c0307208e3754b4ed0b4e73356bc70a444c973fa25534cd266ea3edea297dfeed0042cdb01cb591cb78fcaac66aef3e355a3bfe8e4200f3e9736789053356d30840d996947a90ecc0533daa18435586ff18a2b51e316c19512cf2aff44b1e986f65553d5e4efd6ba005adaf0f2b97a79250fec5a115acc72135e1dcb071679e2752591576627929ca3bf0b9d830c08c2630cdd924492e9a5c40cf136d6ff1b13731d423dc3e41485f7590e44f7aabe9e715c93b33180d9f5a6a81a6d150f9a2d3710abe8f6d6dd9dd2799afdf6dc0878a658e49527ac3bd420e618c2d0293986451e5b1d82e22b5f845b443990aa0aa1e16707bf478670a8a79419ebc689ef7b977af94406019c99c6ab7570c51497d230c993da56372d54816f0ecfc351db1d54028ac8f3ad7bc01080496aa77aa05ff444aa5de597fcb765ed483297244e47909a836487a8e623a12a53b096b369a8e56de566f6f5264e92f7d55350347970f6c1fc7545899bb142209986f4a0d9ba22df543de32290a89564353354ceefcf14c5cfce07ec6c1f01f431a134cbf29926c6c225d4e9b9cd51e008c1255dd84c27c460caa0eb5629d114bd6d657bd1e733036198b38bf9a1f09fd570b6f48669c24f11e71058a90836e37622c4ab881b959fab47d0c6844ee1c8aa8556a7ff38458d38a650f3ff729718c4c780f3423b24a0581272e261856093871a05918fad42dd9ec097a3b4eac2a8c4cba4f5fbe2f055ca5be5ccf2ba6055685d267a8d3745f1ee4c64169a1c12e10089b57678c6e462523272a787b411351384c082c3dd411e90f6a1fd734c47c5500c26f040bf17af894ca27a4e30b39e141a57157138c324405c03d5b6d0a74c42a443fdfe9af25da0c9e627075e908eccdfa4b0307ba6af1f5485a5721ef1e4870794155f1e10e4ad7641fd829cd0ef71fa473d3c1e166095a1b7122b55b68156f8a776e343a441f646842c1df2d3ea789c35293a2c630516ac351ae217e3072a9da246161fe5eb1805343caaee17d8274b404d1d46f31778b333536a8ff451b7d647b06c85e6c"
+                },
+                "isAggregator": false
+            }
+        ],
+        "maxSlot": 3,
+        "_info": {
+            "hash": "0xdfb04f5aa1dcae8f5c6c1863a42ddb773a36363e1d6922ed41d8f691d8c93591",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/fc/test_gossip_attestation_validation.py::test_attestation_source_slot_exceeds_target_rejected[fork_Devnet]",
+            "description": "Attestation where source slot exceeds target slot is rejected.\n\n    Scenario\n    --------\n    Build a chain with blocks at slots 1, 2, and 3.\n    Submit attestation with source at slot 3 and target at slot 2.\n\n    Expected:\n        - Validation fails with \"Source checkpoint slot must not exceed target\"",
+            "fixtureFormat": "fork_choice_test"
+        }
+    }
+}

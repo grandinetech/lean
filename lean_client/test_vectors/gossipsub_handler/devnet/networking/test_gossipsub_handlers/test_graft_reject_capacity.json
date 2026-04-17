@@ -1,0 +1,85 @@
+{
+    "tests/consensus/devnet/networking/test_gossipsub_handlers.py::test_graft_reject_capacity[fork_Devnet][fork_devnet-gossipsub_handler]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "handlerName": "graft",
+        "params": {
+            "d": 4,
+            "dLow": 3,
+            "dHigh": 3,
+            "dLazy": 3
+        },
+        "initialState": {
+            "subscriptions": [
+                "test_topic"
+            ],
+            "meshes": {
+                "test_topic": [
+                    "peerAx",
+                    "peerBx",
+                    "peerCx"
+                ]
+            },
+            "peers": {
+                "peerAx": {
+                    "subscriptions": [
+                        "test_topic"
+                    ]
+                },
+                "peerBx": {
+                    "subscriptions": [
+                        "test_topic"
+                    ]
+                },
+                "peerCx": {
+                    "subscriptions": [
+                        "test_topic"
+                    ]
+                },
+                "peerDx": {
+                    "subscriptions": [
+                        "test_topic"
+                    ]
+                }
+            }
+        },
+        "event": {
+            "fromPeer": "peerDx",
+            "graft": [
+                {
+                    "topicId": "test_topic"
+                }
+            ]
+        },
+        "now": 1000.0,
+        "expected": {
+            "sentRpcs": [
+                {
+                    "toPeer": "peerDx",
+                    "control": {
+                        "prune": [
+                            {
+                                "topicId": "test_topic",
+                                "backoff": 60
+                            }
+                        ]
+                    }
+                }
+            ],
+            "meshAfter": {
+                "test_topic": [
+                    "peerAx",
+                    "peerBx",
+                    "peerCx"
+                ]
+            }
+        },
+        "_info": {
+            "hash": "0x430ed45f4812272a6b3b703e6e1ddaca455bcaf3bde019dda848e07470846d41",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossipsub_handlers.py::test_graft_reject_capacity[fork_Devnet]",
+            "description": "Reject GRAFT with PRUNE when mesh is at d_high.",
+            "fixtureFormat": "gossipsub_handler"
+        }
+    }
+}

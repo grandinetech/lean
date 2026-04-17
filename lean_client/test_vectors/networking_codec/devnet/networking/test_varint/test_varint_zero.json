@@ -1,0 +1,21 @@
+{
+    "tests/consensus/devnet/networking/test_varint.py::test_varint_zero[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "varint",
+        "input": {
+            "value": 0
+        },
+        "output": {
+            "encoded": "0x00",
+            "byteLength": 1
+        },
+        "_info": {
+            "hash": "0xf8b4f161ad833a65177a0059d72c6ede25dcc248da0f8edebddfd742c11e4295",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_varint.py::test_varint_zero[fork_Devnet]",
+            "description": "Varint zero encodes as a single 0x00 byte.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

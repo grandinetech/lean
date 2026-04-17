@@ -1,0 +1,17 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_uint32_mid[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "Uint32",
+        "value": "2147483648",
+        "serialized": "0x00000080",
+        "root": "0x0000008000000000000000000000000000000000000000000000000000000000",
+        "_info": {
+            "hash": "0x2c5633798fd2b5e6e968e4537716adc1e91d3fb905811fb213d1cf1d40871213",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_uint32_mid[fork_Devnet]",
+            "description": "Uint32 midpoint with high bit set (2^31). Tests 4-byte little-endian layout.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

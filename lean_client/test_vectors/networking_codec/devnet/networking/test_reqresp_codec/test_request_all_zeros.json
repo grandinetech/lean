@@ -1,0 +1,20 @@
+{
+    "tests/consensus/devnet/networking/test_reqresp_codec.py::test_request_all_zeros[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "reqresp_request",
+        "input": {
+            "sszData": "0x0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "output": {
+            "encoded": "0x20ff060000734e61507059000a0000faffd70f2000007a0100"
+        },
+        "_info": {
+            "hash": "0xa0eed680352195d185cd446f9aa427d949c388b29048c36055ba3987fe6b2bfa",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_reqresp_codec.py::test_request_all_zeros[fork_Devnet]",
+            "description": "Request with 32 zero bytes. Tests CRC32C on uniform input.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

@@ -1,0 +1,22 @@
+{
+    "tests/consensus/devnet/networking/test_discv5_messages.py::test_findnode_empty[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "discv5_message",
+        "input": {
+            "type": "findnode",
+            "requestId": "0x01",
+            "distances": []
+        },
+        "output": {
+            "encoded": "0x03c201c0"
+        },
+        "_info": {
+            "hash": "0xe342a865ba20de92a1a5e673c7798694222b3f3220d21411f8458907a9c41fd3",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_discv5_messages.py::test_findnode_empty[fork_Devnet]",
+            "description": "FINDNODE with empty distance list.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

@@ -1,0 +1,19 @@
+{
+    "tests/consensus/devnet/state_transition/test_justifiability.py::test_delta_0_finalized_slot_itself[fork_Devnet][fork_devnet-justifiability]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "slot": 10,
+        "finalizedSlot": 10,
+        "output": {
+            "delta": 0,
+            "isJustifiable": true
+        },
+        "_info": {
+            "hash": "0x9216009fcb3e06398a1ce69e35039045742a4b8d8eddcadee5c231d5061d0623",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/state_transition/test_justifiability.py::test_delta_0_finalized_slot_itself[fork_Devnet]",
+            "description": "Delta 0: the finalized slot itself is always justifiable.",
+            "fixtureFormat": "justifiability"
+        }
+    }
+}

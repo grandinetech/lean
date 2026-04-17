@@ -1,0 +1,19 @@
+{
+    "tests/consensus/devnet/state_transition/test_justifiability.py::test_delta_2[fork_Devnet][fork_devnet-justifiability]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "slot": 2,
+        "finalizedSlot": 0,
+        "output": {
+            "delta": 2,
+            "isJustifiable": true
+        },
+        "_info": {
+            "hash": "0x430c24b9824f9f84c4fc1bdf5c3a89d38087c816d62ea8a9970ce46691570829",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/state_transition/test_justifiability.py::test_delta_2[fork_Devnet]",
+            "description": "Delta 2: immediate window (also a pronic: 1*2).",
+            "fixtureFormat": "justifiability"
+        }
+    }
+}

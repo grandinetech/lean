@@ -1,0 +1,22 @@
+{
+    "tests/consensus/devnet/networking/test_enr_and_peer_id.py::test_peer_id_secp256k1_from_enr[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "peer_id",
+        "input": {
+            "keyType": "secp256k1",
+            "publicKey": "0x03ca634cae0d49acb401d8a4c6b6fe8c55b70d115bf400769cc1400f3258cd3138"
+        },
+        "output": {
+            "protobufEncoded": "0x0802122103ca634cae0d49acb401d8a4c6b6fe8c55b70d115bf400769cc1400f3258cd3138",
+            "peerId": "16Uiu2HAmSH2XVgZqYHWucap5kuPzLnt2TsNQkoppVxB5eJGvaXwm"
+        },
+        "_info": {
+            "hash": "0x77f95f529aaff79dc7b9cfcdb880a40021322dce5975e255e01dfed518bbaf8e",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_enr_and_peer_id.py::test_peer_id_secp256k1_from_enr[fork_Devnet]",
+            "description": "secp256k1 PeerId using the public key from the official EIP-778 ENR.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

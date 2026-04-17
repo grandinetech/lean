@@ -1,0 +1,17 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_uint16_mid[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "Uint16",
+        "value": "32768",
+        "serialized": "0x0080",
+        "root": "0x0080000000000000000000000000000000000000000000000000000000000000",
+        "_info": {
+            "hash": "0xbc19f8d10d2eaf36729213b39c936b897b4579ff2f5008025bdb7e63c9054d69",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_uint16_mid[fork_Devnet]",
+            "description": "Uint16 midpoint with high bit set (32768). Tests little-endian byte order.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

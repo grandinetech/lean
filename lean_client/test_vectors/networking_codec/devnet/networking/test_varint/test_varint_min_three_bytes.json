@@ -1,0 +1,21 @@
+{
+    "tests/consensus/devnet/networking/test_varint.py::test_varint_min_three_bytes[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "varint",
+        "input": {
+            "value": 16384
+        },
+        "output": {
+            "encoded": "0x808001",
+            "byteLength": 3
+        },
+        "_info": {
+            "hash": "0xf305cb77f8d924385c52903b2f6a2ae49a94a8e24ef2b11a257b06c21088aa92",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_varint.py::test_varint_min_three_bytes[fork_Devnet]",
+            "description": "Varint 16384 is the smallest value requiring three bytes.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

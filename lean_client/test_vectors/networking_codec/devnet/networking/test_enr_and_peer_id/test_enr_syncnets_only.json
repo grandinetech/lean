@@ -1,0 +1,31 @@
+{
+    "tests/consensus/devnet/networking/test_enr_and_peer_id.py::test_enr_syncnets_only[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "enr",
+        "input": {
+            "enrString": "enr:-H-4QE_YuRp32SAUCRWpLtCZnfsZWnD8SrO0SJE8T3x6XdYJvBKI9eW79Vy9AEIjRGL8jLSgCV2BpEJ4-5NQSksSvyEBgmlkgnY0iXNlY3AyNTZrMaEDymNMrg1JrLQB2KTGtv6MVbcNEVv0AHacwUAPMljNMTiIc3luY25ldHMK"
+        },
+        "output": {
+            "rlp": "0xf87fb8404fd8b91a77d920140915a92ed0999dfb195a70fc4ab3b448913c4f7c7a5dd609bc1288f5e5bbf55cbd0042234462fc8cb4a0095d81a44278fb93504a4b12bf210182696482763489736563703235366b31a103ca634cae0d49acb401d8a4c6b6fe8c55b70d115bf400769cc1400f3258cd31388873796e636e6574730a",
+            "seq": 1,
+            "identityScheme": "v4",
+            "nodeId": "0xa448f24c6d18e575453db13171562b71999873db5b286df957af199ec94617f7",
+            "publicKey": "0x03ca634cae0d49acb401d8a4c6b6fe8c55b70d115bf400769cc1400f3258cd3138",
+            "syncCommitteeSubnets": [
+                1,
+                3
+            ],
+            "isAggregator": false,
+            "signatureValid": true,
+            "isValid": true
+        },
+        "_info": {
+            "hash": "0xf7209b8b473a7483a717fe23b001cf607713be359150307d2eafa352da9346b4",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_enr_and_peer_id.py::test_enr_syncnets_only[fork_Devnet]",
+            "description": "ENR with syncnets (subnets 1, 3) but no eth2 or attnets. Verifies independent parsing.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

@@ -1,0 +1,280 @@
+{
+    "tests/consensus/devnet/fc/test_attestation_target_selection.py::test_attestation_target_walkback_bounded_by_lookback[fork_Devnet][fork_devnet-fork_choice_test]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "anchorState": {
+            "config": {
+                "genesisTime": 0
+            },
+            "slot": 0,
+            "latestBlockHeader": {
+                "slot": 0,
+                "proposerIndex": 0,
+                "parentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "stateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "bodyRoot": "0xdba9671bac9513c9482f1416a53aabd2c6ce90d5a5f865ce5a55c775325c9136"
+            },
+            "latestJustified": {
+                "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "slot": 0
+            },
+            "latestFinalized": {
+                "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "slot": 0
+            },
+            "historicalBlockHashes": {
+                "data": []
+            },
+            "justifiedSlots": {
+                "data": []
+            },
+            "validators": {
+                "data": [
+                    {
+                        "attestationPubkey": "0x1865a50c6478a3173882ff01f2b7904a2b96b64a8ad63d04ea53b34a539bfd672ffffd40f2e93c2900311f068cf9641b81fd364d",
+                        "proposalPubkey": "0xef30711e272be66f8850f13c393f5c7dc302f6112d3d04672b715b0caef8b823cccac138b5ab9644845cc6262dd8076f49bacf3d",
+                        "index": 0
+                    },
+                    {
+                        "attestationPubkey": "0xce45954436b2b4038330ba17071d9c482f56e43cfd3c21414a0f326635cc6132523b995e346e4e2df535e6742a5bb506e0c91365",
+                        "proposalPubkey": "0x2fdc4e5caacbdf3117a6687b09e7f46a132bd54f0e9b8730d3e57c655a60557a488ae4078e248244fadeab6d506a79355b563142",
+                        "index": 1
+                    },
+                    {
+                        "attestationPubkey": "0xa6cece462ea48c5e5a31d1576d6d7c7367fdf851a94dd738442c93570f88556ca04991462fedb17191054f65eeb9eb3777a8d27c",
+                        "proposalPubkey": "0xcfe9915524913f40da7ad5649bf69f450d72b952d2296627072e50524f7e8b775c61c17c36283b210521db7517ef097ca996de10",
+                        "index": 2
+                    },
+                    {
+                        "attestationPubkey": "0xa9536c0b365edf64b9f2a50b7e0c84157697d444bcfeaa72f966070ca539090b00ac6d5e154aa3279c5f624bfa96fd025b66ba09",
+                        "proposalPubkey": "0x951ee23a3065d322d64174463ac89b4fa863ed648a44c02e331e7511da875b4c4fb27c3c2689272634fed634d67b256868f3be59",
+                        "index": 3
+                    }
+                ]
+            },
+            "justificationsRoots": {
+                "data": []
+            },
+            "justificationsValidators": {
+                "data": []
+            }
+        },
+        "anchorBlock": {
+            "slot": 0,
+            "proposerIndex": 0,
+            "parentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "stateRoot": "0xde06920f4007f9d3925ba77bfdc1e0fa970537181be1d99a96e7c3880c7d4c3f",
+            "body": {
+                "attestations": {
+                    "data": []
+                }
+            }
+        },
+        "steps": [
+            {
+                "valid": true,
+                "stepType": "block",
+                "block": {
+                    "slot": 1,
+                    "proposerIndex": 1,
+                    "parentRoot": "0xd123d3d19ba32a08df9b3bf9e55e4447d1a3a3b4f905583d013b8f05c77d585e",
+                    "stateRoot": "0xf9adceb604bbff70c983cb92794e97000925712faa73c1fd33818d3ad6488b7b",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    },
+                    "blockRootLabel": "block_1"
+                }
+            },
+            {
+                "valid": true,
+                "stepType": "block",
+                "block": {
+                    "slot": 2,
+                    "proposerIndex": 2,
+                    "parentRoot": "0x6214b969cc3f585a85432ed9dcd3884d4842fb561a3b303a35a771475d58aa88",
+                    "stateRoot": "0x326030ed14199de4db3fcc7d9daae64fbbd00deb176d7dee3ea13ddab89f8ffd",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    },
+                    "blockRootLabel": "block_2"
+                }
+            },
+            {
+                "valid": true,
+                "stepType": "block",
+                "block": {
+                    "slot": 3,
+                    "proposerIndex": 3,
+                    "parentRoot": "0x6b7c8df5d3628c2425caf72e487418f09c4b34b2693dcccddcba29e28219d5ab",
+                    "stateRoot": "0x933d754121aa8e8e34f0eddbfc2d6fc152126b5d6483c5c10746888d4ef09fe1",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    },
+                    "blockRootLabel": "block_3"
+                }
+            },
+            {
+                "valid": true,
+                "stepType": "block",
+                "block": {
+                    "slot": 4,
+                    "proposerIndex": 0,
+                    "parentRoot": "0x58fed81517132bb2c1eacd474215d3e01298e12d6022946e516e3585cbc20104",
+                    "stateRoot": "0xca43a9a749855be4a0efbd2aacaaf2a30eecc0244a2399db5cea685538a43aa7",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    },
+                    "blockRootLabel": "block_4"
+                }
+            },
+            {
+                "valid": true,
+                "stepType": "block",
+                "block": {
+                    "slot": 5,
+                    "proposerIndex": 1,
+                    "parentRoot": "0x807ac72b883d201702dd1b1b5e5b8037e6168e872fec98479b578bb85030b3a7",
+                    "stateRoot": "0x644b4381cf15f028a5330324a9a6ed16e90ccd06c6de9a14c57913bc14289366",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    },
+                    "blockRootLabel": "block_5"
+                }
+            },
+            {
+                "valid": true,
+                "stepType": "block",
+                "block": {
+                    "slot": 6,
+                    "proposerIndex": 2,
+                    "parentRoot": "0x82e00334e07349f73c463ec75c13a618a58f17e03de4ff52091f7602d03351d0",
+                    "stateRoot": "0xe2f3e183e1c1c201f622a7f9adba6f37267a3b42ad95fb0b238e1b3418778608",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    },
+                    "blockRootLabel": "block_6"
+                }
+            },
+            {
+                "valid": true,
+                "stepType": "block",
+                "block": {
+                    "slot": 7,
+                    "proposerIndex": 3,
+                    "parentRoot": "0xd657bdd96167b131ae65a86508b93628514d71116bd49eb5d2181dc1f6ac4aa4",
+                    "stateRoot": "0xda825d679b1a9a2f2bc9ce8d2e30b2a0f05b0771817035ef3755ad2969cd3bcd",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    },
+                    "blockRootLabel": "block_7"
+                }
+            },
+            {
+                "valid": true,
+                "stepType": "block",
+                "block": {
+                    "slot": 8,
+                    "proposerIndex": 0,
+                    "parentRoot": "0x838a7722e40ffcbf06b299322e1395f63b79faf42171ab3520fd154d41ad8c4f",
+                    "stateRoot": "0x2bf8f5c95819857ea8c6ae7b4c4ef1aba2f9cd11d73a965cccb43318152606f4",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    },
+                    "blockRootLabel": "block_8"
+                }
+            },
+            {
+                "valid": true,
+                "stepType": "block",
+                "block": {
+                    "slot": 9,
+                    "proposerIndex": 1,
+                    "parentRoot": "0x5afded61c201baa9455b78e83bce217e369ab4e7f66337851ae9b323e555826f",
+                    "stateRoot": "0x4025656ad4a11d550523862a1aefe6a5365e92544d69de8c9b75e562ab83e2fc",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    },
+                    "blockRootLabel": "block_9"
+                }
+            },
+            {
+                "valid": true,
+                "stepType": "block",
+                "block": {
+                    "slot": 10,
+                    "proposerIndex": 2,
+                    "parentRoot": "0xfd74f8b1f912c604ebd18dd6c73ff48c7c986b9ecc727ab2c598003578bc7330",
+                    "stateRoot": "0xe66bad9640c6082a63647b0aca0d422416273d2fc17bccdb9ad073a1434eeb19",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    },
+                    "blockRootLabel": "block_10"
+                }
+            },
+            {
+                "valid": true,
+                "stepType": "block",
+                "block": {
+                    "slot": 11,
+                    "proposerIndex": 3,
+                    "parentRoot": "0xb39012e794e6beac0b7c68f64e1490e81d7b289f995627458fe19565f1ba6ca0",
+                    "stateRoot": "0xcb7ec91a3d3d05b5b919ebc53fa9c2f623d7609f654fb53b58f4ee48da9b36cb",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    },
+                    "blockRootLabel": "block_11"
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 12,
+                    "attestationTargetSlot": 9
+                },
+                "stepType": "block",
+                "block": {
+                    "slot": 12,
+                    "proposerIndex": 0,
+                    "parentRoot": "0xd348629c4ec0088c34a3a7c4881a807fc5385c2b1fb432f3c3c6c1c5b367666e",
+                    "stateRoot": "0x405205148a571b6569eeb121db15f1b68f9634594605c0c960d2a9a08a268c86",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    },
+                    "blockRootLabel": "block_12"
+                }
+            }
+        ],
+        "maxSlot": 12,
+        "_info": {
+            "hash": "0x97dfaa292cf9b9891c38d6992084a90f41e32541ae3218ce7e4dd4881b946e55",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/fc/test_attestation_target_selection.py::test_attestation_target_walkback_bounded_by_lookback[fork_Devnet]",
+            "description": "Attestation target walks back at most JUSTIFICATION_LOOKBACK_SLOTS from head.\n\n    Scenario\n    --------\n    Build a long chain (10+ blocks) with no attestations so the safe target\n    stays at genesis. Pick the smallest such head where\n    (head - JUSTIFICATION_LOOKBACK_SLOTS) is justifiable from genesis, so the\n    bounded walk lands cleanly without the secondary justifiability walk\n    altering the result.\n\n    Expected:\n        - Head far ahead of safe target\n        - Safe target at genesis (slot 0)\n        - Attestation target at (head - JUSTIFICATION_LOOKBACK_SLOTS)\n        - NOT at the safe target (slot 0)\n\n    Why This Matters\n    ----------------\n    The walkback bound keeps the attestation target conservatively behind\n    head, anchored toward safe target.\n\n    Without the bound, validators would target blocks too close to head,\n    bypassing the safe target governor and attesting to blocks without\n    sufficient supermajority endorsement.",
+            "fixtureFormat": "fork_choice_test"
+        }
+    }
+}

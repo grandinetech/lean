@@ -1,0 +1,17 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_bytes32_typical[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "Bytes32",
+        "value": "0xabababababababababababababababababababababababababababababababab",
+        "serialized": "0xabababababababababababababababababababababababababababababababab",
+        "root": "0xabababababababababababababababababababababababababababababababab",
+        "_info": {
+            "hash": "0x47718fa64ab7c307f7d991f8c57d9a3b94535d963d2ef0727f0faada1ee1c376",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_bytes32_typical[fork_Devnet]",
+            "description": "Bytes32 with uniform nonzero content (0xAB repeated).",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

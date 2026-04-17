@@ -1,0 +1,43 @@
+{
+    "tests/consensus/devnet/ssz/test_consensus_containers.py::test_signed_aggregated_attestation_minimal[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "SignedAggregatedAttestation",
+        "value": {
+            "data": {
+                "slot": 0,
+                "head": {
+                    "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    "slot": 0
+                },
+                "target": {
+                    "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    "slot": 0
+                },
+                "source": {
+                    "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    "slot": 0
+                }
+            },
+            "proof": {
+                "participants": {
+                    "data": [
+                        true
+                    ]
+                },
+                "proofData": {
+                    "data": "0x"
+                }
+            }
+        },
+        "serialized": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000084000000080000000900000003",
+        "root": "0xc289193d12505d3a14121bd9567d72c1b488832906b04bc56e39f157f176560f",
+        "_info": {
+            "hash": "0xd1b12692c1584c6cc78cdf0155708ddae04b65ba303d7ab7b67c1ac3fee25506",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_consensus_containers.py::test_signed_aggregated_attestation_minimal[fork_Devnet]",
+            "description": "SSZ roundtrip for SignedAggregatedAttestation with one participant and empty proof.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

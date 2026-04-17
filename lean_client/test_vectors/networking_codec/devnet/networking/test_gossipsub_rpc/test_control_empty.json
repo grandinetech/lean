@@ -1,0 +1,22 @@
+{
+    "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_control_empty[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "gossipsub_rpc",
+        "input": {
+            "subscriptions": [],
+            "publish": [],
+            "control": {}
+        },
+        "output": {
+            "encoded": "0x"
+        },
+        "_info": {
+            "hash": "0x479604fec0a9347ed2c34389e559d789c1c6cb8a2b92c4d90ec8c2d20a492694",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_control_empty[fork_Devnet]",
+            "description": "Empty control message. All repeated fields empty, encodes to zero bytes.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

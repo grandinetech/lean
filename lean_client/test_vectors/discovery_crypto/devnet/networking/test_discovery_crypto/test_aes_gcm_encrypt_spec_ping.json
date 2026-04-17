@@ -1,0 +1,23 @@
+{
+    "tests/consensus/devnet/networking/test_discovery_crypto.py::test_aes_gcm_encrypt_spec_ping[fork_Devnet][fork_devnet-discovery_crypto]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "operation": "aes_gcm_encrypt",
+        "input": {
+            "key": "0x9f2d77db7004bf8a1a85107ac686990b",
+            "nonce": "0x27b5af763c446acd2749fe8e",
+            "plaintext": "0x01c20101",
+            "aad": "0x"
+        },
+        "output": {
+            "ciphertext": "0xa5d12a2da4fa47081eedb4b9ff5c2c253d25470c"
+        },
+        "_info": {
+            "hash": "0x11f2ca5f345354c66c9960d1175055e823f93f4a3de4dc5446ed0f6f371f4fdc",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_discovery_crypto.py::test_aes_gcm_encrypt_spec_ping[fork_Devnet]",
+            "description": "AES-GCM encrypt a PING message with spec key and nonce.",
+            "fixtureFormat": "discovery_crypto"
+        }
+    }
+}

@@ -1,0 +1,174 @@
+{
+    "tests/consensus/devnet/state_transition/test_finalization.py::test_merged_attestations_for_same_target_justify_and_finalize_cleanly[fork_Devnet][fork_devnet-state_transition_test]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "pre": {
+            "config": {
+                "genesisTime": 0
+            },
+            "slot": 0,
+            "latestBlockHeader": {
+                "slot": 0,
+                "proposerIndex": 0,
+                "parentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "stateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "bodyRoot": "0xdba9671bac9513c9482f1416a53aabd2c6ce90d5a5f865ce5a55c775325c9136"
+            },
+            "latestJustified": {
+                "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "slot": 0
+            },
+            "latestFinalized": {
+                "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "slot": 0
+            },
+            "historicalBlockHashes": {
+                "data": []
+            },
+            "justifiedSlots": {
+                "data": []
+            },
+            "validators": {
+                "data": [
+                    {
+                        "attestationPubkey": "0x1865a50c6478a3173882ff01f2b7904a2b96b64a8ad63d04ea53b34a539bfd672ffffd40f2e93c2900311f068cf9641b81fd364d",
+                        "proposalPubkey": "0xef30711e272be66f8850f13c393f5c7dc302f6112d3d04672b715b0caef8b823cccac138b5ab9644845cc6262dd8076f49bacf3d",
+                        "index": 0
+                    },
+                    {
+                        "attestationPubkey": "0xce45954436b2b4038330ba17071d9c482f56e43cfd3c21414a0f326635cc6132523b995e346e4e2df535e6742a5bb506e0c91365",
+                        "proposalPubkey": "0x2fdc4e5caacbdf3117a6687b09e7f46a132bd54f0e9b8730d3e57c655a60557a488ae4078e248244fadeab6d506a79355b563142",
+                        "index": 1
+                    },
+                    {
+                        "attestationPubkey": "0xa6cece462ea48c5e5a31d1576d6d7c7367fdf851a94dd738442c93570f88556ca04991462fedb17191054f65eeb9eb3777a8d27c",
+                        "proposalPubkey": "0xcfe9915524913f40da7ad5649bf69f450d72b952d2296627072e50524f7e8b775c61c17c36283b210521db7517ef097ca996de10",
+                        "index": 2
+                    },
+                    {
+                        "attestationPubkey": "0xa9536c0b365edf64b9f2a50b7e0c84157697d444bcfeaa72f966070ca539090b00ac6d5e154aa3279c5f624bfa96fd025b66ba09",
+                        "proposalPubkey": "0x951ee23a3065d322d64174463ac89b4fa863ed648a44c02e331e7511da875b4c4fb27c3c2689272634fed634d67b256868f3be59",
+                        "index": 3
+                    }
+                ]
+            },
+            "justificationsRoots": {
+                "data": []
+            },
+            "justificationsValidators": {
+                "data": []
+            }
+        },
+        "blocks": [
+            {
+                "slot": 1,
+                "proposerIndex": 1,
+                "parentRoot": "0xd123d3d19ba32a08df9b3bf9e55e4447d1a3a3b4f905583d013b8f05c77d585e",
+                "stateRoot": "0xf9adceb604bbff70c983cb92794e97000925712faa73c1fd33818d3ad6488b7b",
+                "body": {
+                    "attestations": {
+                        "data": []
+                    }
+                }
+            },
+            {
+                "slot": 2,
+                "proposerIndex": 2,
+                "parentRoot": "0x6214b969cc3f585a85432ed9dcd3884d4842fb561a3b303a35a771475d58aa88",
+                "stateRoot": "0xcf0983d186ddc99e724e186273eeb969e147802a1cde7c02a4d6f4af4a215df0",
+                "body": {
+                    "attestations": {
+                        "data": [
+                            {
+                                "aggregationBits": {
+                                    "data": [
+                                        true,
+                                        true,
+                                        true
+                                    ]
+                                },
+                                "data": {
+                                    "slot": 2,
+                                    "head": {
+                                        "root": "0x6214b969cc3f585a85432ed9dcd3884d4842fb561a3b303a35a771475d58aa88",
+                                        "slot": 1
+                                    },
+                                    "target": {
+                                        "root": "0x6214b969cc3f585a85432ed9dcd3884d4842fb561a3b303a35a771475d58aa88",
+                                        "slot": 1
+                                    },
+                                    "source": {
+                                        "root": "0xd123d3d19ba32a08df9b3bf9e55e4447d1a3a3b4f905583d013b8f05c77d585e",
+                                        "slot": 0
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "slot": 3,
+                "proposerIndex": 3,
+                "parentRoot": "0x441054581915fa2551ad7616edfc1f856146b0bdb41207eb7db5a801b41e7fb5",
+                "stateRoot": "0x626807f5f52abddc11a1112f309438777a8ed0aa3712d643f5f315507f96c714",
+                "body": {
+                    "attestations": {
+                        "data": [
+                            {
+                                "aggregationBits": {
+                                    "data": [
+                                        true,
+                                        true,
+                                        true,
+                                        true
+                                    ]
+                                },
+                                "data": {
+                                    "slot": 3,
+                                    "head": {
+                                        "root": "0x441054581915fa2551ad7616edfc1f856146b0bdb41207eb7db5a801b41e7fb5",
+                                        "slot": 2
+                                    },
+                                    "target": {
+                                        "root": "0x441054581915fa2551ad7616edfc1f856146b0bdb41207eb7db5a801b41e7fb5",
+                                        "slot": 2
+                                    },
+                                    "source": {
+                                        "root": "0x6214b969cc3f585a85432ed9dcd3884d4842fb561a3b303a35a771475d58aa88",
+                                        "slot": 1
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        ],
+        "post": {
+            "slot": 3,
+            "latestJustifiedSlot": 2,
+            "latestJustifiedRootLabel": "block_2",
+            "latestFinalizedSlot": 1,
+            "latestFinalizedRootLabel": "block_1",
+            "justifiedSlots": {
+                "data": [
+                    true
+                ]
+            },
+            "justificationsRoots": {
+                "data": []
+            },
+            "justificationsValidators": {
+                "data": []
+            }
+        },
+        "_info": {
+            "hash": "0xe9d4607cb86793145a5dc713bb8d67e419826818ae054bcfcf6dac458dc8ecaf",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/state_transition/test_finalization.py::test_merged_attestations_for_same_target_justify_and_finalize_cleanly[fork_Devnet]",
+            "description": "Test the post-state when block 3 justifies slot 2 and leaves no pending votes.\n\n    Scenario\n    --------\n    1. Justify block_1 in block_2\n    2. Process block_3 with two attestation specs both targeting block_2:\n       one supermajority (V0-V2) and one single-validator (V3)\n\n    The block builder merges both specs into a single aggregated\n    attestation covering all 4 validators (same AttestationData).\n    The merged attestation justifies slot 2 and finalizes slot 1\n    in one step. No pending votes remain.\n\n    Expected Behavior\n    -----------------\n    1. The post-state slot is 3\n    2. latest_justified_slot is 2\n    3. latest_justified_root is block_2\n    4. latest_finalized_slot is 1\n    5. latest_finalized_root is block_1\n    6. justified_slots contains a single justified entry for slot 2\n    7. There are no pending justifications",
+            "fixtureFormat": "state_transition_test"
+        }
+    }
+}

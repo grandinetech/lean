@@ -1,0 +1,22 @@
+{
+    "tests/consensus/devnet/networking/test_enr_and_peer_id.py::test_peer_id_ed25519[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "peer_id",
+        "input": {
+            "keyType": "ed25519",
+            "publicKey": "0x1ed1e8fae2c4a144b8be8fd4b47bf3d3b34b871c3cacf6010f0e42d474fce27e"
+        },
+        "output": {
+            "protobufEncoded": "0x080112201ed1e8fae2c4a144b8be8fd4b47bf3d3b34b871c3cacf6010f0e42d474fce27e",
+            "peerId": "12D3KooWBtg3aaRMjxwedh83aGiUkwSxDwUZkzuJcfaqUmo7R3pq"
+        },
+        "_info": {
+            "hash": "0x5d16e173af0f7c33e4d81f793d5b32d6a8c1f720ceb432cd25e432d6cdaf83ef",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_enr_and_peer_id.py::test_peer_id_ed25519[fork_Devnet]",
+            "description": "ED25519 PeerId from libp2p spec. 32-byte key, identity multihash.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

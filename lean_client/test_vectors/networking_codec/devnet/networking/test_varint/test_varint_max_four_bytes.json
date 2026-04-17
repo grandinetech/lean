@@ -1,0 +1,21 @@
+{
+    "tests/consensus/devnet/networking/test_varint.py::test_varint_max_four_bytes[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "varint",
+        "input": {
+            "value": 268435455
+        },
+        "output": {
+            "encoded": "0xffffff7f",
+            "byteLength": 4
+        },
+        "_info": {
+            "hash": "0x0f3c673249287846a90b33d75acb9701864e1dab964812f30c1d1f76263503c0",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_varint.py::test_varint_max_four_bytes[fork_Devnet]",
+            "description": "Varint 268435455 is the largest value fitting in four bytes.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

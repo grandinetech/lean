@@ -1,0 +1,21 @@
+{
+    "tests/consensus/devnet/networking/test_varint.py::test_varint_max_two_bytes[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "varint",
+        "input": {
+            "value": 16383
+        },
+        "output": {
+            "encoded": "0xff7f",
+            "byteLength": 2
+        },
+        "_info": {
+            "hash": "0x968de8b2dfc1ab0fa3d40485371503bc63b5cd3551c5454b5ab2368e4465ff46",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_varint.py::test_varint_max_two_bytes[fork_Devnet]",
+            "description": "Varint 16383 is the largest value fitting in two bytes.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

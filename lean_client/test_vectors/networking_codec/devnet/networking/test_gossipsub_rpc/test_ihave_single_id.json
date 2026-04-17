@@ -1,0 +1,31 @@
+{
+    "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_ihave_single_id[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "gossipsub_rpc",
+        "input": {
+            "subscriptions": [],
+            "publish": [],
+            "control": {
+                "ihave": [
+                    {
+                        "topicId": "/leanconsensus/0x12345678/block/ssz_snappy",
+                        "messageIds": [
+                            "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                        ]
+                    }
+                ]
+            }
+        },
+        "output": {
+            "encoded": "0x1a440a420a2a2f6c65616e636f6e73656e7375732f307831323334353637382f626c6f636b2f73737a5f736e617070791214aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "_info": {
+            "hash": "0x5b4b8d41e13132edd22efeeec4e4f28d76913303c993886a2db2038592f06fe4",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_ihave_single_id[fork_Devnet]",
+            "description": "IHAVE advertising one cached message ID.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

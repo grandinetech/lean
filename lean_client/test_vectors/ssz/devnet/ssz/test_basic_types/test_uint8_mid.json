@@ -1,0 +1,17 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_uint8_mid[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "Uint8",
+        "value": "128",
+        "serialized": "0x80",
+        "root": "0x8000000000000000000000000000000000000000000000000000000000000000",
+        "_info": {
+            "hash": "0x8a5f6c202ed8c6644d30c6e96675d0d103b7069179d1dc8d54e5dea1ee2618d2",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_uint8_mid[fork_Devnet]",
+            "description": "Uint8 midpoint with high bit set (128).",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

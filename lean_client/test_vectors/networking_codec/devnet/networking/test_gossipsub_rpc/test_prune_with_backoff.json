@@ -1,0 +1,29 @@
+{
+    "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_prune_with_backoff[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "gossipsub_rpc",
+        "input": {
+            "subscriptions": [],
+            "publish": [],
+            "control": {
+                "prune": [
+                    {
+                        "topicId": "/leanconsensus/0x12345678/block/ssz_snappy",
+                        "backoff": 60
+                    }
+                ]
+            }
+        },
+        "output": {
+            "encoded": "0x1a30222e0a2a2f6c65616e636f6e73656e7375732f307831323334353637382f626c6f636b2f73737a5f736e61707079183c"
+        },
+        "_info": {
+            "hash": "0xaaf804357f8941c45baf5cee7a73af5dd9de32e2c464459d621f76da673a1d61",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_prune_with_backoff[fork_Devnet]",
+            "description": "PRUNE with a 60-second backoff duration.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

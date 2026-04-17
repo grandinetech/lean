@@ -1,0 +1,34 @@
+{
+    "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_rpc_control_only[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "gossipsub_rpc",
+        "input": {
+            "subscriptions": [],
+            "publish": [],
+            "control": {
+                "graft": [
+                    {
+                        "topicId": "/leanconsensus/0x12345678/block/ssz_snappy"
+                    }
+                ],
+                "prune": [
+                    {
+                        "topicId": "/leanconsensus/0x12345678/aggregation/ssz_snappy",
+                        "backoff": 60
+                    }
+                ]
+            }
+        },
+        "output": {
+            "encoded": "0x1a641a2c0a2a2f6c65616e636f6e73656e7375732f307831323334353637382f626c6f636b2f73737a5f736e6170707922340a302f6c65616e636f6e73656e7375732f307831323334353637382f6167677265676174696f6e2f73737a5f736e61707079183c"
+        },
+        "_info": {
+            "hash": "0xca7b371fc1799a169cdb982bb3116d1605f6ab9c486e6d6ff8e920b825f0038f",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_rpc_control_only[fork_Devnet]",
+            "description": "RPC with only control messages.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

@@ -1,0 +1,44 @@
+{
+    "tests/consensus/devnet/networking/test_gossipsub_handlers.py::test_graft_ignore_unsubscribed[fork_Devnet][fork_devnet-gossipsub_handler]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "handlerName": "graft",
+        "params": {
+            "d": 4,
+            "dLow": 3,
+            "dHigh": 6,
+            "dLazy": 3
+        },
+        "initialState": {
+            "subscriptions": [],
+            "meshes": {},
+            "peers": {
+                "peerAx": {
+                    "subscriptions": [
+                        "test_topic"
+                    ]
+                }
+            }
+        },
+        "event": {
+            "fromPeer": "peerAx",
+            "graft": [
+                {
+                    "topicId": "test_topic"
+                }
+            ]
+        },
+        "now": 1000.0,
+        "expected": {
+            "sentRpcs": [],
+            "meshAfter": {}
+        },
+        "_info": {
+            "hash": "0x25311d754d8a18356db49ab10fd307590f694023e0c2d9a8cf23e42dc521f602",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossipsub_handlers.py::test_graft_ignore_unsubscribed[fork_Devnet]",
+            "description": "Silently ignore GRAFT for a topic we are not subscribed to.",
+            "fixtureFormat": "gossipsub_handler"
+        }
+    }
+}

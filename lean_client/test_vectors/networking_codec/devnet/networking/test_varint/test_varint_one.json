@@ -1,0 +1,21 @@
+{
+    "tests/consensus/devnet/networking/test_varint.py::test_varint_one[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "varint",
+        "input": {
+            "value": 1
+        },
+        "output": {
+            "encoded": "0x01",
+            "byteLength": 1
+        },
+        "_info": {
+            "hash": "0xbb6a8953bc800845930a370570f5356079199e601779ae4d612b0ac128c8fb4c",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_varint.py::test_varint_one[fork_Devnet]",
+            "description": "Varint one encodes as 0x01.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

@@ -1,0 +1,88 @@
+{
+    "tests/consensus/devnet/networking/test_gossipsub_handlers.py::test_message_forward_to_mesh[fork_Devnet][fork_devnet-gossipsub_handler]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "handlerName": "message",
+        "params": {
+            "d": 4,
+            "dLow": 3,
+            "dHigh": 6,
+            "dLazy": 3
+        },
+        "initialState": {
+            "subscriptions": [
+                "test_topic"
+            ],
+            "meshes": {
+                "test_topic": [
+                    "senderX",
+                    "peerAx",
+                    "peerBx"
+                ]
+            },
+            "peers": {
+                "senderX": {
+                    "subscriptions": [
+                        "test_topic"
+                    ]
+                },
+                "peerAx": {
+                    "subscriptions": [
+                        "test_topic"
+                    ]
+                },
+                "peerBx": {
+                    "subscriptions": [
+                        "test_topic"
+                    ]
+                }
+            }
+        },
+        "event": {
+            "fromPeer": "senderX",
+            "publish": [
+                {
+                    "topic": "test_topic",
+                    "data": "0xdeadbeef"
+                }
+            ]
+        },
+        "now": 1000.0,
+        "expected": {
+            "sentRpcs": [
+                {
+                    "toPeer": "peerAx",
+                    "publish": [
+                        {
+                            "topic": "test_topic",
+                            "data": "0xdeadbeef"
+                        }
+                    ]
+                },
+                {
+                    "toPeer": "peerBx",
+                    "publish": [
+                        {
+                            "topic": "test_topic",
+                            "data": "0xdeadbeef"
+                        }
+                    ]
+                }
+            ],
+            "meshAfter": {
+                "test_topic": [
+                    "peerAx",
+                    "peerBx",
+                    "senderX"
+                ]
+            }
+        },
+        "_info": {
+            "hash": "0xf19f5c3e1a9302d67d13d5581d8fdcbeb4ca55e7d68231c660879569d8815201",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossipsub_handlers.py::test_message_forward_to_mesh[fork_Devnet]",
+            "description": "New message forwarded to mesh peers except the sender.",
+            "fixtureFormat": "gossipsub_handler"
+        }
+    }
+}

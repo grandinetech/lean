@@ -1,0 +1,17 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_fp_zero[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "Fp",
+        "value": "0",
+        "serialized": "0x00000000",
+        "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "_info": {
+            "hash": "0x11f4fe8fd8f608b5b276285f51f5224d2e0aedbc4051ac4e63680a67e1bf0b5c",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_fp_zero[fork_Devnet]",
+            "description": "Field element zero. The additive identity.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

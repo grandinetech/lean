@@ -1,0 +1,21 @@
+{
+    "tests/consensus/devnet/networking/test_varint.py::test_varint_255[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "varint",
+        "input": {
+            "value": 255
+        },
+        "output": {
+            "encoded": "0xff01",
+            "byteLength": 2
+        },
+        "_info": {
+            "hash": "0x92c5b0366243beb3b9e05789c70385d27ab1541d08506fd889b04b10e4b4b145",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_varint.py::test_varint_255[fork_Devnet]",
+            "description": "Varint 255. Max Uint8 boundary.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

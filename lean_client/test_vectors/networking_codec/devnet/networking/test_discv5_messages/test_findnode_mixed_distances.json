@@ -1,0 +1,26 @@
+{
+    "tests/consensus/devnet/networking/test_discv5_messages.py::test_findnode_mixed_distances[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "discv5_message",
+        "input": {
+            "type": "findnode",
+            "requestId": "0x01",
+            "distances": [
+                0,
+                1,
+                256
+            ]
+        },
+        "output": {
+            "encoded": "0x03c701c58001820100"
+        },
+        "_info": {
+            "hash": "0x536aa3f380d4f4c99e50fe833213fec53905a843ac844cd130a951fbb684d6f2",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_discv5_messages.py::test_findnode_mixed_distances[fork_Devnet]",
+            "description": "FINDNODE with distances [0, 1, 256]. Tests zero and multi-byte encoding.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

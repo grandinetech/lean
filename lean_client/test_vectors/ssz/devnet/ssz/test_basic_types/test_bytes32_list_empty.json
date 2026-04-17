@@ -1,0 +1,19 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_bytes32_list_empty[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "SampleBytes32List8",
+        "value": {
+            "data": []
+        },
+        "serialized": "0x",
+        "root": "0xe8e527e84f666163a90ef900e013f56b0a4d020148b2224057b719f351b003a6",
+        "_info": {
+            "hash": "0xa990b8df1b0029562fc8b58f078d98aa0ae75399ed85363488d7fddbc39c740d",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_bytes32_list_empty[fork_Devnet]",
+            "description": "Empty Bytes32 list. Each element would occupy one full chunk.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

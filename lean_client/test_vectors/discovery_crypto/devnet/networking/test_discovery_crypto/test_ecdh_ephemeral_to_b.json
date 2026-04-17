@@ -1,0 +1,21 @@
+{
+    "tests/consensus/devnet/networking/test_discovery_crypto.py::test_ecdh_ephemeral_to_b[fork_Devnet][fork_devnet-discovery_crypto]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "operation": "ecdh",
+        "input": {
+            "privateKey": "0xfb757dc581730490a1d7a00deea65e9b1936924caaea8f44d476014856b68736",
+            "publicKey": "0x0317931e6e0840220642f230037d285d122bc59063221ef3226b1f403ddc69ca91"
+        },
+        "output": {
+            "sharedSecret": "0x022c82f214eb37159111712add00040fcdf73fd4d7d0b7c0f980da4d099aa59ba4"
+        },
+        "_info": {
+            "hash": "0xfe2d9e37389bd623e53d4985666ee1cc4bc386a7d135900154ba614284aa11a8",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_discovery_crypto.py::test_ecdh_ephemeral_to_b[fork_Devnet]",
+            "description": "ECDH with spec ephemeral key and Node B. Used in handshake key derivation.",
+            "fixtureFormat": "discovery_crypto"
+        }
+    }
+}

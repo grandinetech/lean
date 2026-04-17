@@ -1,0 +1,26 @@
+{
+    "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_sub_opts_empty_topic[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "gossipsub_rpc",
+        "input": {
+            "subscriptions": [
+                {
+                    "subscribe": true,
+                    "topicId": ""
+                }
+            ],
+            "publish": []
+        },
+        "output": {
+            "encoded": "0x0a0408011200"
+        },
+        "_info": {
+            "hash": "0x2a681c51b948490dc58fbbf9fd2d3525abda571db2b42cefaeebfac03b34bd5a",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_sub_opts_empty_topic[fork_Devnet]",
+            "description": "SubOpts with an empty topic string.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

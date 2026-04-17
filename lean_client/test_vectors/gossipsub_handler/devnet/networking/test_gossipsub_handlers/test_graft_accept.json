@@ -1,0 +1,60 @@
+{
+    "tests/consensus/devnet/networking/test_gossipsub_handlers.py::test_graft_accept[fork_Devnet][fork_devnet-gossipsub_handler]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "handlerName": "graft",
+        "params": {
+            "d": 4,
+            "dLow": 3,
+            "dHigh": 6,
+            "dLazy": 3
+        },
+        "initialState": {
+            "subscriptions": [
+                "test_topic"
+            ],
+            "meshes": {
+                "test_topic": [
+                    "peerAx"
+                ]
+            },
+            "peers": {
+                "peerAx": {
+                    "subscriptions": [
+                        "test_topic"
+                    ]
+                },
+                "peerBx": {
+                    "subscriptions": [
+                        "test_topic"
+                    ]
+                }
+            }
+        },
+        "event": {
+            "fromPeer": "peerBx",
+            "graft": [
+                {
+                    "topicId": "test_topic"
+                }
+            ]
+        },
+        "now": 1000.0,
+        "expected": {
+            "sentRpcs": [],
+            "meshAfter": {
+                "test_topic": [
+                    "peerAx",
+                    "peerBx"
+                ]
+            }
+        },
+        "_info": {
+            "hash": "0x6db42f55b539640f1af308896f31e9c1cdc0c93f1b3fd19b0e77029a43fe2969",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossipsub_handlers.py::test_graft_accept[fork_Devnet]",
+            "description": "Accept GRAFT when subscribed and mesh has capacity.",
+            "fixtureFormat": "gossipsub_handler"
+        }
+    }
+}

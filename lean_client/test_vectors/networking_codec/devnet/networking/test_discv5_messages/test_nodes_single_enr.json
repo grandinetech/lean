@@ -1,0 +1,25 @@
+{
+    "tests/consensus/devnet/networking/test_discv5_messages.py::test_nodes_single_enr[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "discv5_message",
+        "input": {
+            "type": "nodes",
+            "requestId": "0x01",
+            "total": 1,
+            "enrs": [
+                "0xdeadbeef"
+            ]
+        },
+        "output": {
+            "encoded": "0x04c80101c584deadbeef"
+        },
+        "_info": {
+            "hash": "0x6b6af1690922eb1084ebd2ace03c3bfa466c6c9c0080a5480511520d6fa0c302",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_discv5_messages.py::test_nodes_single_enr[fork_Devnet]",
+            "description": "NODES response with total=1 and one ENR (raw RLP bytes).",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

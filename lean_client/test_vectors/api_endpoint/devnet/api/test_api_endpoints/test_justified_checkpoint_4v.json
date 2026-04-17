@@ -1,0 +1,24 @@
+{
+    "tests/consensus/devnet/api/test_api_endpoints.py::test_justified_checkpoint_4v[fork_Devnet][fork_devnet-api_endpoint]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "endpoint": "/lean/v0/checkpoints/justified",
+        "genesisParams": {
+            "numValidators": 4,
+            "genesisTime": 0
+        },
+        "expectedStatusCode": 200,
+        "expectedContentType": "application/json",
+        "expectedBody": {
+            "slot": 0,
+            "root": "0xd123d3d19ba32a08df9b3bf9e55e4447d1a3a3b4f905583d013b8f05c77d585e"
+        },
+        "_info": {
+            "hash": "0xf8fb33f5448cfe776905f89f79078bd7c095f353fe37c889346220c9bd46b176",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/api/test_api_endpoints.py::test_justified_checkpoint_4v[fork_Devnet]",
+            "description": "Justified checkpoint at genesis with 4 validators.",
+            "fixtureFormat": "api_endpoint"
+        }
+    }
+}

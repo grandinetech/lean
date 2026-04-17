@@ -1,0 +1,133 @@
+{
+    "tests/consensus/devnet/state_transition/test_justification.py::test_below_threshold_support_does_not_justify[fork_Devnet][fork_devnet-state_transition_test]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "pre": {
+            "config": {
+                "genesisTime": 0
+            },
+            "slot": 0,
+            "latestBlockHeader": {
+                "slot": 0,
+                "proposerIndex": 0,
+                "parentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "stateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "bodyRoot": "0xdba9671bac9513c9482f1416a53aabd2c6ce90d5a5f865ce5a55c775325c9136"
+            },
+            "latestJustified": {
+                "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "slot": 0
+            },
+            "latestFinalized": {
+                "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "slot": 0
+            },
+            "historicalBlockHashes": {
+                "data": []
+            },
+            "justifiedSlots": {
+                "data": []
+            },
+            "validators": {
+                "data": [
+                    {
+                        "attestationPubkey": "0x1865a50c6478a3173882ff01f2b7904a2b96b64a8ad63d04ea53b34a539bfd672ffffd40f2e93c2900311f068cf9641b81fd364d",
+                        "proposalPubkey": "0xef30711e272be66f8850f13c393f5c7dc302f6112d3d04672b715b0caef8b823cccac138b5ab9644845cc6262dd8076f49bacf3d",
+                        "index": 0
+                    },
+                    {
+                        "attestationPubkey": "0xce45954436b2b4038330ba17071d9c482f56e43cfd3c21414a0f326635cc6132523b995e346e4e2df535e6742a5bb506e0c91365",
+                        "proposalPubkey": "0x2fdc4e5caacbdf3117a6687b09e7f46a132bd54f0e9b8730d3e57c655a60557a488ae4078e248244fadeab6d506a79355b563142",
+                        "index": 1
+                    },
+                    {
+                        "attestationPubkey": "0xa6cece462ea48c5e5a31d1576d6d7c7367fdf851a94dd738442c93570f88556ca04991462fedb17191054f65eeb9eb3777a8d27c",
+                        "proposalPubkey": "0xcfe9915524913f40da7ad5649bf69f450d72b952d2296627072e50524f7e8b775c61c17c36283b210521db7517ef097ca996de10",
+                        "index": 2
+                    },
+                    {
+                        "attestationPubkey": "0xa9536c0b365edf64b9f2a50b7e0c84157697d444bcfeaa72f966070ca539090b00ac6d5e154aa3279c5f624bfa96fd025b66ba09",
+                        "proposalPubkey": "0x951ee23a3065d322d64174463ac89b4fa863ed648a44c02e331e7511da875b4c4fb27c3c2689272634fed634d67b256868f3be59",
+                        "index": 3
+                    },
+                    {
+                        "attestationPubkey": "0x7ab53f4ae84443794fbf6b3954c5cd0a39ae8c6ad082632aaf9fa6370088716ebabaea2fd70f992a6a61751dae412b59a6793d1a",
+                        "proposalPubkey": "0x1a9c0e78e7a25a467f45c15ef26f1443d68fe009ee12cc131c03ff212e7c33639911757afbe4716956244d698c2e45768fba6f6a",
+                        "index": 4
+                    },
+                    {
+                        "attestationPubkey": "0x85a3bc578781b006590af92e92250368b4582903f678f452817c621ed02dd659c3ccc600729f046076944932a550f2570e5cea67",
+                        "proposalPubkey": "0xfbfef9639780891a892fbd313a32b97bbd0c47410bff3251dc57ad107d776a29bac496001d3cff7dbe630e7e19a7fa21f92bf32b",
+                        "index": 5
+                    }
+                ]
+            },
+            "justificationsRoots": {
+                "data": []
+            },
+            "justificationsValidators": {
+                "data": []
+            }
+        },
+        "blocks": [
+            {
+                "slot": 1,
+                "proposerIndex": 1,
+                "parentRoot": "0x130b7bf5a92fdca11ce58ec5894c97a5f83b7d2fa590a5d030b9633a2bf8133f",
+                "stateRoot": "0x337f768f624be82d2cf1bb1471a4701e9f347cc08e698cf7456c8d235055f947",
+                "body": {
+                    "attestations": {
+                        "data": []
+                    }
+                }
+            },
+            {
+                "slot": 2,
+                "proposerIndex": 2,
+                "parentRoot": "0x85d2b862811d4ae2ad76f45ceccc01d09c93934fa16b31d81eebe2bda0e41e0a",
+                "stateRoot": "0x6b063b34fc24b9536ea7e74dad0dfcaf21b8cf9c8c30a76ccada4e0ff64fdde3",
+                "body": {
+                    "attestations": {
+                        "data": [
+                            {
+                                "aggregationBits": {
+                                    "data": [
+                                        true,
+                                        true,
+                                        true
+                                    ]
+                                },
+                                "data": {
+                                    "slot": 2,
+                                    "head": {
+                                        "root": "0x85d2b862811d4ae2ad76f45ceccc01d09c93934fa16b31d81eebe2bda0e41e0a",
+                                        "slot": 1
+                                    },
+                                    "target": {
+                                        "root": "0x85d2b862811d4ae2ad76f45ceccc01d09c93934fa16b31d81eebe2bda0e41e0a",
+                                        "slot": 1
+                                    },
+                                    "source": {
+                                        "root": "0x130b7bf5a92fdca11ce58ec5894c97a5f83b7d2fa590a5d030b9633a2bf8133f",
+                                        "slot": 0
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        ],
+        "post": {
+            "slot": 2,
+            "latestJustifiedSlot": 0
+        },
+        "_info": {
+            "hash": "0xf0af7ac580ce7e135798f22e2e3a9ae517107cd65753004cad19bdf250431461",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/state_transition/test_justification.py::test_below_threshold_support_does_not_justify[fork_Devnet]",
+            "description": "Test that support below two-thirds does not justify a target.\n\n    Scenario\n    --------\n    1. Start from genesis with 6 validators\n    2. Process block_1 at slot 1\n    3. Process a block at slot 2 with attestations from validators 0, 1, and 2\n       targeting block_1 at slot 1\n\n    Expected Behavior\n    -----------------\n    1. Slot 1 is a justifiable target after finalized slot 0\n    2. Three of six validators are below the two-thirds threshold\n    3. The pending tally remains below supermajority\n    4. latest_justified_slot stays at genesis",
+            "fixtureFormat": "state_transition_test"
+        }
+    }
+}

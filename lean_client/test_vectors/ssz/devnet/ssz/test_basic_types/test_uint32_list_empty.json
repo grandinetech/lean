@@ -1,0 +1,19 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_uint32_list_empty[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "SampleUint32List16",
+        "value": {
+            "data": []
+        },
+        "serialized": "0x",
+        "root": "0x7a0501f5957bdf9cb3a8ff4966f02265f968658b7a9c62642cba1165e86642f5",
+        "_info": {
+            "hash": "0x1a2990a4bc1da41a878e70148570f5ffc1e72c1146ad4da23397baf3fc54b3ef",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_uint32_list_empty[fork_Devnet]",
+            "description": "Empty Uint32 list. Length mix-in is zero, data tree is all-zero.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

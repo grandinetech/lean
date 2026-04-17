@@ -1,0 +1,28 @@
+{
+    "tests/consensus/devnet/networking/test_enr_and_peer_id.py::test_enr_attnets_all_zeros[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "enr",
+        "input": {
+            "enrString": "enr:-Ia4QFsi_88hNR5d3KfyPKuHFo9ED0vFol9U3Nwaax848VdNSwaX3URcX3apfTnK88gKRyr76KV948B3NAW4k419194Bh2F0dG5ldHOIAAAAAAAAAACCaWSCdjSJc2VjcDI1NmsxoQPKY0yuDUmstAHYpMa2_oxVtw0RW_QAdpzBQA8yWM0xOA"
+        },
+        "output": {
+            "rlp": "0xf886b8405b22ffcf21351e5ddca7f23cab87168f440f4bc5a25f54dcdc1a6b1f38f1574d4b0697dd445c5f76a97d39caf3c80a472afbe8a57de3c0773405b8938d7dd7de01876174746e65747388000000000000000082696482763489736563703235366b31a103ca634cae0d49acb401d8a4c6b6fe8c55b70d115bf400769cc1400f3258cd3138",
+            "seq": 1,
+            "identityScheme": "v4",
+            "nodeId": "0xa448f24c6d18e575453db13171562b71999873db5b286df957af199ec94617f7",
+            "publicKey": "0x03ca634cae0d49acb401d8a4c6b6fe8c55b70d115bf400769cc1400f3258cd3138",
+            "attestationSubnets": [],
+            "isAggregator": false,
+            "signatureValid": true,
+            "isValid": true
+        },
+        "_info": {
+            "hash": "0x80a2716437c6889ca9efcc67723e6b3c1d253125adbc37cd5af4e07d4cc112c3",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_enr_and_peer_id.py::test_enr_attnets_all_zeros[fork_Devnet]",
+            "description": "ENR with attnets bitfield all zeros. Verifies empty subscribed subnet list.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

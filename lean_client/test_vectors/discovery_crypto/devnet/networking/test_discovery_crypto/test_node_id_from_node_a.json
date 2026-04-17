@@ -1,0 +1,20 @@
+{
+    "tests/consensus/devnet/networking/test_discovery_crypto.py::test_node_id_from_node_a[fork_Devnet][fork_devnet-discovery_crypto]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "operation": "node_id",
+        "input": {
+            "publicKey": "0x0313d14211e0287b2361a1615890a9b5212080546d0a257ae4cff96cf534992cb9"
+        },
+        "output": {
+            "nodeId": "0xaaaa8419e9f49d0083561b48287df592939a8d19947d8c0ef88f2a4856a69fbb"
+        },
+        "_info": {
+            "hash": "0x9edf2468417038999db4491dc9277621ffbc0f39fac0188366a11244b3cb5124",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_discovery_crypto.py::test_node_id_from_node_a[fork_Devnet]",
+            "description": "Compute Node A's ID from its compressed public key.",
+            "fixtureFormat": "discovery_crypto"
+        }
+    }
+}

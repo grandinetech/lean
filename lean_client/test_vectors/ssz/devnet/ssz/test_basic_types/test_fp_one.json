@@ -1,0 +1,17 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_fp_one[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "Fp",
+        "value": "1",
+        "serialized": "0x01000000",
+        "root": "0x0100000000000000000000000000000000000000000000000000000000000000",
+        "_info": {
+            "hash": "0x8fac888206c2204401831fb98021a3fd4a2dee079bd60f8fb73efb45741acb17",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_fp_one[fork_Devnet]",
+            "description": "Field element one. The multiplicative identity.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

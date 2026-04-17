@@ -1,0 +1,21 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_uint32_list_single[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "SampleUint32List16",
+        "value": {
+            "data": [
+                42
+            ]
+        },
+        "serialized": "0x2a000000",
+        "root": "0xce8fe301de280c5a7364836cf298c285ea47eef6ec3b48f22c43fe29bba02ac3",
+        "_info": {
+            "hash": "0xcc70f864fad6550661dfa08846ec5b74720363cefe36d741ba95779a164889f9",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_uint32_list_single[fork_Devnet]",
+            "description": "Uint32 list with one element. Minimal non-empty list.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

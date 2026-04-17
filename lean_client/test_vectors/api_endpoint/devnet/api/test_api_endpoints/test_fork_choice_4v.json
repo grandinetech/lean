@@ -1,0 +1,42 @@
+{
+    "tests/consensus/devnet/api/test_api_endpoints.py::test_fork_choice_4v[fork_Devnet][fork_devnet-api_endpoint]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "endpoint": "/lean/v0/fork_choice",
+        "genesisParams": {
+            "numValidators": 4,
+            "genesisTime": 0
+        },
+        "expectedStatusCode": 200,
+        "expectedContentType": "application/json",
+        "expectedBody": {
+            "nodes": [
+                {
+                    "root": "0xd123d3d19ba32a08df9b3bf9e55e4447d1a3a3b4f905583d013b8f05c77d585e",
+                    "slot": 0,
+                    "parent_root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    "proposer_index": 0,
+                    "weight": 0
+                }
+            ],
+            "head": "0xd123d3d19ba32a08df9b3bf9e55e4447d1a3a3b4f905583d013b8f05c77d585e",
+            "justified": {
+                "slot": 0,
+                "root": "0xd123d3d19ba32a08df9b3bf9e55e4447d1a3a3b4f905583d013b8f05c77d585e"
+            },
+            "finalized": {
+                "slot": 0,
+                "root": "0xd123d3d19ba32a08df9b3bf9e55e4447d1a3a3b4f905583d013b8f05c77d585e"
+            },
+            "safe_target": "0xd123d3d19ba32a08df9b3bf9e55e4447d1a3a3b4f905583d013b8f05c77d585e",
+            "validator_count": 4
+        },
+        "_info": {
+            "hash": "0x9fef671ba5f90989e6a16abe45cbe760772d2e64ead892dac806f910bd841dc5",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/api/test_api_endpoints.py::test_fork_choice_4v[fork_Devnet]",
+            "description": "Fork choice tree at genesis: single node, zero attestation weights.",
+            "fixtureFormat": "api_endpoint"
+        }
+    }
+}

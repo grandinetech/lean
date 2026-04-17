@@ -1,0 +1,26 @@
+{
+    "tests/consensus/devnet/chain/test_slot_clock.py::test_current_slot_at_boundary[fork_Devnet][fork_devnet-slot_clock]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "operation": "current_slot",
+        "input": {
+            "genesisTime": 1700000000,
+            "currentTimeMs": 1700000004000
+        },
+        "output": {
+            "config": {
+                "secondsPerSlot": 4,
+                "intervalsPerSlot": 5,
+                "millisecondsPerInterval": 800
+            },
+            "slot": 1
+        },
+        "_info": {
+            "hash": "0xc06d200866ecf5b3a575773076cc6fe5ade40cdba0b95e43aa725c4b3415a3df",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/chain/test_slot_clock.py::test_current_slot_at_boundary[fork_Devnet]",
+            "description": "Exactly at slot 1 boundary (4 seconds): slot 1.",
+            "fixtureFormat": "slot_clock"
+        }
+    }
+}

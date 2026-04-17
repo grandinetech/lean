@@ -1,0 +1,54 @@
+{
+    "tests/consensus/devnet/networking/test_gossipsub_handlers.py::test_graft_idempotent[fork_Devnet][fork_devnet-gossipsub_handler]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "handlerName": "graft",
+        "params": {
+            "d": 4,
+            "dLow": 3,
+            "dHigh": 6,
+            "dLazy": 3
+        },
+        "initialState": {
+            "subscriptions": [
+                "test_topic"
+            ],
+            "meshes": {
+                "test_topic": [
+                    "peerAx"
+                ]
+            },
+            "peers": {
+                "peerAx": {
+                    "subscriptions": [
+                        "test_topic"
+                    ]
+                }
+            }
+        },
+        "event": {
+            "fromPeer": "peerAx",
+            "graft": [
+                {
+                    "topicId": "test_topic"
+                }
+            ]
+        },
+        "now": 1000.0,
+        "expected": {
+            "sentRpcs": [],
+            "meshAfter": {
+                "test_topic": [
+                    "peerAx"
+                ]
+            }
+        },
+        "_info": {
+            "hash": "0xc656220bb2b57a684f19de61a47e66e3be78a2fa248e93dc1020985ce49f5b4f",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossipsub_handlers.py::test_graft_idempotent[fork_Devnet]",
+            "description": "GRAFT for a peer already in mesh is harmless.",
+            "fixtureFormat": "gossipsub_handler"
+        }
+    }
+}

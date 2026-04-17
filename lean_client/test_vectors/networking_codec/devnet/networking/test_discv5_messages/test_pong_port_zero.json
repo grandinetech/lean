@@ -1,0 +1,24 @@
+{
+    "tests/consensus/devnet/networking/test_discv5_messages.py::test_pong_port_zero[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "discv5_message",
+        "input": {
+            "type": "pong",
+            "requestId": "0x01",
+            "enrSeq": 1,
+            "recipientIp": "0x7f000001",
+            "recipientPort": 0
+        },
+        "output": {
+            "encoded": "0x02c80101847f00000180"
+        },
+        "_info": {
+            "hash": "0xf585fee712b31bef1a01547aedfc86d9614a4863a5b032c0b570b890de90bbd3",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_discv5_messages.py::test_pong_port_zero[fork_Devnet]",
+            "description": "PONG with port=0. Zero port encodes as RLP empty bytes.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

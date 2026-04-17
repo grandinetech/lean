@@ -1,0 +1,28 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_bitvector8_mixed[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "SampleBitvector8",
+        "value": {
+            "data": [
+                true,
+                false,
+                true,
+                false,
+                true,
+                false,
+                true,
+                false
+            ]
+        },
+        "serialized": "0x55",
+        "root": "0x5500000000000000000000000000000000000000000000000000000000000000",
+        "_info": {
+            "hash": "0xf24187578d9d3ae899e52cc28b8088286e4a46be38d660b0c7d7d1aa703cd7d0",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_bitvector8_mixed[fork_Devnet]",
+            "description": "8-bit bitvector, alternating bits (0x55). Tests per-bit placement.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

@@ -1,0 +1,19 @@
+{
+    "tests/consensus/devnet/state_transition/test_justifiability.py::test_nonzero_finalized_delta_7[fork_Devnet][fork_devnet-justifiability]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "slot": 107,
+        "finalizedSlot": 100,
+        "output": {
+            "delta": 7,
+            "isJustifiable": false
+        },
+        "_info": {
+            "hash": "0x5ee94ece4d16f9e5b983c25a2ae3fc05b564f7537d506fa09c76989b91193300",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/state_transition/test_justifiability.py::test_nonzero_finalized_delta_7[fork_Devnet]",
+            "description": "Finalized at slot 100, candidate at 107. Delta 7: not justifiable.",
+            "fixtureFormat": "justifiability"
+        }
+    }
+}

@@ -1,0 +1,53 @@
+{
+    "tests/consensus/devnet/networking/test_gossipsub_handlers.py::test_prune_zero_backoff[fork_Devnet][fork_devnet-gossipsub_handler]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "handlerName": "prune",
+        "params": {
+            "d": 4,
+            "dLow": 3,
+            "dHigh": 6,
+            "dLazy": 3
+        },
+        "initialState": {
+            "subscriptions": [
+                "test_topic"
+            ],
+            "meshes": {
+                "test_topic": [
+                    "peerAx"
+                ]
+            },
+            "peers": {
+                "peerAx": {
+                    "subscriptions": [
+                        "test_topic"
+                    ]
+                }
+            }
+        },
+        "event": {
+            "fromPeer": "peerAx",
+            "prune": [
+                {
+                    "topicId": "test_topic",
+                    "backoff": 0
+                }
+            ]
+        },
+        "now": 1000.0,
+        "expected": {
+            "sentRpcs": [],
+            "meshAfter": {
+                "test_topic": []
+            }
+        },
+        "_info": {
+            "hash": "0xa3aa5d2da27832e0ac8228b8c407ff366329f138a366302685cd54d8a3bc4ffd",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossipsub_handlers.py::test_prune_zero_backoff[fork_Devnet]",
+            "description": "PRUNE with backoff=0 removes from mesh but does not set backoff timer.",
+            "fixtureFormat": "gossipsub_handler"
+        }
+    }
+}

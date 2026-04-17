@@ -1,0 +1,33 @@
+{
+    "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_ihave_multiple_ids[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "gossipsub_rpc",
+        "input": {
+            "subscriptions": [],
+            "publish": [],
+            "control": {
+                "ihave": [
+                    {
+                        "topicId": "/leanconsensus/0x12345678/block/ssz_snappy",
+                        "messageIds": [
+                            "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                            "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                            "0xcccccccccccccccccccccccccccccccccccccccc"
+                        ]
+                    }
+                ]
+            }
+        },
+        "output": {
+            "encoded": "0x1a700a6e0a2a2f6c65616e636f6e73656e7375732f307831323334353637382f626c6f636b2f73737a5f736e617070791214aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1214bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb1214cccccccccccccccccccccccccccccccccccccccc"
+        },
+        "_info": {
+            "hash": "0x178d92b54122e113a1b00f0a4125f529ca3e9949139819001a57c6b1c3dbb3e9",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_ihave_multiple_ids[fork_Devnet]",
+            "description": "IHAVE advertising three cached message IDs.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

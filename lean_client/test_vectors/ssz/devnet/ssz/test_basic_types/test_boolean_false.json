@@ -1,0 +1,17 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_boolean_false[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "Boolean",
+        "value": false,
+        "serialized": "0x00",
+        "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "_info": {
+            "hash": "0x488a47e09f7f41e709b344e2f6812590269de5c8679adbd945313e44de9e74f5",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_boolean_false[fork_Devnet]",
+            "description": "Boolean false encodes as 0x00.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

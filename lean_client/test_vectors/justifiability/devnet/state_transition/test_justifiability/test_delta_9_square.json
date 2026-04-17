@@ -1,0 +1,19 @@
+{
+    "tests/consensus/devnet/state_transition/test_justifiability.py::test_delta_9_square[fork_Devnet][fork_devnet-justifiability]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "slot": 9,
+        "finalizedSlot": 0,
+        "output": {
+            "delta": 9,
+            "isJustifiable": true
+        },
+        "_info": {
+            "hash": "0xa0791ef1cea867572a0e50383b4e411563d6865ca5c77d5818d777771b6e4104",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/state_transition/test_justifiability.py::test_delta_9_square[fork_Devnet]",
+            "description": "Delta 9: perfect square (3^2).",
+            "fixtureFormat": "justifiability"
+        }
+    }
+}

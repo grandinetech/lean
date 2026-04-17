@@ -1,0 +1,21 @@
+{
+    "tests/consensus/devnet/networking/test_discovery_crypto.py::test_ecdh_node_a_to_b[fork_Devnet][fork_devnet-discovery_crypto]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "operation": "ecdh",
+        "input": {
+            "privateKey": "0xeef77acb6c6a6eebc5b363a475ac583ec7eccdb42b6481424c60f59aa326547f",
+            "publicKey": "0x0317931e6e0840220642f230037d285d122bc59063221ef3226b1f403ddc69ca91"
+        },
+        "output": {
+            "sharedSecret": "0x03022df677b53f62850b7d838ac3f3d705a5ae9827342080acc9dec6640fb6d752"
+        },
+        "_info": {
+            "hash": "0x82f4ef4f96b05f6ec5547782df605ea9125c2096b2d18289ec1256f1362504c0",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_discovery_crypto.py::test_ecdh_node_a_to_b[fork_Devnet]",
+            "description": "ECDH(A_priv, B_pub) produces deterministic shared secret.",
+            "fixtureFormat": "discovery_crypto"
+        }
+    }
+}

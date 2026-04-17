@@ -1,0 +1,20 @@
+{
+    "tests/consensus/devnet/networking/test_reqresp_codec.py::test_request_varint_two_byte_min[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "reqresp_request",
+        "input": {
+            "sszData": "0xcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd"
+        },
+        "output": {
+            "encoded": "0x8001ff060000734e61507059000e00004fcbdab1800100cdfe0100fa0300"
+        },
+        "_info": {
+            "hash": "0x6675d8195bade7590b993a4cb3266226caf7416a1a6d17aa42b5529d92ba0c6d",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_reqresp_codec.py::test_request_varint_two_byte_min[fork_Devnet]",
+            "description": "Request with 128-byte payload. Smallest two-byte varint prefix.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

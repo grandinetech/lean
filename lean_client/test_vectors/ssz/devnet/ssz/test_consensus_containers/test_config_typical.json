@@ -7,8 +7,9 @@
             "genesisTime": 1609459200
         },
         "serialized": "0x0066ee5f00000000",
+        "root": "0x0066ee5f00000000000000000000000000000000000000000000000000000000",
         "_info": {
-            "hash": "0x1d787b975fb029fa76e1a9af651597fe6b9f408154afb7eda24575fdc9e77cb3",
+            "hash": "0x51bc193a12cff42aba86b0849b28ae343071d8839082b36f34165307935d1977",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/ssz/test_consensus_containers.py::test_config_typical[fork_Devnet]",
             "description": "SSZ roundtrip for Config with typical genesis time.",

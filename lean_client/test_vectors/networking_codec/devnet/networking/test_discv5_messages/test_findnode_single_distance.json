@@ -1,0 +1,24 @@
+{
+    "tests/consensus/devnet/networking/test_discv5_messages.py::test_findnode_single_distance[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "discv5_message",
+        "input": {
+            "type": "findnode",
+            "requestId": "0x01",
+            "distances": [
+                256
+            ]
+        },
+        "output": {
+            "encoded": "0x03c501c3820100"
+        },
+        "_info": {
+            "hash": "0xa917a1525c3dd24ed2e20f5ad4fd664764b6aad12f536fc90aa5340b7ccf3eb0",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_discv5_messages.py::test_findnode_single_distance[fork_Devnet]",
+            "description": "FINDNODE requesting distance 256 (2-byte big-endian in nested RLP list).",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

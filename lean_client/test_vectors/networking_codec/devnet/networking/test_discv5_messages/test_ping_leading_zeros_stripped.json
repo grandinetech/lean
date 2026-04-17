@@ -1,0 +1,22 @@
+{
+    "tests/consensus/devnet/networking/test_discv5_messages.py::test_ping_leading_zeros_stripped[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "discv5_message",
+        "input": {
+            "type": "ping",
+            "requestId": "0x00000001",
+            "enrSeq": 1
+        },
+        "output": {
+            "encoded": "0x01c20101"
+        },
+        "_info": {
+            "hash": "0xff538bfc1ae8c896a18c6bdcaf5ed5e5b06f86c2e61fd86498076656991fdbdc",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_discv5_messages.py::test_ping_leading_zeros_stripped[fork_Devnet]",
+            "description": "PING with 4-byte request_id containing leading zeros. Stripped to minimal encoding.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

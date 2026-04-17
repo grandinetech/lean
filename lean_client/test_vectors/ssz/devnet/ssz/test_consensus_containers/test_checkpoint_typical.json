@@ -8,8 +8,9 @@
             "slot": 12345
         },
         "serialized": "0xabababababababababababababababababababababababababababababababab3930000000000000",
+        "root": "0x557716e5408e1d20aea4bdd080f5673b2ed9931a6dd950f81aab9d5688eee15e",
         "_info": {
-            "hash": "0x21e2959cd95aa99bf4eda0d33cfc90baa6d06c32d29146735c130ccf6225cef9",
+            "hash": "0x6aba58ebb522467652141c6bebcecec0f58b982cd11c50954eee94558839bf84",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/ssz/test_consensus_containers.py::test_checkpoint_typical[fork_Devnet]",
             "description": "SSZ roundtrip for Checkpoint with typical values.",

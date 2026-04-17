@@ -1,0 +1,42 @@
+{
+    "tests/consensus/devnet/api/test_api_endpoints.py::test_fork_choice_8v[fork_Devnet][fork_devnet-api_endpoint]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "endpoint": "/lean/v0/fork_choice",
+        "genesisParams": {
+            "numValidators": 8,
+            "genesisTime": 0
+        },
+        "expectedStatusCode": 200,
+        "expectedContentType": "application/json",
+        "expectedBody": {
+            "nodes": [
+                {
+                    "root": "0xd567e95979f6ce2186cbada494967c77142153c6e5ab38f2bd7a23ee6b92170b",
+                    "slot": 0,
+                    "parent_root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    "proposer_index": 0,
+                    "weight": 0
+                }
+            ],
+            "head": "0xd567e95979f6ce2186cbada494967c77142153c6e5ab38f2bd7a23ee6b92170b",
+            "justified": {
+                "slot": 0,
+                "root": "0xd567e95979f6ce2186cbada494967c77142153c6e5ab38f2bd7a23ee6b92170b"
+            },
+            "finalized": {
+                "slot": 0,
+                "root": "0xd567e95979f6ce2186cbada494967c77142153c6e5ab38f2bd7a23ee6b92170b"
+            },
+            "safe_target": "0xd567e95979f6ce2186cbada494967c77142153c6e5ab38f2bd7a23ee6b92170b",
+            "validator_count": 8
+        },
+        "_info": {
+            "hash": "0x0b66df5b4fb0c872fa9f0f3f69f241c7214349e3d28d708da46a264eaf12c63a",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/api/test_api_endpoints.py::test_fork_choice_8v[fork_Devnet]",
+            "description": "Fork choice tree at genesis with 8 validators. Same shape, higher count.",
+            "fixtureFormat": "api_endpoint"
+        }
+    }
+}

@@ -1,0 +1,17 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_bytes4_zero[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "Bytes4",
+        "value": "0x00000000",
+        "serialized": "0x00000000",
+        "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "_info": {
+            "hash": "0xb1aec2304f782c156c7edaa90f8187d0fc5064627cc04b70192a4e2b775ba0fc",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_bytes4_zero[fork_Devnet]",
+            "description": "Bytes4 all zeros. Minimal content, still pads to 32-byte chunk.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

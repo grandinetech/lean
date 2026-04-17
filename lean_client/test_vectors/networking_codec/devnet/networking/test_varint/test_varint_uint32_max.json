@@ -1,0 +1,21 @@
+{
+    "tests/consensus/devnet/networking/test_varint.py::test_varint_uint32_max[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "varint",
+        "input": {
+            "value": 4294967295
+        },
+        "output": {
+            "encoded": "0xffffffff0f",
+            "byteLength": 5
+        },
+        "_info": {
+            "hash": "0x28ed590dbe455b46e8e1ffb08939f75afd07394b1c99600c98ac62cd0f944ea4",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_varint.py::test_varint_uint32_max[fork_Devnet]",
+            "description": "Varint 2^32 - 1. Maximum 32-bit unsigned integer.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

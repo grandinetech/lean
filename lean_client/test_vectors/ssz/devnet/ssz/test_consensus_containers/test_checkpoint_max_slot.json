@@ -1,0 +1,20 @@
+{
+    "tests/consensus/devnet/ssz/test_consensus_containers.py::test_checkpoint_max_slot[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "Checkpoint",
+        "value": {
+            "root": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+            "slot": 18446744073709551615
+        },
+        "serialized": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "root": "0xf0b46c4ab8cd5720de9457addeff0a7267e475c09fd5abb6661e32faf9dd30cd",
+        "_info": {
+            "hash": "0xd005e3b53218b00d9fd0782f6916b96f2bc0b03e6d520c98109cd24a9ac0025b",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_consensus_containers.py::test_checkpoint_max_slot[fork_Devnet]",
+            "description": "SSZ roundtrip for Checkpoint at the maximum 64-bit slot and all-0xff root.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

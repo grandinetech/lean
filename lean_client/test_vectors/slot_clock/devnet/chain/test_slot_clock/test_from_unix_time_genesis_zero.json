@@ -1,0 +1,26 @@
+{
+    "tests/consensus/devnet/chain/test_slot_clock.py::test_from_unix_time_genesis_zero[fork_Devnet][fork_devnet-slot_clock]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "operation": "from_unix_time",
+        "input": {
+            "unixSeconds": 100,
+            "genesisTime": 0
+        },
+        "output": {
+            "config": {
+                "secondsPerSlot": 4,
+                "intervalsPerSlot": 5,
+                "millisecondsPerInterval": 800
+            },
+            "interval": 125
+        },
+        "_info": {
+            "hash": "0x549b60227758f1ede66fd9e973aa528ba2b82c965d994c7ea0e2cfdccc43b63d",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/chain/test_slot_clock.py::test_from_unix_time_genesis_zero[fork_Devnet]",
+            "description": "Genesis at Unix epoch 0. 100 seconds elapsed = 125 intervals.",
+            "fixtureFormat": "slot_clock"
+        }
+    }
+}

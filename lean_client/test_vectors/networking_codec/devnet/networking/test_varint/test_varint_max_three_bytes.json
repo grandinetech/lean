@@ -1,0 +1,21 @@
+{
+    "tests/consensus/devnet/networking/test_varint.py::test_varint_max_three_bytes[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "varint",
+        "input": {
+            "value": 2097151
+        },
+        "output": {
+            "encoded": "0xffff7f",
+            "byteLength": 3
+        },
+        "_info": {
+            "hash": "0x8a94dc1e3c8d5502e543a51a24ea6cbe98cd2fb938e911708e03e2c630af2868",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_varint.py::test_varint_max_three_bytes[fork_Devnet]",
+            "description": "Varint 2097151 is the largest value fitting in three bytes.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

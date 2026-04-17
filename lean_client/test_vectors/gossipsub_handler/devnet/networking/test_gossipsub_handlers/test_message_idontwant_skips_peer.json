@@ -1,0 +1,82 @@
+{
+    "tests/consensus/devnet/networking/test_gossipsub_handlers.py::test_message_idontwant_skips_peer[fork_Devnet][fork_devnet-gossipsub_handler]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "handlerName": "message",
+        "params": {
+            "d": 4,
+            "dLow": 3,
+            "dHigh": 6,
+            "dLazy": 3
+        },
+        "initialState": {
+            "subscriptions": [
+                "test_topic"
+            ],
+            "meshes": {
+                "test_topic": [
+                    "senderX",
+                    "peerAx",
+                    "peerBx"
+                ]
+            },
+            "peers": {
+                "senderX": {
+                    "subscriptions": [
+                        "test_topic"
+                    ]
+                },
+                "peerAx": {
+                    "subscriptions": [
+                        "test_topic"
+                    ],
+                    "dontWantIds": [
+                        "0x8dc6bba09a9550cdccb1b1b432bb04919901ce1e"
+                    ]
+                },
+                "peerBx": {
+                    "subscriptions": [
+                        "test_topic"
+                    ]
+                }
+            }
+        },
+        "event": {
+            "fromPeer": "senderX",
+            "publish": [
+                {
+                    "topic": "test_topic",
+                    "data": "0xdeadbeef"
+                }
+            ]
+        },
+        "now": 1000.0,
+        "expected": {
+            "sentRpcs": [
+                {
+                    "toPeer": "peerBx",
+                    "publish": [
+                        {
+                            "topic": "test_topic",
+                            "data": "0xdeadbeef"
+                        }
+                    ]
+                }
+            ],
+            "meshAfter": {
+                "test_topic": [
+                    "peerAx",
+                    "peerBx",
+                    "senderX"
+                ]
+            }
+        },
+        "_info": {
+            "hash": "0x7c2c6f929567726da1aa66d97d1d8ecd03bd30b4e48978d3311802fb37e009bf",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossipsub_handlers.py::test_message_idontwant_skips_peer[fork_Devnet]",
+            "description": "Peer that sent IDONTWANT for this message ID is skipped during forwarding.",
+            "fixtureFormat": "gossipsub_handler"
+        }
+    }
+}

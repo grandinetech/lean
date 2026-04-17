@@ -1,0 +1,39 @@
+{
+    "tests/consensus/devnet/ssz/test_xmss_containers.py::test_public_key_typical[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "PublicKey",
+        "value": {
+            "root": {
+                "data": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7,
+                    8
+                ]
+            },
+            "parameter": {
+                "data": [
+                    100,
+                    101,
+                    102,
+                    103,
+                    104
+                ]
+            }
+        },
+        "serialized": "0x01000000020000000300000004000000050000000600000007000000080000006400000065000000660000006700000068000000",
+        "root": "0xe1e83dcf5e5ebdeead166235322c7f1e104bf77268b95d3b610e746a2309c8a9",
+        "_info": {
+            "hash": "0x7fbeab9294a1e1b76e0b5acf4e6da6bc7b8474dbc5b5fc7a9d4847bb7231daac",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_xmss_containers.py::test_public_key_typical[fork_Devnet]",
+            "description": "SSZ roundtrip for PublicKey with ascending non-zero field elements.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

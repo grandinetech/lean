@@ -1,0 +1,22 @@
+{
+    "tests/consensus/devnet/networking/test_snappy_codec.py::test_snappy_block_single_byte[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "snappy_block",
+        "input": {
+            "data": "0x42"
+        },
+        "output": {
+            "compressed": "0x010042",
+            "compressedLength": 3,
+            "uncompressedLength": 1
+        },
+        "_info": {
+            "hash": "0xdc52d34d9fcd8c3d57a072fa70057b6394c9e5abec2a2fdfabc6b4b83a132ddc",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_snappy_codec.py::test_snappy_block_single_byte[fork_Devnet]",
+            "description": "Single byte. Too short for copy commands, must use a literal.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

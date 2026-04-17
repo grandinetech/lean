@@ -9,8 +9,9 @@
             }
         },
         "serialized": "0x04000000",
+        "root": "0xdba9671bac9513c9482f1416a53aabd2c6ce90d5a5f865ce5a55c775325c9136",
         "_info": {
-            "hash": "0xd46d65c70daf5fe85e615d9045185019b823a7ecdd1888ac8248b42403e723ee",
+            "hash": "0x4865be0110413a544cebf736eb40f625d69c649785ed9887358066f18ae65611",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/ssz/test_consensus_containers.py::test_block_body_empty[fork_Devnet]",
             "description": "SSZ roundtrip for BlockBody with no attestations.",

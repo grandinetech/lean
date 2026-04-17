@@ -1,0 +1,17 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_uint32_zero[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "Uint32",
+        "value": "0",
+        "serialized": "0x00000000",
+        "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "_info": {
+            "hash": "0xc6b77f211a5fde9342f3ee9c058e64037d5037cc07f8c46470cb966394d8f13e",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_uint32_zero[fork_Devnet]",
+            "description": "Uint32 lower bound (0).",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

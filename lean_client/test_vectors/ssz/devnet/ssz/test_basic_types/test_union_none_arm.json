@@ -1,0 +1,20 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_union_none_arm[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "SampleUnionNone",
+        "value": {
+            "selector": 0,
+            "value": null
+        },
+        "serialized": "0x00",
+        "root": "0xf5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b",
+        "_info": {
+            "hash": "0xcfdc0c9d55d52c96702e3e2cd3119a7088dc51d4e46d3caa09ceb3970449d9bc",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_union_none_arm[fork_Devnet]",
+            "description": "Union selecting the None arm (selector 0). Encodes as a single zero byte.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

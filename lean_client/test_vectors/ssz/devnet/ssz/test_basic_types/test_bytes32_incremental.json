@@ -1,0 +1,17 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_bytes32_incremental[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "Bytes32",
+        "value": "0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+        "serialized": "0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+        "root": "0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+        "_info": {
+            "hash": "0x8a5ec9195e0f3e97744669de037995fe734a520b4f7e007ae6d480d6fc97cc46",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_bytes32_incremental[fork_Devnet]",
+            "description": "Bytes32 with every byte distinct (0x00..0x1F). Catches byte-swap errors.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

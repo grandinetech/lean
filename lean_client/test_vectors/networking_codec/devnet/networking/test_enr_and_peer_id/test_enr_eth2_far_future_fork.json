@@ -1,0 +1,32 @@
+{
+    "tests/consensus/devnet/networking/test_enr_and_peer_id.py::test_enr_eth2_far_future_fork[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "enr",
+        "input": {
+            "enrString": "enr:-Iu4QH9jczrZFmQYFzYOnzvoHr0x_oqo6uiVwYyfW4JqmzieRFUycscJpHoQoAudebpIM0ty96ktM0ZdV0Cb_Xc_oD4BhGV0aDKQEjRWeAAAAAD__________4JpZIJ2NIlzZWNwMjU2azGhA8pjTK4NSay0Adikxrb-jFW3DRFb9AB2nMFADzJYzTE4"
+        },
+        "output": {
+            "rlp": "0xf88bb8407f63733ad916641817360e9f3be81ebd31fe8aa8eae895c18c9f5b826a9b389e44553272c709a47a10a00b9d79ba48334b72f7a92d33465d57409bfd773fa03e018465746832901234567800000000ffffffffffffffff82696482763489736563703235366b31a103ca634cae0d49acb401d8a4c6b6fe8c55b70d115bf400769cc1400f3258cd3138",
+            "seq": 1,
+            "identityScheme": "v4",
+            "nodeId": "0xa448f24c6d18e575453db13171562b71999873db5b286df957af199ec94617f7",
+            "publicKey": "0x03ca634cae0d49acb401d8a4c6b6fe8c55b70d115bf400769cc1400f3258cd3138",
+            "eth2Data": {
+                "forkDigest": "0x12345678",
+                "nextForkVersion": "0x00000000",
+                "nextForkEpoch": 18446744073709551615
+            },
+            "isAggregator": false,
+            "signatureValid": true,
+            "isValid": true
+        },
+        "_info": {
+            "hash": "0x99cf891f78068a712c98cb8c8b3fbc41743e4f08fd95c1cd02040e343b23791a",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_enr_and_peer_id.py::test_enr_eth2_far_future_fork[fork_Devnet]",
+            "description": "ENR with eth2 where next_fork_epoch is max uint64 (far future). Verifies large epoch.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

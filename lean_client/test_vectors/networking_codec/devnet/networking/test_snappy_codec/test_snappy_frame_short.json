@@ -1,0 +1,22 @@
+{
+    "tests/consensus/devnet/networking/test_snappy_codec.py::test_snappy_frame_short[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "snappy_frame",
+        "input": {
+            "data": "0x457468657265756d20536e6170707921"
+        },
+        "output": {
+            "framed": "0xff060000734e6150705901140000dc1ecf5c457468657265756d20536e6170707921",
+            "framedLength": 34,
+            "uncompressedLength": 16
+        },
+        "_info": {
+            "hash": "0x92883ecfb8f6d598ab01c6c38b1c8bbfe6eb689a7eea328fdd198f9a78e088b3",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_snappy_codec.py::test_snappy_frame_short[fork_Devnet]",
+            "description": "Short payload (16 bytes). Fits in a single compressed chunk.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

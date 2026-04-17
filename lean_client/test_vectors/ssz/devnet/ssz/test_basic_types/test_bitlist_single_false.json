@@ -1,0 +1,21 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_bitlist_single_false[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "SampleBitlist16",
+        "value": {
+            "data": [
+                false
+            ]
+        },
+        "serialized": "0x02",
+        "root": "0xcb592844121d926f1ca3ad4e1d6fb9d8e260ed6e3216361f7732e975a0e8bbf6",
+        "_info": {
+            "hash": "0x44a034edba696dc97c998afff466884e17254b98b676ed6cc89c75f934af72cf",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_bitlist_single_false[fork_Devnet]",
+            "description": "Bitlist with one clear bit. The sentinel is the only set bit in the byte.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

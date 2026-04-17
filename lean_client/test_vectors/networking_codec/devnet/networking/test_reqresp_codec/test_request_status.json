@@ -1,0 +1,20 @@
+{
+    "tests/consensus/devnet/networking/test_reqresp_codec.py::test_request_status[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "reqresp_request",
+        "input": {
+            "sszData": "0x0101010101010101010101010101010101010101010101010101010101010101640000000000000002020202020202020202020202020202020202020202020202020202020202020296000000000000"
+        },
+        "output": {
+            "encoded": "0x50ff060000734e61507059001c00003eb9d26b5000017a0100046400090100027e01001896000000000000"
+        },
+        "_info": {
+            "hash": "0x6183cd7a957078c43d094222b121f480801a94f7f802498b1d1448d15a3428c0",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_reqresp_codec.py::test_request_status[fork_Devnet]",
+            "description": "Status request through the full wire pipeline. Protocol: /leanconsensus/req/status/1.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

@@ -1,0 +1,24 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_sync_committee_subnets_partial[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "SyncCommitteeSubnets",
+        "value": {
+            "data": [
+                true,
+                false,
+                false,
+                true
+            ]
+        },
+        "serialized": "0x09",
+        "root": "0x0900000000000000000000000000000000000000000000000000000000000000",
+        "_info": {
+            "hash": "0x9b31833c116313502948b252f850c616b96bd06bd0bfa7a5e79305de789c874c",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_sync_committee_subnets_partial[fork_Devnet]",
+            "description": "Sync committee subnets with 2 of 4 selected (boundary IDs 0 and 3).",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

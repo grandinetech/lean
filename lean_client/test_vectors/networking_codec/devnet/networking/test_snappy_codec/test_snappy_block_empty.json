@@ -1,0 +1,22 @@
+{
+    "tests/consensus/devnet/networking/test_snappy_codec.py::test_snappy_block_empty[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "snappy_block",
+        "input": {
+            "data": "0x"
+        },
+        "output": {
+            "compressed": "0x00",
+            "compressedLength": 1,
+            "uncompressedLength": 0
+        },
+        "_info": {
+            "hash": "0xe3f353d6d7e3d08f042e0974aac3106a8ca3fa7ca328b1b56bb6bb1aa21d266f",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_snappy_codec.py::test_snappy_block_empty[fork_Devnet]",
+            "description": "Empty input. Compressed output is just the varint-encoded uncompressed length (0).",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

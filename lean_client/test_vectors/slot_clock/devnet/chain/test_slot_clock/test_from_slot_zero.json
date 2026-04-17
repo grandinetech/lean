@@ -1,0 +1,25 @@
+{
+    "tests/consensus/devnet/chain/test_slot_clock.py::test_from_slot_zero[fork_Devnet][fork_devnet-slot_clock]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "operation": "from_slot",
+        "input": {
+            "slot": 0
+        },
+        "output": {
+            "config": {
+                "secondsPerSlot": 4,
+                "intervalsPerSlot": 5,
+                "millisecondsPerInterval": 800
+            },
+            "interval": 0
+        },
+        "_info": {
+            "hash": "0xb748d4c32eee36318acbc8f655374172ed4bd38d235d704e83616baff7f9af94",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/chain/test_slot_clock.py::test_from_slot_zero[fork_Devnet]",
+            "description": "Slot 0 starts at interval 0.",
+            "fixtureFormat": "slot_clock"
+        }
+    }
+}

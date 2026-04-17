@@ -1,0 +1,35 @@
+{
+    "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_prune_with_peer_exchange[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "gossipsub_rpc",
+        "input": {
+            "subscriptions": [],
+            "publish": [],
+            "control": {
+                "prune": [
+                    {
+                        "topicId": "/leanconsensus/0x12345678/block/ssz_snappy",
+                        "backoff": 120,
+                        "peers": [
+                            {
+                                "peerId": "0xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                                "signedPeerRecord": "0xcafebabe"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        "output": {
+            "encoded": "0x1a5a22580a2a2f6c65616e636f6e73656e7375732f307831323334353637382f626c6f636b2f73737a5f736e6170707912280a20dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd1204cafebabe1878"
+        },
+        "_info": {
+            "hash": "0xb948dc37a434a01087732bed3cc7a8970bf0b1737d6a44f77f3a5240cfa812c8",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_prune_with_peer_exchange[fork_Devnet]",
+            "description": "PRUNE with peer exchange information and backoff.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

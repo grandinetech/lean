@@ -1,0 +1,69 @@
+{
+    "tests/consensus/devnet/networking/test_gossipsub_handlers.py::test_ihave_mixed[fork_Devnet][fork_devnet-gossipsub_handler]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "handlerName": "ihave",
+        "params": {
+            "d": 4,
+            "dLow": 3,
+            "dHigh": 6,
+            "dLazy": 3
+        },
+        "initialState": {
+            "subscriptions": [
+                "test_topic"
+            ],
+            "meshes": {},
+            "peers": {
+                "peerAx": {
+                    "subscriptions": [
+                        "test_topic"
+                    ]
+                }
+            },
+            "seenMessageIds": [
+                "0x8dc6bba09a9550cdccb1b1b432bb04919901ce1e"
+            ],
+            "cachedMessages": []
+        },
+        "event": {
+            "fromPeer": "peerAx",
+            "ihave": [
+                {
+                    "topicId": "test_topic",
+                    "messageIds": [
+                        "0x8dc6bba09a9550cdccb1b1b432bb04919901ce1e",
+                        "0xb51451075fcc3e8f0baa9041d8256c647ceaeaac"
+                    ]
+                }
+            ]
+        },
+        "now": 1000.0,
+        "expected": {
+            "sentRpcs": [
+                {
+                    "toPeer": "peerAx",
+                    "control": {
+                        "iwant": [
+                            {
+                                "messageIds": [
+                                    "0xb51451075fcc3e8f0baa9041d8256c647ceaeaac"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ],
+            "meshAfter": {
+                "test_topic": []
+            }
+        },
+        "_info": {
+            "hash": "0x6b5c331ad4959597b224cee07831515545d009c4e423ffda1a5702745aa6064f",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossipsub_handlers.py::test_ihave_mixed[fork_Devnet]",
+            "description": "IHAVE with seen and unseen IDs. IWANT only for the unseen one.",
+            "fixtureFormat": "gossipsub_handler"
+        }
+    }
+}

@@ -1,0 +1,20 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_union_types_uint8_arm[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "SampleUnionTypes",
+        "value": {
+            "selector": 0,
+            "value": 255
+        },
+        "serialized": "0x00ff",
+        "root": "0x483d5e8c70ecbbd7d76b343298d1958cec121b6d1fc24d72801442317b82cfc0",
+        "_info": {
+            "hash": "0x647dc644ea20428ca4f4c8c3048fbb5bd7bbc750d46c4b9f68b7d3f8c064ac8d",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_union_types_uint8_arm[fork_Devnet]",
+            "description": "Union selecting the Uint8 arm (selector 0) with maximum value.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

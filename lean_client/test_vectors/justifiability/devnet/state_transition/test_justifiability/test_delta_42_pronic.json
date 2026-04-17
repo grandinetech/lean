@@ -1,0 +1,19 @@
+{
+    "tests/consensus/devnet/state_transition/test_justifiability.py::test_delta_42_pronic[fork_Devnet][fork_devnet-justifiability]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "slot": 42,
+        "finalizedSlot": 0,
+        "output": {
+            "delta": 42,
+            "isJustifiable": true
+        },
+        "_info": {
+            "hash": "0x44c722f0f05e4e6998ee256c45ca8de6847f9b1f675039feb5afda69a7659c2b",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/state_transition/test_justifiability.py::test_delta_42_pronic[fork_Devnet]",
+            "description": "Delta 42: pronic number (6*7).",
+            "fixtureFormat": "justifiability"
+        }
+    }
+}

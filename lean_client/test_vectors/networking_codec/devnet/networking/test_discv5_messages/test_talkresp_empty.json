@@ -1,0 +1,22 @@
+{
+    "tests/consensus/devnet/networking/test_discv5_messages.py::test_talkresp_empty[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "discv5_message",
+        "input": {
+            "type": "talkresp",
+            "requestId": "0x01",
+            "response": "0x"
+        },
+        "output": {
+            "encoded": "0x06c20180"
+        },
+        "_info": {
+            "hash": "0x115967764c317880e2a294b17c1171c76a8bcd11581a68e7f6f09c0959faad22",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_discv5_messages.py::test_talkresp_empty[fork_Devnet]",
+            "description": "TALKRESP with empty response.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

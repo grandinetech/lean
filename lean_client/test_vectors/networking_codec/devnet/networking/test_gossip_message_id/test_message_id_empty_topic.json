@@ -1,0 +1,22 @@
+{
+    "tests/consensus/devnet/networking/test_gossip_message_id.py::test_message_id_empty_topic[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "gossip_message_id",
+        "input": {
+            "topic": "0x",
+            "data": "0xdeadbeef",
+            "domain": "0x01000000"
+        },
+        "output": {
+            "messageId": "0x285f038cae99a63f9861ed5868790bf251ee0904"
+        },
+        "_info": {
+            "hash": "0x1e02f2027cc6ca3327b4f523619b11e40bfc4339b52de584a5606c231db0e395",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossip_message_id.py::test_message_id_empty_topic[fork_Devnet]",
+            "description": "Message ID with empty topic string.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

@@ -1,0 +1,19 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_bitlist_empty[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "SampleBitlist16",
+        "value": {
+            "data": []
+        },
+        "serialized": "0x01",
+        "root": "0xf5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b",
+        "_info": {
+            "hash": "0xd0d304f1d19528213b4c7e59afc898d6efc30d5a43f7f3aabaf087a02e21923e",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_bitlist_empty[fork_Devnet]",
+            "description": "Empty bitlist. Sentinel-only encoding (0x01).",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

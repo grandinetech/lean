@@ -1,0 +1,21 @@
+{
+    "tests/consensus/devnet/networking/test_varint.py::test_varint_300[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "varint",
+        "input": {
+            "value": 300
+        },
+        "output": {
+            "encoded": "0xac02",
+            "byteLength": 2
+        },
+        "_info": {
+            "hash": "0xb8a537a979dd49ad2de262623fe1065aaffb3eaa368fcd8f31e9d54bf7ddf0fc",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_varint.py::test_varint_300[fork_Devnet]",
+            "description": "Varint 300. The example from the module docstring.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

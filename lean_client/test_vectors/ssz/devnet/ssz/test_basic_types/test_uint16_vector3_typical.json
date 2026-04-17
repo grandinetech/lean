@@ -1,0 +1,23 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_uint16_vector3_typical[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "SampleUint16Vector3",
+        "value": {
+            "data": [
+                100,
+                200,
+                65535
+            ]
+        },
+        "serialized": "0x6400c800ffff",
+        "root": "0x6400c800ffff0000000000000000000000000000000000000000000000000000",
+        "_info": {
+            "hash": "0xf65fb1b8c1a3add06ea0857f463fff447ef1d5a2c919ab1eeee9c169a968f0ec",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_uint16_vector3_typical[fork_Devnet]",
+            "description": "3-element Uint16 vector with mixed values, including the maximum (65535).",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

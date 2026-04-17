@@ -1,0 +1,22 @@
+{
+    "tests/consensus/devnet/networking/test_gossip_topic.py::test_attestation_subnet_63[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "gossip_topic",
+        "input": {
+            "kind": "attestation",
+            "forkDigest": "12345678",
+            "subnetId": 63
+        },
+        "output": {
+            "topicString": "/leanconsensus/12345678/attestation_63/ssz_snappy"
+        },
+        "_info": {
+            "hash": "0x0b28173a1c4c11807dfb2dd798030cb8f71f9437892df152cc112c206718bf54",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossip_topic.py::test_attestation_subnet_63[fork_Devnet]",
+            "description": "Attestation subnet 63. Last subnet in a 64-subnet network.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

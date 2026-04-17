@@ -1,0 +1,68 @@
+{
+    "tests/consensus/devnet/networking/test_gossipsub_handlers.py::test_iwant_cached_responds[fork_Devnet][fork_devnet-gossipsub_handler]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "handlerName": "iwant",
+        "params": {
+            "d": 4,
+            "dLow": 3,
+            "dHigh": 6,
+            "dLazy": 3
+        },
+        "initialState": {
+            "subscriptions": [
+                "test_topic"
+            ],
+            "meshes": {},
+            "peers": {
+                "peerAx": {
+                    "subscriptions": [
+                        "test_topic"
+                    ]
+                }
+            },
+            "seenMessageIds": [],
+            "cachedMessages": [
+                {
+                    "topic": "test_topic",
+                    "data": "0xdeadbeef",
+                    "messageId": "0x8dc6bba09a9550cdccb1b1b432bb04919901ce1e"
+                }
+            ]
+        },
+        "event": {
+            "fromPeer": "peerAx",
+            "iwant": [
+                {
+                    "messageIds": [
+                        "0x8dc6bba09a9550cdccb1b1b432bb04919901ce1e"
+                    ]
+                }
+            ]
+        },
+        "now": 1000.0,
+        "expected": {
+            "sentRpcs": [
+                {
+                    "toPeer": "peerAx",
+                    "publish": [
+                        {
+                            "topic": "test_topic",
+                            "data": "0xdeadbeef"
+                        }
+                    ]
+                }
+            ],
+            "meshAfter": {
+                "test_topic": []
+            }
+        },
+        "_info": {
+            "hash": "0x91d47bc9a2a25163eac49a20a609f89e25b3b652372819cec0c55ca6d43c79e1",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossipsub_handlers.py::test_iwant_cached_responds[fork_Devnet]",
+            "description": "IWANT for a cached message responds with the full message.",
+            "fixtureFormat": "gossipsub_handler"
+        }
+    }
+}

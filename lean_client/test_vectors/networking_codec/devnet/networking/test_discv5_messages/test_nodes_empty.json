@@ -1,0 +1,23 @@
+{
+    "tests/consensus/devnet/networking/test_discv5_messages.py::test_nodes_empty[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "discv5_message",
+        "input": {
+            "type": "nodes",
+            "requestId": "0x01",
+            "total": 0,
+            "enrs": []
+        },
+        "output": {
+            "encoded": "0x04c30180c0"
+        },
+        "_info": {
+            "hash": "0x825fecea8ea141b12f13dcbbc82753d6dfb6f4a756ba3ced1b3d34a1bfff0642",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_discv5_messages.py::test_nodes_empty[fork_Devnet]",
+            "description": "NODES response with total=0 and empty ENR list.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

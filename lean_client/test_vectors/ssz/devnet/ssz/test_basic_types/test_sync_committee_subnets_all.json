@@ -1,0 +1,24 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_sync_committee_subnets_all[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "SyncCommitteeSubnets",
+        "value": {
+            "data": [
+                true,
+                true,
+                true,
+                true
+            ]
+        },
+        "serialized": "0x0f",
+        "root": "0x0f00000000000000000000000000000000000000000000000000000000000000",
+        "_info": {
+            "hash": "0x55c6d538dc778f9c0574908528eeacc1e173edf8d1e6081af5d7c5e470d389e9",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_sync_committee_subnets_all[fork_Devnet]",
+            "description": "Sync committee subnets with all 4 subscriptions active.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

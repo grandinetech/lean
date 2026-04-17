@@ -1,0 +1,19 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_bytelist_small[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "ByteListMiB",
+        "value": {
+            "data": "0x01020304"
+        },
+        "serialized": "0x01020304",
+        "root": "0xdf49c607e30c985f98ef047826c336958b6231efafe497061dc337f8f6cf53b2",
+        "_info": {
+            "hash": "0xa037430b814c168dddf69ac9440d80cb3212ded1f3e68cc84aa5ae758814fe6c",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_bytelist_small[fork_Devnet]",
+            "description": "Byte list with 4 bytes. Fits within a single 32-byte chunk.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

@@ -1,0 +1,23 @@
+{
+    "tests/consensus/devnet/networking/test_discovery_crypto.py::test_aes_gcm_encrypt_empty_plaintext[fork_Devnet][fork_devnet-discovery_crypto]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "operation": "aes_gcm_encrypt",
+        "input": {
+            "key": "0x9f2d77db7004bf8a1a85107ac686990b",
+            "nonce": "0x27b5af763c446acd2749fe8e",
+            "plaintext": "0x",
+            "aad": "0x"
+        },
+        "output": {
+            "ciphertext": "0x812c5815fc6486d33478ab51e25c9d02"
+        },
+        "_info": {
+            "hash": "0xd357aad14c65cfe90e5cbbbe4f44db7f47a1b86f867a2ccb3b2cf66af53e75fa",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_discovery_crypto.py::test_aes_gcm_encrypt_empty_plaintext[fork_Devnet]",
+            "description": "AES-GCM with empty plaintext. Output is just the 16-byte auth tag.",
+            "fixtureFormat": "discovery_crypto"
+        }
+    }
+}

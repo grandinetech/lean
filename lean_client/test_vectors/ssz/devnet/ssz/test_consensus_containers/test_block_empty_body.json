@@ -15,8 +15,9 @@
             }
         },
         "serialized": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005400000004000000",
+        "root": "0xed01b1825c7b112c8b9c6e0f41c4d49e400fc120425582e533c332a6ac46082e",
         "_info": {
-            "hash": "0x0acee77b911106028cc710d446c202c37ce65c62a44a958d3fccc357db4faaf3",
+            "hash": "0xb798abd6043a40cde0e511763170bb68462d8d8973f4103d46ce4963f409a049",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/devnet/ssz/test_consensus_containers.py::test_block_empty_body[fork_Devnet]",
             "description": "SSZ roundtrip for Block with empty body.",

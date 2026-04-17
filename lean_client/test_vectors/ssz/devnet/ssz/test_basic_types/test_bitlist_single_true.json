@@ -1,0 +1,21 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_bitlist_single_true[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "SampleBitlist16",
+        "value": {
+            "data": [
+                true
+            ]
+        },
+        "serialized": "0x03",
+        "root": "0x56d8a66fbae0300efba7ec2c531973aaae22e7a2ed6ded081b5b32d07a32780a",
+        "_info": {
+            "hash": "0x00b7d1ca5c458c2eaa5c48b76d3397d7995b319a0d067ef8f4d9e1ab53fadf7a",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_bitlist_single_true[fork_Devnet]",
+            "description": "Bitlist with one set bit. Sentinel immediately follows the data bit.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

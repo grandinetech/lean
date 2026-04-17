@@ -1,0 +1,30 @@
+{
+    "tests/consensus/devnet/networking/test_enr_and_peer_id.py::test_enr_no_eth2_field[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "enr",
+        "input": {
+            "enrString": "enr:-IS4QDohXCCn6lWtmPJGwLPaUz9uZbIcvDotMiTRS2RpRLLaExazyVAAWYwBgZu_w8M-3NHdkIC7dKuyKgxbxV8mr0cBgmlkgnY0gmlwhAoAAAGJc2VjcDI1NmsxoQPKY0yuDUmstAHYpMa2_oxVtw0RW_QAdpzBQA8yWM0xOIN1ZHCCdl8"
+        },
+        "output": {
+            "rlp": "0xf884b8403a215c20a7ea55ad98f246c0b3da533f6e65b21cbc3a2d3224d14b646944b2da1316b3c95000598c01819bbfc3c33edcd1dd9080bb74abb22a0c5bc55f26af4701826964827634826970840a00000189736563703235366b31a103ca634cae0d49acb401d8a4c6b6fe8c55b70d115bf400769cc1400f3258cd31388375647082765f",
+            "seq": 1,
+            "identityScheme": "v4",
+            "nodeId": "0xa448f24c6d18e575453db13171562b71999873db5b286df957af199ec94617f7",
+            "publicKey": "0x03ca634cae0d49acb401d8a4c6b6fe8c55b70d115bf400769cc1400f3258cd3138",
+            "ip4": "10.0.0.1",
+            "udpPort": 30303,
+            "multiaddr": "/ip4/10.0.0.1/udp/30303/quic-v1",
+            "isAggregator": false,
+            "signatureValid": true,
+            "isValid": true
+        },
+        "_info": {
+            "hash": "0xa2dabcee579b763ac42f0cf905dcfc226057830f1812d81e4e2fae9c4d20398b",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_enr_and_peer_id.py::test_enr_no_eth2_field[fork_Devnet]",
+            "description": "ENR with ip4 + udp but no eth2, attnets, or syncnets. Verifies absent optional fields.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

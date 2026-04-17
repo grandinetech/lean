@@ -1,0 +1,20 @@
+{
+    "tests/consensus/devnet/networking/test_reqresp_codec.py::test_request_empty[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "reqresp_request",
+        "input": {
+            "sszData": "0x"
+        },
+        "output": {
+            "encoded": "0x00ff060000734e61507059"
+        },
+        "_info": {
+            "hash": "0x23fb719924caebd004e7771b6b9e405c0cd05f8580f4a9978c2cfd21897eb339",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_reqresp_codec.py::test_request_empty[fork_Devnet]",
+            "description": "Request with empty SSZ payload. Varint prefix is 0x00.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

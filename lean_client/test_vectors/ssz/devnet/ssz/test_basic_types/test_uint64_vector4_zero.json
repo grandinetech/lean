@@ -1,0 +1,24 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_uint64_vector4_zero[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "SampleUint64Vector4",
+        "value": {
+            "data": [
+                0,
+                0,
+                0,
+                0
+            ]
+        },
+        "serialized": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "_info": {
+            "hash": "0x2fcdbfd80f0274c47215c42220e1e5542827f181a0bdb9ab66ddbda5e6bee433",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_uint64_vector4_zero[fork_Devnet]",
+            "description": "4-element Uint64 vector, all zeros. Fills exactly one 32-byte chunk.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

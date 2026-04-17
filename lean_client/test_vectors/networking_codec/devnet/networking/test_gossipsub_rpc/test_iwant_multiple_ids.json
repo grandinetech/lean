@@ -1,0 +1,31 @@
+{
+    "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_iwant_multiple_ids[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "gossipsub_rpc",
+        "input": {
+            "subscriptions": [],
+            "publish": [],
+            "control": {
+                "iwant": [
+                    {
+                        "messageIds": [
+                            "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                            "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                        ]
+                    }
+                ]
+            }
+        },
+        "output": {
+            "encoded": "0x1a2e122c0a14aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0a14bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "_info": {
+            "hash": "0xf8aedf6ebfc261e4d5b0d042434592f2bdc3b09ac30cf54ed84c54264f3a57b5",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_iwant_multiple_ids[fork_Devnet]",
+            "description": "IWANT requesting two messages by ID.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

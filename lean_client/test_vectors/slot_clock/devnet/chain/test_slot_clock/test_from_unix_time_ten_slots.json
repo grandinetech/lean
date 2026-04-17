@@ -1,0 +1,26 @@
+{
+    "tests/consensus/devnet/chain/test_slot_clock.py::test_from_unix_time_ten_slots[fork_Devnet][fork_devnet-slot_clock]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "operation": "from_unix_time",
+        "input": {
+            "unixSeconds": 1700000040,
+            "genesisTime": 1700000000
+        },
+        "output": {
+            "config": {
+                "secondsPerSlot": 4,
+                "intervalsPerSlot": 5,
+                "millisecondsPerInterval": 800
+            },
+            "interval": 50
+        },
+        "_info": {
+            "hash": "0xa0374ad027f952c95caf0c99b5d8e9adfbafea8ccc5f5b2807e60537b887d175",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/chain/test_slot_clock.py::test_from_unix_time_ten_slots[fork_Devnet]",
+            "description": "Ten slots = 40 seconds = 50 intervals.",
+            "fixtureFormat": "slot_clock"
+        }
+    }
+}

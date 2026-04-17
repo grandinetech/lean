@@ -1,0 +1,17 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_uint64_mid[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "Uint64",
+        "value": "9223372036854775808",
+        "serialized": "0x0000000000000080",
+        "root": "0x0000000000000080000000000000000000000000000000000000000000000000",
+        "_info": {
+            "hash": "0x72e43b2490cd26e053b9008d37a21598100339803d693a453005f1e3250e0c5f",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_uint64_mid[fork_Devnet]",
+            "description": "Uint64 midpoint with high bit set (2^63). Tests 8-byte little-endian layout.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

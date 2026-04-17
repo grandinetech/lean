@@ -1,0 +1,29 @@
+{
+    "tests/consensus/devnet/networking/test_enr_and_peer_id.py::test_enr_ipv6_only[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "enr",
+        "input": {
+            "enrString": "enr:-JK4QGjix5Zy3h0NXP7WkXobaBJtkv_bAMf5pkq17EIThF7rSvyRoBA_dQ93_u-icZRoK_-vdEy2RM1AKuAKArf2z3UBgmlkgnY0g2lwNpAgAQ24AAAAAAAAAAAAAAABiXNlY3AyNTZrMaEDymNMrg1JrLQB2KTGtv6MVbcNEVv0AHacwUAPMljNMTiEdWRwNoIjKQ"
+        },
+        "output": {
+            "rlp": "0xf892b84068e2c79672de1d0d5cfed6917a1b68126d92ffdb00c7f9a64ab5ec4213845eeb4afc91a0103f750f77feefa27194682bffaf744cb644cd402ae00a02b7f6cf7501826964827634836970369020010db800000000000000000000000189736563703235366b31a103ca634cae0d49acb401d8a4c6b6fe8c55b70d115bf400769cc1400f3258cd31388475647036822329",
+            "seq": 1,
+            "identityScheme": "v4",
+            "nodeId": "0xa448f24c6d18e575453db13171562b71999873db5b286df957af199ec94617f7",
+            "publicKey": "0x03ca634cae0d49acb401d8a4c6b6fe8c55b70d115bf400769cc1400f3258cd3138",
+            "udp6Port": 9001,
+            "ip6": "2001:0db8:0000:0000:0000:0000:0000:0001",
+            "isAggregator": false,
+            "signatureValid": true,
+            "isValid": true
+        },
+        "_info": {
+            "hash": "0x973078abd1d54a66c10f07d0645adb64bd079eb599273c71567be5e02b0c03f5",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_enr_and_peer_id.py::test_enr_ipv6_only[fork_Devnet]",
+            "description": "ENR with IPv6 address (2001:db8::1) and udp6 port, no IPv4.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

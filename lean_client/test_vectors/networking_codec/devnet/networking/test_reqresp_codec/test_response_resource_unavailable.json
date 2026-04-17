@@ -1,0 +1,21 @@
+{
+    "tests/consensus/devnet/networking/test_reqresp_codec.py::test_response_resource_unavailable[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "reqresp_response",
+        "input": {
+            "responseCode": 3,
+            "sszData": "0x626c6f636b206e6f7420666f756e64"
+        },
+        "output": {
+            "encoded": "0x030fff060000734e615070590113000011defbac626c6f636b206e6f7420666f756e64"
+        },
+        "_info": {
+            "hash": "0x294a356a7e5409ac2dee79e5bad41e16d933e739d1d72b1d0357dbbff60faf61",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_reqresp_codec.py::test_response_resource_unavailable[fork_Devnet]",
+            "description": "RESOURCE_UNAVAILABLE response with UTF-8 error message.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

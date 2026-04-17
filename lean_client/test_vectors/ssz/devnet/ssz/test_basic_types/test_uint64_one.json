@@ -1,0 +1,17 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_uint64_one[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "Uint64",
+        "value": "1",
+        "serialized": "0x0100000000000000",
+        "root": "0x0100000000000000000000000000000000000000000000000000000000000000",
+        "_info": {
+            "hash": "0x12f39a0162e02f7cb7d684f33b5393de4b5e33b227aeb6275b89b51dbc73ce6b",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_uint64_one[fork_Devnet]",
+            "description": "Uint64 smallest nonzero value (1).",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

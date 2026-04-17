@@ -2,7 +2,7 @@
 
 # Commit of lean specification. Allows to specify which spec version to use,
 #   when generating test vectors. Currently set to devnet-3 spec version.
-LEAN_SPEC_COMMIT ?= 137bb5834b4230c1484c17368f6ff92a8fd2ec53
+LEAN_SPEC_COMMIT ?= f64b1038caef043849147c791ddd64907fbf19a7
 # Docker image name. Used for both release (with publish) and local builds.
 DOCKER_REPO ?= sifrai/lean
 # Image tag.

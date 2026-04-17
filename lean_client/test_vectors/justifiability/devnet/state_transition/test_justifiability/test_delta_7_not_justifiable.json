@@ -1,0 +1,19 @@
+{
+    "tests/consensus/devnet/state_transition/test_justifiability.py::test_delta_7_not_justifiable[fork_Devnet][fork_devnet-justifiability]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "slot": 7,
+        "finalizedSlot": 0,
+        "output": {
+            "delta": 7,
+            "isJustifiable": false
+        },
+        "_info": {
+            "hash": "0x262b8bfecc8c270461af16ce6f4061fddb2a122a41583bb673f8a8a08eed4fe4",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/state_transition/test_justifiability.py::test_delta_7_not_justifiable[fork_Devnet]",
+            "description": "Delta 7: not square, not pronic, outside window. First non-justifiable delta.",
+            "fixtureFormat": "justifiability"
+        }
+    }
+}

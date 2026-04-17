@@ -1,0 +1,21 @@
+{
+    "tests/consensus/devnet/networking/test_reqresp_codec.py::test_response_success_empty[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "reqresp_response",
+        "input": {
+            "responseCode": 0,
+            "sszData": "0x"
+        },
+        "output": {
+            "encoded": "0x0000ff060000734e61507059"
+        },
+        "_info": {
+            "hash": "0xbf50747e03106ce7a9f0ab9ce356e974dd958071513c55e2ee9c198e70a47353",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_reqresp_codec.py::test_response_success_empty[fork_Devnet]",
+            "description": "SUCCESS response with empty payload.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}

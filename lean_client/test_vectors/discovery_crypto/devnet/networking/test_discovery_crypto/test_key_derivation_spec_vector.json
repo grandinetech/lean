@@ -1,0 +1,24 @@
+{
+    "tests/consensus/devnet/networking/test_discovery_crypto.py::test_key_derivation_spec_vector[fork_Devnet][fork_devnet-discovery_crypto]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "operation": "key_derivation",
+        "input": {
+            "sharedSecret": "0x022c82f214eb37159111712add00040fcdf73fd4d7d0b7c0f980da4d099aa59ba4",
+            "initiatorId": "0xaaaa8419e9f49d0083561b48287df592939a8d19947d8c0ef88f2a4856a69fbb",
+            "recipientId": "0xbbbb9d047f0488c0b5a93c1c3f2d8bafc7c8ff337024a55434a0d0555de64db9",
+            "challengeData": "0x000000000000000000000000000000006469736376350001010102030405060708090a0b0c00180102030405060708090a0b0c0d0e0f100000000000000000"
+        },
+        "output": {
+            "initiatorKey": "0xdccc82d81bd610f4f76d3ebe97a40571",
+            "recipientKey": "0xac74bb8773749920b0d3a8881c173ec5"
+        },
+        "_info": {
+            "hash": "0x65eef7af5023914917bf5fdf6b966ca860005de6ba3a2cf17565aba276cea59c",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_discovery_crypto.py::test_key_derivation_spec_vector[fork_Devnet]",
+            "description": "HKDF key derivation with official spec challenge data.",
+            "fixtureFormat": "discovery_crypto"
+        }
+    }
+}

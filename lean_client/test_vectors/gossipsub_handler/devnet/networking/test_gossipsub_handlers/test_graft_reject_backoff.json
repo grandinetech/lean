@@ -1,0 +1,74 @@
+{
+    "tests/consensus/devnet/networking/test_gossipsub_handlers.py::test_graft_reject_backoff[fork_Devnet][fork_devnet-gossipsub_handler]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "handlerName": "graft",
+        "params": {
+            "d": 4,
+            "dLow": 3,
+            "dHigh": 6,
+            "dLazy": 3
+        },
+        "initialState": {
+            "subscriptions": [
+                "test_topic"
+            ],
+            "meshes": {
+                "test_topic": [
+                    "peerAx"
+                ]
+            },
+            "peers": {
+                "peerAx": {
+                    "subscriptions": [
+                        "test_topic"
+                    ]
+                },
+                "peerBx": {
+                    "subscriptions": [
+                        "test_topic"
+                    ],
+                    "backoff": {
+                        "test_topic": 1060.0
+                    }
+                }
+            }
+        },
+        "event": {
+            "fromPeer": "peerBx",
+            "graft": [
+                {
+                    "topicId": "test_topic"
+                }
+            ]
+        },
+        "now": 1000.0,
+        "expected": {
+            "sentRpcs": [
+                {
+                    "toPeer": "peerBx",
+                    "control": {
+                        "prune": [
+                            {
+                                "topicId": "test_topic",
+                                "backoff": 60
+                            }
+                        ]
+                    }
+                }
+            ],
+            "meshAfter": {
+                "test_topic": [
+                    "peerAx"
+                ]
+            }
+        },
+        "_info": {
+            "hash": "0xe1c83495a95625035587e870b91d440efcca603ad8c51a63821404dcfa90be82",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossipsub_handlers.py::test_graft_reject_backoff[fork_Devnet]",
+            "description": "Reject GRAFT with PRUNE when peer is in backoff period.",
+            "fixtureFormat": "gossipsub_handler"
+        }
+    }
+}

@@ -1,0 +1,25 @@
+{
+    "tests/consensus/devnet/ssz/test_basic_types.py::test_bitlist_mixed[fork_Devnet][fork_devnet-ssz]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "typeName": "SampleBitlist16",
+        "value": {
+            "data": [
+                true,
+                false,
+                true,
+                true,
+                false
+            ]
+        },
+        "serialized": "0x2d",
+        "root": "0x88f1b289bdd0b2c8cc9ee45ebb26d1330024a595ead0a755eaf8cd164d90ab81",
+        "_info": {
+            "hash": "0x75eb7f8f9dc51e07341f1a0fda7c9514b3e59d29c0289c90c79458c910c6c450",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/ssz/test_basic_types.py::test_bitlist_mixed[fork_Devnet]",
+            "description": "Bitlist with 5 mixed bits. Partial fill below the 16-bit limit.",
+            "fixtureFormat": "ssz"
+        }
+    }
+}

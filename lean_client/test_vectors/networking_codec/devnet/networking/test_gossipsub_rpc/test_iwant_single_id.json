@@ -1,0 +1,30 @@
+{
+    "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_iwant_single_id[fork_Devnet][fork_devnet-networking_codec]": {
+        "network": "Devnet",
+        "leanEnv": "prod",
+        "codecName": "gossipsub_rpc",
+        "input": {
+            "subscriptions": [],
+            "publish": [],
+            "control": {
+                "iwant": [
+                    {
+                        "messageIds": [
+                            "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                        ]
+                    }
+                ]
+            }
+        },
+        "output": {
+            "encoded": "0x1a1812160a14aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "_info": {
+            "hash": "0xf30e164d27a5428d26bfbd610378f04a15247a1c29bc4ec961342654b16b5737",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/devnet/networking/test_gossipsub_rpc.py::test_iwant_single_id[fork_Devnet]",
+            "description": "IWANT requesting one message by ID.",
+            "fixtureFormat": "networking_codec"
+        }
+    }
+}
