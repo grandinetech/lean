@@ -568,7 +568,9 @@ where
                 let data_len = message.data.len();
                 match GossipsubMessage::decode(&message.topic, &message.data) {
                     Ok(GossipsubMessage::Block(signed_block)) => {
-                        METRICS.get().map(|m| m.lean_gossip_block_size_bytes.observe(data_len as f64));
+                        METRICS
+                            .get()
+                            .map(|m| m.lean_gossip_block_size_bytes.observe(data_len as f64));
                         info!(block_root = %signed_block.block.hash_tree_root(), "received block via gossip");
 
                         let slot = signed_block.block.slot.0;
@@ -591,7 +593,10 @@ where
                         subnet_id,
                         attestation,
                     }) => {
-                        METRICS.get().map(|m| m.lean_gossip_attestation_size_bytes.observe(data_len as f64));
+                        METRICS.get().map(|m| {
+                            m.lean_gossip_attestation_size_bytes
+                                .observe(data_len as f64)
+                        });
                         info!(
                             validator = %attestation.validator_id,
                             slot = %attestation.message.slot.0,
@@ -615,7 +620,10 @@ where
                         }
                     }
                     Ok(GossipsubMessage::Aggregation(signed_aggregated_attestation)) => {
-                        METRICS.get().map(|m| m.lean_gossip_aggregation_size_bytes.observe(data_len as f64));
+                        METRICS.get().map(|m| {
+                            m.lean_gossip_aggregation_size_bytes
+                                .observe(data_len as f64)
+                        });
                         info!(
                             slot = %signed_aggregated_attestation.data.slot.0,
                             "received aggregated attestation via gossip"

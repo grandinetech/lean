@@ -453,7 +453,10 @@ impl Metrics {
 
             // Node Status
             lean_node_sync_status: GaugeVec::new(
-                opts!("lean_node_sync_status", "Node sync status (idle/syncing/synced)"),
+                opts!(
+                    "lean_node_sync_status",
+                    "Node sync status (idle/syncing/synced)"
+                ),
                 &["status"],
             )?,
 
@@ -462,8 +465,14 @@ impl Metrics {
                 "lean_gossip_block_size_bytes",
                 "Bytes size of a gossip block message",
                 vec![
-                    10_000.0, 50_000.0, 100_000.0, 250_000.0, 500_000.0,
-                    1_000_000.0, 2_000_000.0, 5_000_000.0,
+                    10_000.0,
+                    50_000.0,
+                    100_000.0,
+                    250_000.0,
+                    500_000.0,
+                    1_000_000.0,
+                    2_000_000.0,
+                    5_000_000.0,
                 ]
             ))?,
             lean_gossip_attestation_size_bytes: Histogram::with_opts(histogram_opts!(
@@ -475,8 +484,14 @@ impl Metrics {
                 "lean_gossip_aggregation_size_bytes",
                 "Bytes size of a gossip aggregated attestation message",
                 vec![
-                    1_024.0, 4_096.0, 16_384.0, 65_536.0, 131_072.0,
-                    262_144.0, 524_288.0, 1_048_576.0,
+                    1_024.0,
+                    4_096.0,
+                    16_384.0,
+                    65_536.0,
+                    131_072.0,
+                    262_144.0,
+                    524_288.0,
+                    1_048_576.0,
                 ]
             ))?,
         })
@@ -594,23 +609,20 @@ impl Metrics {
         // Block Production Metrics
         default_registry.register(Box::new(self.lean_block_building_time_seconds.clone()))?;
         default_registry.register(Box::new(
-            self.lean_block_building_payload_aggregation_time_seconds.clone(),
+            self.lean_block_building_payload_aggregation_time_seconds
+                .clone(),
         ))?;
         default_registry.register(Box::new(self.lean_block_aggregated_payloads.clone()))?;
-        default_registry
-            .register(Box::new(self.lean_block_building_success_total.clone()))?;
-        default_registry
-            .register(Box::new(self.lean_block_building_failures_total.clone()))?;
+        default_registry.register(Box::new(self.lean_block_building_success_total.clone()))?;
+        default_registry.register(Box::new(self.lean_block_building_failures_total.clone()))?;
 
         // Node Status
         default_registry.register(Box::new(self.lean_node_sync_status.clone()))?;
 
         // Gossip Size Metrics
         default_registry.register(Box::new(self.lean_gossip_block_size_bytes.clone()))?;
-        default_registry
-            .register(Box::new(self.lean_gossip_attestation_size_bytes.clone()))?;
-        default_registry
-            .register(Box::new(self.lean_gossip_aggregation_size_bytes.clone()))?;
+        default_registry.register(Box::new(self.lean_gossip_attestation_size_bytes.clone()))?;
+        default_registry.register(Box::new(self.lean_gossip_aggregation_size_bytes.clone()))?;
 
         Ok(())
     }
