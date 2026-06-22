@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 
 use anyhow::{Result, anyhow, ensure};
 use containers::{
@@ -64,7 +65,9 @@ pub struct Store {
 
     pub blocks: HashMap<H256, Block>,
 
-    pub states: HashMap<H256, State>,
+    /// States are stored behind `Arc` so the many places that hand out a
+    /// snapshot of a state instead of deep-copying the whole state.
+    pub states: HashMap<H256, Arc<State>>,
 
     pub latest_known_attestations: HashMap<u64, AttestationData>,
 
@@ -266,7 +269,7 @@ pub fn get_forkchoice_store(
         },
         states: {
             let mut m = HashMap::new();
-            m.insert(block_root, anchor_state);
+            m.insert(block_root, Arc::new(anchor_state));
             m
         },
         latest_known_attestations: HashMap::new(),
@@ -369,7 +372,7 @@ pub fn get_fork_choice_head(
     }
 }
 
-pub fn get_latest_justified(states: &HashMap<H256, State>) -> Option<&Checkpoint> {
+pub fn get_latest_justified(states: &HashMap<H256, Arc<State>>) -> Option<&Checkpoint> {
     states
         .values()
         .map(|state| &state.latest_justified)
@@ -616,7 +619,7 @@ pub struct BlockProductionInputs {
     pub slot: Slot,
     pub validator_index: u64,
     pub head_root: H256,
-    pub head_state: State,
+    pub head_state: Arc<State>,
     pub known_block_roots: HashSet<H256>,
     /// Joined view of `latest_known_aggregated_payloads` keyed by `data_root`,
     /// with the `AttestationData` carried in the value. Entries whose

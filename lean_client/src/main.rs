@@ -952,7 +952,7 @@ async fn main() -> Result<()> {
                                     // proposer_signature is NOT covered by the hash — verify it
                                     // explicitly so a peer serving a validly-hashed but unsigned
                                     // block cannot become our anchor.
-                                    match signed_block.verify_signatures(anchor_state.clone()) {
+                                    match signed_block.verify_signatures(&anchor_state) {
                                         Ok(()) => {
                                             info!(
                                                 slot = signed_block.block.slot.0,

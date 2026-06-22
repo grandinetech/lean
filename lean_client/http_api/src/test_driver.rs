@@ -309,7 +309,7 @@ async fn run_verify_signatures(
         }
     };
 
-    Json(match signed_block.verify_signatures(anchor_state) {
+    Json(match signed_block.verify_signatures(&anchor_state) {
         Ok(()) => VerifySignaturesResponse {
             succeeded: true,
             error: None,

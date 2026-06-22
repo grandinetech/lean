@@ -719,7 +719,7 @@ impl TestRunner {
             println!("  Expecting exception: {}", exception);
 
             // Verify signatures - we expect this to fail (return Err)
-            match signed_block.verify_signatures(anchor_state) {
+            match signed_block.verify_signatures(&anchor_state) {
                 Ok(()) => {
                     println!(
                         "    \x1b[31m✗ FAIL: Signatures verified successfully but should have failed!\x1b[0m\n"
@@ -734,7 +734,7 @@ impl TestRunner {
             }
         }
 
-        match signed_block.verify_signatures(anchor_state) {
+        match signed_block.verify_signatures(&anchor_state) {
             Ok(()) => {
                 println!("    ✓ All signatures verified successfully");
                 println!("\n\x1b[32m✓ PASS\x1b[0m\n");

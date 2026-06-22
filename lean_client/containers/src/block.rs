@@ -40,7 +40,13 @@ pub struct SignedBlock {
 }
 
 impl SignedBlock {
-    pub fn verify_signatures(&self, parent_state: State) -> Result<()> {
+    /// Verify all XMSS signatures in this signed block.
+    ///
+    /// Verifies each aggregated attestation proof against the participant
+    /// validator public keys from parent state.
+    ///
+    /// Returns `Ok(())` if all signatures are valid, or an error describing the failure.
+    pub fn verify_signatures(&self, parent_state: &State) -> Result<()> {
         let block = &self.block;
         let aggregated_attestations = &block.body.attestations;
 

@@ -688,7 +688,7 @@ pub fn on_block(
 /// driving the function with synthetic signature placeholders (e.g. spec-test fixtures
 /// that ship unsigned blocks).
 pub fn verify_and_transition(
-    parent_state: State,
+    parent_state: Arc<State>,
     signed_block: SignedBlock,
     verify_signatures: bool,
 ) -> Result<State> {
@@ -699,7 +699,7 @@ pub fn verify_and_transition(
     });
 
     if verify_signatures {
-        signed_block.verify_signatures(parent_state.clone())?;
+        signed_block.verify_signatures(&parent_state)?;
     }
     parent_state.state_transition(&signed_block.block)
 }
@@ -714,6 +714,7 @@ pub fn apply_verified_block(
     block_root: H256,
 ) -> Result<()> {
     let block = signed_block.block.clone();
+    let new_state = Arc::new(new_state);
 
     tracing::debug!(
         block_slot = block.slot.0,
@@ -724,7 +725,7 @@ pub fn apply_verified_block(
     );
 
     store.blocks.insert(block_root, block.clone());
-    store.states.insert(block_root, new_state.clone());
+    store.states.insert(block_root, Arc::clone(&new_state));
 
     METRICS.get().map(|m| {
         m.grandine_store_blocks_size.set(store.blocks.len() as i64);
