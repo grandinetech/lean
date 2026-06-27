@@ -2,6 +2,7 @@
 members = [
     "chain",
     "containers",
+    "database",
     "env-config",
     "fork_choice",
     "http_api",
