@@ -1,5 +1,0 @@
-[package]
-name = "database"
-edition = { workspace = true }
-
-[dependencies]

@@ -2,13 +2,13 @@
 members = [
     "chain",
     "containers",
-    "database",
     "env-config",
     "fork_choice",
     "http_api",
     "metrics",
     "networking",
-    "spec_test_fixtures",
+    "spec_test_fixtures", 
+    "storage",
     "validator",
     "xmss",
 ]
@@ -230,6 +230,7 @@ http_api = { path = "./http_api" }
 metrics = { path = "./metrics" }
 networking = { path = "./networking" }
 spec_test_fixtures = { path = "./spec_test_fixtures" }
+storage = { path = "./storage" }
 validator = { path = "./validator" }
 xmss = { path = "./xmss" }
 
@@ -239,6 +240,7 @@ axum = "0.8.8"
 bitvec = "1.0.1"
 bls = { git = "https://github.com/grandinetech/grandine", package = "bls", features = ["blst"], rev = "64afdee3c6be79fceffb66933dcb69a943f3f1ae" }
 clap = { version = "4", features = ["derive"] }
+database = { git = "https://github.com/grandinetech/grandine", package = "database", rev = "64afdee3c6be79fceffb66933dcb69a943f3f1ae" }
 derive_more = "2.1.1"
 discv5 = "0.10.2"
 enr = { version = "0.13", features = ["k256"] }
@@ -331,6 +333,7 @@ networking = { workspace = true }
 num_cpus = { workspace = true }
 parking_lot = { workspace = true }
 ssz = { workspace = true }
+storage = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }

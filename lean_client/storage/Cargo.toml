@@ -1,0 +1,9 @@
+[package]
+name = "storage"
+edition = { workspace = true }
+
+[dependencies]
+database = { workspace = true }
+
+[lints]
+workspace = true
