@@ -4,6 +4,8 @@ edition = { workspace = true }
 
 [dependencies]
 database = { workspace = true }
+bytesize = { workspace = true }
+anyhow = { workspace = true }
 
 [lints]
 workspace = true

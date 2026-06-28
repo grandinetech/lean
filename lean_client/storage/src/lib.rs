@@ -1,24 +1,96 @@
-use database::{Database, DatabaseMode, RestartMessage};
+use std::path::Path;
 
-const BLOCKS_TABLE_NAME: &str = "blocks";
+use anyhow::Result;
+use bytesize::ByteSize;
+use database::{Database, DatabaseMode};
 
-const BLOCKS_CREATE_INDEX: &str = "slots_to_block_roots_index";
+pub struct Storage {
+    pub blocks: Blocks,
+    pub states: States,
+    pub checkpoints: Checkpoints,
+    pub slot_index: SlotIndex,
+    pub state_root_index: StateRootIndex,
+}
 
-const STATES_TABLE_NAME: &str = "states";
+impl Storage {
+    pub fn new() -> Result<Self> {
+        Ok(Self {
+            blocks: Blocks::new()?,
+            states: States::new()?,
+            checkpoints: Checkpoints::new()?,
+            slot_index: SlotIndex::new()?,
+            state_root_index: StateRootIndex::new()?,
+        })
+    }
+}
 
-const STATES_CREATE_INDEX: &str = "slots_to_state_roots_index";
+pub struct Blocks(Database);
+pub struct States(Database);
+pub struct Checkpoints(Database);
+pub struct SlotIndex(Database);
+pub struct StateRootIndex(Database);
 
-const CHECKPOINTS_TABLE_NAME: &str = "checkpoints";
+impl Blocks {
+    pub fn new() -> Result<Self> {
+        let db = Database::persistent(
+            "blocks",
+            Path::new("./database/blocks"),
+            ByteSize::gib(2),
+            DatabaseMode::ReadWrite,
+            None,
+        )?;
+        Ok(Self(db))
+    }
+}
 
-const CHECKPOINTS_KEY_JUSTIFIED: &str = "justified";
+impl States {
+    pub fn new() -> Result<Self> {
+        let db = Database::persistent(
+            "states",
+            Path::new("./database/states"),
+            ByteSize::gib(2),
+            DatabaseMode::ReadWrite,
+            None,
+        )?;
+        Ok(Self(db))
+    }
+}
 
-const CHECKPOINTS_KEY_FINALIZED: &str = "finalized";
+impl Checkpoints {
+    pub fn new() -> Result<Self> {
+        let db = Database::persistent(
+            "checkpoints",
+            Path::new("./database/checkpoints"),
+            ByteSize::gib(2),
+            DatabaseMode::ReadWrite,
+            None,
+        )?;
+        Ok(Self(db))
+    }
+}
 
-const CHECKPOINTS_KEY_HEAD: &str = "head";
+impl SlotIndex {
+    pub fn new() -> Result<Self> {
+        let db = Database::persistent(
+            "slot_index",
+            Path::new("./database/slot_index"),
+            ByteSize::gib(2),
+            DatabaseMode::ReadWrite,
+            None,
+        )?;
+        Ok(Self(db))
+    }
+}
 
-const CHECKPOINTS_KEY_GENESIS_TIME: &str = "genesis_time";
-
-const SLOT_INDEX_TABLE_NAME: &str = "slot_index";
-
-const STATE_ROOT_INDEX_TABLE_NAME: &str = "state_root_index";
-
+impl StateRootIndex {
+    pub fn new() -> Result<Self> {
+        let db = Database::persistent(
+            "state_root_index",
+            Path::new("./database/state_root_index"),
+            ByteSize::gib(2),
+            DatabaseMode::ReadWrite,
+            None,
+        )?;
+        Ok(Self(db))
+    }
+}
