@@ -438,7 +438,7 @@ async fn main() -> Result<()> {
     info!(
         "Starting grandine v{} ({})",
         env!("CARGO_PKG_VERSION"),
-        git_version::git_version!(args = ["--always", "--abbrev=8"]),
+        git_version::git_version!(args = ["--always", "--abbrev=8"], fallback = "unknown"),
     );
 
     let args = Args::parse();
