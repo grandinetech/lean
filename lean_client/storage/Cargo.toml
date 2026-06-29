@@ -6,6 +6,8 @@ edition = { workspace = true }
 database = { workspace = true }
 bytesize = { workspace = true }
 anyhow = { workspace = true }
+containers = { workspace = true }
+ssz = { workspace = true }
 
 [lints]
 workspace = true
