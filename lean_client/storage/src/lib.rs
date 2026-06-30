@@ -4,8 +4,8 @@ use anyhow::Result;
 use bytesize::ByteSize;
 use database::{Database, DatabaseMode};
 
-use containers::{Block, State, Checkpoint, Slot};
-use ssz::H256;
+use containers::{Block, Checkpoint, Slot, State};
+use ssz::{H256, SszReadDefault as _, SszWrite as _};
 
 pub struct Storage {
     blocks: Blocks,
@@ -26,84 +26,107 @@ impl Storage {
         })
     }
 
-    pub fn get_block(self, root: H256) -> Result<Option<Block>> {
-        let blocks_db = self.blocks;
-
-        Ok(None)
+    pub fn get_block(&self, root: H256) -> Result<Option<Block>> {
+        match self.blocks.0.get(root)? {
+            Some(block_bytes) => Ok(Some(Block::from_ssz_default(&block_bytes)?)),
+            None => Ok(None),
+        }
     }
 
-    pub fn put_block(self, block: Block, root: H256) {
-        let blocks_db = self.blocks;
+    pub fn put_block(&self, block: Block, root: H256) -> Result<()> {
+        let block_bytes = block.to_ssz()?;
+        self.blocks.0.put(root, block_bytes)?;
+        Ok(())
     }
 
-    pub fn get_state(self, root: H256) -> Result<Option<State>> {
-        let states_db = self.states;
-
-        Ok(None)
+    pub fn get_state(&self, root: H256) -> Result<Option<State>> {
+        match self.states.0.get(root)? {
+            Some(state_bytes) => Ok(Some(State::from_ssz_default(&state_bytes)?)),
+            None => Ok(None),
+        }
     }
 
-    pub fn put_state(self, state: State, root: H256) {
-        let states_db = self.states;
+    pub fn put_state(&self, state: State, root: H256) -> Result<()> {
+        let state_bytes = state.to_ssz()?;
+        self.states.0.put(root, state_bytes)?;
+        Ok(())
     }
 
-    pub fn get_justified_checkpoint(self) -> Result<Option<Checkpoint>> {
-        let checkpoints_db = self.checkpoints;
-
-        Ok(None)
+    pub fn get_justified_checkpoint(&self) -> Result<Option<Checkpoint>> {
+        match self.checkpoints.0.get("justified")? {
+            Some(checkpoint_bytes) => Ok(Some(Checkpoint::from_ssz_default(&checkpoint_bytes)?)),
+            None => Ok(None),
+        }
     }
 
-    pub fn put_justified_checkpoint(self, checkpoint: Checkpoint) {
-        let checkpoints_db = self.checkpoints;
+    pub fn put_justified_checkpoint(&self, checkpoint: Checkpoint) -> Result<()> {
+        let checkpoint_bytes = checkpoint.to_ssz()?;
+        self.checkpoints.0.put("justified", checkpoint_bytes)?;
+        Ok(())
     }
 
-    pub fn get_finalized_checkpoint(self) -> Result<Option<Checkpoint>> {
-        let checkpoints_db = self.checkpoints;
-
-        Ok(None)
+    pub fn get_finalized_checkpoint(&self) -> Result<Option<Checkpoint>> {
+        match self.checkpoints.0.get("finalized")? {
+            Some(checkpoint_bytes) => Ok(Some(Checkpoint::from_ssz_default(&checkpoint_bytes)?)),
+            None => Ok(None),
+        }
     }
 
-    pub fn put_finalized_checkpoint(self, checkpoint: Checkpoint) {
-        let checkpoints_db = self.checkpoints;
+    pub fn put_finalized_checkpoint(&self, checkpoint: Checkpoint) -> Result<()> {
+        let checkpoint_bytes = checkpoint.to_ssz()?;
+        self.checkpoints.0.put("finalized", checkpoint_bytes)?;
+        Ok(())
     }
 
-    pub fn get_head_root(self) -> Result<Option<H256>> {
-        let checkpoints_db = self.checkpoints;
-
-        Ok(None)
+    pub fn get_head_root(&self) -> Result<Option<H256>> {
+        match self.checkpoints.0.get("head")? {
+            Some(head_root_bytes) => Ok(Some(H256::from_slice(&head_root_bytes))),
+            None => Ok(None),
+        }
     }
 
-    pub fn put_head_root(self, root: H256) {
-        let checkpoints_db = self.checkpoints;
+    pub fn put_head_root(&self, root: H256) -> Result<()> {
+        self.checkpoints.0.put("head", root)?;
+        Ok(())
     }
 
-    pub fn get_block_root_by_slot(self, slot: Slot) -> Result<Option<H256>> {
-        let slot_index_db = self.slot_index;
-
-        Ok(None)
+    pub fn get_block_root_by_slot(&self, slot: Slot) -> Result<Option<H256>> {
+        let slot_bytes = slot.0.to_be_bytes();
+        match self.slot_index.0.get(slot_bytes)? {
+            Some(block_root_bytes) => Ok(Some(H256::from_slice(&block_root_bytes))),
+            None => Ok(None),
+        }
     }
 
-    pub fn put_block_root_by_slot(self, slot: Slot, root: H256) {
-        let slot_index_db = self.slot_index;
+    pub fn put_block_root_by_slot(&self, slot: Slot, root: H256) -> Result<()> {
+        let slot_bytes = slot.0.to_be_bytes();
+        self.slot_index.0.put(slot_bytes, root)?;
+        Ok(())
     }
 
-    pub fn get_block_root_by_state_root(self, state_root: H256) -> Result<Option<H256>> {
-        let state_root_index_db = self.state_root_index;
-
-        Ok(None)
+    pub fn get_block_root_by_state_root(&self, state_root: H256) -> Result<Option<H256>> {
+        match self.state_root_index.0.get(state_root)? {
+            Some(block_root_bytes) => Ok(Some(H256::from_slice(&block_root_bytes))),
+            None => Ok(None),
+        }
     }
 
-    pub fn put_block_root_by_state_root(self, state_root: H256, block_root: H256) {
-        let state_root_index_db = self.state_root_index;
+    pub fn put_block_root_by_state_root(&self, state_root: H256, block_root: H256) -> Result<()> {
+        self.state_root_index.0.put(state_root, block_root)?;
+        Ok(())
     }
 
-    pub fn get_genesis_time(self) -> Result<Option<u64>> {
-        let checkpoints_db = self.checkpoints;
-
-        Ok(None)
+    pub fn get_genesis_time(&self) -> Result<Option<u64>> {
+        match self.checkpoints.0.get("genesis_time")? {
+            Some(genesis_time_bytes) => Ok(Some(u64::from_ssz_default(&genesis_time_bytes)?)),
+            None => Ok(None),
+        }
     }
 
-    pub fn put_genesis_time(self, genesis_time: u64) {
-        let checkpoints_db = self.checkpoints;
+    pub fn put_genesis_time(&self, genesis_time: u64) -> Result<()> {
+        let genesis_time_bytes = genesis_time.to_ssz()?;
+        self.checkpoints.0.put("genesis_time", genesis_time_bytes)?;
+        Ok(())
     }
 }
 
