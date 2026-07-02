@@ -204,6 +204,38 @@ impl Database {
         Ok(())
     }
 
+    pub fn delete_batch(&self, keys: impl IntoIterator<Item = impl AsRef<[u8]>>) -> Result<()> {
+        match self.kind() {
+            DatabaseKind::Persistent {
+                database_name,
+                environment,
+                restart_tx: _,
+            } => {
+                let transaction = environment.begin_rw_txn()?;
+                let database = transaction.open_db(Some(database_name))?;
+
+                let mut cursor = transaction.cursor(&database)?;
+
+                for key in keys {
+                    if cursor.set::<()>(key.as_ref())?.is_some() {
+                        cursor.del(WriteFlags::default())?;
+                    }
+                }
+
+                transaction.commit()?;
+            }
+            DatabaseKind::InMemory { map } => {
+                let mut map = map.lock().expect("in-memory database mutex is poisoned");
+
+                for key in keys {
+                    map.remove(key.as_ref());
+                }
+            }
+        }
+
+        Ok(())
+    }
+
     pub fn delete_range(&self, range: Range<impl AsRef<[u8]>>) -> Result<()> {
         let start = range.start.as_ref();
         let end = range.end.as_ref();
@@ -628,4 +660,338 @@ fn handle_write_error(
     }
 
     error
+}
+
+#[cfg(test)]
+mod tests {
+    use tempfile::TempDir;
+    use test_case::test_case;
+
+    use super::*;
+
+    type Constructor = fn() -> Result<Database>;
+
+    #[test_case(build_persistent_database)]
+    #[test_case(build_in_memory_database)]
+    fn test_delete(constructor: Constructor) -> Result<()> {
+        let database = constructor()?;
+
+        database.delete("C")?;
+        database.delete("D")?;
+
+        assert_pairs_eq(
+            database.iterator_ascending("A"..)?,
+            [("A", "1"), ("B", "2"), ("E", "5")],
+        )?;
+
+        Ok(())
+    }
+
+    #[test_case(build_persistent_database)]
+    #[test_case(build_in_memory_database)]
+    fn test_delete_batch(constructor: Constructor) -> Result<()> {
+        let database = constructor()?;
+
+        database.delete_batch(["A", "C", "D"])?;
+
+        assert_pairs_eq(
+            database.iterator_ascending("A"..)?,
+            [("B", "2"), ("E", "5")],
+        )?;
+
+        Ok(())
+    }
+
+    #[test_case(build_persistent_database)]
+    #[test_case(build_in_memory_database)]
+    fn test_delete_range_inclusive_exclusive(constructor: Constructor) -> Result<()> {
+        let database = constructor()?;
+
+        database.delete_range("B".."C")?;
+
+        assert_pairs_eq(
+            database.iterator_ascending("A"..)?,
+            [("A", "1"), ("C", "3"), ("E", "5")],
+        )?;
+
+        Ok(())
+    }
+
+    #[test_case(build_persistent_database)]
+    #[test_case(build_in_memory_database)]
+    fn test_delete_range_between(constructor: Constructor) -> Result<()> {
+        let database = constructor()?;
+
+        database.delete_range("D".."F")?;
+
+        assert_pairs_eq(
+            database.iterator_ascending("A"..)?,
+            [("A", "1"), ("B", "2"), ("C", "3")],
+        )?;
+
+        Ok(())
+    }
+
+    #[test_case(build_persistent_database)]
+    #[test_case(build_in_memory_database)]
+    fn test_contains_key(constructor: Constructor) -> Result<()> {
+        let database = constructor()?;
+
+        assert!(database.contains_key("A")?);
+        assert!(database.contains_key("B")?);
+        assert!(database.contains_key("C")?);
+        assert!(!database.contains_key("D")?);
+        assert!(database.contains_key("E")?);
+        assert!(!database.contains_key("F")?);
+
+        Ok(())
+    }
+
+    #[test_case(build_persistent_database)]
+    #[test_case(build_in_memory_database)]
+    fn test_iterator_ascending(constructor: Constructor) -> Result<()> {
+        let database = constructor()?;
+
+        assert_pairs_eq(
+            database.iterator_ascending("0"..)?,
+            [("A", "1"), ("B", "2"), ("C", "3"), ("E", "5")],
+        )?;
+
+        assert_pairs_eq(
+            database.iterator_ascending("A"..)?,
+            [("A", "1"), ("B", "2"), ("C", "3"), ("E", "5")],
+        )?;
+
+        assert_pairs_eq(
+            database.iterator_ascending("B"..)?,
+            [("B", "2"), ("C", "3"), ("E", "5")],
+        )?;
+
+        assert_pairs_eq(
+            database.iterator_ascending("C"..)?,
+            [("C", "3"), ("E", "5")],
+        )?;
+
+        assert_pairs_eq(database.iterator_ascending("D"..)?, [("E", "5")])?;
+        assert_pairs_eq(database.iterator_ascending("E"..)?, [("E", "5")])?;
+        assert_pairs_eq(database.iterator_ascending("F"..)?, [])?;
+
+        Ok(())
+    }
+
+    #[test_case(build_persistent_database)]
+    #[test_case(build_in_memory_database)]
+    fn test_iterator_descending(constructor: Constructor) -> Result<()> {
+        let database = constructor()?;
+
+        assert_pairs_eq(
+            database.iterator_descending(..="F")?,
+            [("E", "5"), ("C", "3"), ("B", "2"), ("A", "1")],
+        )?;
+
+        assert_pairs_eq(
+            database.iterator_descending(..="E")?,
+            [("E", "5"), ("C", "3"), ("B", "2"), ("A", "1")],
+        )?;
+
+        assert_pairs_eq(
+            database.iterator_descending(..="D")?,
+            [("C", "3"), ("B", "2"), ("A", "1")],
+        )?;
+
+        assert_pairs_eq(
+            database.iterator_descending(..="C")?,
+            [("C", "3"), ("B", "2"), ("A", "1")],
+        )?;
+
+        assert_pairs_eq(
+            database.iterator_descending(..="B")?,
+            [("B", "2"), ("A", "1")],
+        )?;
+
+        assert_pairs_eq(database.iterator_descending(..="A")?, [("A", "1")])?;
+        assert_pairs_eq(database.iterator_descending(..="0")?, [])?;
+
+        Ok(())
+    }
+
+    #[test_case(build_persistent_database)]
+    #[test_case(build_in_memory_database)]
+    fn test_all_keys_iterator_with_lengths(constructor: Constructor) -> Result<()> {
+        let database = constructor()?;
+        let values = database
+            .iterate_all_keys_with_lengths()?
+            .map(|result| {
+                let (key, length) = result?;
+                let key_string = core::str::from_utf8(key.as_ref())?;
+                Ok((key_string.to_owned(), length))
+            })
+            .collect::<Result<Vec<_>>>()?;
+
+        let compressed_len = Compression::Zstd.compress(b"A")?.len();
+
+        let expected = [
+            ("A".to_owned(), compressed_len),
+            ("B".to_owned(), compressed_len),
+            ("C".to_owned(), compressed_len),
+            ("E".to_owned(), compressed_len),
+        ];
+
+        assert_eq!(values, expected);
+
+        Ok(())
+    }
+
+    // This covers a bug we introduced and fixed while implementing in-memory mode.
+    #[test_case(build_persistent_database)]
+    #[test_case(build_in_memory_database)]
+    fn test_iterators_do_not_modify_the_database(constructor: Constructor) -> Result<()> {
+        let database = constructor()?;
+
+        assert_pairs_eq(database.iterator_ascending("E"..)?, [("E", "5")])?;
+        assert_pairs_eq(database.iterator_ascending("E"..)?, [("E", "5")])?;
+
+        assert_pairs_eq(database.iterator_ascending("F"..)?, [])?;
+        assert_pairs_eq(database.iterator_ascending("F"..)?, [])?;
+
+        assert_pairs_eq(database.iterator_descending(..="A")?, [("A", "1")])?;
+        assert_pairs_eq(database.iterator_descending(..="A")?, [("A", "1")])?;
+
+        assert_pairs_eq(database.iterator_descending(..="0")?, [])?;
+        assert_pairs_eq(database.iterator_descending(..="0")?, [])?;
+
+        Ok(())
+    }
+
+    #[test_case(build_persistent_database)]
+    #[test_case(build_in_memory_database)]
+    fn test_multiple_of_the_same_key(constructor: Constructor) -> Result<()> {
+        let database = constructor()?;
+
+        database.put_batch(vec![("A", "1"), ("A", "2"), ("A", "3")])?;
+
+        assert_eq!(database.get("A")?, Some(to_bytes("3")));
+
+        Ok(())
+    }
+
+    // ```text
+    // 0 A B C D E F
+    //   │ │ ├─┘ ├─┘
+    //   A B C   E
+    // ```
+    #[test_case(build_persistent_database)]
+    #[test_case(build_in_memory_database)]
+    fn test_prev(constructor: Constructor) -> Result<()> {
+        let database = constructor()?;
+
+        assert!("0" < "A");
+
+        assert_eq!(database.prev("0")?, None);
+        assert_eq!(database.prev("A")?, Some(to_bytes_pair(("A", "1"))));
+        assert_eq!(database.prev("B")?, Some(to_bytes_pair(("B", "2"))));
+        assert_eq!(database.prev("C")?, Some(to_bytes_pair(("C", "3"))));
+        assert_eq!(database.prev("D")?, Some(to_bytes_pair(("C", "3"))));
+        assert_eq!(database.prev("E")?, Some(to_bytes_pair(("E", "5"))));
+        assert_eq!(database.prev("F")?, Some(to_bytes_pair(("E", "5"))));
+
+        Ok(())
+    }
+
+    // ```text
+    // 0 A B C D E F
+    // └─┤ │ │ └─┤
+    //   A B C   E
+    // ```
+    #[test_case(build_persistent_database)]
+    #[test_case(build_in_memory_database)]
+    fn test_next(constructor: Constructor) -> Result<()> {
+        let database = constructor()?;
+
+        assert!("0" < "A");
+
+        assert_eq!(database.next("0")?, Some(to_bytes_pair(("A", "1"))));
+        assert_eq!(database.next("A")?, Some(to_bytes_pair(("A", "1"))));
+        assert_eq!(database.next("B")?, Some(to_bytes_pair(("B", "2"))));
+        assert_eq!(database.next("C")?, Some(to_bytes_pair(("C", "3"))));
+        assert_eq!(database.next("D")?, Some(to_bytes_pair(("E", "5"))));
+        assert_eq!(database.next("E")?, Some(to_bytes_pair(("E", "5"))));
+        assert_eq!(database.next("F")?, None);
+
+        Ok(())
+    }
+
+    #[test_case(build_persistent_database)]
+    #[test_case(build_in_memory_database)]
+    fn test_isolation(constructor: Constructor) -> Result<()> {
+        let database = constructor()?;
+        let iterator = database.iterator_ascending("A"..)?;
+
+        database.delete_range("A".."F")?;
+
+        assert_pairs_eq(iterator, [("A", "1"), ("B", "2"), ("C", "3"), ("E", "5")])?;
+
+        Ok(())
+    }
+
+    fn build_persistent_database() -> Result<Database> {
+        let database = Database::persistent(
+            "test_db",
+            TempDir::new()?,
+            Compression::Zstd,
+            ByteSize::mib(1),
+            DatabaseMode::ReadWrite,
+            None,
+        )?;
+
+        populate_database(&database)?;
+        Ok(database)
+    }
+
+    fn build_in_memory_database() -> Result<Database> {
+        let database = Database::in_memory();
+        populate_database(&database)?;
+        Ok(database)
+    }
+
+    fn populate_database(database: &Database) -> Result<()> {
+        // This indirectly tests `Database::put` and `Database::put_batch`.
+        database.put_batch(vec![("A", "1"), ("B", "2"), ("C", "3")])?;
+        database.put("E", "5")?;
+        Ok(())
+    }
+
+    fn assert_pairs_eq<'strings>(
+        actual_pairs: impl IntoIterator<Item = Result<(impl AsRef<[u8]>, impl AsRef<[u8]>)>>,
+        expected_pairs: impl IntoIterator<Item = (&'strings str, &'strings str)>,
+    ) -> Result<()> {
+        let actual_pairs = to_string_pairs(actual_pairs)?;
+        let expected_pairs = to_string_pairs(expected_pairs.into_iter().map(Ok))?;
+
+        assert_eq!(actual_pairs, expected_pairs);
+
+        Ok(())
+    }
+
+    fn to_string_pairs(
+        pairs: impl IntoIterator<Item = Result<(impl AsRef<[u8]>, impl AsRef<[u8]>)>>,
+    ) -> Result<Vec<(String, String)>> {
+        pairs
+            .into_iter()
+            .map(|result| {
+                let (key, value) = result?;
+                let key_string = core::str::from_utf8(key.as_ref())?;
+                let value_string = core::str::from_utf8(value.as_ref())?;
+                Ok((key_string.to_owned(), value_string.to_owned()))
+            })
+            .collect()
+    }
+
+    fn to_bytes_pair((key, value): (&str, &str)) -> (Vec<u8>, Vec<u8>) {
+        (to_bytes(key), to_bytes(value))
+    }
+
+    fn to_bytes(string: &str) -> Vec<u8> {
+        string.as_bytes().to_vec()
+    }
 }
