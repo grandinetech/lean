@@ -1,8 +1,10 @@
+mod database;
+
 use std::path::Path;
 
+use crate::database::{Compression, Database, DatabaseMode};
 use anyhow::Result;
 use bytesize::ByteSize;
-use database::{Database, DatabaseMode};
 
 use containers::{Block, Checkpoint, Slot, State};
 use ssz::{H256, SszReadDefault as _, SszWrite as _};
@@ -141,6 +143,7 @@ impl Blocks {
         let db = Database::persistent(
             "blocks",
             Path::new("./database/blocks"),
+            Compression::Lz4,
             ByteSize::gib(2),
             DatabaseMode::ReadWrite,
             None,
@@ -154,6 +157,7 @@ impl States {
         let db = Database::persistent(
             "states",
             Path::new("./database/states"),
+            Compression::Zstd,
             ByteSize::gib(2),
             DatabaseMode::ReadWrite,
             None,
@@ -167,6 +171,7 @@ impl Checkpoints {
         let db = Database::persistent(
             "checkpoints",
             Path::new("./database/checkpoints"),
+            Compression::None,
             ByteSize::gib(2),
             DatabaseMode::ReadWrite,
             None,
@@ -180,6 +185,7 @@ impl SlotIndex {
         let db = Database::persistent(
             "slot_index",
             Path::new("./database/slot_index"),
+            Compression::None,
             ByteSize::gib(2),
             DatabaseMode::ReadWrite,
             None,
@@ -193,6 +199,7 @@ impl StateRootIndex {
         let db = Database::persistent(
             "state_root_index",
             Path::new("./database/state_root_index"),
+            Compression::None,
             ByteSize::gib(2),
             DatabaseMode::ReadWrite,
             None,

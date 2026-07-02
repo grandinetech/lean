@@ -1,0 +1,631 @@
+use core::ops::{Range, RangeFrom, RangeToInclusive};
+use std::path::Path;
+use std::{
+    borrow::Cow,
+    sync::{Arc, Mutex},
+};
+
+use anyhow::Result;
+use bytesize::ByteSize;
+use futures::channel::mpsc::UnboundedSender;
+use im::OrdMap;
+use itertools::Either;
+use libmdbx::{DatabaseFlags, Environment, Geometry, ObjectLength, Stat, WriteFlags};
+use tap::Pipe as _;
+use thiserror::Error;
+use unwrap_none::UnwrapNone as _;
+
+const GROWTH_STEP: ByteSize = ByteSize::mib(256);
+
+const MAX_NAMED_DATABASES: usize = 10;
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Compression {
+    None,
+    #[default]
+    Lz4,
+    Zstd,
+}
+
+impl Compression {
+    fn compress(self, data: &[u8]) -> Result<Vec<u8>> {
+        match self {
+            Self::None => Ok(data.to_vec()),
+            Self::Lz4 => Ok(lz4_flex::compress_prepend_size(data)),
+            Self::Zstd => Ok(zstd::encode_all(data, 3)?),
+        }
+    }
+
+    fn decompress(self, data: &[u8]) -> Result<Vec<u8>> {
+        match self {
+            Self::None => Ok(data.to_vec()),
+            Self::Lz4 => Ok(lz4_flex::decompress_size_prepended(data)?),
+            Self::Zstd => Ok(zstd::decode_all(data)?),
+        }
+    }
+
+    fn decompress_pair<K>(self, (key, compressed_value): (K, Cow<[u8]>)) -> Result<(K, Vec<u8>)> {
+        let value = self.decompress(&compressed_value)?;
+        Ok((key, value))
+    }
+}
+
+pub trait PrefixableKey {
+    const PREFIX: &'static str;
+
+    #[must_use]
+    fn has_prefix(bytes: &[u8]) -> bool {
+        bytes.starts_with(Self::PREFIX.as_bytes())
+    }
+}
+
+#[derive(Debug)]
+pub enum RestartMessage {
+    StorageMapFull(libmdbx::Error),
+}
+
+impl RestartMessage {
+    pub fn send(self, tx: &UnboundedSender<Self>) {
+        // Nothing to do if the send fails: the receiver has been dropped.
+        drop(tx.unbounded_send(self));
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum DatabaseMode {
+    ReadOnly,
+    ReadWrite,
+}
+
+impl DatabaseMode {
+    #[must_use]
+    pub const fn is_read_only(self) -> bool {
+        matches!(self, Self::ReadOnly)
+    }
+
+    #[must_use]
+    pub const fn mode_permissions(self) -> u16 {
+        match self {
+            // <https://erthink.github.io/libmdbx/group__c__opening.html#gabb7dd3b10dd31639ba252df545e11768>
+            // The UNIX permissions to set on created files. Zero value means to open existing, but do not create.
+            Self::ReadOnly => 0,
+            Self::ReadWrite => 0o600,
+        }
+    }
+
+    #[must_use]
+    #[cfg(target_os = "linux")]
+    pub fn permissions(self) -> u32 {
+        self.mode_permissions().into()
+    }
+
+    #[must_use]
+    #[cfg(not(target_os = "linux"))]
+    pub const fn permissions(self) -> u16 {
+        self.mode_permissions()
+    }
+}
+
+pub struct Database {
+    kind: DatabaseKind,
+    compression: Compression,
+}
+
+impl Database {
+    pub fn persistent(
+        name: &str,
+        directory: impl AsRef<Path>,
+        compression: Compression,
+        max_size: ByteSize,
+        mode: DatabaseMode,
+        restart_tx: Option<UnboundedSender<RestartMessage>>,
+    ) -> Result<Self> {
+        // If a database with the legacy name exists, keep using it.
+        // Otherwise, create a new database with the specified name.
+        // This check will not force existing users to resync.
+        let legacy_name = directory.as_ref().to_str().ok_or(Error)?;
+
+        if !mode.is_read_only() {
+            fs_err::create_dir_all(&directory)?;
+        }
+
+        // TODO(Grandine Team): The call to `set_max_dbs` and `MAX_NAMED_DATABASES` should be
+        //                      unnecessary if the default database is used.
+        let environment = Environment::builder()
+            .set_max_dbs(MAX_NAMED_DATABASES)
+            .set_geometry(Geometry {
+                size: Some(..usize::try_from(max_size.as_u64())?),
+                growth_step: Some(isize::try_from(GROWTH_STEP.as_u64())?),
+                shrink_threshold: None,
+                page_size: None,
+            })
+            .open_with_permissions(directory.as_ref(), mode.permissions())?;
+
+        let transaction = environment.begin_rw_txn()?;
+        let existing_db = transaction.open_db(Some(legacy_name));
+
+        let database_name = if existing_db.is_err() {
+            if !mode.is_read_only() {
+                transaction.create_db(Some(name), DatabaseFlags::default())?;
+            }
+
+            name
+        } else {
+            legacy_name
+        }
+        .to_owned();
+
+        transaction.commit()?;
+
+        Ok(Self {
+            kind: DatabaseKind::Persistent {
+                database_name,
+                environment,
+                restart_tx,
+            },
+            compression,
+        })
+    }
+
+    #[must_use]
+    pub fn in_memory() -> Self {
+        Self {
+            kind: DatabaseKind::InMemory {
+                map: Mutex::default(),
+            },
+            compression: Compression::Zstd,
+        }
+    }
+
+    pub fn delete(&self, key: impl AsRef<[u8]>) -> Result<()> {
+        match self.kind() {
+            DatabaseKind::Persistent {
+                database_name,
+                environment,
+                restart_tx: _,
+            } => {
+                let transaction = environment.begin_rw_txn()?;
+                let database = transaction.open_db(Some(database_name))?;
+
+                let mut cursor = transaction.cursor(&database)?;
+
+                if cursor.set::<()>(key.as_ref())?.is_some() {
+                    cursor.del(WriteFlags::default())?;
+                    transaction.commit()?;
+                }
+            }
+            DatabaseKind::InMemory { map } => {
+                map.lock()
+                    .expect("in-memory database mutex is poisoned")
+                    .remove(key.as_ref());
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn delete_range(&self, range: Range<impl AsRef<[u8]>>) -> Result<()> {
+        let start = range.start.as_ref();
+        let end = range.end.as_ref();
+
+        match self.kind() {
+            DatabaseKind::Persistent {
+                database_name,
+                environment,
+                restart_tx: _,
+            } => {
+                let transaction = environment.begin_rw_txn()?;
+                let database = transaction.open_db(Some(database_name))?;
+
+                let mut cursor = transaction.cursor(&database)?;
+
+                let Some((mut key, ())) = cursor.set_range::<Cow<_>, _>(start)? else {
+                    return Ok(());
+                };
+
+                while *key < *end {
+                    cursor.del(WriteFlags::default())?;
+                    match cursor.next::<Cow<_>, _>()? {
+                        Some((new_key, ())) => key = new_key,
+                        None => break,
+                    }
+                }
+
+                transaction.commit()?;
+            }
+            DatabaseKind::InMemory { map } => {
+                // Update the map atomically for consistency with `Database::put_batch`.
+                // This should only make a difference if the method panics between mutations.
+                // The mutex will be left poisoned either way.
+                let mut map = map.lock().expect("in-memory database mutex is poisoned");
+                let mut new_map = map.clone();
+
+                let end_pair = map.get_key_value(end);
+                let (below, _) = new_map.split(start);
+                let (_, above) = new_map.split(end);
+
+                new_map = below.union(above);
+
+                if let Some((key, value)) = end_pair {
+                    new_map
+                        .insert(key.clone(), value.clone())
+                        .expect_none("end_pair should have been discarded by OrdMap::split");
+                }
+
+                *map = new_map;
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn contains_key(&self, key: impl AsRef<[u8]>) -> Result<bool> {
+        let contains_key = match self.kind() {
+            DatabaseKind::Persistent {
+                database_name,
+                environment,
+                restart_tx: _,
+            } => {
+                let transaction = environment.begin_ro_txn()?;
+                let database = transaction.open_db(Some(database_name))?;
+                transaction
+                    .get::<()>(database.dbi(), key.as_ref())?
+                    .is_some()
+            }
+            DatabaseKind::InMemory { map } => map
+                .lock()
+                .expect("in-memory database mutex is poisoned")
+                .contains_key(key.as_ref()),
+        };
+
+        Ok(contains_key)
+    }
+
+    pub fn get(&self, key: impl AsRef<[u8]>) -> Result<Option<Vec<u8>>> {
+        match self.kind() {
+            DatabaseKind::Persistent {
+                database_name,
+                environment,
+                restart_tx: _,
+            } => {
+                let transaction = environment.begin_ro_txn()?;
+                let database = transaction.open_db(Some(database_name))?;
+
+                transaction
+                    .get::<Cow<_>>(database.dbi(), key.as_ref())?
+                    .map(|compressed| self.compression.decompress(&compressed))
+            }
+            DatabaseKind::InMemory { map } => map
+                .lock()
+                .expect("in-memory database mutex is poisoned")
+                .get(key.as_ref())
+                .map(|compressed| self.compression.decompress(compressed)),
+        }
+        .transpose()
+    }
+
+    pub fn db_stats(&self) -> Result<Option<Stat>> {
+        match self.kind() {
+            DatabaseKind::Persistent {
+                database_name,
+                environment,
+                restart_tx: _,
+            } => {
+                let transaction = environment.begin_ro_txn()?;
+                let database = transaction.open_db(Some(database_name))?;
+
+                Some(transaction.db_stat(&database)?)
+            }
+            DatabaseKind::InMemory { map: _ } => None,
+        }
+        .pipe(Ok)
+    }
+
+    pub fn iterate_all_keys_with_lengths(
+        &self,
+    ) -> Result<impl Iterator<Item = Result<(Cow<'_, [u8]>, usize)>>> {
+        match self.kind() {
+            DatabaseKind::Persistent {
+                database_name,
+                environment,
+                restart_tx: _,
+            } => {
+                let transaction = environment.begin_ro_txn()?;
+                let database = transaction.open_db(Some(database_name))?;
+
+                let mut cursor = transaction.cursor(&database)?;
+
+                core::iter::from_fn(move || cursor.next().transpose())
+                    .map(|result| {
+                        let (key, ObjectLength(length)) = result?;
+                        Ok((key, length))
+                    })
+                    .pipe(Either::Left)
+            }
+            DatabaseKind::InMemory { map } => {
+                let map = map.lock().expect("in-memory database mutex is poisoned");
+
+                let it = map
+                    .clone()
+                    .into_iter()
+                    .map(|(key, value)| Ok((Cow::Owned(key.to_vec()), value.len())));
+
+                it.pipe(Either::Right)
+            }
+        }
+        .pipe(Ok)
+    }
+
+    #[expect(clippy::type_complexity)]
+    pub fn iterator_ascending(
+        &self,
+        range: RangeFrom<impl AsRef<[u8]>>,
+    ) -> Result<impl Iterator<Item = Result<(Cow<'_, [u8]>, Vec<u8>)>>> {
+        let start = range.start.as_ref();
+
+        match self.kind() {
+            DatabaseKind::Persistent {
+                database_name,
+                environment,
+                restart_tx: _,
+            } => {
+                let transaction = environment.begin_ro_txn()?;
+                let database = transaction.open_db(Some(database_name))?;
+
+                let mut cursor = transaction.cursor(&database)?;
+
+                cursor
+                    .set_range(start)
+                    .transpose()
+                    .into_iter()
+                    .chain(core::iter::from_fn(move || cursor.next().transpose()))
+                    .map(|result| self.compression.decompress_pair(result?))
+                    .pipe(Either::Left)
+            }
+            DatabaseKind::InMemory { map } => {
+                let map = map.lock().expect("in-memory database mutex is poisoned");
+                let start_pair = map.get_key_value(start);
+                let (_, mut above) = map.split(start);
+
+                if let Some((key, value)) = start_pair {
+                    above
+                        .insert(key.clone(), value.clone())
+                        .expect_none("start_pair should have been discarded by OrdMap::split");
+                }
+
+                let it = above.into_iter().map(|(key, value)| {
+                    Ok((
+                        Cow::Owned(key.to_vec()),
+                        self.compression.decompress(value.as_ref())?,
+                    ))
+                });
+
+                it.pipe(Either::Right)
+            }
+        }
+        .pipe(Ok)
+    }
+
+    #[expect(clippy::type_complexity)]
+    pub fn iterator_descending(
+        &self,
+        range: RangeToInclusive<impl AsRef<[u8]>>,
+    ) -> Result<impl Iterator<Item = Result<(Cow<'_, [u8]>, Vec<u8>)>>> {
+        let end = range.end.as_ref();
+
+        match self.kind() {
+            DatabaseKind::Persistent {
+                database_name,
+                environment,
+                restart_tx: _,
+            } => {
+                let transaction = environment.begin_ro_txn()?;
+                let database = transaction.open_db(Some(database_name))?;
+
+                let mut cursor = transaction.cursor(&database)?;
+
+                cursor
+                    .set_key(end)
+                    .transpose()
+                    .into_iter()
+                    .chain(core::iter::from_fn(move || cursor.prev().transpose()))
+                    .map(|result| self.compression.decompress_pair(result?))
+                    .pipe(Either::Left)
+            }
+            DatabaseKind::InMemory { map } => {
+                let map = map.lock().expect("in-memory database mutex is poisoned");
+                let end_pair = map.get_key_value(end);
+                let (mut below, _) = map.split(end);
+
+                if let Some((key, value)) = end_pair {
+                    below
+                        .insert(key.clone(), value.clone())
+                        .expect_none("end_pair should have been discarded by OrdMap::split");
+                }
+
+                let it = below.into_iter().rev().map(|(key, value)| {
+                    Ok((
+                        Cow::Owned(key.to_vec()),
+                        self.compression.decompress(value.as_ref())?,
+                    ))
+                });
+
+                it.pipe(Either::Right)
+            }
+        }
+        .pipe(Ok)
+    }
+
+    pub fn put(&self, key: impl AsRef<[u8]>, value: impl AsRef<[u8]>) -> Result<()> {
+        self.put_batch(core::iter::once((key, value)))
+    }
+
+    pub fn put_batch(
+        &self,
+        pairs: impl IntoIterator<Item = (impl AsRef<[u8]>, impl AsRef<[u8]>)>,
+    ) -> Result<()> {
+        match self.kind() {
+            DatabaseKind::Persistent {
+                database_name,
+                environment,
+                restart_tx,
+            } => {
+                let transaction = environment.begin_rw_txn()?;
+                let database = transaction.open_db(Some(database_name))?;
+
+                for (key, value) in pairs {
+                    let key = key.as_ref();
+                    let compressed = self.compression.compress(value.as_ref())?;
+                    transaction
+                        .put(database.dbi(), key, compressed, WriteFlags::default())
+                        .map_err(|error| handle_write_error(error, restart_tx.as_ref()))?;
+                }
+
+                transaction
+                    .commit()
+                    .map_err(|error| handle_write_error(error, restart_tx.as_ref()))?;
+            }
+            DatabaseKind::InMemory { map } => {
+                let mut map = map.lock().expect("in-memory database mutex is poisoned");
+                let mut new_map = map.clone();
+
+                for (key, value) in pairs {
+                    let key = key.as_ref().into();
+                    let compressed = self.compression.compress(value.as_ref())?.into();
+                    new_map.insert(key, compressed);
+                }
+
+                *map = new_map;
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Returns the first key-value pair whose key is less than or equal to `key`.
+    ///
+    /// Behaves like [`im::OrdMap::get_prev`].
+    ///
+    /// [`im::OrdMap::get_prev`]: https://docs.rs/im/15.1.0/im/ordmap/struct.OrdMap.html#method.get_prev
+    pub fn prev(&self, key: impl AsRef<[u8]>) -> Result<Option<(Vec<u8>, Vec<u8>)>> {
+        match self.kind() {
+            DatabaseKind::Persistent {
+                database_name,
+                environment,
+                restart_tx: _,
+            } => {
+                let transaction = environment.begin_ro_txn()?;
+                let database = transaction.open_db(Some(database_name))?;
+
+                let mut cursor = transaction.cursor(&database)?;
+
+                cursor
+                    .set_key(key.as_ref())
+                    .transpose()
+                    .or_else(|| cursor.prev().transpose())
+                    .transpose()?
+                    .map(|pair| self.compression.decompress_pair(pair))
+            }
+            DatabaseKind::InMemory { map } => map
+                .lock()
+                .expect("in-memory database mutex is poisoned")
+                .get_prev(key.as_ref())
+                .map(|(key, value)| Ok((key.to_vec(), self.compression.decompress(value)?))),
+        }
+        .transpose()
+    }
+
+    /// Returns the first key-value pair whose key is greater than or equal to `key`.
+    ///
+    /// Behaves like [`im::OrdMap::get_next`].
+    ///
+    /// [`im::OrdMap::get_next`]: https://docs.rs/im/15.1.0/im/ordmap/struct.OrdMap.html#method.get_next
+    pub fn next(&self, key: impl AsRef<[u8]>) -> Result<Option<(Vec<u8>, Vec<u8>)>> {
+        match self.kind() {
+            DatabaseKind::Persistent {
+                database_name,
+                environment,
+                restart_tx: _,
+            } => {
+                let transaction = environment.begin_ro_txn()?;
+                let database = transaction.open_db(Some(database_name))?;
+
+                let mut cursor = transaction.cursor(&database)?;
+
+                cursor
+                    .set_range(key.as_ref())?
+                    .map(|pair| self.compression.decompress_pair(pair))
+            }
+            DatabaseKind::InMemory { map } => map
+                .lock()
+                .expect("in-memory database mutex is poisoned")
+                .get_next(key.as_ref())
+                .map(|(key, value)| Ok((key.to_vec(), self.compression.decompress(value)?))),
+        }
+        .transpose()
+    }
+
+    const fn kind(&self) -> &DatabaseKind {
+        &self.kind
+    }
+}
+
+impl From<InMemoryMap> for Database {
+    fn from(map: InMemoryMap) -> Self {
+        Self {
+            kind: DatabaseKind::InMemory {
+                map: Mutex::new(map),
+            },
+            compression: Compression::Zstd,
+        }
+    }
+}
+
+enum DatabaseKind {
+    Persistent {
+        // TODO(Grandine Team): It should be possible to remove `database_name` by using the default
+        //                      database (`None`), but that would probably force users to resync.
+        database_name: String,
+        environment: Environment,
+        restart_tx: Option<UnboundedSender<RestartMessage>>,
+    },
+    InMemory {
+        // Various methods of `OrdMap` and `Database` clone the elements of this map,
+        // so they should be cheaply cloneable. This disqualifies `Vec<u8>` and `Box<[u8]>`.
+        //
+        // Various methods of `Database` return keys in the form of `Vec<u8>` or `Cow<[u8]>`.
+        // Converting between them and `Arc<[u8]>` is costly due to the reference count before data.
+        // Returning `Arc<[u8]>` from the methods would require a conversion in the persistent case
+        // because `libmdbx` cannot decode directly into `std::sync::Arc` or `triomphe::Arc`.
+        //
+        // `Bytes` can be cheaply converted to and from `Vec<u8>` if its capacity equals its length,
+        // but `Database` cannot benefit from that with its current API.
+        // Returning a `Vec<u8>` or `Cow<u8>` requires copying due to shared ownership.
+        // Writing requires copying due to the signature of `Database::put`.
+        //
+        // Some versions of `libmdbx` (including the one from `reth-libmdbx`) can decode into
+        // `lifetimed_bytes::Bytes`, which functions like `Cow<[u8]>`, but with the internal
+        // representation of `Bytes`. `lifetimed_bytes::Bytes` is necessarily distinct from
+        // `bytes::Bytes`, which makes it harder to use.
+        map: Mutex<InMemoryMap>,
+    },
+}
+
+#[derive(Debug, Error)]
+#[error("database directory path should be a valid Unicode string")]
+struct Error;
+
+pub type InMemoryMap = OrdMap<Arc<[u8]>, Arc<[u8]>>;
+
+fn handle_write_error(
+    error: libmdbx::Error,
+    restart_tx: Option<&UnboundedSender<RestartMessage>>,
+) -> libmdbx::Error {
+    if error == libmdbx::Error::MapFull {
+        if let Some(restart_tx) = restart_tx {
+            RestartMessage::StorageMapFull(error).send(restart_tx);
+        }
+    }
+
+    error
+}
