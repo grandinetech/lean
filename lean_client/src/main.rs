@@ -1,4 +1,5 @@
 #[cfg(not(target_env = "msvc"))]
+#[cfg(not(feature = "shadow-integration"))]
 #[global_allocator]
 static ALLOC: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 
@@ -418,9 +419,37 @@ struct Args {
 
     #[arg(long)]
     checkpoint_sync_url: Option<String>,
+
+    #[cfg(feature = "shadow-integration")]
+    #[command(flatten)]
+    shadow: ShadowOptions,
 }
 
-#[tokio::main]
+#[cfg(feature = "shadow-integration")]
+#[derive(clap::Args, Debug)]
+struct ShadowOptions {
+    #[arg(long, default_value_t = false)]
+    shadow_xmss_fake: bool,
+
+    #[arg(long)]
+    shadow_xmss_aggregate_signatures_rate: Option<f64>,
+
+    #[arg(long)]
+    shadow_xmss_verify_aggregated_signatures_rate: Option<f64>,
+
+    #[arg(long)]
+    shadow_xmss_merge_rate: Option<f64>,
+
+    #[arg(
+        long,
+        default_value_t = xmss::shadow_cost::DEFAULT_FAKE_PROOF_SIZE as u64,
+        value_parser = clap::value_parser!(u64).range(1..=524_288)
+    )]
+    shadow_xmss_fake_proof_size: u64,
+}
+
+#[cfg_attr(feature = "shadow-integration", tokio::main(flavor = "current_thread"))]
+#[cfg_attr(not(feature = "shadow-integration"), tokio::main)]
 async fn main() -> Result<()> {
     let rayon_threads = num_cpus::get().saturating_sub(3).max(1);
     xmss::configure_rayon_pool(rayon_threads);
@@ -438,10 +467,30 @@ async fn main() -> Result<()> {
     info!(
         "Starting grandine v{} ({})",
         env!("CARGO_PKG_VERSION"),
-        git_version::git_version!(args = ["--always", "--abbrev=8"], fallback = "unknown"),
+        git_version::git_version!(args = ["--always", "--abbrev=8"]),
     );
 
     let args = Args::parse();
+
+    #[cfg(feature = "shadow-integration")]
+    {
+        let s = &args.shadow;
+        info!(
+            fake = s.shadow_xmss_fake,
+            aggregate_rate = ?s.shadow_xmss_aggregate_signatures_rate,
+            verify_rate = ?s.shadow_xmss_verify_aggregated_signatures_rate,
+            merge_rate = ?s.shadow_xmss_merge_rate,
+            fake_proof_size = s.shadow_xmss_fake_proof_size,
+            "Applying Shadow XMSS sim-cost / fake-XMSS config"
+        );
+        xmss::shadow_cost::init(
+            s.shadow_xmss_fake,
+            s.shadow_xmss_aggregate_signatures_rate,
+            s.shadow_xmss_verify_aggregated_signatures_rate,
+            s.shadow_xmss_merge_rate,
+            s.shadow_xmss_fake_proof_size as usize,
+        );
+    }
 
     for feature in args.features {
         feature.enable();

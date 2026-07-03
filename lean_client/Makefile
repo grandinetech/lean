@@ -126,6 +126,39 @@ docker-local: ./target/x86_64-unknown-linux-gnu/release/lean_client
 		$(DOCKER_TAGS) \
 		.
 
+### Shadow-simulator support
+# `rust/patch/quinn-udp` is a vendored fallback-only build of quinn-udp so QUIC
+# runs under the Shadow simulator (which does not emulate sendmsg cmsg / GRO /
+# GSO / ECN). Applied only for the shadow-* targets via cargo's --config
+# override, so prod / devnet builds see the crates.io version.
+SHADOW_CONFIG := --config 'patch.crates-io."quinn-udp".path="rust/patch/quinn-udp"'
+SHADOW_FEATURES := --features shadow-integration
+
+.PHONY: shadow-build
+shadow-build:
+	cargo build --profile shadow $(SHADOW_FEATURES) $(SHADOW_CONFIG)
+
+.PHONY: shadow-x86_64-unknown-linux-gnu
+shadow-x86_64-unknown-linux-gnu:
+	CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS="-C target-cpu=x86-64-v3" \
+	LEAN_REPO_ROOT=$(LEAN_REPO_ROOT) cross build --bin lean_client --target x86_64-unknown-linux-gnu --profile shadow $(SHADOW_FEATURES) $(SHADOW_CONFIG)
+
+.PHONY: shadow-aarch64-unknown-linux-gnu
+shadow-aarch64-unknown-linux-gnu:
+	LEAN_REPO_ROOT=$(LEAN_REPO_ROOT) cross build --bin lean_client --target aarch64-unknown-linux-gnu --profile shadow $(SHADOW_FEATURES) $(SHADOW_CONFIG)
+
+.PHONY: shadow-docker-local
+shadow-docker-local: shadow-x86_64-unknown-linux-gnu
+	@mkdir -p ./bin/amd64
+	@cp ./target/x86_64-unknown-linux-gnu/shadow/lean_client ./bin/amd64/lean_client
+	docker build \
+		--file Dockerfile \
+		--build-arg COMMIT_SHA=$(COMMIT_SHA) \
+		--build-arg BUILD_DATE=$(BUILD_DATE) \
+		--build-arg GIT_BRANCH=$(GIT_BRANCH) \
+		$(DOCKER_TAGS) \
+		.
+
 .PHONY: help
 help:
 	@awk '/^## / { \

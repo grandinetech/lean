@@ -38,6 +38,22 @@ impl MultiMessageAggregate {
             bail!("multi-message aggregate requires at least one Type-1 component");
         }
 
+        #[cfg(feature = "shadow-integration")]
+        if crate::shadow_cost::fake_xmss() {
+            let merge_n = parts.len();
+            let count_bytes = merge_n.to_le_bytes();
+            let mut seed: Vec<&[u8]> = Vec::with_capacity(parts.len() + 1);
+            for (sig, _) in parts {
+                seed.push(sig.as_bytes());
+            }
+            seed.push(&count_bytes);
+            let bytes =
+                crate::shadow_cost::fill_fake_proof(crate::shadow_cost::fake_proof_size(), &seed);
+            crate::shadow_cost::sleep(crate::shadow_cost::merge_delay(merge_n));
+            let _ = log_inv_rate;
+            return Self::new(&bytes);
+        }
+
         let parts_lean = parts
             .iter()
             .map(|(sig, pks)| {
@@ -66,6 +82,11 @@ impl MultiMessageAggregate {
                 pubkeys_per_message.len(),
                 messages.len()
             );
+        }
+
+        #[cfg(feature = "shadow-integration")]
+        if crate::shadow_cost::fake_xmss() {
+            return Ok(());
         }
 
         let pubkeys_per_info = sorted_dedup_lean_pubkeys(pubkeys_per_message);
@@ -104,6 +125,17 @@ impl MultiMessageAggregate {
         log_inv_rate: usize,
     ) -> Result<AggregatedSignature> {
         setup_aggregation();
+
+        #[cfg(feature = "shadow-integration")]
+        if crate::shadow_cost::fake_xmss() {
+            let bytes = crate::shadow_cost::fill_fake_proof(
+                crate::shadow_cost::fake_proof_size(),
+                &[self.proof.as_bytes(), message.as_bytes()],
+            );
+            let _ = pubkeys_per_message;
+            let _ = log_inv_rate;
+            return AggregatedSignature::new(&bytes);
+        }
 
         let pubkeys_per_info = sorted_dedup_lean_pubkeys(pubkeys_per_message);
         let sig = MultiMessageAggregateSignature::decompress_without_pubkeys(

@@ -130,6 +130,24 @@ impl AggregatedSignature {
 
         let sig_count = public_keys.len();
 
+        #[cfg(feature = "shadow-integration")]
+        if crate::shadow_cost::fake_xmss() {
+            stop_and_discard(timer);
+            let slot_bytes = slot.to_le_bytes();
+            let count_bytes = sig_count.to_le_bytes();
+            let mut parts: Vec<&[u8]> = Vec::with_capacity(2 + children.len() + 1);
+            parts.push(message.as_bytes());
+            parts.push(&slot_bytes);
+            for (_, child) in children {
+                parts.push(child.0.as_bytes());
+            }
+            parts.push(&count_bytes);
+            let bytes =
+                crate::shadow_cost::fill_fake_proof(crate::shadow_cost::fake_proof_size(), &parts);
+            crate::shadow_cost::sleep(crate::shadow_cost::aggregate_delay(sig_count));
+            return Self::new(&bytes);
+        }
+
         let raw_xmss = public_keys
             .into_iter()
             .zip(signatures)
@@ -168,6 +186,15 @@ impl AggregatedSignature {
         slot: u32,
     ) -> Result<()> {
         setup_aggregation();
+
+        #[cfg(feature = "shadow-integration")]
+        if crate::shadow_cost::fake_xmss() {
+            let n = public_keys.into_iter().count();
+            crate::shadow_cost::sleep(crate::shadow_cost::verify_delay(n));
+            let _ = message;
+            let _ = slot;
+            return Ok(());
+        }
 
         let _timer = METRICS.get().map(|metrics| {
             metrics
@@ -223,6 +250,11 @@ impl AggregatedSignature {
     // todo(xmss): this is a function used only for testing. ideally, it should not exist
     pub fn is_empty(&self) -> bool {
         self.0.as_bytes().is_empty()
+    }
+
+    #[cfg(feature = "shadow-integration")]
+    pub(crate) fn as_bytes(&self) -> &[u8] {
+        self.0.as_bytes()
     }
 }
 
