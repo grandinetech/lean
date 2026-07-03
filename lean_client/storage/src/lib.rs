@@ -47,7 +47,7 @@ impl Storage {
                     shrink_threshold: None,
                     page_size: None,
                 })
-                .open_with_permissions(base, DatabaseMode::ReadWrite.permissions())?,
+                .open_with_permissions(base, 0o600)?,
         );
 
         let txn = environment.begin_rw_txn()?;
@@ -297,20 +297,20 @@ fn slot_of(key: &[u8]) -> u64 {
     u64::from_be_bytes(slot)
 }
 
-pub struct Database {
+struct Database {
     name: String,
     compression: Compression,
 }
 
 impl Database {
-    pub fn new(name: &str, compression: Compression) -> Self {
+    fn new(name: &str, compression: Compression) -> Self {
         Self {
             name: name.to_owned(),
             compression,
         }
     }
 
-    pub fn get<K: TransactionKind>(
+    fn get<K: TransactionKind>(
         &self,
         txn: &Transaction<K>,
         key: impl AsRef<[u8]>,
@@ -322,7 +322,7 @@ impl Database {
             .transpose()
     }
 
-    pub fn put(
+    fn put(
         &self,
         txn: &Transaction<RW>,
         key: impl AsRef<[u8]>,
@@ -334,7 +334,7 @@ impl Database {
         Ok(())
     }
 
-    pub fn for_each<K: TransactionKind>(
+    fn for_each<K: TransactionKind>(
         &self,
         txn: &Transaction<K>,
         mut f: impl FnMut(&[u8], &[u8]) -> Result<bool>,
@@ -352,7 +352,7 @@ impl Database {
         Ok(())
     }
 
-    pub fn delete_batch(
+    fn delete_batch(
         &self,
         txn: &Transaction<RW>,
         keys: impl IntoIterator<Item = impl AsRef<[u8]>>,
@@ -373,7 +373,7 @@ impl Database {
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum Compression {
+enum Compression {
     None,
     #[default]
     Lz4,
@@ -395,39 +395,6 @@ impl Compression {
             Self::Lz4 => Ok(lz4_flex::decompress_size_prepended(data)?),
             Self::Zstd => Ok(zstd::decode_all(data)?),
         }
-    }
-}
-
-#[derive(Clone, Copy)]
-pub enum DatabaseMode {
-    ReadOnly,
-    ReadWrite,
-}
-
-impl DatabaseMode {
-    #[must_use]
-    pub const fn is_read_only(self) -> bool {
-        matches!(self, Self::ReadOnly)
-    }
-
-    #[must_use]
-    pub const fn mode_permissions(self) -> u16 {
-        match self {
-            Self::ReadOnly => 0,
-            Self::ReadWrite => 0o600,
-        }
-    }
-
-    #[must_use]
-    #[cfg(target_os = "linux")]
-    pub fn permissions(self) -> u32 {
-        self.mode_permissions().into()
-    }
-
-    #[must_use]
-    #[cfg(not(target_os = "linux"))]
-    pub const fn permissions(self) -> u16 {
-        self.mode_permissions()
     }
 }
 

@@ -255,7 +255,6 @@ hex = "0.4.3"
 indexmap = "2"
 http-body-util = "0.1"
 http_api_utils = { git = "https://github.com/grandinetech/grandine", rev = "64afdee3c6be79fceffb66933dcb69a943f3f1ae" }
-im = "15"
 k256 = "0.13"
 rec_aggregation = { git = "https://github.com/leanEthereum/leanVM.git", rev = "e2592df4e30fdddbbf8ae26a333116c68cec7026" }
 backend = { git = "https://github.com/leanEthereum/leanVM.git", rev = "e2592df4e30fdddbbf8ae26a333116c68cec7026" }
@@ -299,9 +298,7 @@ snap = "1.1"
 ssz = { git = "https://github.com/grandinetech/grandine", package = "ssz", rev = "64afdee3c6be79fceffb66933dcb69a943f3f1ae" }
 ssz-types = "0.3"
 itertools = "0.14"
-tap = "1"
 tempfile = "3"
-test-case = "3"
 test-generator = "0.3.1"
 thiserror = "2"
 tikv-jemallocator = { version = "0.6", features = ["stats", "unprefixed_malloc_on_supported_platforms"] }
@@ -314,7 +311,6 @@ tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
 tree-hash = "0.4.0"
 try_from_iterator = { git = "https://github.com/grandinetech/grandine", package = "try_from_iterator", rev = "64afdee3c6be79fceffb66933dcb69a943f3f1ae" }
 typenum = "1.19"
-unwrap_none = "0.1"
 yamux = "0.12"
 zeroize = "1.8"
 zstd = "0.13.3"
