@@ -1,8 +1,4 @@
-use std::{
-    borrow::Cow,
-    path::Path,
-    sync::Arc,
-};
+use std::{borrow::Cow, cell::RefCell, collections::HashSet, path::Path, sync::Arc};
 
 use anyhow::Result;
 use bytesize::ByteSize;
@@ -10,17 +6,370 @@ use bytesize::ByteSize;
 use containers::{Block, Checkpoint, Slot, State};
 use ssz::{H256, SszReadDefault as _, SszWrite as _};
 
-use libmdbx::{
-    DatabaseFlags, Environment, Geometry, RW, Transaction, WriteFlags,
-};
+use libmdbx::{DatabaseFlags, Environment, Geometry, RW, Transaction, TransactionKind, WriteFlags};
+
+const BLOCKS_TABLE_NAME: &str = "blocks";
+const STATES_TABLE_NAME: &str = "states";
+const CHECKPOINTS_TABLE_NAME: &str = "checkpoints";
+const SLOT_INDEX_TABLE_NAME: &str = "slot_index";
+const STATE_ROOT_INDEX_TABLE_NAME: &str = "state_root_index";
+const BLOCKS_BY_SLOT_TABLE_NAME: &str = "blocks_by_slot";
+const STATES_BY_SLOT_TABLE_NAME: &str = "states_by_slot";
+
+const JUSTIFIED: u8 = 0;
+const FINALIZED: u8 = 1;
+const HEAD: u8 = 2;
+const GENESIS_TIME: u8 = 3;
 
 pub struct Storage {
     environment: Arc<Environment>,
+    transaction: RefCell<Option<Transaction<RW>>>,
     blocks: Database,
     states: Database,
     checkpoints: Database,
     slot_index: Database,
     state_root_index: Database,
+    blocks_by_slot: Database,
+    states_by_slot: Database,
+}
+
+impl Storage {
+    pub fn new(base: impl AsRef<Path>) -> Result<Self> {
+        let base = base.as_ref();
+        fs_err::create_dir_all(base)?;
+
+        let environment = Arc::new(
+            Environment::builder()
+                .set_max_dbs(7)
+                .set_geometry(Geometry {
+                    size: Some(..usize::try_from(ByteSize::gib(2).as_u64())?),
+                    growth_step: Some(isize::try_from(ByteSize::mib(256).as_u64())?),
+                    shrink_threshold: None,
+                    page_size: None,
+                })
+                .open_with_permissions(base, DatabaseMode::ReadWrite.permissions())?,
+        );
+
+        let txn = environment.begin_rw_txn()?;
+        for name in [
+            BLOCKS_TABLE_NAME,
+            STATES_TABLE_NAME,
+            CHECKPOINTS_TABLE_NAME,
+            SLOT_INDEX_TABLE_NAME,
+            STATE_ROOT_INDEX_TABLE_NAME,
+            BLOCKS_BY_SLOT_TABLE_NAME,
+            STATES_BY_SLOT_TABLE_NAME,
+        ] {
+            txn.create_db(Some(name), DatabaseFlags::default())?;
+        }
+        txn.commit()?;
+
+        Ok(Self {
+            blocks: Database::new(BLOCKS_TABLE_NAME, Compression::Lz4),
+            states: Database::new(STATES_TABLE_NAME, Compression::Zstd),
+            checkpoints: Database::new(CHECKPOINTS_TABLE_NAME, Compression::None),
+            slot_index: Database::new(SLOT_INDEX_TABLE_NAME, Compression::None),
+            state_root_index: Database::new(STATE_ROOT_INDEX_TABLE_NAME, Compression::None),
+            blocks_by_slot: Database::new(BLOCKS_BY_SLOT_TABLE_NAME, Compression::None),
+            states_by_slot: Database::new(STATES_BY_SLOT_TABLE_NAME, Compression::None),
+            environment,
+            transaction: RefCell::new(None),
+        })
+    }
+
+    pub fn batch_write(&self, f: impl FnOnce() -> Result<()>) -> Result<()> {
+        let txn = self.environment.begin_rw_txn()?;
+        *self.transaction.borrow_mut() = Some(txn);
+
+        let result = f();
+
+        let txn = self
+            .transaction
+            .borrow_mut()
+            .take()
+            .expect("batch_write installed the ambient transaction");
+
+        match result {
+            Ok(()) => {
+                txn.commit()?;
+                Ok(())
+            }
+            Err(error) => {
+                drop(txn);
+                Err(error)
+            }
+        }
+    }
+
+    fn write<R>(&self, f: impl FnOnce(&Transaction<RW>) -> Result<R>) -> Result<R> {
+        if let Some(txn) = self.transaction.borrow().as_ref() {
+            return f(txn);
+        }
+        let txn = self.environment.begin_rw_txn()?;
+        let result = f(&txn)?;
+        txn.commit()?;
+        Ok(result)
+    }
+
+    fn read_bytes(&self, db: &Database, key: impl AsRef<[u8]>) -> Result<Option<Vec<u8>>> {
+        if let Some(txn) = self.transaction.borrow().as_ref() {
+            return db.get(txn, key);
+        }
+        let txn = self.environment.begin_ro_txn()?;
+        let bytes = db.get(&txn, key)?;
+        txn.commit()?;
+        Ok(bytes)
+    }
+
+    pub fn get_block(&self, root: H256) -> Result<Option<Block>> {
+        match self.read_bytes(&self.blocks, root)? {
+            Some(bytes) => Ok(Some(Block::from_ssz_default(&bytes)?)),
+            None => Ok(None),
+        }
+    }
+
+    pub fn put_block(&self, block: Block, root: H256) -> Result<()> {
+        let block_bytes = block.to_ssz()?;
+        let index_key = slot_root_key(block.slot, root);
+        self.write(|txn| {
+            self.blocks.put(txn, root, block_bytes)?;
+            self.blocks_by_slot.put(txn, index_key, b"")?;
+            Ok(())
+        })
+    }
+
+    pub fn get_state(&self, root: H256) -> Result<Option<State>> {
+        match self.read_bytes(&self.states, root)? {
+            Some(bytes) => Ok(Some(State::from_ssz_default(&bytes)?)),
+            None => Ok(None),
+        }
+    }
+
+    pub fn put_state(&self, state: State, root: H256) -> Result<()> {
+        let state_bytes = state.to_ssz()?;
+        let index_key = slot_root_key(state.slot, root);
+        self.write(|txn| {
+            self.states.put(txn, root, state_bytes)?;
+            self.states_by_slot.put(txn, index_key, b"")?;
+            Ok(())
+        })
+    }
+
+    pub fn get_justified_checkpoint(&self) -> Result<Option<Checkpoint>> {
+        match self.read_bytes(&self.checkpoints, [JUSTIFIED])? {
+            Some(bytes) => Ok(Some(Checkpoint::from_ssz_default(&bytes)?)),
+            None => Ok(None),
+        }
+    }
+
+    pub fn put_justified_checkpoint(&self, checkpoint: Checkpoint) -> Result<()> {
+        let checkpoint_bytes = checkpoint.to_ssz()?;
+        self.write(|txn| self.checkpoints.put(txn, [JUSTIFIED], checkpoint_bytes))
+    }
+
+    pub fn get_finalized_checkpoint(&self) -> Result<Option<Checkpoint>> {
+        match self.read_bytes(&self.checkpoints, [FINALIZED])? {
+            Some(bytes) => Ok(Some(Checkpoint::from_ssz_default(&bytes)?)),
+            None => Ok(None),
+        }
+    }
+
+    pub fn put_finalized_checkpoint(&self, checkpoint: Checkpoint) -> Result<()> {
+        let checkpoint_bytes = checkpoint.to_ssz()?;
+        self.write(|txn| self.checkpoints.put(txn, [FINALIZED], checkpoint_bytes))
+    }
+
+    pub fn get_head_root(&self) -> Result<Option<H256>> {
+        match self.read_bytes(&self.checkpoints, [HEAD])? {
+            Some(bytes) => Ok(Some(H256::from_slice(&bytes))),
+            None => Ok(None),
+        }
+    }
+
+    pub fn put_head_root(&self, root: H256) -> Result<()> {
+        self.write(|txn| self.checkpoints.put(txn, [HEAD], root))
+    }
+
+    pub fn get_block_root_by_slot(&self, slot: Slot) -> Result<Option<H256>> {
+        match self.read_bytes(&self.slot_index, slot.0.to_be_bytes())? {
+            Some(bytes) => Ok(Some(H256::from_slice(&bytes))),
+            None => Ok(None),
+        }
+    }
+
+    pub fn put_block_root_by_slot(&self, slot: Slot, root: H256) -> Result<()> {
+        let slot_bytes = slot.0.to_be_bytes();
+        self.write(|txn| self.slot_index.put(txn, slot_bytes, root))
+    }
+
+    pub fn get_block_root_by_state_root(&self, state_root: H256) -> Result<Option<H256>> {
+        match self.read_bytes(&self.state_root_index, state_root)? {
+            Some(bytes) => Ok(Some(H256::from_slice(&bytes))),
+            None => Ok(None),
+        }
+    }
+
+    pub fn put_block_root_by_state_root(&self, state_root: H256, block_root: H256) -> Result<()> {
+        self.write(|txn| self.state_root_index.put(txn, state_root, block_root))
+    }
+
+    pub fn get_genesis_time(&self) -> Result<Option<u64>> {
+        match self.read_bytes(&self.checkpoints, [GENESIS_TIME])? {
+            Some(bytes) => Ok(Some(u64::from_ssz_default(&bytes)?)),
+            None => Ok(None),
+        }
+    }
+
+    pub fn put_genesis_time(&self, genesis_time: u64) -> Result<()> {
+        let genesis_time_bytes = genesis_time.to_ssz()?;
+        self.write(|txn| {
+            self.checkpoints
+                .put(txn, [GENESIS_TIME], genesis_time_bytes)
+        })
+    }
+
+    pub fn prune_before_slot(&self, slot: Slot, keep_roots: &HashSet<H256>) -> Result<usize> {
+        let bound = slot.0;
+        self.write(|txn| {
+            let mut block_roots: Vec<H256> = Vec::new();
+            let mut block_index_keys: Vec<Vec<u8>> = Vec::new();
+            self.blocks_by_slot.for_each(txn, |key, _value| {
+                if slot_of(key) >= bound {
+                    return Ok(false);
+                }
+                let root = H256::from_slice(&key[8..]);
+                if !keep_roots.contains(&root) {
+                    block_roots.push(root);
+                    block_index_keys.push(key.to_vec());
+                }
+                Ok(true)
+            })?;
+
+            let mut state_roots: Vec<H256> = Vec::new();
+            let mut state_index_keys: Vec<Vec<u8>> = Vec::new();
+            self.states_by_slot.for_each(txn, |key, _value| {
+                if slot_of(key) >= bound {
+                    return Ok(false);
+                }
+                let root = H256::from_slice(&key[8..]);
+                if !keep_roots.contains(&root) {
+                    state_roots.push(root);
+                    state_index_keys.push(key.to_vec());
+                }
+                Ok(true)
+            })?;
+
+            let mut slot_index_keys: Vec<Vec<u8>> = Vec::new();
+            self.slot_index.for_each(txn, |key, value| {
+                if slot_of(key) >= bound {
+                    return Ok(false);
+                }
+                let canonical_root = H256::from_slice(value);
+                if !keep_roots.contains(&canonical_root) {
+                    slot_index_keys.push(key.to_vec());
+                }
+                Ok(true)
+            })?;
+
+            let mut removed = 0;
+            removed += self.blocks.delete_batch(txn, &block_roots)?;
+            removed += self.blocks_by_slot.delete_batch(txn, &block_index_keys)?;
+            removed += self.slot_index.delete_batch(txn, &slot_index_keys)?;
+            removed += self.states.delete_batch(txn, &state_roots)?;
+            removed += self.states_by_slot.delete_batch(txn, &state_index_keys)?;
+            removed += self.state_root_index.delete_batch(txn, &state_roots)?;
+
+            Ok(removed)
+        })
+    }
+}
+
+fn slot_root_key(slot: Slot, root: H256) -> [u8; 40] {
+    let mut key = [0u8; 40];
+    key[..8].copy_from_slice(&slot.0.to_be_bytes());
+    key[8..].copy_from_slice(root.as_ref());
+    key
+}
+
+fn slot_of(key: &[u8]) -> u64 {
+    let mut slot = [0u8; 8];
+    slot.copy_from_slice(&key[..8]);
+    u64::from_be_bytes(slot)
+}
+
+pub struct Database {
+    name: String,
+    compression: Compression,
+}
+
+impl Database {
+    pub fn new(name: &str, compression: Compression) -> Self {
+        Self {
+            name: name.to_owned(),
+            compression,
+        }
+    }
+
+    pub fn get<K: TransactionKind>(
+        &self,
+        txn: &Transaction<K>,
+        key: impl AsRef<[u8]>,
+    ) -> Result<Option<Vec<u8>>> {
+        let db = txn.open_db(Some(&self.name))?;
+
+        txn.get::<Cow<_>>(db.dbi(), key.as_ref())?
+            .map(|compressed| self.compression.decompress(&compressed))
+            .transpose()
+    }
+
+    pub fn put(
+        &self,
+        txn: &Transaction<RW>,
+        key: impl AsRef<[u8]>,
+        value: impl AsRef<[u8]>,
+    ) -> Result<()> {
+        let db = txn.open_db(Some(&self.name))?;
+        let compressed = self.compression.compress(value.as_ref())?;
+        txn.put(db.dbi(), key.as_ref(), compressed, WriteFlags::default())?;
+        Ok(())
+    }
+
+    pub fn for_each<K: TransactionKind>(
+        &self,
+        txn: &Transaction<K>,
+        mut f: impl FnMut(&[u8], &[u8]) -> Result<bool>,
+    ) -> Result<()> {
+        let db = txn.open_db(Some(&self.name))?;
+        let mut cursor = txn.cursor(&db)?;
+
+        while let Some((key, value)) = cursor.next::<Cow<[u8]>, Cow<[u8]>>()? {
+            let value = self.compression.decompress(&value)?;
+            if !f(key.as_ref(), &value)? {
+                break;
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn delete_batch(
+        &self,
+        txn: &Transaction<RW>,
+        keys: impl IntoIterator<Item = impl AsRef<[u8]>>,
+    ) -> Result<usize> {
+        let db = txn.open_db(Some(&self.name))?;
+        let mut cursor = txn.cursor(&db)?;
+
+        let mut deleted = 0;
+        for key in keys {
+            if cursor.set::<()>(key.as_ref())?.is_some() {
+                cursor.del(WriteFlags::default())?;
+                deleted += 1;
+            }
+        }
+
+        Ok(deleted)
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -79,197 +428,6 @@ impl DatabaseMode {
     #[cfg(not(target_os = "linux"))]
     pub const fn permissions(self) -> u16 {
         self.mode_permissions()
-    }
-}
-
-pub struct Database {
-    environment: Arc<Environment>,
-    name: String,
-    compression: Compression,
-}
-
-impl Database {
-    pub fn new(env: Arc<Environment>, name: &str, compression: Compression) -> Result<Database> {
-        Ok(Self {
-            environment: env,
-            name: name.to_owned(),
-            compression,
-        })
-    }
-
-    pub fn get(&self, key: impl AsRef<[u8]>) -> Result<Option<Vec<u8>>> {
-        let txn = self.environment.begin_ro_txn()?;
-        let db = txn.open_db(Some(&self.name))?;
-
-        txn.get::<Cow<_>>(db.dbi(), key.as_ref())?
-            .map(|compressed| self.compression.decompress(&compressed))
-            .transpose()
-    }
-
-    pub fn put(&self, key: impl AsRef<[u8]>, value: impl AsRef<[u8]>) -> Result<()> {
-        let txn = self.environment.begin_rw_txn()?;
-        self.put_in(&txn, key, value)?;
-        txn.commit()?;
-        Ok(())
-    }
-
-    fn put_in(
-        &self,
-        txn: &Transaction<RW>,
-        key: impl AsRef<[u8]>,
-        value: impl AsRef<[u8]>,
-    ) -> Result<()> {
-        let db = txn.open_db(Some(&self.name))?;
-        let compressed = self.compression.compress(value.as_ref())?;
-        txn.put(db.dbi(), key.as_ref(), compressed, WriteFlags::default())?;
-        Ok(())
-    }
-}
-
-impl Storage {
-    pub fn new(base: impl AsRef<Path>) -> Result<Self> {
-        let base = base.as_ref();
-        fs_err::create_dir_all(base)?;
-
-        let environment = Arc::new(
-            Environment::builder()
-                .set_max_dbs(5)
-                .set_geometry(Geometry {
-                    size: Some(..usize::try_from(ByteSize::gib(2).as_u64())?),
-                    growth_step: Some(isize::try_from(ByteSize::mib(256).as_u64())?),
-                    shrink_threshold: None,
-                    page_size: None,
-                })
-                .open_with_permissions(base, DatabaseMode::ReadWrite.permissions())?,
-        );
-
-        let txn = environment.begin_rw_txn()?;
-        for name in [
-            "blocks",
-            "states",
-            "checkpoints",
-            "slot_index",
-            "state_root_index",
-        ] {
-            txn.create_db(Some(name), DatabaseFlags::default())?;
-        }
-        txn.commit()?;
-
-        Ok(Self {
-            blocks: Database::new(environment.clone(), "blocks", Compression::Lz4)?,
-            states: Database::new(environment.clone(), "states", Compression::Zstd)?,
-            checkpoints: Database::new(environment.clone(), "checkpoints", Compression::None)?,
-            slot_index: Database::new(environment.clone(), "slot_index", Compression::None)?,
-            state_root_index: Database::new(
-                environment.clone(),
-                "state_root_index",
-                Compression::None,
-            )?,
-            environment,
-        })
-    }
-
-    pub fn get_block(&self, root: H256) -> Result<Option<Block>> {
-        match self.blocks.get(root)? {
-            Some(block_bytes) => Ok(Some(Block::from_ssz_default(&block_bytes)?)),
-            None => Ok(None),
-        }
-    }
-
-    pub fn put_block(&self, block: Block, root: H256) -> Result<()> {
-        let block_bytes = block.to_ssz()?;
-        self.blocks.put(root, block_bytes)?;
-        Ok(())
-    }
-
-    pub fn get_state(&self, root: H256) -> Result<Option<State>> {
-        match self.states.get(root)? {
-            Some(state_bytes) => Ok(Some(State::from_ssz_default(&state_bytes)?)),
-            None => Ok(None),
-        }
-    }
-
-    pub fn put_state(&self, state: State, root: H256) -> Result<()> {
-        let state_bytes = state.to_ssz()?;
-        self.states.put(root, state_bytes)?;
-        Ok(())
-    }
-
-    pub fn get_justified_checkpoint(&self) -> Result<Option<Checkpoint>> {
-        match self.checkpoints.get("justified")? {
-            Some(checkpoint_bytes) => Ok(Some(Checkpoint::from_ssz_default(&checkpoint_bytes)?)),
-            None => Ok(None),
-        }
-    }
-
-    pub fn put_justified_checkpoint(&self, checkpoint: Checkpoint) -> Result<()> {
-        let checkpoint_bytes = checkpoint.to_ssz()?;
-        self.checkpoints.put("justified", checkpoint_bytes)?;
-        Ok(())
-    }
-
-    pub fn get_finalized_checkpoint(&self) -> Result<Option<Checkpoint>> {
-        match self.checkpoints.get("finalized")? {
-            Some(checkpoint_bytes) => Ok(Some(Checkpoint::from_ssz_default(&checkpoint_bytes)?)),
-            None => Ok(None),
-        }
-    }
-
-    pub fn put_finalized_checkpoint(&self, checkpoint: Checkpoint) -> Result<()> {
-        let checkpoint_bytes = checkpoint.to_ssz()?;
-        self.checkpoints.put("finalized", checkpoint_bytes)?;
-        Ok(())
-    }
-
-    pub fn get_head_root(&self) -> Result<Option<H256>> {
-        match self.checkpoints.get("head")? {
-            Some(head_root_bytes) => Ok(Some(H256::from_slice(&head_root_bytes))),
-            None => Ok(None),
-        }
-    }
-
-    pub fn put_head_root(&self, root: H256) -> Result<()> {
-        self.checkpoints.put("head", root)?;
-        Ok(())
-    }
-
-    pub fn get_block_root_by_slot(&self, slot: Slot) -> Result<Option<H256>> {
-        let slot_bytes = slot.0.to_be_bytes();
-        match self.slot_index.get(slot_bytes)? {
-            Some(block_root_bytes) => Ok(Some(H256::from_slice(&block_root_bytes))),
-            None => Ok(None),
-        }
-    }
-
-    pub fn put_block_root_by_slot(&self, slot: Slot, root: H256) -> Result<()> {
-        let slot_bytes = slot.0.to_be_bytes();
-        self.slot_index.put(slot_bytes, root)?;
-        Ok(())
-    }
-
-    pub fn get_block_root_by_state_root(&self, state_root: H256) -> Result<Option<H256>> {
-        match self.state_root_index.get(state_root)? {
-            Some(block_root_bytes) => Ok(Some(H256::from_slice(&block_root_bytes))),
-            None => Ok(None),
-        }
-    }
-
-    pub fn put_block_root_by_state_root(&self, state_root: H256, block_root: H256) -> Result<()> {
-        self.state_root_index.put(state_root, block_root)?;
-        Ok(())
-    }
-
-    pub fn get_genesis_time(&self) -> Result<Option<u64>> {
-        match self.checkpoints.get("genesis_time")? {
-            Some(genesis_time_bytes) => Ok(Some(u64::from_ssz_default(&genesis_time_bytes)?)),
-            None => Ok(None),
-        }
-    }
-
-    pub fn put_genesis_time(&self, genesis_time: u64) -> Result<()> {
-        let genesis_time_bytes = genesis_time.to_ssz()?;
-        self.checkpoints.put("genesis_time", genesis_time_bytes)?;
-        Ok(())
     }
 }
 
@@ -494,7 +652,6 @@ mod tests {
         assert_eq!(storage.get_genesis_time().unwrap().unwrap(), genesis_time);
     }
 
-
     #[test]
     fn block_root_by_slot_returns_none_when_absent() {
         let (_dir, storage) = storage();
@@ -532,7 +689,6 @@ mod tests {
             );
         }
     }
-
 
     #[test]
     fn block_root_by_state_root_returns_none_when_absent() {
@@ -585,5 +741,219 @@ mod tests {
                 *block_root,
             );
         }
+    }
+
+    fn state_at_slot(slot: u64) -> State {
+        let mut state = State::generate_genesis(1_234, 3);
+        state.slot = Slot(slot);
+        state
+    }
+
+    #[test]
+    fn prune_removes_blocks_below_slot_and_keeps_the_rest() {
+        let (_dir, storage) = storage();
+        for i in 0..10u8 {
+            storage.put_block(sample_block(i), h256(i)).unwrap();
+        }
+
+        let removed = storage.prune_before_slot(Slot(5), &HashSet::new()).unwrap();
+        assert_eq!(removed, 10);
+
+        for i in 0..5u8 {
+            assert!(storage.get_block(h256(i)).unwrap().is_none());
+        }
+        for i in 5..10u8 {
+            assert!(storage.get_block(h256(i)).unwrap().is_some());
+        }
+    }
+
+    #[test]
+    fn prune_keeps_frozen_block_root() {
+        let (_dir, storage) = storage();
+        for i in 0..5u8 {
+            storage.put_block(sample_block(i), h256(i)).unwrap();
+        }
+
+        let mut keep = HashSet::new();
+        keep.insert(h256(2));
+
+        storage.prune_before_slot(Slot(5), &keep).unwrap();
+
+        assert!(storage.get_block(h256(2)).unwrap().is_some());
+        for i in [0u8, 1, 3, 4] {
+            assert!(storage.get_block(h256(i)).unwrap().is_none());
+        }
+    }
+
+    #[test]
+    fn prune_removes_forked_blocks_at_same_slot() {
+        let (_dir, storage) = storage();
+        let mut fork = sample_block(2);
+        fork.proposer_index = 99;
+        storage.put_block(sample_block(2), h256(20)).unwrap();
+        storage.put_block(fork, h256(21)).unwrap();
+
+        let removed = storage.prune_before_slot(Slot(5), &HashSet::new()).unwrap();
+
+        assert_eq!(removed, 4);
+        assert!(storage.get_block(h256(20)).unwrap().is_none());
+        assert!(storage.get_block(h256(21)).unwrap().is_none());
+    }
+
+    #[test]
+    fn prune_cleans_slot_index_unless_frozen() {
+        let (_dir, storage) = storage();
+        storage.put_block(sample_block(2), h256(2)).unwrap();
+        storage.put_block_root_by_slot(Slot(2), h256(2)).unwrap();
+        storage.put_block(sample_block(3), h256(3)).unwrap();
+        storage.put_block_root_by_slot(Slot(3), h256(3)).unwrap();
+
+        let mut keep = HashSet::new();
+        keep.insert(h256(3));
+
+        storage.prune_before_slot(Slot(5), &keep).unwrap();
+
+        assert!(storage.get_block_root_by_slot(Slot(2)).unwrap().is_none());
+        assert_eq!(
+            storage.get_block_root_by_slot(Slot(3)).unwrap().unwrap(),
+            h256(3),
+        );
+    }
+
+    #[test]
+    fn prune_removes_states_below_slot_and_keeps_frozen() {
+        let (_dir, storage) = storage();
+        storage.put_state(state_at_slot(1), h256(1)).unwrap();
+        storage.put_state(state_at_slot(2), h256(2)).unwrap();
+        storage
+            .put_block_root_by_state_root(h256(1), h256(101))
+            .unwrap();
+        storage
+            .put_block_root_by_state_root(h256(2), h256(102))
+            .unwrap();
+
+        let mut keep = HashSet::new();
+        keep.insert(h256(2));
+
+        storage.prune_before_slot(Slot(5), &keep).unwrap();
+
+        assert!(storage.get_state(h256(1)).unwrap().is_none());
+        assert!(storage.get_state(h256(2)).unwrap().is_some());
+        assert!(
+            storage
+                .get_block_root_by_state_root(h256(1))
+                .unwrap()
+                .is_none()
+        );
+        assert_eq!(
+            storage
+                .get_block_root_by_state_root(h256(2))
+                .unwrap()
+                .unwrap(),
+            h256(102),
+        );
+    }
+
+    #[test]
+    fn prune_protection_is_per_entity() {
+        let (_dir, storage) = storage();
+        storage.put_block(sample_block(1), h256(1)).unwrap();
+        storage.put_state(state_at_slot(1), h256(1)).unwrap();
+
+        let mut keep = HashSet::new();
+        keep.insert(h256(1));
+
+        storage.prune_before_slot(Slot(5), &keep).unwrap();
+
+        assert!(storage.get_block(h256(1)).unwrap().is_some());
+        assert!(storage.get_state(h256(1)).unwrap().is_some());
+    }
+
+    #[test]
+    fn prune_below_lowest_slot_is_a_noop() {
+        let (_dir, storage) = storage();
+        for i in 0..5u8 {
+            storage.put_block(sample_block(i), h256(i)).unwrap();
+        }
+
+        let removed = storage.prune_before_slot(Slot(0), &HashSet::new()).unwrap();
+        assert_eq!(removed, 0);
+        for i in 0..5u8 {
+            assert!(storage.get_block(h256(i)).unwrap().is_some());
+        }
+    }
+
+    #[test]
+    fn batch_write_commits_all_on_success() {
+        let (_dir, storage) = storage();
+
+        storage
+            .batch_write(|| {
+                storage.put_block(sample_block(1), h256(1))?;
+                storage.put_state(state_at_slot(1), h256(2))?;
+                storage.put_head_root(h256(3))?;
+                Ok(())
+            })
+            .unwrap();
+
+        assert!(storage.get_block(h256(1)).unwrap().is_some());
+        assert!(storage.get_state(h256(2)).unwrap().is_some());
+        assert_eq!(storage.get_head_root().unwrap().unwrap(), h256(3));
+    }
+
+    #[test]
+    fn batch_write_rolls_back_every_write_on_error() {
+        let (_dir, storage) = storage();
+
+        let result = storage.batch_write(|| {
+            storage.put_block(sample_block(1), h256(1))?;
+            storage.put_state(state_at_slot(1), h256(2))?;
+            Err(anyhow::anyhow!("intentional failure"))
+        });
+
+        assert!(result.is_err());
+        assert!(storage.get_block(h256(1)).unwrap().is_none());
+        assert!(storage.get_state(h256(2)).unwrap().is_none());
+    }
+
+    #[test]
+    fn storage_is_usable_after_batch_write() {
+        let (_dir, storage) = storage();
+
+        storage
+            .batch_write(|| storage.put_block(sample_block(1), h256(1)))
+            .unwrap();
+
+        storage.put_block(sample_block(2), h256(2)).unwrap();
+
+        assert!(storage.get_block(h256(1)).unwrap().is_some());
+        assert!(storage.get_block(h256(2)).unwrap().is_some());
+    }
+
+    #[test]
+    fn storage_is_usable_after_failed_batch_write() {
+        let (_dir, storage) = storage();
+
+        assert!(
+            storage
+                .batch_write(|| Err(anyhow::anyhow!("boom")))
+                .is_err()
+        );
+
+        storage.put_block(sample_block(5), h256(5)).unwrap();
+        assert!(storage.get_block(h256(5)).unwrap().is_some());
+    }
+
+    #[test]
+    fn batch_write_reads_see_pending_writes() {
+        let (_dir, storage) = storage();
+
+        storage
+            .batch_write(|| {
+                storage.put_block(sample_block(7), h256(7)).unwrap();
+                assert!(storage.get_block(h256(7)).unwrap().is_some());
+                Ok(())
+            })
+            .unwrap();
     }
 }

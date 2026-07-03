@@ -7,20 +7,13 @@ anyhow = { workspace = true }
 bytesize = { workspace = true }
 containers = { workspace = true }
 fs-err = { workspace = true }
-futures = { workspace = true }
-im = { workspace = true }
-itertools = { workspace = true }
 libmdbx = { workspace = true }
 lz4_flex = { workspace = true }
 ssz = { workspace = true }
-tap = { workspace = true }
-thiserror = { workspace = true }
-unwrap_none = { workspace = true }
 zstd = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }
-test-case = { workspace = true }
 
 [lints]
 workspace = true
