@@ -1,40 +1,176 @@
-mod database;
+use std::{
+    borrow::Cow,
+    path::Path,
+    sync::Arc,
+};
 
-// Dev-dependency reserved for parametrized tests we haven't written yet.
-#[cfg(test)]
-use ::test_case as _;
-
-use std::path::Path;
-
-use crate::database::{Compression, Database, DatabaseMode};
 use anyhow::Result;
 use bytesize::ByteSize;
 
 use containers::{Block, Checkpoint, Slot, State};
 use ssz::{H256, SszReadDefault as _, SszWrite as _};
 
+use libmdbx::{
+    DatabaseFlags, Environment, Geometry, RW, Transaction, WriteFlags,
+};
+
 pub struct Storage {
-    blocks: Blocks,
-    states: States,
-    checkpoints: Checkpoints,
-    slot_index: SlotIndex,
-    state_root_index: StateRootIndex,
+    environment: Arc<Environment>,
+    blocks: Database,
+    states: Database,
+    checkpoints: Database,
+    slot_index: Database,
+    state_root_index: Database,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Compression {
+    None,
+    #[default]
+    Lz4,
+    Zstd,
+}
+
+impl Compression {
+    fn compress(self, data: &[u8]) -> Result<Vec<u8>> {
+        match self {
+            Self::None => Ok(data.to_vec()),
+            Self::Lz4 => Ok(lz4_flex::compress_prepend_size(data)),
+            Self::Zstd => Ok(zstd::encode_all(data, 3)?),
+        }
+    }
+
+    fn decompress(self, data: &[u8]) -> Result<Vec<u8>> {
+        match self {
+            Self::None => Ok(data.to_vec()),
+            Self::Lz4 => Ok(lz4_flex::decompress_size_prepended(data)?),
+            Self::Zstd => Ok(zstd::decode_all(data)?),
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum DatabaseMode {
+    ReadOnly,
+    ReadWrite,
+}
+
+impl DatabaseMode {
+    #[must_use]
+    pub const fn is_read_only(self) -> bool {
+        matches!(self, Self::ReadOnly)
+    }
+
+    #[must_use]
+    pub const fn mode_permissions(self) -> u16 {
+        match self {
+            Self::ReadOnly => 0,
+            Self::ReadWrite => 0o600,
+        }
+    }
+
+    #[must_use]
+    #[cfg(target_os = "linux")]
+    pub fn permissions(self) -> u32 {
+        self.mode_permissions().into()
+    }
+
+    #[must_use]
+    #[cfg(not(target_os = "linux"))]
+    pub const fn permissions(self) -> u16 {
+        self.mode_permissions()
+    }
+}
+
+pub struct Database {
+    environment: Arc<Environment>,
+    name: String,
+    compression: Compression,
+}
+
+impl Database {
+    pub fn new(env: Arc<Environment>, name: &str, compression: Compression) -> Result<Database> {
+        Ok(Self {
+            environment: env,
+            name: name.to_owned(),
+            compression,
+        })
+    }
+
+    pub fn get(&self, key: impl AsRef<[u8]>) -> Result<Option<Vec<u8>>> {
+        let txn = self.environment.begin_ro_txn()?;
+        let db = txn.open_db(Some(&self.name))?;
+
+        txn.get::<Cow<_>>(db.dbi(), key.as_ref())?
+            .map(|compressed| self.compression.decompress(&compressed))
+            .transpose()
+    }
+
+    pub fn put(&self, key: impl AsRef<[u8]>, value: impl AsRef<[u8]>) -> Result<()> {
+        let txn = self.environment.begin_rw_txn()?;
+        self.put_in(&txn, key, value)?;
+        txn.commit()?;
+        Ok(())
+    }
+
+    fn put_in(
+        &self,
+        txn: &Transaction<RW>,
+        key: impl AsRef<[u8]>,
+        value: impl AsRef<[u8]>,
+    ) -> Result<()> {
+        let db = txn.open_db(Some(&self.name))?;
+        let compressed = self.compression.compress(value.as_ref())?;
+        txn.put(db.dbi(), key.as_ref(), compressed, WriteFlags::default())?;
+        Ok(())
+    }
 }
 
 impl Storage {
     pub fn new(base: impl AsRef<Path>) -> Result<Self> {
         let base = base.as_ref();
+        fs_err::create_dir_all(base)?;
+
+        let environment = Arc::new(
+            Environment::builder()
+                .set_max_dbs(5)
+                .set_geometry(Geometry {
+                    size: Some(..usize::try_from(ByteSize::gib(2).as_u64())?),
+                    growth_step: Some(isize::try_from(ByteSize::mib(256).as_u64())?),
+                    shrink_threshold: None,
+                    page_size: None,
+                })
+                .open_with_permissions(base, DatabaseMode::ReadWrite.permissions())?,
+        );
+
+        let txn = environment.begin_rw_txn()?;
+        for name in [
+            "blocks",
+            "states",
+            "checkpoints",
+            "slot_index",
+            "state_root_index",
+        ] {
+            txn.create_db(Some(name), DatabaseFlags::default())?;
+        }
+        txn.commit()?;
+
         Ok(Self {
-            blocks: Blocks::new(base)?,
-            states: States::new(base)?,
-            checkpoints: Checkpoints::new(base)?,
-            slot_index: SlotIndex::new(base)?,
-            state_root_index: StateRootIndex::new(base)?,
+            blocks: Database::new(environment.clone(), "blocks", Compression::Lz4)?,
+            states: Database::new(environment.clone(), "states", Compression::Zstd)?,
+            checkpoints: Database::new(environment.clone(), "checkpoints", Compression::None)?,
+            slot_index: Database::new(environment.clone(), "slot_index", Compression::None)?,
+            state_root_index: Database::new(
+                environment.clone(),
+                "state_root_index",
+                Compression::None,
+            )?,
+            environment,
         })
     }
 
     pub fn get_block(&self, root: H256) -> Result<Option<Block>> {
-        match self.blocks.0.get(root)? {
+        match self.blocks.get(root)? {
             Some(block_bytes) => Ok(Some(Block::from_ssz_default(&block_bytes)?)),
             None => Ok(None),
         }
@@ -42,12 +178,12 @@ impl Storage {
 
     pub fn put_block(&self, block: Block, root: H256) -> Result<()> {
         let block_bytes = block.to_ssz()?;
-        self.blocks.0.put(root, block_bytes)?;
+        self.blocks.put(root, block_bytes)?;
         Ok(())
     }
 
     pub fn get_state(&self, root: H256) -> Result<Option<State>> {
-        match self.states.0.get(root)? {
+        match self.states.get(root)? {
             Some(state_bytes) => Ok(Some(State::from_ssz_default(&state_bytes)?)),
             None => Ok(None),
         }
@@ -55,12 +191,12 @@ impl Storage {
 
     pub fn put_state(&self, state: State, root: H256) -> Result<()> {
         let state_bytes = state.to_ssz()?;
-        self.states.0.put(root, state_bytes)?;
+        self.states.put(root, state_bytes)?;
         Ok(())
     }
 
     pub fn get_justified_checkpoint(&self) -> Result<Option<Checkpoint>> {
-        match self.checkpoints.0.get("justified")? {
+        match self.checkpoints.get("justified")? {
             Some(checkpoint_bytes) => Ok(Some(Checkpoint::from_ssz_default(&checkpoint_bytes)?)),
             None => Ok(None),
         }
@@ -68,12 +204,12 @@ impl Storage {
 
     pub fn put_justified_checkpoint(&self, checkpoint: Checkpoint) -> Result<()> {
         let checkpoint_bytes = checkpoint.to_ssz()?;
-        self.checkpoints.0.put("justified", checkpoint_bytes)?;
+        self.checkpoints.put("justified", checkpoint_bytes)?;
         Ok(())
     }
 
     pub fn get_finalized_checkpoint(&self) -> Result<Option<Checkpoint>> {
-        match self.checkpoints.0.get("finalized")? {
+        match self.checkpoints.get("finalized")? {
             Some(checkpoint_bytes) => Ok(Some(Checkpoint::from_ssz_default(&checkpoint_bytes)?)),
             None => Ok(None),
         }
@@ -81,25 +217,25 @@ impl Storage {
 
     pub fn put_finalized_checkpoint(&self, checkpoint: Checkpoint) -> Result<()> {
         let checkpoint_bytes = checkpoint.to_ssz()?;
-        self.checkpoints.0.put("finalized", checkpoint_bytes)?;
+        self.checkpoints.put("finalized", checkpoint_bytes)?;
         Ok(())
     }
 
     pub fn get_head_root(&self) -> Result<Option<H256>> {
-        match self.checkpoints.0.get("head")? {
+        match self.checkpoints.get("head")? {
             Some(head_root_bytes) => Ok(Some(H256::from_slice(&head_root_bytes))),
             None => Ok(None),
         }
     }
 
     pub fn put_head_root(&self, root: H256) -> Result<()> {
-        self.checkpoints.0.put("head", root)?;
+        self.checkpoints.put("head", root)?;
         Ok(())
     }
 
     pub fn get_block_root_by_slot(&self, slot: Slot) -> Result<Option<H256>> {
         let slot_bytes = slot.0.to_be_bytes();
-        match self.slot_index.0.get(slot_bytes)? {
+        match self.slot_index.get(slot_bytes)? {
             Some(block_root_bytes) => Ok(Some(H256::from_slice(&block_root_bytes))),
             None => Ok(None),
         }
@@ -107,24 +243,24 @@ impl Storage {
 
     pub fn put_block_root_by_slot(&self, slot: Slot, root: H256) -> Result<()> {
         let slot_bytes = slot.0.to_be_bytes();
-        self.slot_index.0.put(slot_bytes, root)?;
+        self.slot_index.put(slot_bytes, root)?;
         Ok(())
     }
 
     pub fn get_block_root_by_state_root(&self, state_root: H256) -> Result<Option<H256>> {
-        match self.state_root_index.0.get(state_root)? {
+        match self.state_root_index.get(state_root)? {
             Some(block_root_bytes) => Ok(Some(H256::from_slice(&block_root_bytes))),
             None => Ok(None),
         }
     }
 
     pub fn put_block_root_by_state_root(&self, state_root: H256, block_root: H256) -> Result<()> {
-        self.state_root_index.0.put(state_root, block_root)?;
+        self.state_root_index.put(state_root, block_root)?;
         Ok(())
     }
 
     pub fn get_genesis_time(&self) -> Result<Option<u64>> {
-        match self.checkpoints.0.get("genesis_time")? {
+        match self.checkpoints.get("genesis_time")? {
             Some(genesis_time_bytes) => Ok(Some(u64::from_ssz_default(&genesis_time_bytes)?)),
             None => Ok(None),
         }
@@ -132,84 +268,8 @@ impl Storage {
 
     pub fn put_genesis_time(&self, genesis_time: u64) -> Result<()> {
         let genesis_time_bytes = genesis_time.to_ssz()?;
-        self.checkpoints.0.put("genesis_time", genesis_time_bytes)?;
+        self.checkpoints.put("genesis_time", genesis_time_bytes)?;
         Ok(())
-    }
-}
-
-struct Blocks(Database);
-struct States(Database);
-struct Checkpoints(Database);
-struct SlotIndex(Database);
-struct StateRootIndex(Database);
-
-impl Blocks {
-    fn new(base: &Path) -> Result<Self> {
-        let db = Database::persistent(
-            "blocks",
-            base.join("blocks"),
-            Compression::Lz4,
-            ByteSize::gib(2),
-            DatabaseMode::ReadWrite,
-            None,
-        )?;
-        Ok(Self(db))
-    }
-}
-
-impl States {
-    fn new(base: &Path) -> Result<Self> {
-        let db = Database::persistent(
-            "states",
-            base.join("states"),
-            Compression::Zstd,
-            ByteSize::gib(2),
-            DatabaseMode::ReadWrite,
-            None,
-        )?;
-        Ok(Self(db))
-    }
-}
-
-impl Checkpoints {
-    fn new(base: &Path) -> Result<Self> {
-        let db = Database::persistent(
-            "checkpoints",
-            base.join("checkpoints"),
-            Compression::None,
-            ByteSize::gib(2),
-            DatabaseMode::ReadWrite,
-            None,
-        )?;
-        Ok(Self(db))
-    }
-}
-
-impl SlotIndex {
-    fn new(base: &Path) -> Result<Self> {
-        let db = Database::persistent(
-            "slot_index",
-            base.join("slot_index"),
-            Compression::None,
-            ByteSize::gib(2),
-            DatabaseMode::ReadWrite,
-            None,
-        )?;
-        Ok(Self(db))
-    }
-}
-
-impl StateRootIndex {
-    fn new(base: &Path) -> Result<Self> {
-        let db = Database::persistent(
-            "state_root_index",
-            base.join("state_root_index"),
-            Compression::None,
-            ByteSize::gib(2),
-            DatabaseMode::ReadWrite,
-            None,
-        )?;
-        Ok(Self(db))
     }
 }
 
@@ -221,13 +281,6 @@ mod tests {
     use ssz::SszWrite;
     use tempfile::TempDir;
 
-    // Each test gets its own persistent `Storage` rooted in a fresh temp dir, so
-    // tests are isolated, parallel-safe, and cleaned up on drop. This uses the
-    // real `Storage::new`, so it exercises the real libmdbx path and the real
-    // per-DB codecs — the only difference from production is the base directory.
-    //
-    // The returned `TempDir` MUST be kept alive for as long as the `Storage` is
-    // used: dropping it deletes the on-disk database files.
     fn storage() -> (TempDir, Storage) {
         let dir = tempfile::tempdir().expect("failed to create temp dir");
         let storage = Storage::new(dir.path()).expect("failed to open storage");
@@ -248,16 +301,12 @@ mod tests {
         }
     }
 
-    // `Block` and `State` do not implement `PartialEq`, so compare their SSZ
-    // encodings — the exact bytes the database stores and returns.
     fn assert_ssz_eq<T: SszWrite>(left: &T, right: &T) {
         assert_eq!(
             left.to_ssz().expect("left should serialize"),
             right.to_ssz().expect("right should serialize"),
         );
     }
-
-    // --- blocks -----------------------------------------------------------
 
     #[test]
     fn get_block_returns_none_when_absent() {
@@ -314,8 +363,6 @@ mod tests {
         assert_ssz_eq(&updated, &read);
     }
 
-    // --- states -----------------------------------------------------------
-
     #[test]
     fn get_state_returns_none_when_absent() {
         let (_dir, storage) = storage();
@@ -356,8 +403,6 @@ mod tests {
             assert_ssz_eq(state, &read);
         }
     }
-
-    // --- checkpoints (justified / finalized / head / genesis_time) ---------
 
     #[test]
     fn justified_checkpoint_roundtrips() {
@@ -418,8 +463,6 @@ mod tests {
         assert_eq!(storage.get_genesis_time().unwrap().unwrap(), 1_700_000_000);
     }
 
-    // All four values above share the single `checkpoints` database under
-    // distinct string keys; verify they never clobber one another.
     #[test]
     fn checkpoints_database_keys_do_not_collide() {
         let (_dir, storage) = storage();
@@ -451,7 +494,6 @@ mod tests {
         assert_eq!(storage.get_genesis_time().unwrap().unwrap(), genesis_time);
     }
 
-    // --- slot_index -------------------------------------------------------
 
     #[test]
     fn block_root_by_slot_returns_none_when_absent() {
@@ -491,7 +533,6 @@ mod tests {
         }
     }
 
-    // --- state_root_index -------------------------------------------------
 
     #[test]
     fn block_root_by_state_root_returns_none_when_absent() {
