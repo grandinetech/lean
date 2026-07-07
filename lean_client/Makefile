@@ -132,20 +132,21 @@ docker-local: ./target/x86_64-unknown-linux-gnu/release/lean_client
 # GSO / ECN). Applied only for the shadow-* targets via cargo's --config
 # override, so prod / devnet builds see the crates.io version.
 SHADOW_CONFIG := --config 'patch.crates-io."quinn-udp".path="rust/patch/quinn-udp"'
-SHADOW_FEATURES := --features shadow-integration
+SHADOW_RUSTFLAGS := --cfg shadow_mode
 
 .PHONY: shadow-build
 shadow-build:
-	cargo build --profile shadow $(SHADOW_FEATURES) $(SHADOW_CONFIG)
+	RUSTFLAGS="$(SHADOW_RUSTFLAGS)" cargo build --profile shadow $(SHADOW_CONFIG)
 
 .PHONY: shadow-x86_64-unknown-linux-gnu
 shadow-x86_64-unknown-linux-gnu:
-	CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS="-C target-cpu=x86-64-v3" \
-	LEAN_REPO_ROOT=$(LEAN_REPO_ROOT) cross build --bin lean_client --target x86_64-unknown-linux-gnu --profile shadow $(SHADOW_FEATURES) $(SHADOW_CONFIG)
+	CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS="-C target-cpu=x86-64-v3 $(SHADOW_RUSTFLAGS)" \
+	LEAN_REPO_ROOT=$(LEAN_REPO_ROOT) cross build --bin lean_client --target x86_64-unknown-linux-gnu --profile shadow $(SHADOW_CONFIG)
 
 .PHONY: shadow-aarch64-unknown-linux-gnu
 shadow-aarch64-unknown-linux-gnu:
-	LEAN_REPO_ROOT=$(LEAN_REPO_ROOT) cross build --bin lean_client --target aarch64-unknown-linux-gnu --profile shadow $(SHADOW_FEATURES) $(SHADOW_CONFIG)
+	CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS="$(SHADOW_RUSTFLAGS)" \
+	LEAN_REPO_ROOT=$(LEAN_REPO_ROOT) cross build --bin lean_client --target aarch64-unknown-linux-gnu --profile shadow $(SHADOW_CONFIG)
 
 .PHONY: shadow-docker-local
 shadow-docker-local: shadow-x86_64-unknown-linux-gnu

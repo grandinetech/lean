@@ -4,7 +4,7 @@ mod public_key;
 mod secret_key;
 mod signature;
 
-#[cfg(feature = "shadow-integration")]
+#[cfg(shadow_mode)]
 pub mod shadow_cost;
 
 pub use aggregated_signature::{AggregatedSignature, configure_rayon_pool, setup_aggregation};

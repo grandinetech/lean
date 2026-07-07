@@ -24,8 +24,5 @@ typenum = { workspace = true }
 serde = { workspace = true }
 zeroize = { workspace = true, features = ["derive"] }
 
-[features]
-shadow-integration = []
-
 [dev-dependencies]
 rand_chacha = { workspace = true }

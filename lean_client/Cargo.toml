@@ -61,6 +61,8 @@ unused_qualifications                  = 'warn'
 # These are almost never helpful and require boilerplate.
 unstable_name_collisions               = 'allow'
 
+unexpected_cfgs                        = { level = 'warn', check-cfg = ['cfg(shadow_mode)'] }
+
 [workspace.lints.clippy]
 # Additional Clippy lint groups.
 nursery  = 'warn'
@@ -310,9 +312,6 @@ zeroize = "1.8"
 name = "lean_client"
 version = "0.1.0"
 edition = { workspace = true }
-
-[features]
-shadow-integration = ["xmss/shadow-integration"]
 
 [dependencies]
 anyhow = { workspace = true }

@@ -38,7 +38,7 @@ impl MultiMessageAggregate {
             bail!("multi-message aggregate requires at least one Type-1 component");
         }
 
-        #[cfg(feature = "shadow-integration")]
+        #[cfg(shadow_mode)]
         if crate::shadow_cost::fake_xmss() {
             let merge_n = parts.len();
             let count_bytes = merge_n.to_le_bytes();
@@ -84,7 +84,7 @@ impl MultiMessageAggregate {
             );
         }
 
-        #[cfg(feature = "shadow-integration")]
+        #[cfg(shadow_mode)]
         if crate::shadow_cost::fake_xmss() {
             return Ok(());
         }
@@ -126,7 +126,7 @@ impl MultiMessageAggregate {
     ) -> Result<AggregatedSignature> {
         setup_aggregation();
 
-        #[cfg(feature = "shadow-integration")]
+        #[cfg(shadow_mode)]
         if crate::shadow_cost::fake_xmss() {
             let bytes = crate::shadow_cost::fill_fake_proof(
                 crate::shadow_cost::fake_proof_size(),

@@ -1,5 +1,5 @@
 #[cfg(not(target_env = "msvc"))]
-#[cfg(not(feature = "shadow-integration"))]
+#[cfg(not(shadow_mode))]
 #[global_allocator]
 static ALLOC: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 
@@ -420,12 +420,12 @@ struct Args {
     #[arg(long)]
     checkpoint_sync_url: Option<String>,
 
-    #[cfg(feature = "shadow-integration")]
+    #[cfg(shadow_mode)]
     #[command(flatten)]
     shadow: ShadowOptions,
 }
 
-#[cfg(feature = "shadow-integration")]
+#[cfg(shadow_mode)]
 #[derive(clap::Args, Debug)]
 struct ShadowOptions {
     #[arg(long, default_value_t = false)]
@@ -448,8 +448,8 @@ struct ShadowOptions {
     shadow_xmss_fake_proof_size: u64,
 }
 
-#[cfg_attr(feature = "shadow-integration", tokio::main(flavor = "current_thread"))]
-#[cfg_attr(not(feature = "shadow-integration"), tokio::main)]
+#[cfg_attr(shadow_mode, tokio::main(flavor = "current_thread"))]
+#[cfg_attr(not(shadow_mode), tokio::main)]
 async fn main() -> Result<()> {
     let rayon_threads = num_cpus::get().saturating_sub(3).max(1);
     xmss::configure_rayon_pool(rayon_threads);
@@ -467,12 +467,12 @@ async fn main() -> Result<()> {
     info!(
         "Starting grandine v{} ({})",
         env!("CARGO_PKG_VERSION"),
-        git_version::git_version!(args = ["--always", "--abbrev=8"]),
+        git_version::git_version!(args = ["--always", "--abbrev=8"], fallback = "unknown"),
     );
 
     let args = Args::parse();
 
-    #[cfg(feature = "shadow-integration")]
+    #[cfg(shadow_mode)]
     {
         let s = &args.shadow;
         info!(

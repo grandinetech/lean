@@ -130,7 +130,7 @@ impl AggregatedSignature {
 
         let sig_count = public_keys.len();
 
-        #[cfg(feature = "shadow-integration")]
+        #[cfg(shadow_mode)]
         if crate::shadow_cost::fake_xmss() {
             stop_and_discard(timer);
             let slot_bytes = slot.to_le_bytes();
@@ -187,7 +187,7 @@ impl AggregatedSignature {
     ) -> Result<()> {
         setup_aggregation();
 
-        #[cfg(feature = "shadow-integration")]
+        #[cfg(shadow_mode)]
         if crate::shadow_cost::fake_xmss() {
             let n = public_keys.into_iter().count();
             crate::shadow_cost::sleep(crate::shadow_cost::verify_delay(n));
@@ -252,7 +252,7 @@ impl AggregatedSignature {
         self.0.as_bytes().is_empty()
     }
 
-    #[cfg(feature = "shadow-integration")]
+    #[cfg(shadow_mode)]
     pub(crate) fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }

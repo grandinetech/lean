@@ -1,5 +1,5 @@
 //! Shadow-simulator sim-cost + fake-proof backend. Compiled only under the
-//! `shadow-integration` feature.
+//! `shadow_mode` cfg.
 
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::time::Duration;
