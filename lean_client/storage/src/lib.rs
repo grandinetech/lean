@@ -1,4 +1,4 @@
-use std::{borrow::Cow, cell::RefCell, collections::HashSet, path::Path, sync::Arc};
+use std::{borrow::Cow, collections::HashSet, path::Path, sync::{Arc, Mutex}};
 
 use anyhow::Result;
 use bytesize::ByteSize;
@@ -12,25 +12,20 @@ const BLOCKS_TABLE_NAME: &str = "blocks";
 const STATES_TABLE_NAME: &str = "states";
 const CHECKPOINTS_TABLE_NAME: &str = "checkpoints";
 const SLOT_INDEX_TABLE_NAME: &str = "slot_index";
-const STATE_ROOT_INDEX_TABLE_NAME: &str = "state_root_index";
 const BLOCKS_BY_SLOT_TABLE_NAME: &str = "blocks_by_slot";
-const STATES_BY_SLOT_TABLE_NAME: &str = "states_by_slot";
 
-const JUSTIFIED: u8 = 0;
 const FINALIZED: u8 = 1;
 const HEAD: u8 = 2;
-const GENESIS_TIME: u8 = 3;
 
+#[derive(Debug)]
 pub struct Storage {
     environment: Arc<Environment>,
-    transaction: RefCell<Option<Transaction<RW>>>,
+    transaction: Mutex<Option<Transaction<RW>>>,
     blocks: Database,
     states: Database,
     checkpoints: Database,
     slot_index: Database,
-    state_root_index: Database,
     blocks_by_slot: Database,
-    states_by_slot: Database,
 }
 
 impl Storage {
@@ -40,7 +35,7 @@ impl Storage {
 
         let environment = Arc::new(
             Environment::builder()
-                .set_max_dbs(7)
+                .set_max_dbs(5)
                 .set_geometry(Geometry {
                     size: Some(..usize::try_from(ByteSize::gib(2).as_u64())?),
                     growth_step: Some(isize::try_from(ByteSize::mib(256).as_u64())?),
@@ -56,9 +51,7 @@ impl Storage {
             STATES_TABLE_NAME,
             CHECKPOINTS_TABLE_NAME,
             SLOT_INDEX_TABLE_NAME,
-            STATE_ROOT_INDEX_TABLE_NAME,
             BLOCKS_BY_SLOT_TABLE_NAME,
-            STATES_BY_SLOT_TABLE_NAME,
         ] {
             txn.create_db(Some(name), DatabaseFlags::default())?;
         }
@@ -69,23 +62,22 @@ impl Storage {
             states: Database::new(STATES_TABLE_NAME, Compression::Zstd),
             checkpoints: Database::new(CHECKPOINTS_TABLE_NAME, Compression::None),
             slot_index: Database::new(SLOT_INDEX_TABLE_NAME, Compression::None),
-            state_root_index: Database::new(STATE_ROOT_INDEX_TABLE_NAME, Compression::None),
             blocks_by_slot: Database::new(BLOCKS_BY_SLOT_TABLE_NAME, Compression::None),
-            states_by_slot: Database::new(STATES_BY_SLOT_TABLE_NAME, Compression::None),
             environment,
-            transaction: RefCell::new(None),
+            transaction: Mutex::new(None),
         })
     }
 
     pub fn batch_write(&self, f: impl FnOnce() -> Result<()>) -> Result<()> {
         let txn = self.environment.begin_rw_txn()?;
-        *self.transaction.borrow_mut() = Some(txn);
+        *self.transaction.lock().expect("transaction mutex poisoned") = Some(txn);
 
         let result = f();
 
         let txn = self
             .transaction
-            .borrow_mut()
+            .lock()
+            .expect("transaction mutex poisoned")
             .take()
             .expect("batch_write installed the ambient transaction");
 
@@ -102,9 +94,11 @@ impl Storage {
     }
 
     fn write<R>(&self, f: impl FnOnce(&Transaction<RW>) -> Result<R>) -> Result<R> {
-        if let Some(txn) = self.transaction.borrow().as_ref() {
+        let guard = self.transaction.lock().expect("transaction mutex poisoned");
+        if let Some(txn) = guard.as_ref() {
             return f(txn);
         }
+        drop(guard);
         let txn = self.environment.begin_rw_txn()?;
         let result = f(&txn)?;
         txn.commit()?;
@@ -112,59 +106,44 @@ impl Storage {
     }
 
     fn read_bytes(&self, db: &Database, key: impl AsRef<[u8]>) -> Result<Option<Vec<u8>>> {
-        if let Some(txn) = self.transaction.borrow().as_ref() {
+        let guard = self.transaction.lock().expect("transaction mutex poisoned");
+        if let Some(txn) = guard.as_ref() {
             return db.get(txn, key);
         }
+        drop(guard);
         let txn = self.environment.begin_ro_txn()?;
         let bytes = db.get(&txn, key)?;
         txn.commit()?;
         Ok(bytes)
     }
 
-    pub fn get_block(&self, root: H256) -> Result<Option<Block>> {
-        match self.read_bytes(&self.blocks, root)? {
+    pub fn get_block(&self, block_root: H256) -> Result<Option<Block>> {
+        match self.read_bytes(&self.blocks, block_root)? {
             Some(bytes) => Ok(Some(Block::from_ssz_default(&bytes)?)),
             None => Ok(None),
         }
     }
 
-    pub fn put_block(&self, block: Block, root: H256) -> Result<()> {
+    pub fn put_block(&self, block: Block, block_root: H256) -> Result<()> {
         let block_bytes = block.to_ssz()?;
-        let index_key = slot_root_key(block.slot, root);
+        let index_key = slot_root_key(block.slot, block_root);
         self.write(|txn| {
-            self.blocks.put(txn, root, block_bytes)?;
+            self.blocks.put(txn, block_root, block_bytes)?;
             self.blocks_by_slot.put(txn, index_key, b"")?;
             Ok(())
         })
     }
 
-    pub fn get_state(&self, root: H256) -> Result<Option<State>> {
-        match self.read_bytes(&self.states, root)? {
+    pub fn get_state(&self, block_root: H256) -> Result<Option<State>> {
+        match self.read_bytes(&self.states, block_root)? {
             Some(bytes) => Ok(Some(State::from_ssz_default(&bytes)?)),
             None => Ok(None),
         }
     }
 
-    pub fn put_state(&self, state: State, root: H256) -> Result<()> {
+    pub fn put_state(&self, state: State, block_root: H256) -> Result<()> {
         let state_bytes = state.to_ssz()?;
-        let index_key = slot_root_key(state.slot, root);
-        self.write(|txn| {
-            self.states.put(txn, root, state_bytes)?;
-            self.states_by_slot.put(txn, index_key, b"")?;
-            Ok(())
-        })
-    }
-
-    pub fn get_justified_checkpoint(&self) -> Result<Option<Checkpoint>> {
-        match self.read_bytes(&self.checkpoints, [JUSTIFIED])? {
-            Some(bytes) => Ok(Some(Checkpoint::from_ssz_default(&bytes)?)),
-            None => Ok(None),
-        }
-    }
-
-    pub fn put_justified_checkpoint(&self, checkpoint: Checkpoint) -> Result<()> {
-        let checkpoint_bytes = checkpoint.to_ssz()?;
-        self.write(|txn| self.checkpoints.put(txn, [JUSTIFIED], checkpoint_bytes))
+        self.write(|txn| self.states.put(txn, block_root, state_bytes))
     }
 
     pub fn get_finalized_checkpoint(&self) -> Result<Option<Checkpoint>> {
@@ -202,36 +181,10 @@ impl Storage {
         self.write(|txn| self.slot_index.put(txn, slot_bytes, root))
     }
 
-    pub fn get_block_root_by_state_root(&self, state_root: H256) -> Result<Option<H256>> {
-        match self.read_bytes(&self.state_root_index, state_root)? {
-            Some(bytes) => Ok(Some(H256::from_slice(&bytes))),
-            None => Ok(None),
-        }
-    }
-
-    pub fn put_block_root_by_state_root(&self, state_root: H256, block_root: H256) -> Result<()> {
-        self.write(|txn| self.state_root_index.put(txn, state_root, block_root))
-    }
-
-    pub fn get_genesis_time(&self) -> Result<Option<u64>> {
-        match self.read_bytes(&self.checkpoints, [GENESIS_TIME])? {
-            Some(bytes) => Ok(Some(u64::from_ssz_default(&bytes)?)),
-            None => Ok(None),
-        }
-    }
-
-    pub fn put_genesis_time(&self, genesis_time: u64) -> Result<()> {
-        let genesis_time_bytes = genesis_time.to_ssz()?;
-        self.write(|txn| {
-            self.checkpoints
-                .put(txn, [GENESIS_TIME], genesis_time_bytes)
-        })
-    }
-
     pub fn prune_before_slot(&self, slot: Slot, keep_roots: &HashSet<H256>) -> Result<usize> {
         let bound = slot.0;
         self.write(|txn| {
-            let mut block_roots: Vec<H256> = Vec::new();
+            let mut roots: Vec<H256> = Vec::new();
             let mut block_index_keys: Vec<Vec<u8>> = Vec::new();
             self.blocks_by_slot.for_each(txn, |key, _value| {
                 if slot_of(key) >= bound {
@@ -239,22 +192,8 @@ impl Storage {
                 }
                 let root = H256::from_slice(&key[8..]);
                 if !keep_roots.contains(&root) {
-                    block_roots.push(root);
+                    roots.push(root);
                     block_index_keys.push(key.to_vec());
-                }
-                Ok(true)
-            })?;
-
-            let mut state_roots: Vec<H256> = Vec::new();
-            let mut state_index_keys: Vec<Vec<u8>> = Vec::new();
-            self.states_by_slot.for_each(txn, |key, _value| {
-                if slot_of(key) >= bound {
-                    return Ok(false);
-                }
-                let root = H256::from_slice(&key[8..]);
-                if !keep_roots.contains(&root) {
-                    state_roots.push(root);
-                    state_index_keys.push(key.to_vec());
                 }
                 Ok(true)
             })?;
@@ -272,15 +211,19 @@ impl Storage {
             })?;
 
             let mut removed = 0;
-            removed += self.blocks.delete_batch(txn, &block_roots)?;
+            removed += self.blocks.delete_batch(txn, &roots)?;
+            removed += self.states.delete_batch(txn, &roots)?;
             removed += self.blocks_by_slot.delete_batch(txn, &block_index_keys)?;
             removed += self.slot_index.delete_batch(txn, &slot_index_keys)?;
-            removed += self.states.delete_batch(txn, &state_roots)?;
-            removed += self.states_by_slot.delete_batch(txn, &state_index_keys)?;
-            removed += self.state_root_index.delete_batch(txn, &state_roots)?;
 
             Ok(removed)
         })
+    }
+}
+
+impl Default for Storage {
+    fn default() -> Self {
+        Self::new("./database").expect("failed to open default storage at ./database")
     }
 }
 
@@ -297,6 +240,7 @@ fn slot_of(key: &[u8]) -> u64 {
     u64::from_be_bytes(slot)
 }
 
+#[derive(Debug)]
 struct Database {
     name: String,
     compression: Compression,
@@ -530,25 +474,6 @@ mod tests {
     }
 
     #[test]
-    fn justified_checkpoint_roundtrips() {
-        let (_dir, storage) = storage();
-        assert!(storage.get_justified_checkpoint().unwrap().is_none());
-
-        let checkpoint = Checkpoint {
-            root: h256(4),
-            slot: Slot(10),
-        };
-        storage
-            .put_justified_checkpoint(checkpoint.clone())
-            .unwrap();
-
-        assert_eq!(
-            storage.get_justified_checkpoint().unwrap().unwrap(),
-            checkpoint
-        );
-    }
-
-    #[test]
     fn finalized_checkpoint_roundtrips() {
         let (_dir, storage) = storage();
         assert!(storage.get_finalized_checkpoint().unwrap().is_none());
@@ -579,44 +504,22 @@ mod tests {
     }
 
     #[test]
-    fn genesis_time_roundtrips() {
-        let (_dir, storage) = storage();
-        assert!(storage.get_genesis_time().unwrap().is_none());
-
-        storage.put_genesis_time(1_700_000_000).unwrap();
-
-        assert_eq!(storage.get_genesis_time().unwrap().unwrap(), 1_700_000_000);
-    }
-
-    #[test]
     fn checkpoints_database_keys_do_not_collide() {
         let (_dir, storage) = storage();
-        let justified = Checkpoint {
-            root: h256(1),
-            slot: Slot(1),
-        };
         let finalized = Checkpoint {
             root: h256(2),
             slot: Slot(2),
         };
         let head = h256(3);
-        let genesis_time = 42;
 
-        storage.put_justified_checkpoint(justified.clone()).unwrap();
         storage.put_finalized_checkpoint(finalized.clone()).unwrap();
         storage.put_head_root(head).unwrap();
-        storage.put_genesis_time(genesis_time).unwrap();
 
-        assert_eq!(
-            storage.get_justified_checkpoint().unwrap().unwrap(),
-            justified
-        );
         assert_eq!(
             storage.get_finalized_checkpoint().unwrap().unwrap(),
             finalized
         );
         assert_eq!(storage.get_head_root().unwrap().unwrap(), head);
-        assert_eq!(storage.get_genesis_time().unwrap().unwrap(), genesis_time);
     }
 
     #[test]
@@ -653,59 +556,6 @@ mod tests {
                     .unwrap()
                     .unwrap(),
                 h256(i),
-            );
-        }
-    }
-
-    #[test]
-    fn block_root_by_state_root_returns_none_when_absent() {
-        let (_dir, storage) = storage();
-        assert!(
-            storage
-                .get_block_root_by_state_root(h256(7))
-                .unwrap()
-                .is_none()
-        );
-    }
-
-    #[test]
-    fn block_root_by_state_root_roundtrips() {
-        let (_dir, storage) = storage();
-        let state_root = h256(7);
-        let block_root = h256(8);
-        storage
-            .put_block_root_by_state_root(state_root, block_root)
-            .unwrap();
-
-        assert_eq!(
-            storage
-                .get_block_root_by_state_root(state_root)
-                .unwrap()
-                .unwrap(),
-            block_root,
-        );
-    }
-
-    #[test]
-    fn block_root_by_state_root_handles_multiple() {
-        let (_dir, storage) = storage();
-        let pairs: Vec<(H256, H256)> = (0..10)
-            .map(|i| (h256(i), h256(i.wrapping_add(100))))
-            .collect();
-
-        for (state_root, block_root) in &pairs {
-            storage
-                .put_block_root_by_state_root(*state_root, *block_root)
-                .unwrap();
-        }
-
-        for (state_root, block_root) in &pairs {
-            assert_eq!(
-                storage
-                    .get_block_root_by_state_root(*state_root)
-                    .unwrap()
-                    .unwrap(),
-                *block_root,
             );
         }
     }
@@ -790,35 +640,20 @@ mod tests {
     #[test]
     fn prune_removes_states_below_slot_and_keeps_frozen() {
         let (_dir, storage) = storage();
+        storage.put_block(sample_block(1), h256(1)).unwrap();
         storage.put_state(state_at_slot(1), h256(1)).unwrap();
+        storage.put_block(sample_block(2), h256(2)).unwrap();
         storage.put_state(state_at_slot(2), h256(2)).unwrap();
-        storage
-            .put_block_root_by_state_root(h256(1), h256(101))
-            .unwrap();
-        storage
-            .put_block_root_by_state_root(h256(2), h256(102))
-            .unwrap();
 
         let mut keep = HashSet::new();
         keep.insert(h256(2));
 
         storage.prune_before_slot(Slot(5), &keep).unwrap();
 
+        assert!(storage.get_block(h256(1)).unwrap().is_none());
         assert!(storage.get_state(h256(1)).unwrap().is_none());
+        assert!(storage.get_block(h256(2)).unwrap().is_some());
         assert!(storage.get_state(h256(2)).unwrap().is_some());
-        assert!(
-            storage
-                .get_block_root_by_state_root(h256(1))
-                .unwrap()
-                .is_none()
-        );
-        assert_eq!(
-            storage
-                .get_block_root_by_state_root(h256(2))
-                .unwrap()
-                .unwrap(),
-            h256(102),
-        );
     }
 
     #[test]

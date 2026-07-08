@@ -12,6 +12,7 @@
 //! `simulators/lean/src/scenarios/spec_assets.rs`.
 
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use axum::{
     Json, Router, body::Bytes, extract::State as AxumState, http::StatusCode, routing::post,
@@ -32,6 +33,7 @@ use spec_test_fixtures::{
     VerifySignaturesTestCase,
 };
 use ssz::SszHash;
+use storage::Storage;
 use xmss::{AggregatedSignature, Signature};
 
 /// Shared state for test-driver routes. Carries a writable handle to the
@@ -179,7 +181,15 @@ async fn init_fork_choice(
         genesis_time: anchor_state.config.genesis_time,
     };
 
-    let new_store = get_forkchoice_store(anchor_state, anchor_block, config, false, 1);
+    // Each fixture drives a fresh fork-choice store, so give it its own
+    // throwaway libmdbx environment in a unique temp directory.
+    let storage = {
+        static COUNTER: AtomicU64 = AtomicU64::new(0);
+        let n = COUNTER.fetch_add(1, Ordering::Relaxed);
+        let dir = std::env::temp_dir().join(format!("lean-test-driver-{}-{n}", std::process::id()));
+        Arc::new(Storage::new(dir).expect("failed to open test-driver storage"))
+    };
+    let new_store = get_forkchoice_store(anchor_state, anchor_block, config, false, 1, storage);
 
     *state.store.write() = new_store;
     *state.cache.write() = BlockCache::new();

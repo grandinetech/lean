@@ -727,6 +727,13 @@ pub fn apply_verified_block(
     store.blocks.insert(block_root, block.clone());
     store.states.insert(block_root, Arc::clone(&new_state));
 
+
+    store.storage.batch_write(|| {
+        store.storage.put_block(block.clone(), block_root)?;
+        store.storage.put_state(new_state.as_ref().clone(), block_root)?;
+        Ok(())
+    }).expect("database write failed");
+
     METRICS.get().map(|m| {
         m.grandine_store_blocks_size.set(store.blocks.len() as i64);
         m.grandine_store_states_size.set(store.states.len() as i64);

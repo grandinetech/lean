@@ -11,6 +11,7 @@ indexmap = { workspace = true }
 metrics = { workspace = true }
 parking_lot = { workspace = true }
 ssz = { workspace = true }
+storage = { workspace = true }
 tracing = { workspace = true }
 xmss = { workspace = true }
 

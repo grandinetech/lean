@@ -9,6 +9,7 @@ use containers::{
 use indexmap::IndexMap;
 use metrics::{METRICS, set_gauge_u64};
 use ssz::{H256, SszHash};
+use storage::Storage;
 use tracing::{info, warn};
 use xmss::Signature;
 
@@ -108,6 +109,8 @@ pub struct Store {
     pub pending_fetch_roots: HashSet<H256>,
 
     pub log_inv_rate: usize,
+
+    pub storage: Arc<Storage>,
 }
 
 const JUSTIFICATION_LOOKBACK_SLOTS: u64 = 3;
@@ -133,6 +136,15 @@ pub const STATES_TO_KEEP: usize = 3_000;
 pub const HEAD_RETENTION_SLOTS: u64 = 128;
 
 impl Store {
+    pub fn get_block(&self, root: H256) -> Option<Block> {
+        if let Some(block) = self.blocks.get(&root) {
+            return Some(block.clone());
+        }
+        self.storage
+            .get_block(root)
+            .expect("failed to read block from database")
+    }
+
     pub fn produce_attestation_data(&self, slot: Slot) -> Result<AttestationData> {
         let head_checkpoint = Checkpoint {
             root: self.head,
@@ -224,6 +236,7 @@ pub fn get_forkchoice_store(
     config: Config,
     is_aggregator: bool,
     log_inv_rate: usize,
+    storage: Arc<Storage>,
 ) -> Store {
     // Extract the plain Block from the signed block
     let block = anchor_block.block.clone();
@@ -261,6 +274,14 @@ pub fn get_forkchoice_store(
     let latest_justified = anchor_checkpoint.clone();
     let latest_finalized = anchor_checkpoint;
 
+    storage.batch_write(|| {
+        storage.put_block(block.clone(), block_root)?;
+        storage.put_state(anchor_state.clone(), block_root)?;
+        storage.put_finalized_checkpoint(latest_finalized.clone())?;
+        storage.put_head_root(block_root)?;
+        Ok(())
+    }).expect("database write failed");
+
     // Store the original anchor_state - do NOT modify it
     // Modifying checkpoints would change its hash_tree_root(), breaking the
     // consistency with block.state_root
@@ -294,6 +315,7 @@ pub fn get_forkchoice_store(
         pending_aggregated_attestations: HashMap::new(),
         pending_fetch_roots: HashSet::new(),
         log_inv_rate,
+        storage,
     }
 }
 
@@ -403,6 +425,7 @@ pub fn update_head(store: &mut Store) {
     // Compute new head using LMD-GHOST from latest justified root
     let new_head = get_fork_choice_head(store, store.latest_justified.root, &latest_votes, 0);
     store.head = new_head;
+    store.storage.put_head_root(new_head).expect("failed to persist head");
 
     if let Some(head_state) = store.states.get(&new_head) {
         let finalized_slot = head_state.latest_finalized.slot;
@@ -423,6 +446,10 @@ pub fn update_head(store: &mut Store) {
                     root: finalized_root,
                     slot: finalized_slot,
                 };
+                store.storage.put_finalized_checkpoint(Checkpoint {
+                    root: finalized_root,
+                    slot: finalized_slot,
+                }).expect("failed to write to database");
                 store.finalized_ever_updated = true;
                 METRICS.get().map(|m| {
                     if let Ok(s) = i64::try_from(finalized_slot.0) {

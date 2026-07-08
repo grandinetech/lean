@@ -35,11 +35,12 @@ use networking::types::{
 };
 use parking_lot::{Mutex, RwLock};
 use ssz::{PersistentList, SszHash, SszReadDefault as _};
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{io::IsTerminal, net::IpAddr};
+use storage::Storage;
 use tokio::{
     sync::{Notify, mpsc, oneshot, watch},
     task,
@@ -376,6 +377,9 @@ struct Args {
     #[arg(short, long)]
     genesis: Option<String>,
 
+    #[arg(long, default_value = "data")]
+    data_dir: PathBuf,
+
     #[arg(long)]
     node_id: Option<String>,
 
@@ -446,6 +450,8 @@ async fn main() -> Result<()> {
     for feature in args.features {
         feature.enable();
     }
+
+    let storage = Arc::new(Storage::new(args.data_dir)?);
 
     let metrics = if args.metrics_config.enabled() {
         let metrics = Metrics::new()?;
@@ -1020,6 +1026,7 @@ async fn main() -> Result<()> {
         config.clone(),
         args.is_aggregator,
         genesis_log_inv_rate as usize,
+        storage,
     )));
 
     // Seed the block provider so we can serve the anchor block to peers via BlocksByRoot.
