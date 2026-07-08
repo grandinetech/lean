@@ -13,9 +13,17 @@ const STATES_TABLE_NAME: &str = "states";
 const CHECKPOINTS_TABLE_NAME: &str = "checkpoints";
 const SLOT_INDEX_TABLE_NAME: &str = "slot_index";
 const BLOCKS_BY_SLOT_TABLE_NAME: &str = "blocks_by_slot";
+const METADATA_TABLE_NAME: &str = "metadata";
 
+const JUSTIFIED: u8 = 0;
 const FINALIZED: u8 = 1;
 const HEAD: u8 = 2;
+const SAFE_TARGET: u8 = 3;
+
+const SCHEMA_VERSION: u8 = 0;
+const NETWORK_ID: u8 = 1;
+const JUSTIFIED_EVER_UPDATED: u8 = 2;
+const FINALIZED_EVER_UPDATED: u8 = 3;
 
 #[derive(Debug)]
 pub struct Storage {
@@ -26,6 +34,7 @@ pub struct Storage {
     checkpoints: Database,
     slot_index: Database,
     blocks_by_slot: Database,
+    metadata: Database,
 }
 
 impl Storage {
@@ -35,7 +44,7 @@ impl Storage {
 
         let environment = Arc::new(
             Environment::builder()
-                .set_max_dbs(5)
+                .set_max_dbs(6)
                 .set_geometry(Geometry {
                     size: Some(..usize::try_from(ByteSize::gib(2).as_u64())?),
                     growth_step: Some(isize::try_from(ByteSize::mib(256).as_u64())?),
@@ -52,6 +61,7 @@ impl Storage {
             CHECKPOINTS_TABLE_NAME,
             SLOT_INDEX_TABLE_NAME,
             BLOCKS_BY_SLOT_TABLE_NAME,
+            METADATA_TABLE_NAME,
         ] {
             txn.create_db(Some(name), DatabaseFlags::default())?;
         }
@@ -63,6 +73,7 @@ impl Storage {
             checkpoints: Database::new(CHECKPOINTS_TABLE_NAME, Compression::None),
             slot_index: Database::new(SLOT_INDEX_TABLE_NAME, Compression::None),
             blocks_by_slot: Database::new(BLOCKS_BY_SLOT_TABLE_NAME, Compression::None),
+            metadata: Database::new(METADATA_TABLE_NAME, Compression::None),
             environment,
             transaction: Mutex::new(None),
         })
@@ -134,6 +145,10 @@ impl Storage {
         })
     }
 
+    pub fn has_block(&self, block_root: H256) -> Result<bool> {
+        Ok(self.read_bytes(&self.blocks, block_root)?.is_some())
+    }
+
     pub fn get_state(&self, block_root: H256) -> Result<Option<State>> {
         match self.read_bytes(&self.states, block_root)? {
             Some(bytes) => Ok(Some(State::from_ssz_default(&bytes)?)),
@@ -144,6 +159,18 @@ impl Storage {
     pub fn put_state(&self, state: State, block_root: H256) -> Result<()> {
         let state_bytes = state.to_ssz()?;
         self.write(|txn| self.states.put(txn, block_root, state_bytes))
+    }
+
+    pub fn get_justified_checkpoint(&self) -> Result<Option<Checkpoint>> {
+        match self.read_bytes(&self.checkpoints, [JUSTIFIED])? {
+            Some(bytes) => Ok(Some(Checkpoint::from_ssz_default(&bytes)?)),
+            None => Ok(None),
+        }
+    }
+
+    pub fn put_justified_checkpoint(&self, checkpoint: Checkpoint) -> Result<()> {
+        let checkpoint_bytes = checkpoint.to_ssz()?;
+        self.write(|txn| self.checkpoints.put(txn, [JUSTIFIED], checkpoint_bytes))
     }
 
     pub fn get_finalized_checkpoint(&self) -> Result<Option<Checkpoint>> {
@@ -167,6 +194,67 @@ impl Storage {
 
     pub fn put_head_root(&self, root: H256) -> Result<()> {
         self.write(|txn| self.checkpoints.put(txn, [HEAD], root))
+    }
+
+    pub fn get_safe_target(&self) -> Result<Option<H256>> {
+        match self.read_bytes(&self.checkpoints, [SAFE_TARGET])? {
+            Some(bytes) => Ok(Some(H256::from_slice(&bytes))),
+            None => Ok(None),
+        }
+    }
+
+    pub fn put_safe_target(&self, root: H256) -> Result<()> {
+        self.write(|txn| self.checkpoints.put(txn, [SAFE_TARGET], root))
+    }
+
+    pub fn get_schema_version(&self) -> Result<Option<u32>> {
+        match self.read_bytes(&self.metadata, [SCHEMA_VERSION])? {
+            Some(bytes) => Ok(Some(u32::from_be_bytes(bytes.as_slice().try_into()?))),
+            None => Ok(None),
+        }
+    }
+
+    pub fn put_schema_version(&self, version: u32) -> Result<()> {
+        self.write(|txn| self.metadata.put(txn, [SCHEMA_VERSION], version.to_be_bytes()))
+    }
+
+    pub fn get_network_id(&self) -> Result<Option<H256>> {
+        match self.read_bytes(&self.metadata, [NETWORK_ID])? {
+            Some(bytes) => Ok(Some(H256::from_slice(&bytes))),
+            None => Ok(None),
+        }
+    }
+
+    pub fn put_network_id(&self, network_id: H256) -> Result<()> {
+        self.write(|txn| self.metadata.put(txn, [NETWORK_ID], network_id))
+    }
+
+    pub fn get_justified_ever_updated(&self) -> Result<Option<bool>> {
+        match self.read_bytes(&self.metadata, [JUSTIFIED_EVER_UPDATED])? {
+            Some(bytes) => Ok(Some(bytes.first().copied().unwrap_or(0) != 0)),
+            None => Ok(None),
+        }
+    }
+
+    pub fn put_justified_ever_updated(&self, value: bool) -> Result<()> {
+        self.write(|txn| {
+            self.metadata
+                .put(txn, [JUSTIFIED_EVER_UPDATED], [u8::from(value)])
+        })
+    }
+
+    pub fn get_finalized_ever_updated(&self) -> Result<Option<bool>> {
+        match self.read_bytes(&self.metadata, [FINALIZED_EVER_UPDATED])? {
+            Some(bytes) => Ok(Some(bytes.first().copied().unwrap_or(0) != 0)),
+            None => Ok(None),
+        }
+    }
+
+    pub fn put_finalized_ever_updated(&self, value: bool) -> Result<()> {
+        self.write(|txn| {
+            self.metadata
+                .put(txn, [FINALIZED_EVER_UPDATED], [u8::from(value)])
+        })
     }
 
     pub fn get_block_root_by_slot(&self, slot: Slot) -> Result<Option<H256>> {
@@ -218,6 +306,54 @@ impl Storage {
 
             Ok(removed)
         })
+    }
+
+    pub fn load_since(&self, slot: Slot) -> Result<Vec<(H256, Block, State)>> {
+        let bound = slot.0;
+        let txn = self.environment.begin_ro_txn()?;
+
+        let mut roots: Vec<H256> = Vec::new();
+        self.blocks_by_slot.for_each(&txn, |key, _value| {
+            if slot_of(key) >= bound {
+                roots.push(H256::from_slice(&key[8..]));
+            }
+            Ok(true)
+        })?;
+
+        let mut entries = Vec::with_capacity(roots.len());
+        for root in roots {
+            let block = match self.blocks.get(&txn, root)? {
+                Some(bytes) => Block::from_ssz_default(&bytes)?,
+                None => continue,
+            };
+            let state = match self.states.get(&txn, root)? {
+                Some(bytes) => State::from_ssz_default(&bytes)?,
+                None => continue,
+            };
+            entries.push((root, block, state));
+        }
+
+        txn.commit()?;
+        Ok(entries)
+    }
+
+    pub fn commit_finalization(
+        &self,
+        head: H256,
+        finalized: Checkpoint,
+        safe_target: H256,
+        prune_before: Slot,
+        keep_roots: &HashSet<H256>,
+    ) -> Result<usize> {
+        let mut removed = 0;
+        self.batch_write(|| {
+            self.put_head_root(head)?;
+            self.put_finalized_checkpoint(finalized)?;
+            self.put_safe_target(safe_target)?;
+            removed = self.prune_before_slot(prune_before, keep_roots)?;
+            Ok(())
+        })?;
+        Ok(removed)
     }
 }
 
@@ -501,6 +637,185 @@ mod tests {
         storage.put_head_root(root).unwrap();
 
         assert_eq!(storage.get_head_root().unwrap().unwrap(), root);
+    }
+
+    #[test]
+    fn safe_target_roundtrips() {
+        let (_dir, storage) = storage();
+        assert!(storage.get_safe_target().unwrap().is_none());
+
+        let root = h256(7);
+        storage.put_safe_target(root).unwrap();
+
+        assert_eq!(storage.get_safe_target().unwrap().unwrap(), root);
+    }
+
+    #[test]
+    fn schema_version_roundtrips() {
+        let (_dir, storage) = storage();
+        assert!(storage.get_schema_version().unwrap().is_none());
+
+        storage.put_schema_version(3).unwrap();
+
+        assert_eq!(storage.get_schema_version().unwrap().unwrap(), 3);
+    }
+
+    #[test]
+    fn network_id_roundtrips() {
+        let (_dir, storage) = storage();
+        assert!(storage.get_network_id().unwrap().is_none());
+
+        let id = h256(9);
+        storage.put_network_id(id).unwrap();
+
+        assert_eq!(storage.get_network_id().unwrap().unwrap(), id);
+    }
+
+    #[test]
+    fn justified_checkpoint_roundtrips() {
+        let (_dir, storage) = storage();
+        assert!(storage.get_justified_checkpoint().unwrap().is_none());
+
+        let checkpoint = Checkpoint {
+            root: h256(4),
+            slot: Slot(10),
+        };
+        storage
+            .put_justified_checkpoint(checkpoint.clone())
+            .unwrap();
+
+        assert_eq!(
+            storage.get_justified_checkpoint().unwrap().unwrap(),
+            checkpoint
+        );
+    }
+
+    #[test]
+    fn justified_ever_updated_roundtrips() {
+        let (_dir, storage) = storage();
+        assert!(storage.get_justified_ever_updated().unwrap().is_none());
+
+        storage.put_justified_ever_updated(true).unwrap();
+        assert!(storage.get_justified_ever_updated().unwrap().unwrap());
+
+        storage.put_justified_ever_updated(false).unwrap();
+        assert!(!storage.get_justified_ever_updated().unwrap().unwrap());
+    }
+
+    #[test]
+    fn finalized_ever_updated_roundtrips() {
+        let (_dir, storage) = storage();
+        assert!(storage.get_finalized_ever_updated().unwrap().is_none());
+
+        storage.put_finalized_ever_updated(true).unwrap();
+        assert!(storage.get_finalized_ever_updated().unwrap().unwrap());
+
+        storage.put_finalized_ever_updated(false).unwrap();
+        assert!(!storage.get_finalized_ever_updated().unwrap().unwrap());
+    }
+
+    #[test]
+    fn checkpoints_and_metadata_keys_do_not_collide() {
+        let (_dir, storage) = storage();
+        let justified = Checkpoint {
+            root: h256(1),
+            slot: Slot(1),
+        };
+        let finalized = Checkpoint {
+            root: h256(2),
+            slot: Slot(2),
+        };
+
+        storage.put_justified_checkpoint(justified.clone()).unwrap();
+        storage.put_finalized_checkpoint(finalized.clone()).unwrap();
+        storage.put_head_root(h256(3)).unwrap();
+        storage.put_safe_target(h256(4)).unwrap();
+        storage.put_schema_version(7).unwrap();
+        storage.put_network_id(h256(5)).unwrap();
+        storage.put_justified_ever_updated(true).unwrap();
+        storage.put_finalized_ever_updated(false).unwrap();
+
+        assert_eq!(
+            storage.get_justified_checkpoint().unwrap().unwrap(),
+            justified
+        );
+        assert_eq!(
+            storage.get_finalized_checkpoint().unwrap().unwrap(),
+            finalized
+        );
+        assert_eq!(storage.get_head_root().unwrap().unwrap(), h256(3));
+        assert_eq!(storage.get_safe_target().unwrap().unwrap(), h256(4));
+        assert_eq!(storage.get_schema_version().unwrap().unwrap(), 7);
+        assert_eq!(storage.get_network_id().unwrap().unwrap(), h256(5));
+        assert!(storage.get_justified_ever_updated().unwrap().unwrap());
+        assert!(!storage.get_finalized_ever_updated().unwrap().unwrap());
+    }
+
+    #[test]
+    fn has_block_reflects_presence() {
+        let (_dir, storage) = storage();
+        assert!(!storage.has_block(h256(1)).unwrap());
+
+        storage.put_block(sample_block(1), h256(1)).unwrap();
+
+        assert!(storage.has_block(h256(1)).unwrap());
+        assert!(!storage.has_block(h256(2)).unwrap());
+    }
+
+    #[test]
+    fn load_since_returns_blocks_and_states_from_slot() {
+        let (_dir, storage) = storage();
+        for i in 0..6u8 {
+            storage.put_block(sample_block(i), h256(i)).unwrap();
+            storage
+                .put_state(state_at_slot(u64::from(i)), h256(i))
+                .unwrap();
+        }
+
+        let mut loaded = storage.load_since(Slot(3)).unwrap();
+        loaded.sort_by_key(|(_, block, _)| block.slot.0);
+
+        let slots: Vec<u64> = loaded.iter().map(|(_, block, _)| block.slot.0).collect();
+        assert_eq!(slots, vec![3, 4, 5]);
+
+        for (root, block, state) in loaded {
+            assert_eq!(root, h256(u8::try_from(block.slot.0).unwrap()));
+            assert_eq!(state.slot, block.slot);
+        }
+    }
+
+    #[test]
+    fn commit_finalization_persists_and_prunes() {
+        let (_dir, storage) = storage();
+        for i in 0..6u8 {
+            storage.put_block(sample_block(i), h256(i)).unwrap();
+            storage
+                .put_state(state_at_slot(u64::from(i)), h256(i))
+                .unwrap();
+        }
+
+        let finalized = Checkpoint {
+            root: h256(4),
+            slot: Slot(4),
+        };
+        let mut keep = HashSet::new();
+        keep.insert(h256(4));
+
+        let removed = storage
+            .commit_finalization(h256(4), finalized.clone(), h256(5), Slot(4), &keep)
+            .unwrap();
+
+        assert!(removed > 0);
+        assert_eq!(storage.get_head_root().unwrap().unwrap(), h256(4));
+        assert_eq!(
+            storage.get_finalized_checkpoint().unwrap().unwrap(),
+            finalized
+        );
+        assert_eq!(storage.get_safe_target().unwrap().unwrap(), h256(5));
+        assert!(storage.get_block(h256(0)).unwrap().is_none());
+        assert!(storage.get_state(h256(0)).unwrap().is_none());
+        assert!(storage.get_block(h256(4)).unwrap().is_some());
+        assert!(storage.get_block(h256(5)).unwrap().is_some());
     }
 
     #[test]
