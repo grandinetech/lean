@@ -636,9 +636,8 @@ where
                         METRICS
                             .get()
                             .map(|m| m.lean_gossip_block_size_bytes.observe(data_len as f64));
-                        info!(block_root = %signed_block.block.hash_tree_root(), "received block via gossip");
-
                         let slot = signed_block.block.slot.0;
+                        info!(slot, block_root = %signed_block.block.hash_tree_root(), "received block via gossip");
 
                         if let Err(err) = self
                             .chain_message_sink

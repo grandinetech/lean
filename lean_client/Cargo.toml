@@ -62,6 +62,8 @@ unused_qualifications                  = 'warn'
 # These are almost never helpful and require boilerplate.
 unstable_name_collisions               = 'allow'
 
+unexpected_cfgs                        = { level = 'warn', check-cfg = ['cfg(shadow_mode)'] }
+
 [workspace.lints.clippy]
 # Additional Clippy lint groups.
 nursery  = 'warn'
@@ -351,3 +353,6 @@ tikv-jemallocator = { workspace = true }
 [profile.release]
 lto = true
 codegen-units = 1
+
+[profile.shadow]
+inherits = "release"
