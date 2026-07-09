@@ -11,7 +11,6 @@ use libmdbx::{DatabaseFlags, Environment, Geometry, RW, Transaction, Transaction
 const BLOCKS_TABLE_NAME: &str = "blocks";
 const STATES_TABLE_NAME: &str = "states";
 const CHECKPOINTS_TABLE_NAME: &str = "checkpoints";
-const SLOT_INDEX_TABLE_NAME: &str = "slot_index";
 const BLOCKS_BY_SLOT_TABLE_NAME: &str = "blocks_by_slot";
 const METADATA_TABLE_NAME: &str = "metadata";
 
@@ -20,7 +19,6 @@ const FINALIZED: u8 = 1;
 const HEAD: u8 = 2;
 const SAFE_TARGET: u8 = 3;
 
-const SCHEMA_VERSION: u8 = 0;
 const NETWORK_ID: u8 = 1;
 const JUSTIFIED_EVER_UPDATED: u8 = 2;
 const FINALIZED_EVER_UPDATED: u8 = 3;
@@ -32,7 +30,6 @@ pub struct Storage {
     blocks: Database,
     states: Database,
     checkpoints: Database,
-    slot_index: Database,
     blocks_by_slot: Database,
     metadata: Database,
 }
@@ -44,7 +41,7 @@ impl Storage {
 
         let environment = Arc::new(
             Environment::builder()
-                .set_max_dbs(6)
+                .set_max_dbs(5)
                 .set_geometry(Geometry {
                     size: Some(..usize::try_from(ByteSize::gib(2).as_u64())?),
                     growth_step: Some(isize::try_from(ByteSize::mib(256).as_u64())?),
@@ -59,7 +56,6 @@ impl Storage {
             BLOCKS_TABLE_NAME,
             STATES_TABLE_NAME,
             CHECKPOINTS_TABLE_NAME,
-            SLOT_INDEX_TABLE_NAME,
             BLOCKS_BY_SLOT_TABLE_NAME,
             METADATA_TABLE_NAME,
         ] {
@@ -71,7 +67,6 @@ impl Storage {
             blocks: Database::new(BLOCKS_TABLE_NAME, Compression::Lz4),
             states: Database::new(STATES_TABLE_NAME, Compression::Zstd),
             checkpoints: Database::new(CHECKPOINTS_TABLE_NAME, Compression::None),
-            slot_index: Database::new(SLOT_INDEX_TABLE_NAME, Compression::None),
             blocks_by_slot: Database::new(BLOCKS_BY_SLOT_TABLE_NAME, Compression::None),
             metadata: Database::new(METADATA_TABLE_NAME, Compression::None),
             environment,
@@ -145,10 +140,6 @@ impl Storage {
         })
     }
 
-    pub fn has_block(&self, block_root: H256) -> Result<bool> {
-        Ok(self.read_bytes(&self.blocks, block_root)?.is_some())
-    }
-
     pub fn get_state(&self, block_root: H256) -> Result<Option<State>> {
         match self.read_bytes(&self.states, block_root)? {
             Some(bytes) => Ok(Some(State::from_ssz_default(&bytes)?)),
@@ -207,17 +198,6 @@ impl Storage {
         self.write(|txn| self.checkpoints.put(txn, [SAFE_TARGET], root))
     }
 
-    pub fn get_schema_version(&self) -> Result<Option<u32>> {
-        match self.read_bytes(&self.metadata, [SCHEMA_VERSION])? {
-            Some(bytes) => Ok(Some(u32::from_be_bytes(bytes.as_slice().try_into()?))),
-            None => Ok(None),
-        }
-    }
-
-    pub fn put_schema_version(&self, version: u32) -> Result<()> {
-        self.write(|txn| self.metadata.put(txn, [SCHEMA_VERSION], version.to_be_bytes()))
-    }
-
     pub fn get_network_id(&self) -> Result<Option<H256>> {
         match self.read_bytes(&self.metadata, [NETWORK_ID])? {
             Some(bytes) => Ok(Some(H256::from_slice(&bytes))),
@@ -257,18 +237,6 @@ impl Storage {
         })
     }
 
-    pub fn get_block_root_by_slot(&self, slot: Slot) -> Result<Option<H256>> {
-        match self.read_bytes(&self.slot_index, slot.0.to_be_bytes())? {
-            Some(bytes) => Ok(Some(H256::from_slice(&bytes))),
-            None => Ok(None),
-        }
-    }
-
-    pub fn put_block_root_by_slot(&self, slot: Slot, root: H256) -> Result<()> {
-        let slot_bytes = slot.0.to_be_bytes();
-        self.write(|txn| self.slot_index.put(txn, slot_bytes, root))
-    }
-
     pub fn prune_before_slot(&self, slot: Slot, keep_roots: &HashSet<H256>) -> Result<usize> {
         let bound = slot.0;
         self.write(|txn| {
@@ -286,23 +254,10 @@ impl Storage {
                 Ok(true)
             })?;
 
-            let mut slot_index_keys: Vec<Vec<u8>> = Vec::new();
-            self.slot_index.for_each(txn, |key, value| {
-                if slot_of(key) >= bound {
-                    return Ok(false);
-                }
-                let canonical_root = H256::from_slice(value);
-                if !keep_roots.contains(&canonical_root) {
-                    slot_index_keys.push(key.to_vec());
-                }
-                Ok(true)
-            })?;
-
             let mut removed = 0;
             removed += self.blocks.delete_batch(txn, &roots)?;
             removed += self.states.delete_batch(txn, &roots)?;
             removed += self.blocks_by_slot.delete_batch(txn, &block_index_keys)?;
-            removed += self.slot_index.delete_batch(txn, &slot_index_keys)?;
 
             Ok(removed)
         })
@@ -651,16 +606,6 @@ mod tests {
     }
 
     #[test]
-    fn schema_version_roundtrips() {
-        let (_dir, storage) = storage();
-        assert!(storage.get_schema_version().unwrap().is_none());
-
-        storage.put_schema_version(3).unwrap();
-
-        assert_eq!(storage.get_schema_version().unwrap().unwrap(), 3);
-    }
-
-    #[test]
     fn network_id_roundtrips() {
         let (_dir, storage) = storage();
         assert!(storage.get_network_id().unwrap().is_none());
@@ -730,7 +675,6 @@ mod tests {
         storage.put_finalized_checkpoint(finalized.clone()).unwrap();
         storage.put_head_root(h256(3)).unwrap();
         storage.put_safe_target(h256(4)).unwrap();
-        storage.put_schema_version(7).unwrap();
         storage.put_network_id(h256(5)).unwrap();
         storage.put_justified_ever_updated(true).unwrap();
         storage.put_finalized_ever_updated(false).unwrap();
@@ -745,21 +689,9 @@ mod tests {
         );
         assert_eq!(storage.get_head_root().unwrap().unwrap(), h256(3));
         assert_eq!(storage.get_safe_target().unwrap().unwrap(), h256(4));
-        assert_eq!(storage.get_schema_version().unwrap().unwrap(), 7);
         assert_eq!(storage.get_network_id().unwrap().unwrap(), h256(5));
         assert!(storage.get_justified_ever_updated().unwrap().unwrap());
         assert!(!storage.get_finalized_ever_updated().unwrap().unwrap());
-    }
-
-    #[test]
-    fn has_block_reflects_presence() {
-        let (_dir, storage) = storage();
-        assert!(!storage.has_block(h256(1)).unwrap());
-
-        storage.put_block(sample_block(1), h256(1)).unwrap();
-
-        assert!(storage.has_block(h256(1)).unwrap());
-        assert!(!storage.has_block(h256(2)).unwrap());
     }
 
     #[test]
@@ -837,44 +769,6 @@ mod tests {
         assert_eq!(storage.get_head_root().unwrap().unwrap(), head);
     }
 
-    #[test]
-    fn block_root_by_slot_returns_none_when_absent() {
-        let (_dir, storage) = storage();
-        assert!(storage.get_block_root_by_slot(Slot(0)).unwrap().is_none());
-    }
-
-    #[test]
-    fn block_root_by_slot_roundtrips() {
-        let (_dir, storage) = storage();
-        let root = h256(6);
-        storage.put_block_root_by_slot(Slot(42), root).unwrap();
-
-        assert_eq!(
-            storage.get_block_root_by_slot(Slot(42)).unwrap().unwrap(),
-            root
-        );
-    }
-
-    #[test]
-    fn block_root_by_slot_handles_multiple() {
-        let (_dir, storage) = storage();
-        for i in 0..10 {
-            storage
-                .put_block_root_by_slot(Slot(u64::from(i)), h256(i))
-                .unwrap();
-        }
-
-        for i in 0..10 {
-            assert_eq!(
-                storage
-                    .get_block_root_by_slot(Slot(u64::from(i)))
-                    .unwrap()
-                    .unwrap(),
-                h256(i),
-            );
-        }
-    }
-
     fn state_at_slot(slot: u64) -> State {
         let mut state = State::generate_genesis(1_234, 3);
         state.slot = Slot(slot);
@@ -930,26 +824,6 @@ mod tests {
         assert_eq!(removed, 4);
         assert!(storage.get_block(h256(20)).unwrap().is_none());
         assert!(storage.get_block(h256(21)).unwrap().is_none());
-    }
-
-    #[test]
-    fn prune_cleans_slot_index_unless_frozen() {
-        let (_dir, storage) = storage();
-        storage.put_block(sample_block(2), h256(2)).unwrap();
-        storage.put_block_root_by_slot(Slot(2), h256(2)).unwrap();
-        storage.put_block(sample_block(3), h256(3)).unwrap();
-        storage.put_block_root_by_slot(Slot(3), h256(3)).unwrap();
-
-        let mut keep = HashSet::new();
-        keep.insert(h256(3));
-
-        storage.prune_before_slot(Slot(5), &keep).unwrap();
-
-        assert!(storage.get_block_root_by_slot(Slot(2)).unwrap().is_none());
-        assert_eq!(
-            storage.get_block_root_by_slot(Slot(3)).unwrap().unwrap(),
-            h256(3),
-        );
     }
 
     #[test]

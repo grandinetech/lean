@@ -582,6 +582,15 @@ async fn main() -> Result<()> {
         },
     };
 
+    let genesis_root = genesis_block.hash_tree_root();
+    match storage.get_network_id()? {
+        Some(existing) => anyhow::ensure!(
+            existing == genesis_root,
+            "database belongs to a different network: found {existing:?}, expected {genesis_root:?}"
+        ),
+        None => storage.put_network_id(genesis_root)?,
+    }
+
     let genesis_signed_block = SignedBlock {
         block: genesis_block,
         proof: MultiMessageAggregate::default(),

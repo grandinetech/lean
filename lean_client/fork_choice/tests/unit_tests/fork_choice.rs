@@ -1,6 +1,6 @@
-use super::common::create_test_store;
-use containers::{Block, BlockBody, Slot};
-use fork_choice::store::get_proposal_head;
+use super::common::{create_test_store, test_storage};
+use containers::{Block, BlockBody, Config, SignedBlock, Slot, State, Validator};
+use fork_choice::store::{get_forkchoice_store, get_proposal_head};
 use ssz::{H256, SszHash};
 
 #[test]
@@ -52,4 +52,40 @@ fn test_get_vote_target_chain() {
     let target = store.get_attestation_target();
 
     assert_eq!(target.slot, Slot(6));
+}
+
+#[test]
+fn get_forkchoice_store_restores_from_db() {
+    let storage = test_storage();
+    let state = State::generate_genesis_with_validators(1000, vec![Validator::default(); 4]);
+    let block = Block {
+        slot: Slot(0),
+        proposer_index: 0,
+        parent_root: H256::default(),
+        state_root: state.hash_tree_root(),
+        body: BlockBody::default(),
+    };
+    let signed_block = SignedBlock {
+        block,
+        proof: Default::default(),
+    };
+    let config = Config { genesis_time: 1000 };
+
+    let fresh = get_forkchoice_store(
+        state.clone(),
+        signed_block.clone(),
+        config.clone(),
+        true,
+        1,
+        storage.clone(),
+    );
+    let head = fresh.head;
+    let finalized = fresh.latest_finalized.clone();
+    drop(fresh);
+
+    let restored = get_forkchoice_store(state, signed_block, config, true, 1, storage);
+    assert_eq!(restored.head, head);
+    assert!(restored.blocks.contains_key(&head));
+    assert!(restored.states.contains_key(&head));
+    assert_eq!(restored.latest_finalized, finalized);
 }

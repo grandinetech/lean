@@ -136,15 +136,6 @@ pub const STATES_TO_KEEP: usize = 3_000;
 pub const HEAD_RETENTION_SLOTS: u64 = 128;
 
 impl Store {
-    pub fn get_block(&self, root: H256) -> Option<Block> {
-        if let Some(block) = self.blocks.get(&root) {
-            return Some(block.clone());
-        }
-        self.storage
-            .get_block(root)
-            .expect("failed to read block from database")
-    }
-
     pub fn produce_attestation_data(&self, slot: Slot) -> Result<AttestationData> {
         let head_checkpoint = Checkpoint {
             root: self.head,
@@ -238,84 +229,144 @@ pub fn get_forkchoice_store(
     log_inv_rate: usize,
     storage: Arc<Storage>,
 ) -> Store {
-    // Extract the plain Block from the signed block
-    let block = anchor_block.block.clone();
-    let block_slot = block.slot;
+    if let Some(head_root) = storage
+        .get_head_root()
+        .expect("failed to read head root from database")
+    {
+        let latest_finalized = storage
+            .get_finalized_checkpoint()
+            .expect("failed to read finalized checkpoint from database")
+            .unwrap_or_default();
+        let latest_justified = storage
+            .get_justified_checkpoint()
+            .expect("failed to read justified checkpoint from database")
+            .unwrap_or_default();
+        let safe_target = storage
+            .get_safe_target()
+            .expect("failed to read safe target from database")
+            .unwrap_or_default();
+        let justified_ever_updated = storage
+            .get_justified_ever_updated()
+            .expect("failed to read justified_ever_updated from database")
+            .unwrap_or(false);
+        let finalized_ever_updated = storage
+            .get_finalized_ever_updated()
+            .expect("failed to read finalized_ever_updated from database")
+            .unwrap_or(false);
 
-    // Compute block root differently for genesis vs checkpoint sync:
-    // - Genesis (slot 0): Use block.hash_tree_root() directly — block and state are consistent.
-    // - Checkpoint sync (slot > 0): Reconstruct BlockHeader from state.latest_block_header,
-    //   using anchor_state.hash_tree_root() as state_root.  This guarantees the root stored
-    //   as the key in store.blocks / store.states is the canonical one committed to by the
-    //   downloaded state, independent of what the real block's state_root field contains.
-    let block_root = if block_slot.0 == 0 {
-        block.hash_tree_root()
-    } else {
-        let block_header = BlockHeader {
-            slot: anchor_state.latest_block_header.slot,
-            proposer_index: anchor_state.latest_block_header.proposer_index,
-            parent_root: anchor_state.latest_block_header.parent_root,
-            state_root: anchor_state.hash_tree_root(),
-            body_root: anchor_state.latest_block_header.body_root,
+        let keep_from = latest_finalized.slot.0.saturating_sub(STATE_PRUNE_BUFFER);
+        let mut blocks = HashMap::new();
+        let mut states = HashMap::new();
+        for (root, block, state) in storage
+            .load_since(Slot(keep_from))
+            .expect("failed to load chain from database")
+        {
+            blocks.insert(root, block);
+            states.insert(root, Arc::new(state));
+        }
+
+        let head = if blocks.contains_key(&head_root) {
+            head_root
+        } else {
+            latest_finalized.root
         };
-        block_header.hash_tree_root()
-    };
+        let head_slot = blocks
+            .get(&head)
+            .map(|block| block.slot.0)
+            .unwrap_or(latest_finalized.slot.0);
 
-    // Seed both checkpoints from the anchor block itself: (root=anchor_root,
-    // slot=anchor_slot). The store treats the anchor as the new "genesis" for
-    // fork choice — pre-anchor history is pruned — so the embedded checkpoints
-    // from the downloaded state are intentionally ignored. This keeps the
-    // checkpoint slot/root pair internally consistent with the block at
-    // anchor_root, mirroring the beacon-chain seeding convention.
-    let anchor_checkpoint = Checkpoint {
-        root: block_root,
-        slot: block_slot,
-    };
-    let latest_justified = anchor_checkpoint.clone();
-    let latest_finalized = anchor_checkpoint;
+        Store {
+            time: head_slot * INTERVALS_PER_SLOT,
+            config,
+            is_aggregator,
+            head,
+            safe_target,
+            latest_justified,
+            latest_finalized,
+            justified_ever_updated,
+            finalized_ever_updated,
+            blocks,
+            states,
+            latest_known_attestations: HashMap::new(),
+            latest_new_attestations: HashMap::new(),
+            gossip_signatures: HashMap::new(),
+            latest_known_aggregated_payloads: IndexMap::new(),
+            latest_new_aggregated_payloads: IndexMap::new(),
+            attestation_data_by_root: HashMap::new(),
+            pending_attestations: HashMap::new(),
+            pending_aggregated_attestations: HashMap::new(),
+            pending_fetch_roots: HashSet::new(),
+            log_inv_rate,
+            storage,
+        }
+    } else {
+        let block = anchor_block.block.clone();
+        let block_slot = block.slot;
 
-    storage.batch_write(|| {
-        storage.put_block(block.clone(), block_root)?;
-        storage.put_state(anchor_state.clone(), block_root)?;
-        storage.put_finalized_checkpoint(latest_finalized.clone())?;
-        storage.put_head_root(block_root)?;
-        Ok(())
-    }).expect("database write failed");
+        let block_root = if block_slot.0 == 0 {
+            block.hash_tree_root()
+        } else {
+            let block_header = BlockHeader {
+                slot: anchor_state.latest_block_header.slot,
+                proposer_index: anchor_state.latest_block_header.proposer_index,
+                parent_root: anchor_state.latest_block_header.parent_root,
+                state_root: anchor_state.hash_tree_root(),
+                body_root: anchor_state.latest_block_header.body_root,
+            };
+            block_header.hash_tree_root()
+        };
 
-    // Store the original anchor_state - do NOT modify it
-    // Modifying checkpoints would change its hash_tree_root(), breaking the
-    // consistency with block.state_root
-    Store {
-        time: block_slot.0 * INTERVALS_PER_SLOT,
-        config,
-        is_aggregator,
-        head: block_root,
-        safe_target: block_root,
-        latest_justified,
-        latest_finalized,
-        justified_ever_updated: block_slot.0 == 0,
-        finalized_ever_updated: false,
-        blocks: {
-            let mut m = HashMap::new();
-            m.insert(block_root, block);
-            m
-        },
-        states: {
-            let mut m = HashMap::new();
-            m.insert(block_root, Arc::new(anchor_state));
-            m
-        },
-        latest_known_attestations: HashMap::new(),
-        latest_new_attestations: HashMap::new(),
-        gossip_signatures: HashMap::new(),
-        latest_known_aggregated_payloads: IndexMap::new(),
-        latest_new_aggregated_payloads: IndexMap::new(),
-        attestation_data_by_root: HashMap::new(),
-        pending_attestations: HashMap::new(),
-        pending_aggregated_attestations: HashMap::new(),
-        pending_fetch_roots: HashSet::new(),
-        log_inv_rate,
-        storage,
+        let anchor_checkpoint = Checkpoint {
+            root: block_root,
+            slot: block_slot,
+        };
+        let latest_justified = anchor_checkpoint.clone();
+        let latest_finalized = anchor_checkpoint;
+
+        storage.batch_write(|| {
+            storage.put_block(block.clone(), block_root)?;
+            storage.put_state(anchor_state.clone(), block_root)?;
+            storage.put_justified_checkpoint(latest_justified.clone())?;
+            storage.put_finalized_checkpoint(latest_finalized.clone())?;
+            storage.put_head_root(block_root)?;
+            storage.put_safe_target(block_root)?;
+            storage.put_justified_ever_updated(block_slot.0 == 0)?;
+            storage.put_finalized_ever_updated(false)?;
+            Ok(())
+        }).expect("database write failed");
+
+        Store {
+            time: block_slot.0 * INTERVALS_PER_SLOT,
+            config,
+            is_aggregator,
+            head: block_root,
+            safe_target: block_root,
+            latest_justified,
+            latest_finalized,
+            justified_ever_updated: block_slot.0 == 0,
+            finalized_ever_updated: false,
+            blocks: {
+                let mut m = HashMap::new();
+                m.insert(block_root, block);
+                m
+            },
+            states: {
+                let mut m = HashMap::new();
+                m.insert(block_root, Arc::new(anchor_state));
+                m
+            },
+            latest_known_attestations: HashMap::new(),
+            latest_new_attestations: HashMap::new(),
+            gossip_signatures: HashMap::new(),
+            latest_known_aggregated_payloads: IndexMap::new(),
+            latest_new_aggregated_payloads: IndexMap::new(),
+            attestation_data_by_root: HashMap::new(),
+            pending_attestations: HashMap::new(),
+            pending_aggregated_attestations: HashMap::new(),
+            pending_fetch_roots: HashSet::new(),
+            log_inv_rate,
+            storage,
+        }
     }
 }
 
@@ -451,6 +502,7 @@ pub fn update_head(store: &mut Store) {
                     slot: finalized_slot,
                 }).expect("failed to write to database");
                 store.finalized_ever_updated = true;
+                store.storage.put_finalized_ever_updated(true).expect("failed to persist finalized_ever_updated");
                 METRICS.get().map(|m| {
                     if let Ok(s) = i64::try_from(finalized_slot.0) {
                         m.lean_latest_finalized_slot.set(s);
@@ -592,6 +644,7 @@ pub fn update_safe_target(store: &mut Store) {
     // Run LMD-GHOST with 2/3 threshold to find safe target
     let new_safe_target = get_fork_choice_head(store, root, &attestations, min_score);
     store.safe_target = new_safe_target;
+    store.storage.put_safe_target(new_safe_target).expect("failed to persist safe target");
 
     set_gauge_u64(
         |metrics| &metrics.lean_safe_target_slot,
