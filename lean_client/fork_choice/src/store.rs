@@ -323,17 +323,19 @@ pub fn get_forkchoice_store(
         let latest_justified = anchor_checkpoint.clone();
         let latest_finalized = anchor_checkpoint;
 
-        storage.batch_write(|| {
-            storage.put_block(block.clone(), block_root)?;
-            storage.put_state(anchor_state.clone(), block_root)?;
-            storage.put_justified_checkpoint(latest_justified.clone())?;
-            storage.put_finalized_checkpoint(latest_finalized.clone())?;
-            storage.put_head_root(block_root)?;
-            storage.put_safe_target(block_root)?;
-            storage.put_justified_ever_updated(block_slot.0 == 0)?;
-            storage.put_finalized_ever_updated(false)?;
-            Ok(())
-        }).expect("database write failed");
+        storage
+            .batch_write(|| {
+                storage.put_block(block.clone(), block_root)?;
+                storage.put_state(anchor_state.clone(), block_root)?;
+                storage.put_justified_checkpoint(latest_justified.clone())?;
+                storage.put_finalized_checkpoint(latest_finalized.clone())?;
+                storage.put_head_root(block_root)?;
+                storage.put_safe_target(block_root)?;
+                storage.put_justified_ever_updated(block_slot.0 == 0)?;
+                storage.put_finalized_ever_updated(false)?;
+                Ok(())
+            })
+            .expect("database write failed");
 
         Store {
             time: block_slot.0 * INTERVALS_PER_SLOT,
@@ -476,7 +478,10 @@ pub fn update_head(store: &mut Store) {
     // Compute new head using LMD-GHOST from latest justified root
     let new_head = get_fork_choice_head(store, store.latest_justified.root, &latest_votes, 0);
     store.head = new_head;
-    store.storage.put_head_root(new_head).expect("failed to persist head");
+    store
+        .storage
+        .put_head_root(new_head)
+        .expect("failed to persist head");
 
     if let Some(head_state) = store.states.get(&new_head) {
         let finalized_slot = head_state.latest_finalized.slot;
@@ -497,12 +502,18 @@ pub fn update_head(store: &mut Store) {
                     root: finalized_root,
                     slot: finalized_slot,
                 };
-                store.storage.put_finalized_checkpoint(Checkpoint {
-                    root: finalized_root,
-                    slot: finalized_slot,
-                }).expect("failed to write to database");
+                store
+                    .storage
+                    .put_finalized_checkpoint(Checkpoint {
+                        root: finalized_root,
+                        slot: finalized_slot,
+                    })
+                    .expect("failed to write to database");
                 store.finalized_ever_updated = true;
-                store.storage.put_finalized_ever_updated(true).expect("failed to persist finalized_ever_updated");
+                store
+                    .storage
+                    .put_finalized_ever_updated(true)
+                    .expect("failed to persist finalized_ever_updated");
                 METRICS.get().map(|m| {
                     if let Ok(s) = i64::try_from(finalized_slot.0) {
                         m.lean_latest_finalized_slot.set(s);
@@ -644,7 +655,10 @@ pub fn update_safe_target(store: &mut Store) {
     // Run LMD-GHOST with 2/3 threshold to find safe target
     let new_safe_target = get_fork_choice_head(store, root, &attestations, min_score);
     store.safe_target = new_safe_target;
-    store.storage.put_safe_target(new_safe_target).expect("failed to persist safe target");
+    store
+        .storage
+        .put_safe_target(new_safe_target)
+        .expect("failed to persist safe target");
 
     set_gauge_u64(
         |metrics| &metrics.lean_safe_target_slot,

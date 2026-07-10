@@ -727,12 +727,16 @@ pub fn apply_verified_block(
     store.blocks.insert(block_root, block.clone());
     store.states.insert(block_root, Arc::clone(&new_state));
 
-
-    store.storage.batch_write(|| {
-        store.storage.put_block(block.clone(), block_root)?;
-        store.storage.put_state(new_state.as_ref().clone(), block_root)?;
-        Ok(())
-    }).expect("database write failed");
+    store
+        .storage
+        .batch_write(|| {
+            store.storage.put_block(block.clone(), block_root)?;
+            store
+                .storage
+                .put_state(new_state.as_ref().clone(), block_root)?;
+            Ok(())
+        })
+        .expect("database write failed");
 
     METRICS.get().map(|m| {
         m.grandine_store_blocks_size.set(store.blocks.len() as i64);
@@ -778,9 +782,15 @@ pub fn apply_verified_block(
             "Store justified checkpoint updated!"
         );
         store.latest_justified = new_state.latest_justified.clone();
-        store.storage.put_justified_checkpoint(new_state.latest_justified.clone()).expect("failed to persist justified checkpoint");
+        store
+            .storage
+            .put_justified_checkpoint(new_state.latest_justified.clone())
+            .expect("failed to persist justified checkpoint");
         store.justified_ever_updated = true;
-        store.storage.put_justified_ever_updated(true).expect("failed to persist justified_ever_updated");
+        store
+            .storage
+            .put_justified_ever_updated(true)
+            .expect("failed to persist justified_ever_updated");
         METRICS.get().map(|metrics| {
             let Some(slot) = new_state.latest_justified.slot.0.try_into().ok() else {
                 warn!("unable to set latest_justified slot in metrics");

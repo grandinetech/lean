@@ -1,4 +1,9 @@
-use std::{borrow::Cow, collections::HashSet, path::Path, sync::{Arc, Mutex}};
+use std::{
+    borrow::Cow,
+    collections::HashSet,
+    path::Path,
+    sync::{Arc, Mutex},
+};
 
 use anyhow::Result;
 use bytesize::ByteSize;
@@ -314,7 +319,7 @@ impl Storage {
 
 impl Default for Storage {
     fn default() -> Self {
-        Self::new("./database").expect("failed to open default storage at ./database")
+        Self::new("./data").expect("failed to open default storage at ./data")
     }
 }
 
