@@ -300,9 +300,16 @@ pub fn get_forkchoice_store(
             storage,
         }
     } else {
+        // Extract the plain Block from the signed block
         let block = anchor_block.block.clone();
         let block_slot = block.slot;
 
+        // Compute block root differently for genesis vs checkpoint sync:
+        // - Genesis (slot 0): Use block.hash_tree_root() directly — block and state are consistent.
+        // - Checkpoint sync (slot > 0): Reconstruct BlockHeader from state.latest_block_header,
+        //   using anchor_state.hash_tree_root() as state_root.  This guarantees the root stored
+        //   as the key in store.blocks / store.states is the canonical one committed to by the
+        //   downloaded state, independent of what the real block's state_root field contains.
         let block_root = if block_slot.0 == 0 {
             block.hash_tree_root()
         } else {
@@ -316,6 +323,12 @@ pub fn get_forkchoice_store(
             block_header.hash_tree_root()
         };
 
+        // Seed both checkpoints from the anchor block itself: (root=anchor_root,
+        // slot=anchor_slot). The store treats the anchor as the new "genesis" for
+        // fork choice — pre-anchor history is pruned — so the embedded checkpoints
+        // from the downloaded state are intentionally ignored. This keeps the
+        // checkpoint slot/root pair internally consistent with the block at
+        // anchor_root, mirroring the beacon-chain seeding convention.
         let anchor_checkpoint = Checkpoint {
             root: block_root,
             slot: block_slot,
@@ -337,6 +350,9 @@ pub fn get_forkchoice_store(
             })
             .expect("database write failed");
 
+        // Store the original anchor_state - do NOT modify it
+        // Modifying checkpoints would change its hash_tree_root(), breaking the
+        // consistency with block.state_root
         Store {
             time: block_slot.0 * INTERVALS_PER_SLOT,
             config,
