@@ -17,6 +17,7 @@ pub fn normal_routes(
     Router::new()
         .route("/lean/v0/health", get(handlers::health))
         .route("/lean/v0/states/finalized", get(handlers::states_finalized))
+        .route("/lean/v0/blocks/finalized", get(handlers::blocks_finalized))
         .route(
             "/lean/v0/checkpoints/justified",
             get(handlers::checkpoints_justified),

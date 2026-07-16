@@ -6,6 +6,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use containers::Block;
 use fork_choice::store::Store;
 use parking_lot::RwLock;
 use serde_json::{Value, json};
@@ -51,6 +52,28 @@ pub async fn states_finalized(State(store): State<SharedStore>) -> Result<Respon
         .ok_or(StatusCode::NOT_FOUND)?;
 
     let ssz_bytes = state
+        .to_ssz()
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok((
+        StatusCode::OK,
+        [(axum::http::header::CONTENT_TYPE, "application/octet-stream")],
+        ssz_bytes,
+    )
+        .into_response())
+}
+
+pub async fn blocks_finalized(State(store): State<SharedStore>) -> Result<Response, StatusCode> {
+    let store = store.read();
+
+    let finalized_root = store.latest_finalized.root;
+
+    let block = store
+        .blocks
+        .get(&finalized_root)
+        .ok_or(StatusCode::NOT_FOUND)?;
+
+    let ssz_bytes = block
         .to_ssz()
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
