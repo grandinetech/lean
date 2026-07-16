@@ -12,12 +12,16 @@ use axum::{
     body::Body,
     http::{Request, header::CONTENT_TYPE},
 };
+use containers::{Block, BlockBody, Checkpoint, MultiMessageAggregate, SignedBlock, Slot};
 use fork_choice::store::Store;
-use http_api::{AggregatorController, HttpServerConfig, SharedStore, normal_routes};
+use http_api::{
+    AggregatorController, HttpServerConfig, SharedSignedBlocks, SharedStore, normal_routes,
+};
 use http_body_util::BodyExt;
 use parking_lot::RwLock;
 use serde::Deserialize;
 use serde_json::Value;
+use ssz::{H256, SszHash, SszReadDefault as _};
 use test_generator::test_resources;
 use tower::ServiceExt;
 
@@ -73,10 +77,12 @@ fn api_endpoint(spec_file: &str) {
             ..Default::default()
         }));
 
+        let signed_blocks: SharedSignedBlocks = Arc::new(RwLock::new(HashMap::new()));
+
         let controller = Some(Arc::new(AggregatorController::new(store.clone(), None)));
 
         let config = HttpServerConfig::default();
-        let router = normal_routes(&config, store, controller);
+        let router = normal_routes(&config, store, signed_blocks, controller);
 
         let request = match (case.method.as_str(), case.request_body.as_ref()) {
             ("POST", Some(body)) => {
@@ -136,5 +142,104 @@ fn api_endpoint(spec_file: &str) {
                 serde_json::from_slice(&body_bytes).expect("parse response body as JSON");
             assert_eq!(actual_body, expected_body, "body mismatch in {}", test_name);
         }
+    });
+}
+
+fn sample_signed_block() -> SignedBlock {
+    SignedBlock {
+        block: Block {
+            slot: Slot(13),
+            proposer_index: 0,
+            parent_root: H256::default(),
+            state_root: H256::default(),
+            body: BlockBody {
+                attestations: Default::default(),
+            },
+        },
+        proof: MultiMessageAggregate::default(),
+    }
+}
+
+fn blocks_finalized_request() -> Request<Body> {
+    Request::builder()
+        .method("GET")
+        .uri("/lean/v0/blocks/finalized")
+        .body(Body::empty())
+        .expect("build request")
+}
+
+#[test]
+fn blocks_finalized_returns_signed_block_ssz() {
+    let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
+    rt.block_on(async move {
+        let signed_block = sample_signed_block();
+        let root = signed_block.block.hash_tree_root();
+
+        let store: SharedStore = Arc::new(RwLock::new(Store {
+            latest_finalized: Checkpoint {
+                root,
+                slot: signed_block.block.slot,
+            },
+            ..Default::default()
+        }));
+        let signed_blocks: SharedSignedBlocks =
+            Arc::new(RwLock::new(HashMap::from([(root, signed_block.clone())])));
+        let controller = Some(Arc::new(AggregatorController::new(store.clone(), None)));
+
+        let config = HttpServerConfig::default();
+        let router = normal_routes(&config, store, signed_blocks, controller);
+
+        let response = router
+            .oneshot(blocks_finalized_request())
+            .await
+            .expect("router oneshot");
+
+        assert_eq!(response.status().as_u16(), 200);
+        assert_eq!(
+            response
+                .headers()
+                .get(CONTENT_TYPE)
+                .and_then(|value| value.to_str().ok()),
+            Some("application/octet-stream"),
+        );
+
+        let body_bytes = response
+            .into_body()
+            .collect()
+            .await
+            .expect("collect response body")
+            .to_bytes();
+
+        let decoded = SignedBlock::from_ssz_default(&body_bytes).expect("decode SignedBlock SSZ");
+        assert_eq!(decoded.block.hash_tree_root(), root);
+        assert_eq!(decoded.block.slot, signed_block.block.slot);
+    });
+}
+
+#[test]
+fn blocks_finalized_returns_404_when_signed_block_missing() {
+    let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
+    rt.block_on(async move {
+        let signed_block = sample_signed_block();
+
+        let store: SharedStore = Arc::new(RwLock::new(Store {
+            latest_finalized: Checkpoint {
+                root: signed_block.block.hash_tree_root(),
+                slot: signed_block.block.slot,
+            },
+            ..Default::default()
+        }));
+        let signed_blocks: SharedSignedBlocks = Arc::new(RwLock::new(HashMap::new()));
+        let controller = Some(Arc::new(AggregatorController::new(store.clone(), None)));
+
+        let config = HttpServerConfig::default();
+        let router = normal_routes(&config, store, signed_blocks, controller);
+
+        let response = router
+            .oneshot(blocks_finalized_request())
+            .await
+            .expect("router oneshot");
+
+        assert_eq!(response.status().as_u16(), 404);
     });
 }

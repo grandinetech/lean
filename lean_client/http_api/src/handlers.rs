@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use axum::{
     Json,
@@ -6,25 +6,33 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use containers::Block;
+use containers::SignedBlock;
 use fork_choice::store::Store;
 use parking_lot::RwLock;
 use serde_json::{Value, json};
-use ssz::SszWrite;
+use ssz::{H256, SszWrite};
 
 use crate::aggregator_controller::SharedController;
 
 pub type SharedStore = Arc<RwLock<Store>>;
+pub type SharedSignedBlocks = Arc<RwLock<HashMap<H256, SignedBlock>>>;
 
 #[derive(Clone)]
 pub struct AppState {
     pub store: SharedStore,
+    pub signed_blocks: SharedSignedBlocks,
     pub controller: SharedController,
 }
 
 impl FromRef<AppState> for SharedStore {
     fn from_ref(app_state: &AppState) -> Self {
         app_state.store.clone()
+    }
+}
+
+impl FromRef<AppState> for SharedSignedBlocks {
+    fn from_ref(app_state: &AppState) -> Self {
+        app_state.signed_blocks.clone()
     }
 }
 
@@ -63,13 +71,16 @@ pub async fn states_finalized(State(store): State<SharedStore>) -> Result<Respon
         .into_response())
 }
 
-pub async fn blocks_finalized(State(store): State<SharedStore>) -> Result<Response, StatusCode> {
+pub async fn blocks_finalized(
+    State(store): State<SharedStore>,
+    State(signed_blocks): State<SharedSignedBlocks>,
+) -> Result<Response, StatusCode> {
     let store = store.read();
+    let signed_blocks = signed_blocks.read();
 
     let finalized_root = store.latest_finalized.root;
 
-    let block = store
-        .blocks
+    let block = signed_blocks
         .get(&finalized_root)
         .ok_or(StatusCode::NOT_FOUND)?;
 

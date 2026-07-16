@@ -1100,6 +1100,7 @@ async fn main() -> Result<()> {
     let chain_outbound_sender = outbound_p2p_sender.clone();
 
     let http_store = store.clone();
+    let http_signed_blocks = signed_block_provider.clone();
     let aggregator_controller =
         Arc::new(AggregatorController::new(store.clone(), vs_for_controller));
     // The hive `spec-assets-*` test suites drive the client through the
@@ -1114,17 +1115,25 @@ async fn main() -> Result<()> {
             .map(str::trim),
         Some("1") | Some("true") | Some("TRUE") | Some("yes")
     );
+
     task::spawn(async move {
         let result = if test_driver_enabled {
             info!("HTTP server starting in test-driver mode (HIVE_LEAN_TEST_DRIVER=1)");
             http_api::run_test_driver_server(
                 args.http_config,
                 http_store,
+                http_signed_blocks,
                 Some(aggregator_controller),
             )
             .await
         } else {
-            http_api::run_server(args.http_config, http_store, Some(aggregator_controller)).await
+            http_api::run_server(
+                args.http_config,
+                http_store,
+                http_signed_blocks,
+                Some(aggregator_controller),
+            )
+            .await
         };
         if let Err(err) = result {
             error!("HTTP Server failed with error: {err:?}");
