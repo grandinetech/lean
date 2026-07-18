@@ -61,12 +61,12 @@ impl From<TestCheckpoint> for Checkpoint {
 #[serde(rename_all = "camelCase")]
 pub struct TestValidator {
     /// Legacy single-key fixtures emit `pubkey` instead of the camelCase
-    /// `attestationPubkey`; `rename_all` handles the camelCase, the explicit
+    /// `attestationPublicKey`; `rename_all` handles the camelCase, the explicit
     /// alias keeps the legacy form working.
     #[serde(alias = "pubkey")]
-    pub attestation_pubkey: String,
+    pub attestation_public_key: String,
     #[serde(default)]
-    pub proposal_pubkey: Option<String>,
+    pub proposal_public_key: Option<String>,
     #[serde(default)]
     pub index: u64,
 }
@@ -219,11 +219,11 @@ impl From<TestAnchorState> for State {
         let mut validators = Validators::default();
         for test_validator in &value.validators.data {
             let attestation_pubkey: PublicKey = test_validator
-                .attestation_pubkey
+                .attestation_public_key
                 .parse()
                 .expect("Failed to parse validator attestation_pubkey");
             let proposal_pubkey: PublicKey = test_validator
-                .proposal_pubkey
+                .proposal_public_key
                 .as_deref()
                 .map(|s| {
                     s.parse()
