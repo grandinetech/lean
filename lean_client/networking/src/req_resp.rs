@@ -734,3 +734,56 @@ pub fn build_blocks_by_root() -> ReqResp {
 pub fn build_blocks_by_range() -> ReqResp {
     build(vec![BLOCKS_BY_RANGE_PROTOCOL_V1.to_string()])
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Encoding an error response must produce a single, well-formed ssz-snappy
+    /// chunk whose response-code byte is the requested error code. This mirrors
+    /// what the hive `reqresp/blocks_by_range/zero_count` scenario asserts on the
+    /// wire: `!chunks.is_empty() && chunks[0].0 == RESPONSE_CODE_INVALID_REQUEST`.
+    #[test]
+    fn encode_error_response_sets_invalid_request_code() {
+        let message = "count must be greater than zero";
+        let response = LeanResponse::Error {
+            code: RESPONSE_INVALID_REQUEST,
+            message: message.to_string(),
+        };
+
+        let encoded = LeanCodec::encode_response(&response).expect("error response should encode");
+
+        // The mock rejects an empty response, so there must be at least the code byte.
+        assert!(!encoded.is_empty(), "encoded error response must not be empty");
+        // First byte is the response code the peer reads.
+        assert_eq!(
+            encoded[0], RESPONSE_INVALID_REQUEST,
+            "first byte must be the INVALID_REQUEST code"
+        );
+
+        // The chunk must be parseable back with the same framing the peer uses,
+        // recovering the code and the original message payload, consuming all bytes.
+        let (code, payload, consumed) =
+            LeanCodec::decode_response_chunk(&encoded).expect("error chunk should decode");
+        assert_eq!(code, RESPONSE_INVALID_REQUEST);
+        assert_eq!(payload, message.as_bytes());
+        assert_eq!(consumed, encoded.len(), "error response must be a single chunk");
+    }
+
+    /// The error code carried in the variant is what ends up on the wire, so a
+    /// different code round-trips independently of the payload.
+    #[test]
+    fn encode_error_response_preserves_code_and_message() {
+        let response = LeanResponse::Error {
+            code: RESPONSE_SERVER_ERROR,
+            message: "boom".to_string(),
+        };
+
+        let encoded = LeanCodec::encode_response(&response).expect("error response should encode");
+        let (code, payload, _) =
+            LeanCodec::decode_response_chunk(&encoded).expect("error chunk should decode");
+
+        assert_eq!(code, RESPONSE_SERVER_ERROR);
+        assert_eq!(payload, b"boom");
+    }
+}
