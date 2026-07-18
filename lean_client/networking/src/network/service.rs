@@ -1678,7 +1678,6 @@ where
 
                     if count == 0 || count > req_resp::MAX_REQUEST_BLOCKS as u64 {
                         info!(peer = %peer, start_slot, count, "Rejecting BlocksByRange: invalid count");
-
                         let response = LeanResponse::Error {
                             code: RESPONSE_INVALID_REQUEST,
                             message: "Invalid Block Request Count".to_string(),
