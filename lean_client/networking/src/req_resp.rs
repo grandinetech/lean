@@ -62,6 +62,7 @@ pub enum LeanResponse {
     Status(Status),
     BlocksByRoot(Vec<SignedBlock>),
     BlocksByRange(Vec<SignedBlock>),
+    Error { code: u8, message: String },
     Empty,
 }
 
@@ -296,6 +297,9 @@ impl LeanCodec {
                     result.extend(chunk);
                 }
                 Ok(result)
+            }
+            LeanResponse::Error { code, message } => {
+                Self::encode_response_chunk(*code, message.as_bytes())
             }
             LeanResponse::Empty => Ok(Vec::new()),
         }

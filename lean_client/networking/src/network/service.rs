@@ -41,9 +41,11 @@ use crate::{
     discovery::{DiscoveryConfig, DiscoveryService},
     enr_ext::EnrExt,
     gossipsub::{self, config::GossipsubConfig, message::GossipsubMessage, topic::GossipsubKind},
-    network::behaviour::{LeanNetworkBehaviour, LeanNetworkBehaviourEvent},
-    network::range_sync::{MAX_SYNC_RANGE, RangeSyncState},
-    req_resp::{self, LeanRequest, ReqRespMessage},
+    network::{
+        behaviour::{LeanNetworkBehaviour, LeanNetworkBehaviourEvent},
+        range_sync::{MAX_SYNC_RANGE, RangeSyncState},
+    },
+    req_resp::{self, LeanRequest, RESPONSE_INVALID_REQUEST, ReqRespMessage},
     types::{
         CanonicalBlocksProvider, ChainMessage, ChainMessageSink, ConnectionState,
         MAX_BLOCK_CACHE_SIZE, NetworkFinalizedSlot, OutboundP2pRequest, P2pRequestSource,
@@ -59,6 +61,7 @@ const MAX_BLOCKS_PER_REQUEST: usize = 10;
 /// Set comfortably above libp2p's default protocol timeout (10s) so the app-layer
 /// gives the underlying stream room to complete under host CPU contention.
 const BLOCKS_BY_ROOT_REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
+const RESPONSE_CODE_INVALID_REQUEST: u8 = 1;
 
 struct PendingBlocksRequest {
     roots: Vec<H256>,
@@ -1676,8 +1679,11 @@ where
 
                     if count == 0 || count > req_resp::MAX_REQUEST_BLOCKS as u64 {
                         info!(peer = %peer, start_slot, count, "Rejecting BlocksByRange: invalid count");
-                        // Send an empty response — peer will treat as no data.
-                        let response = LeanResponse::BlocksByRange(Vec::new());
+
+                        let response = LeanResponse::Error {
+                            code: RESPONSE_INVALID_REQUEST,
+                            message: "Invalid Block Request Count".to_string(),
+                        };
                         if let Err(e) = self
                             .swarm
                             .behaviour_mut()
