@@ -61,7 +61,6 @@ const MAX_BLOCKS_PER_REQUEST: usize = 10;
 /// Set comfortably above libp2p's default protocol timeout (10s) so the app-layer
 /// gives the underlying stream room to complete under host CPU contention.
 const BLOCKS_BY_ROOT_REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
-const RESPONSE_CODE_INVALID_REQUEST: u8 = 1;
 
 struct PendingBlocksRequest {
     roots: Vec<H256>,
