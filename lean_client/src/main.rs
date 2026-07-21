@@ -36,12 +36,11 @@ use networking::types::{
 };
 use parking_lot::{Mutex, RwLock};
 use ssz::{PersistentList, SszHash, SszReadDefault as _};
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
-use std::{collections::HashMap, path::PathBuf};
 use std::{io::IsTerminal, net::IpAddr};
-use storage::Storage;
 use tokio::{
     sync::{Notify, mpsc, oneshot, watch},
     task,
@@ -378,9 +377,6 @@ struct Args {
     #[arg(short, long)]
     genesis: Option<String>,
 
-    #[arg(long, default_value = "data")]
-    data_dir: PathBuf,
-
     #[arg(long)]
     node_id: Option<String>,
 
@@ -499,8 +495,6 @@ async fn main() -> Result<()> {
     for feature in args.features {
         feature.enable();
     }
-
-    let mut storage = Arc::new(Storage::new(&args.data_dir)?);
 
     let metrics = if args.metrics_config.enabled() {
         let metrics = Metrics::new()?;
@@ -630,24 +624,6 @@ async fn main() -> Result<()> {
             attestations: Default::default(),
         },
     };
-
-    let genesis_root = genesis_block.hash_tree_root();
-    if let Some(existing) = storage.get_network_id()? {
-        if existing != genesis_root {
-            let suffix = hex::encode(&genesis_root.as_bytes()[..3]);
-            let mut new_dir = args.data_dir.clone().into_os_string();
-            new_dir.push("_");
-            new_dir.push(&suffix);
-            let new_dir = PathBuf::from(new_dir);
-            info!("database belongs to a different network; switching to {new_dir:?}");
-            storage = Arc::new(Storage::new(&new_dir)?);
-            if storage.get_network_id()?.is_none() {
-                storage.put_network_id(genesis_root)?;
-            }
-        }
-    } else {
-        storage.put_network_id(genesis_root)?;
-    }
 
     let genesis_signed_block = SignedBlock {
         block: genesis_block,
@@ -1093,7 +1069,6 @@ async fn main() -> Result<()> {
         config.clone(),
         args.is_aggregator,
         genesis_log_inv_rate as usize,
-        storage,
     )));
 
     // Seed the block provider so we can serve the anchor block to peers via BlocksByRoot.

@@ -13,22 +13,10 @@ use spec_test_fixtures::fork_choice::{ForkChoiceStep, StoreChecks};
 
 use serde::Deserialize;
 use ssz::{BitList, H256, SszHash};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::{collections::HashMap, fs::File};
 use std::{panic::AssertUnwindSafe, path::Path};
-use storage::Storage;
 use test_generator::test_resources;
 use xmss::PublicKey;
-
-/// Open a throwaway `Storage` in a unique temp directory, one libmdbx
-/// environment per store so parallel test cases never share a path.
-fn test_storage() -> Arc<Storage> {
-    static COUNTER: AtomicU64 = AtomicU64::new(0);
-    let n = COUNTER.fetch_add(1, Ordering::Relaxed);
-    let dir = std::env::temp_dir().join(format!("lean-test-vectors-{}-{n}", std::process::id()));
-    Arc::new(Storage::new(dir).expect("failed to open test storage"))
-}
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -481,8 +469,7 @@ fn forkchoice(spec_file: &str) {
             body_root,
         };
 
-        let mut store =
-            get_forkchoice_store(anchor_state, anchor_block, config, false, 1, test_storage());
+        let mut store = get_forkchoice_store(anchor_state, anchor_block, config, false, 1);
         let mut cache = BlockCache::new();
         let mut block_labels: HashMap<String, H256> = HashMap::new();
 

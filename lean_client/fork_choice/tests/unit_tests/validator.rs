@@ -4,7 +4,7 @@
 
 use std::collections::HashMap;
 
-use crate::unit_tests::common::{create_test_store, test_storage};
+use crate::unit_tests::common::create_test_store;
 use containers::{
     AggregatedSignatureProof, AggregationBits, Attestation, AttestationData, Block, BlockBody,
     Checkpoint, Config, MultiMessageAggregate, SignedBlock, Slot, State, Validator,
@@ -122,7 +122,7 @@ fn create_test_store_with_signers() -> (Store, HashMap<u64, SecretKey>) {
     };
 
     (
-        get_forkchoice_store(state, signed_block, config, true, 1, test_storage()),
+        get_forkchoice_store(state, signed_block, config, true, 1),
         keys,
     )
 }
@@ -514,7 +514,7 @@ fn test_validator_operations_empty_store() {
         proof: Default::default(),
     };
 
-    let mut store = get_forkchoice_store(state, signed_block, config, true, 1, test_storage());
+    let mut store = get_forkchoice_store(state, signed_block, config, true, 1);
 
     // Should be able to produce block and attestation
     let (_root, block, _sig) =
