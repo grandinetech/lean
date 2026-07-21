@@ -1,19 +1,14 @@
 [package]
-name = "storage"
+name = "database"
 edition = { workspace = true }
 
 [dependencies]
 anyhow = { workspace = true }
-bytesize = { workspace = true }
 containers = { workspace = true }
-fs-err = { workspace = true }
 libmdbx = { workspace = true }
 lz4_flex = { workspace = true }
 ssz = { workspace = true }
 zstd = { workspace = true }
-
-[dev-dependencies]
-tempfile = { workspace = true }
 
 [lints]
 workspace = true

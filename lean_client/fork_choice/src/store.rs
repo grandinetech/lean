@@ -6,6 +6,7 @@ use containers::{
     AggregatedSignatureProof, AttestationData, Block, BlockHeader, Checkpoint, Config,
     SignatureKey, SignedAggregatedAttestation, SignedAttestation, SignedBlock, Slot, State,
 };
+use database::Database;
 use indexmap::IndexMap;
 use metrics::{METRICS, set_gauge_u64};
 use ssz::{H256, SszHash};
@@ -26,7 +27,7 @@ pub const GOSSIP_DISPARITY_INTERVALS: u64 = 1;
 
 /// Forkchoice store tracking chain state and validator attestations
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct Store {
     pub time: Interval,
 
@@ -108,6 +109,8 @@ pub struct Store {
     pub pending_fetch_roots: HashSet<H256>,
 
     pub log_inv_rate: usize,
+
+    // pub database: Arc<Database>,
 }
 
 const JUSTIFICATION_LOOKBACK_SLOTS: u64 = 3;

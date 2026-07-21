@@ -817,15 +817,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bytesize"
-version = "2.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49e78e506b9d7633710dab98996f22f95f3d0f488e8f1aa162830556ed9fc14d"
-dependencies = [
- "serde_core",
-]
-
-[[package]]
 name = "cc"
 version = "1.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1343,6 +1334,18 @@ checksum = "7ab67060fc6b8ef687992d439ca0fa36e7ed17e9a0b16b25b601e8757df720de"
 dependencies = [
  "data-encoding",
  "syn 2.0.117",
+]
+
+[[package]]
+name = "database"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "containers",
+ "lz4_flex",
+ "reth-libmdbx",
+ "ssz",
+ "zstd",
 ]
 
 [[package]]
@@ -1917,6 +1920,7 @@ dependencies = [
  "anyhow",
  "bls",
  "containers",
+ "database",
  "env-config",
  "indexmap 2.14.0",
  "metrics",
@@ -1939,15 +1943,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb4cb245038516f5f85277875cdaa4f7d2c9a0fa0468de06ed190163b1581fcf"
 dependencies = [
  "percent-encoding",
-]
-
-[[package]]
-name = "fs-err"
-version = "3.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "73fde052dbfc920003cfd2c8e2c6e6d4cc7c1091538c3a24226cec0665ab08c0"
-dependencies = [
- "autocfg",
 ]
 
 [[package]]
@@ -2996,6 +2991,7 @@ dependencies = [
  "chain",
  "clap",
  "containers",
+ "database",
  "dedicated_executor",
  "ethereum-types",
  "features",
@@ -3010,7 +3006,6 @@ dependencies = [
  "parking_lot",
  "reqwest",
  "ssz",
- "storage",
  "tikv-jemallocator",
  "tokio",
  "tracing",
@@ -5829,21 +5824,6 @@ source = "git+https://github.com/grandinetech/grandine?rev=64afdee3c6be79fceffb6
 dependencies = [
  "easy-ext",
  "triomphe",
-]
-
-[[package]]
-name = "storage"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "bytesize",
- "containers",
- "fs-err",
- "lz4_flex",
- "reth-libmdbx",
- "ssz",
- "tempfile",
- "zstd",
 ]
 
 [[package]]

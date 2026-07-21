@@ -2,13 +2,13 @@
 members = [
     "chain",
     "containers",
+    "database",
     "env-config",
     "fork_choice",
     "http_api",
     "metrics",
     "networking",
-    "spec_test_fixtures", 
-    "storage",
+    "spec_test_fixtures",
     "validator",
     "xmss",
 ]
@@ -226,13 +226,13 @@ private_intra_doc_links = 'allow'
 [workspace.dependencies]
 chain = { path = "./chain" }
 containers = { path = "./containers" }
+database = { path = "./database" }
 env-config = { path = "./env-config" }
 fork_choice = { path = "./fork_choice" }
 http_api = { path = "./http_api" }
 metrics = { path = "./metrics" }
 networking = { path = "./networking" }
 spec_test_fixtures = { path = "./spec_test_fixtures" }
-storage = { path = "./storage" }
 validator = { path = "./validator" }
 xmss = { path = "./xmss" }
 
@@ -243,7 +243,6 @@ bitvec = "1.0.1"
 bls = { git = "https://github.com/grandinetech/grandine", package = "bls", features = ["blst"], rev = "64afdee3c6be79fceffb66933dcb69a943f3f1ae" }
 bytesize = { version = '2', features = ['serde'] }
 clap = { version = "4", features = ["derive"] }
-database = { git = "https://github.com/grandinetech/grandine", package = "database", rev = "64afdee3c6be79fceffb66933dcb69a943f3f1ae" }
 derive_more = "2.1.1"
 discv5 = "0.10.2"
 enr = { version = "0.13", features = ["k256"] }
@@ -328,6 +327,7 @@ bls = { workspace = true }
 chain = { workspace = true }
 clap = { workspace = true }
 containers = { workspace = true }
+database = { workspace = true }
 dedicated_executor = { workspace = true }
 ethereum-types = { workspace = true }
 features = { workspace = true }
@@ -341,7 +341,6 @@ networking = { workspace = true }
 num_cpus = { workspace = true }
 parking_lot = { workspace = true }
 ssz = { workspace = true }
-storage = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }

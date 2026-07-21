@@ -69,8 +69,27 @@ fn api_endpoint(spec_file: &str) {
         // `store.is_aggregator`; no chain state is needed.
         let initial_is_aggregator = case.initial_is_aggregator.unwrap_or(false);
         let store: SharedStore = Arc::new(RwLock::new(Store {
+            time: Default::default(),
+            config: Default::default(),
             is_aggregator: initial_is_aggregator,
-            ..Default::default()
+            head: Default::default(),
+            safe_target: Default::default(),
+            latest_justified: Default::default(),
+            latest_finalized: Default::default(),
+            justified_ever_updated: false,
+            finalized_ever_updated: false,
+            blocks: Default::default(),
+            states: Default::default(),
+            latest_known_attestations: Default::default(),
+            latest_new_attestations: Default::default(),
+            gossip_signatures: Default::default(),
+            latest_known_aggregated_payloads: Default::default(),
+            latest_new_aggregated_payloads: Default::default(),
+            attestation_data_by_root: Default::default(),
+            pending_attestations: Default::default(),
+            pending_aggregated_attestations: Default::default(),
+            pending_fetch_roots: Default::default(),
+            log_inv_rate: Default::default(),
         }));
 
         let controller = Some(Arc::new(AggregatorController::new(store.clone(), None)));

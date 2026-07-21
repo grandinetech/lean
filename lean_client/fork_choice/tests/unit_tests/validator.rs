@@ -557,13 +557,25 @@ fn test_produce_block_missing_parent_state() {
     let store = Store {
         time: 100,
         config: Config { genesis_time: 1000 },
+        is_aggregator: true,
         head: H256::from_slice(&[0xab; 32]),
         safe_target: H256::from_slice(&[0xab; 32]),
         latest_justified: checkpoint.clone(),
         latest_finalized: checkpoint,
+        justified_ever_updated: false,
+        finalized_ever_updated: false,
         blocks: Default::default(),
         states: Default::default(),
-        ..Default::default()
+        latest_known_attestations: Default::default(),
+        latest_new_attestations: Default::default(),
+        gossip_signatures: Default::default(),
+        latest_known_aggregated_payloads: Default::default(),
+        latest_new_aggregated_payloads: Default::default(),
+        attestation_data_by_root: Default::default(),
+        pending_attestations: Default::default(),
+        pending_aggregated_attestations: Default::default(),
+        pending_fetch_roots: Default::default(),
+        log_inv_rate: 1,
     };
 
     let mut s = store;
