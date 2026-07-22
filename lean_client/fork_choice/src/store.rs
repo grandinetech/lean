@@ -1,12 +1,17 @@
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
+use crate::block_cache::BlockCache;
+use crate::handlers::on_block;
 use anyhow::{Result, anyhow, ensure};
 use containers::{
     AggregatedSignatureProof, AttestationData, Block, BlockHeader, Checkpoint, Config,
     SignatureKey, SignedAggregatedAttestation, SignedAttestation, SignedBlock, Slot, State,
 };
-use database::Database;
+use database::{
+    BLOCKS_TABLE_NAME, BlockKey, BySlot, Compression, Database, EnvironmentBuilder,
+    GENESIS_STATE_TABLE_NAME, StateKey, StateKeyPrefix,
+};
 use indexmap::IndexMap;
 use metrics::{METRICS, set_gauge_u64};
 use ssz::{H256, SszHash};
@@ -110,7 +115,9 @@ pub struct Store {
 
     pub log_inv_rate: usize,
 
-    // pub database: Arc<Database>,
+    pub blocks_db: Database<BlockKey, Block>,
+
+    pub genesis_db: Database<StateKey, State>,
 }
 
 const JUSTIFICATION_LOOKBACK_SLOTS: u64 = 3;
@@ -227,7 +234,7 @@ pub fn get_forkchoice_store(
     config: Config,
     is_aggregator: bool,
     log_inv_rate: usize,
-) -> Store {
+) -> Result<Store> {
     // Extract the plain Block from the signed block
     let block = anchor_block.block.clone();
     let block_slot = block.slot;
@@ -264,10 +271,106 @@ pub fn get_forkchoice_store(
     let latest_justified = anchor_checkpoint.clone();
     let latest_finalized = anchor_checkpoint;
 
+    let env_builder = EnvironmentBuilder::new("./data", 1);
+    let env = env_builder.build()?;
+
+    let blocks_db: Database<BlockKey, Block> =
+        Database::new(env.clone(), BLOCKS_TABLE_NAME, Compression::Lz4)?;
+    let genesis_db: Database<StateKey, State> =
+        Database::new(env, GENESIS_STATE_TABLE_NAME, Compression::Zstd)?;
+
+    if let Some(anchor_state_db) = genesis_db.range(StateKeyPrefix..)?.pop() {
+        let anchor_slot = anchor_state_db.latest_block_header.slot;
+        let anchor_header = BlockHeader {
+            slot: anchor_state_db.latest_block_header.slot,
+            proposer_index: anchor_state_db.latest_block_header.proposer_index,
+            parent_root: anchor_state_db.latest_block_header.parent_root,
+            state_root: anchor_state_db.hash_tree_root(),
+            body_root: anchor_state_db.latest_block_header.body_root,
+        };
+        let anchor_root = anchor_header.hash_tree_root();
+        if let Some(anchor_block_db) = blocks_db.get(&BlockKey {
+            slot: anchor_slot,
+            root: anchor_root,
+        })? {
+            let anchor_checkpoint = Checkpoint {
+                root: anchor_root,
+                slot: anchor_block_db.slot,
+            };
+
+            let mut store = Store {
+                time: anchor_block_db.slot.0 * INTERVALS_PER_SLOT,
+                config,
+                is_aggregator,
+                head: anchor_root,
+                safe_target: anchor_root,
+                latest_justified: anchor_checkpoint.clone(),
+                latest_finalized: anchor_checkpoint,
+                justified_ever_updated: anchor_block_db.slot.0 == 0,
+                finalized_ever_updated: false,
+                blocks: {
+                    let mut m = HashMap::new();
+                    m.insert(anchor_root, anchor_block_db);
+                    m
+                },
+                states: {
+                    let mut m = HashMap::new();
+                    m.insert(anchor_root, Arc::new(anchor_state_db));
+                    m
+                },
+                latest_known_attestations: HashMap::new(),
+                latest_new_attestations: HashMap::new(),
+                gossip_signatures: HashMap::new(),
+                latest_known_aggregated_payloads: IndexMap::new(),
+                latest_new_aggregated_payloads: IndexMap::new(),
+                attestation_data_by_root: HashMap::new(),
+                pending_attestations: HashMap::new(),
+                pending_aggregated_attestations: HashMap::new(),
+                pending_fetch_roots: HashSet::new(),
+                log_inv_rate,
+                blocks_db,
+                genesis_db,
+            };
+
+            let mut cache = BlockCache::new();
+            for block in store.blocks_db.range(BySlot(anchor_slot)..)? {
+                let signed_block = SignedBlock {
+                    block,
+                    proof: Default::default(),
+                };
+                if let Err(error) = on_block(&mut store, &mut cache, signed_block, false) {
+                    warn!("failed to replay block from database: {error}");
+                }
+            }
+
+            let prune_cutoff = store
+                .latest_finalized
+                .slot
+                .0
+                .saturating_sub(STATE_PRUNE_BUFFER);
+            if prune_cutoff > 0 {
+                store.blocks_db.delete_range(..BySlot(Slot(prune_cutoff)))?;
+            }
+
+            return Ok(store);
+        }
+    }
+
+    if block_slot.0 == 0 {
+        genesis_db.put(&StateKey(block_slot), &anchor_state)?;
+    }
+    blocks_db.put(
+        &BlockKey {
+            slot: block_slot,
+            root: block_root,
+        },
+        &block,
+    )?;
+
     // Store the original anchor_state - do NOT modify it
     // Modifying checkpoints would change its hash_tree_root(), breaking the
     // consistency with block.state_root
-    Store {
+    Ok(Store {
         time: block_slot.0 * INTERVALS_PER_SLOT,
         config,
         is_aggregator,
@@ -297,7 +400,9 @@ pub fn get_forkchoice_store(
         pending_aggregated_attestations: HashMap::new(),
         pending_fetch_roots: HashSet::new(),
         log_inv_rate,
-    }
+        blocks_db,
+        genesis_db,
+    })
 }
 
 pub fn get_fork_choice_head(
@@ -422,6 +527,7 @@ pub fn update_head(store: &mut Store) {
         }
         if let Some(block) = store.blocks.get(&finalized_root) {
             if block.slot == finalized_slot {
+                let finalized_advanced = finalized_slot > store.latest_finalized.slot;
                 store.latest_finalized = Checkpoint {
                     root: finalized_root,
                     slot: finalized_slot,
@@ -432,6 +538,29 @@ pub fn update_head(store: &mut Store) {
                         m.lean_latest_finalized_slot.set(s);
                     }
                 });
+                if finalized_advanced {
+                    if let Some(finalized_state) = store.states.get(&finalized_root) {
+                        if let Err(error) = store
+                            .genesis_db
+                            .put(&StateKey(finalized_slot), finalized_state.as_ref())
+                        {
+                            warn!("failed to persist finalized state to database: {error}");
+                        }
+                        if let Err(error) =
+                            store.genesis_db.delete_range(..StateKey(finalized_slot))
+                        {
+                            warn!("failed to prune old finalized states from database: {error}");
+                        }
+                    }
+                    let prune_cutoff = finalized_slot.0.saturating_sub(STATE_PRUNE_BUFFER);
+                    if prune_cutoff > 0 {
+                        if let Err(error) =
+                            store.blocks_db.delete_range(..BySlot(Slot(prune_cutoff)))
+                        {
+                            warn!("failed to prune blocks from database: {error}");
+                        }
+                    }
+                }
             }
         }
     }

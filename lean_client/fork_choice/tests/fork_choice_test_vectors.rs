@@ -469,7 +469,8 @@ fn forkchoice(spec_file: &str) {
             body_root,
         };
 
-        let mut store = get_forkchoice_store(anchor_state, anchor_block, config, false, 1);
+        let mut store = get_forkchoice_store(anchor_state, anchor_block, config, false, 1)
+            .expect("failed to create test store");
         let mut cache = BlockCache::new();
         let mut block_labels: HashMap<String, H256> = HashMap::new();
 

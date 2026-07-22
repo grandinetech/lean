@@ -12,6 +12,9 @@ use axum::{
     body::Body,
     http::{Request, header::CONTENT_TYPE},
 };
+use database::{
+    BLOCKS_TABLE_NAME, Compression, Database, EnvironmentBuilder, GENESIS_STATE_TABLE_NAME,
+};
 use fork_choice::store::Store;
 use http_api::{AggregatorController, HttpServerConfig, SharedStore, normal_routes};
 use http_body_util::BodyExt;
@@ -68,6 +71,19 @@ fn api_endpoint(spec_file: &str) {
         // Build a minimal store — aggregator handlers only read/write
         // `store.is_aggregator`; no chain state is needed.
         let initial_is_aggregator = case.initial_is_aggregator.unwrap_or(false);
+        let env = EnvironmentBuilder::new(
+            std::env::temp_dir().join(format!(
+                "lean_api_test_db_{}",
+                spec_file.replace(['/', '\\'], "_")
+            )),
+            1,
+        )
+        .build()
+        .expect("failed to open test database environment");
+        let blocks_db = Database::new(env.clone(), BLOCKS_TABLE_NAME, Compression::Lz4)
+            .expect("failed to open blocks table");
+        let genesis_db = Database::new(env, GENESIS_STATE_TABLE_NAME, Compression::Zstd)
+            .expect("failed to open genesis table");
         let store: SharedStore = Arc::new(RwLock::new(Store {
             time: Default::default(),
             config: Default::default(),
@@ -90,6 +106,8 @@ fn api_endpoint(spec_file: &str) {
             pending_aggregated_attestations: Default::default(),
             pending_fetch_roots: Default::default(),
             log_inv_rate: Default::default(),
+            blocks_db,
+            genesis_db,
         }));
 
         let controller = Some(Arc::new(AggregatorController::new(store.clone(), None)));

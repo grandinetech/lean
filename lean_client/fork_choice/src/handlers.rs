@@ -6,6 +6,7 @@ use containers::{
     AttestationData, Checkpoint, SignatureKey, SignedAggregatedAttestation, SignedAttestation,
     SignedBlock, State,
 };
+use database::BlockKey;
 use metrics::METRICS;
 use parking_lot::RwLock;
 use ssz::{H256, SszHash};
@@ -726,6 +727,16 @@ pub fn apply_verified_block(
 
     store.blocks.insert(block_root, block.clone());
     store.states.insert(block_root, Arc::clone(&new_state));
+
+    if let Err(error) = store.blocks_db.put(
+        &BlockKey {
+            slot: block.slot,
+            root: block_root,
+        },
+        &block,
+    ) {
+        warn!("failed to persist block to database: {error}");
+    }
 
     METRICS.get().map(|m| {
         m.grandine_store_blocks_size.set(store.blocks.len() as i64);

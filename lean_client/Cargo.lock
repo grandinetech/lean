@@ -2415,6 +2415,7 @@ dependencies = [
  "axum",
  "clap",
  "containers",
+ "database",
  "fork_choice",
  "futures",
  "hex",

@@ -1069,7 +1069,7 @@ async fn main() -> Result<()> {
         config.clone(),
         args.is_aggregator,
         genesis_log_inv_rate as usize,
-    )));
+    )?));
 
     // Seed the block provider so we can serve the anchor block to peers via BlocksByRoot.
     {
