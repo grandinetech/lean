@@ -41,15 +41,13 @@ use crate::{
     discovery::{DiscoveryConfig, DiscoveryService},
     enr_ext::EnrExt,
     gossipsub::{self, config::GossipsubConfig, message::GossipsubMessage, topic::GossipsubKind},
-    network::{
-        behaviour::{LeanNetworkBehaviour, LeanNetworkBehaviourEvent},
-        range_sync::{MAX_SYNC_RANGE, RangeSyncState},
-    },
-    req_resp::{self, LeanRequest, RESPONSE_INVALID_REQUEST, ReqRespMessage},
+    network::behaviour::{LeanNetworkBehaviour, LeanNetworkBehaviourEvent},
+    network::range_sync::{MAX_SYNC_RANGE, RangeSyncState},
+    req_resp::{self, LeanRequest, ReqRespMessage},
     types::{
         CanonicalBlocksProvider, ChainMessage, ChainMessageSink, ConnectionState,
-        MAX_BLOCK_CACHE_SIZE, NetworkFinalizedSlot, OutboundP2pRequest, P2pRequestSource,
-        SignedBlockProvider, StatusProvider,
+        MAX_BLOCK_CACHE_SIZE, NetworkFinalizedSlot, NetworkHeadSlot, OutboundP2pRequest,
+        P2pRequestSource, SignedBlockProvider, StatusProvider,
     },
 };
 
@@ -211,6 +209,7 @@ where
     /// Roots currently in-flight to deduplicate network-layer pipelining vs chain-side requests
     in_flight_roots: HashSet<H256>,
     network_finalized_slot: NetworkFinalizedSlot,
+    network_head_slot: NetworkHeadSlot,
     peer_finalized_slots: HashMap<PeerId, u64>,
     /// Peer head slots reported via Status; used by the caller to decide
     /// when a backfill should switch from per-root BlocksByRoot to batched BlocksByRange.
@@ -233,6 +232,7 @@ where
         status_provider: StatusProvider,
         blocks_by_range_provider: CanonicalBlocksProvider,
         network_finalized_slot: NetworkFinalizedSlot,
+        network_head_slot: NetworkHeadSlot,
         status_notify: Arc<Notify>,
     ) -> Result<Self> {
         Self::new_with_peer_count(
@@ -244,6 +244,7 @@ where
             status_provider,
             blocks_by_range_provider,
             network_finalized_slot,
+            network_head_slot,
             status_notify,
         )
         .await
@@ -258,6 +259,7 @@ where
         status_provider: StatusProvider,
         blocks_by_range_provider: CanonicalBlocksProvider,
         network_finalized_slot: NetworkFinalizedSlot,
+        network_head_slot: NetworkHeadSlot,
         status_notify: Arc<Notify>,
     ) -> Result<Self> {
         let local_key = Keypair::generate_secp256k1();
@@ -271,6 +273,7 @@ where
             status_provider,
             blocks_by_range_provider,
             network_finalized_slot,
+            network_head_slot,
             status_notify,
         )
         .await
@@ -286,6 +289,7 @@ where
         status_provider: StatusProvider,
         blocks_by_range_provider: CanonicalBlocksProvider,
         network_finalized_slot: NetworkFinalizedSlot,
+        network_head_slot: NetworkHeadSlot,
         status_notify: Arc<Notify>,
     ) -> Result<Self> {
         let behaviour = Self::build_behaviour(&local_key, &network_config)?;
@@ -347,6 +351,7 @@ where
             pending_block_depths: HashMap::new(),
             in_flight_roots: HashSet::new(),
             network_finalized_slot,
+            network_head_slot,
             peer_finalized_slots: HashMap::new(),
             peer_head_slots: HashMap::new(),
             range_sync_state: None,
@@ -535,6 +540,7 @@ where
                     .retain(|_, (p, _, _)| *p != peer_id);
                 self.inflight_range_keys.retain(|(p, _, _)| *p != peer_id);
                 self.recompute_network_finalized_slot();
+                self.recompute_network_head_slot();
 
                 info!(peer = %peer_id, ?cause, "Disconnected from peer (total: {})", connected);
 
@@ -1278,6 +1284,14 @@ where
         }
     }
 
+    fn recompute_network_head_slot(&mut self) {
+        let max_head = self.peer_head_slots.values().copied().max();
+        let mut slot_guard = self.network_head_slot.lock();
+        if *slot_guard != max_head {
+            *slot_guard = max_head;
+        }
+    }
+
     fn maybe_trigger_backfill(
         &mut self,
         peer: PeerId,
@@ -1290,6 +1304,7 @@ where
         self.peer_finalized_slots.insert(peer, peer_finalized_slot);
         self.peer_head_slots.insert(peer, peer_head_slot);
         self.recompute_network_finalized_slot();
+        self.recompute_network_head_slot();
 
         if peer_head_slot > our_head_slot {
             let gap = peer_head_slot - our_head_slot;
@@ -1677,10 +1692,8 @@ where
 
                     if count == 0 || count > req_resp::MAX_REQUEST_BLOCKS as u64 {
                         info!(peer = %peer, start_slot, count, "Rejecting BlocksByRange: invalid count");
-                        let response = LeanResponse::Error {
-                            code: RESPONSE_INVALID_REQUEST,
-                            message: "Invalid Block Request Count".to_string(),
-                        };
+                        // Send an empty response — peer will treat as no data.
+                        let response = LeanResponse::BlocksByRange(Vec::new());
                         if let Err(e) = self
                             .swarm
                             .behaviour_mut()

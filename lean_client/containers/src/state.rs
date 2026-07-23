@@ -451,6 +451,20 @@ impl State {
             "zero hash is not allowed in justification roots"
         );
 
+        let validator_count = self.validators.len_usize();
+        ensure!(
+            validator_count > 0,
+            "state holds no validators to segment justification votes against"
+        );
+
+        let expected_vote_count = self.justifications_roots.len_usize() * validator_count;
+        ensure!(
+            self.justifications_validators.len() == expected_vote_count,
+            "justification vote list length {} does not equal tracked-root count times validator count {}",
+            self.justifications_validators.len(),
+            expected_vote_count,
+        );
+
         let mut justifications = self
             .justifications_roots
             .into_iter()
@@ -458,8 +472,7 @@ impl State {
             .map(|(i, root)| {
                 (
                     root.clone(),
-                    self.justifications_validators
-                        [i * self.validators.len_usize()..(i + 1) * self.validators.len_usize()]
+                    self.justifications_validators[i * validator_count..(i + 1) * validator_count]
                         .to_bitvec(),
                 )
             })
@@ -585,13 +598,17 @@ impl State {
                     {
                         justified_slots = justified_slots.shift_window(delta);
 
-                        ensure!(
-                            justifications
-                                .keys()
-                                .all(|root| root_to_slot.contains_key(root)),
-                            "Justification root missing from root_to_slot"
-                        );
-                        justifications.retain(|root, _| root_to_slot[root].0 > finalized_slot.0);
+                        justifications.retain(|root, _| match root_to_slot.get(root) {
+                            Some(slot) => slot.0 > finalized_slot.0,
+                            None => {
+                                warn!(
+                                    root = %root,
+                                    finalized_slot = finalized_slot.0,
+                                    "Justification root missing from root_to_slot, pruning"
+                                );
+                                false
+                            }
+                        });
                     }
                 }
                 // justified_slots = justified_slots
@@ -652,6 +669,7 @@ impl State {
         known_block_roots: &HashSet<H256>,
         aggregated_payloads: &HashMap<H256, (AttestationData, Vec<AggregatedSignatureProof>)>,
         log_inv_rate: usize,
+        enable_proposer_aggregation: bool,
     ) -> Result<(
         Block,
         Self,
@@ -805,7 +823,12 @@ impl State {
                 .with_label_values(&["compact"])
                 .start_timer()
         });
-        let compacted = self.compact_proofs_by_data(selected, log_inv_rate)?;
+        let compacted = if enable_proposer_aggregation {
+            self.compact_proofs_by_data(selected, log_inv_rate)?
+        } else {
+            let running_votes = build_running_votes(self);
+            keep_best_proof_per_data(selected, &running_votes, slot.0)
+        };
         drop(compact_timer);
 
         METRICS.get().map(|metrics| {
@@ -964,6 +987,108 @@ impl State {
 
 fn is_proposer_for(validator_index: u64, slot: Slot, num_validators: u64) -> bool {
     slot.0 % num_validators == validator_index
+}
+
+/// Read `state.justifications_validators` into a per-target-root voter set.
+/// Layout: `bit[i * N + j]` = validator `j` has voted for
+/// `justifications_roots[i]`, where `N = validators.len()`.
+pub(crate) fn build_running_votes(state: &State) -> HashMap<H256, HashSet<u64>> {
+    let validator_count = state.validators.len_usize();
+    let mut votes: HashMap<H256, HashSet<u64>> = HashMap::new();
+    for (i, root) in (&state.justifications_roots).into_iter().enumerate() {
+        let mut voters: HashSet<u64> = HashSet::new();
+        for j in 0..validator_count {
+            if state
+                .justifications_validators
+                .get(i * validator_count + j)
+                .map(|b| *b)
+                .unwrap_or(false)
+            {
+                voters.insert(j as u64);
+            }
+        }
+        votes.insert(*root, voters);
+    }
+    votes
+}
+
+/// Keep one proof per AttestationData without merging.
+///
+/// For each group of entries sharing an AttestationData, pick the proof with
+/// the largest count of voters that are neither already in `running_votes`
+/// for the target root nor already claimed by an earlier same-target-root
+/// group in this block. Ties broken by the densest proof (most set bits),
+/// then by earliest occurrence in the input.
+pub(crate) fn keep_best_proof_per_data(
+    entries: Vec<(AggregatedAttestation, AggregatedSignatureProof)>,
+    running_votes: &HashMap<H256, HashSet<u64>>,
+    block_slot: u64,
+) -> Vec<(AggregatedAttestation, AggregatedSignatureProof)> {
+    let mut order: Vec<H256> = Vec::new();
+    let mut groups: HashMap<H256, Vec<usize>> = HashMap::new();
+    for (i, (att, _)) in entries.iter().enumerate() {
+        let dr = att.data.hash_tree_root();
+        match groups.entry(dr) {
+            std::collections::hash_map::Entry::Vacant(e) => {
+                order.push(*e.key());
+                e.insert(vec![i]);
+            }
+            std::collections::hash_map::Entry::Occupied(mut e) => {
+                e.get_mut().push(i);
+            }
+        }
+    }
+
+    if order.len() == entries.len() {
+        return entries;
+    }
+
+    info!(
+        slot = block_slot,
+        entries = entries.len(),
+        unique = order.len(),
+        "Skipping attestation compaction"
+    );
+
+    let mut claimed: HashMap<H256, HashSet<u64>> = HashMap::new();
+    let mut best_per_data: Vec<usize> = Vec::with_capacity(order.len());
+    for dr in &order {
+        let group = &groups[dr];
+        let target_root = entries[group[0]].0.data.target.root;
+        let prior = running_votes.get(&target_root);
+        let block_claimed = claimed.get(&target_root);
+        let best = *group
+            .iter()
+            .max_by_key(|&&idx| {
+                let (att, proof) = &entries[idx];
+                let marginal = proof
+                    .get_participant_indices()
+                    .into_iter()
+                    .filter(|vid| {
+                        prior.map_or(true, |voted| !voted.contains(vid))
+                            && block_claimed.map_or(true, |voted| !voted.contains(vid))
+                    })
+                    .count();
+                (
+                    marginal,
+                    att.aggregation_bits.to_validator_indices().len(),
+                    std::cmp::Reverse(idx),
+                )
+            })
+            .expect("group is non-empty");
+        claimed
+            .entry(target_root)
+            .or_default()
+            .extend(entries[best].1.get_participant_indices());
+        best_per_data.push(best);
+    }
+
+    let mut items: Vec<Option<(AggregatedAttestation, AggregatedSignatureProof)>> =
+        entries.into_iter().map(Some).collect();
+    best_per_data
+        .into_iter()
+        .map(|idx| items[idx].take().expect("best index taken once"))
+        .collect()
 }
 
 #[cfg(test)]

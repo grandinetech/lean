@@ -160,7 +160,7 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 [[package]]
 name = "arithmetic"
 version = "0.0.0"
-source = "git+https://github.com/grandinetech/grandine?rev=64afdee3c6be79fceffb66933dcb69a943f3f1ae#64afdee3c6be79fceffb66933dcb69a943f3f1ae"
+source = "git+https://github.com/grandinetech/grandine?rev=c4b676e3daa0ddcb86d0bcb321b7166d59f920f9#c4b676e3daa0ddcb86d0bcb321b7166d59f920f9"
 dependencies = [
  "easy-ext",
  "typenum",
@@ -705,7 +705,7 @@ dependencies = [
 [[package]]
 name = "bls"
 version = "0.0.0"
-source = "git+https://github.com/grandinetech/grandine?rev=64afdee3c6be79fceffb66933dcb69a943f3f1ae#64afdee3c6be79fceffb66933dcb69a943f3f1ae"
+source = "git+https://github.com/grandinetech/grandine?rev=c4b676e3daa0ddcb86d0bcb321b7166d59f920f9#c4b676e3daa0ddcb86d0bcb321b7166d59f920f9"
 dependencies = [
  "bls-blst",
  "bls-core",
@@ -714,7 +714,7 @@ dependencies = [
 [[package]]
 name = "bls-blst"
 version = "0.0.0"
-source = "git+https://github.com/grandinetech/grandine?rev=64afdee3c6be79fceffb66933dcb69a943f3f1ae#64afdee3c6be79fceffb66933dcb69a943f3f1ae"
+source = "git+https://github.com/grandinetech/grandine?rev=c4b676e3daa0ddcb86d0bcb321b7166d59f920f9#c4b676e3daa0ddcb86d0bcb321b7166d59f920f9"
 dependencies = [
  "bls-core",
  "blst",
@@ -737,7 +737,7 @@ dependencies = [
 [[package]]
 name = "bls-core"
 version = "0.0.0"
-source = "git+https://github.com/grandinetech/grandine?rev=64afdee3c6be79fceffb66933dcb69a943f3f1ae#64afdee3c6be79fceffb66933dcb69a943f3f1ae"
+source = "git+https://github.com/grandinetech/grandine?rev=c4b676e3daa0ddcb86d0bcb321b7166d59f920f9#c4b676e3daa0ddcb86d0bcb321b7166d59f920f9"
 dependencies = [
  "derivative",
  "hex",
@@ -1805,7 +1805,7 @@ dependencies = [
 [[package]]
 name = "features"
 version = "0.0.0"
-source = "git+https://github.com/grandinetech/grandine?rev=64afdee3c6be79fceffb66933dcb69a943f3f1ae#64afdee3c6be79fceffb66933dcb69a943f3f1ae"
+source = "git+https://github.com/grandinetech/grandine?rev=c4b676e3daa0ddcb86d0bcb321b7166d59f920f9#c4b676e3daa0ddcb86d0bcb321b7166d59f920f9"
 dependencies = [
  "enum-iterator",
  "log",
@@ -2199,7 +2199,7 @@ checksum = "4f467dd6dccf739c208452f8014c75c18bb8301b050ad1cfb27153803edb0f51"
 [[package]]
 name = "hashing"
 version = "0.0.0"
-source = "git+https://github.com/grandinetech/grandine?rev=64afdee3c6be79fceffb66933dcb69a943f3f1ae#64afdee3c6be79fceffb66933dcb69a943f3f1ae"
+source = "git+https://github.com/grandinetech/grandine?rev=c4b676e3daa0ddcb86d0bcb321b7166d59f920f9#c4b676e3daa0ddcb86d0bcb321b7166d59f920f9"
 dependencies = [
  "ethereum-types",
  "generic-array",
@@ -2391,7 +2391,7 @@ dependencies = [
 [[package]]
 name = "http_api_utils"
 version = "0.0.0"
-source = "git+https://github.com/grandinetech/grandine?rev=64afdee3c6be79fceffb66933dcb69a943f3f1ae#64afdee3c6be79fceffb66933dcb69a943f3f1ae"
+source = "git+https://github.com/grandinetech/grandine?rev=c4b676e3daa0ddcb86d0bcb321b7166d59f920f9#c4b676e3daa0ddcb86d0bcb321b7166d59f920f9"
 dependencies = [
  "anyhow",
  "axum",
@@ -3462,7 +3462,7 @@ checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
 [[package]]
 name = "logging"
 version = "0.0.0"
-source = "git+https://github.com/grandinetech/grandine?rev=64afdee3c6be79fceffb66933dcb69a943f3f1ae#64afdee3c6be79fceffb66933dcb69a943f3f1ae"
+source = "git+https://github.com/grandinetech/grandine?rev=c4b676e3daa0ddcb86d0bcb321b7166d59f920f9#c4b676e3daa0ddcb86d0bcb321b7166d59f920f9"
 dependencies = [
  "derive_more",
  "tracing",
@@ -4558,7 +4558,7 @@ dependencies = [
 [[package]]
 name = "prometheus_metrics"
 version = "0.1.0"
-source = "git+https://github.com/grandinetech/grandine?rev=64afdee3c6be79fceffb66933dcb69a943f3f1ae#64afdee3c6be79fceffb66933dcb69a943f3f1ae"
+source = "git+https://github.com/grandinetech/grandine?rev=c4b676e3daa0ddcb86d0bcb321b7166d59f920f9#c4b676e3daa0ddcb86d0bcb321b7166d59f920f9"
 dependencies = [
  "anyhow",
  "features",
@@ -5403,7 +5403,7 @@ dependencies = [
 [[package]]
 name = "serde_utils"
 version = "0.0.0"
-source = "git+https://github.com/grandinetech/grandine?rev=64afdee3c6be79fceffb66933dcb69a943f3f1ae#64afdee3c6be79fceffb66933dcb69a943f3f1ae"
+source = "git+https://github.com/grandinetech/grandine?rev=c4b676e3daa0ddcb86d0bcb321b7166d59f920f9#c4b676e3daa0ddcb86d0bcb321b7166d59f920f9"
 dependencies = [
  "const-hex",
  "generic-array",
@@ -5658,7 +5658,7 @@ dependencies = [
 [[package]]
 name = "ssz"
 version = "0.0.0"
-source = "git+https://github.com/grandinetech/grandine?rev=64afdee3c6be79fceffb66933dcb69a943f3f1ae#64afdee3c6be79fceffb66933dcb69a943f3f1ae"
+source = "git+https://github.com/grandinetech/grandine?rev=c4b676e3daa0ddcb86d0bcb321b7166d59f920f9#c4b676e3daa0ddcb86d0bcb321b7166d59f920f9"
 dependencies = [
  "arithmetic",
  "bit_field",
@@ -5690,7 +5690,7 @@ dependencies = [
 [[package]]
 name = "ssz_derive"
 version = "0.0.0"
-source = "git+https://github.com/grandinetech/grandine?rev=64afdee3c6be79fceffb66933dcb69a943f3f1ae#64afdee3c6be79fceffb66933dcb69a943f3f1ae"
+source = "git+https://github.com/grandinetech/grandine?rev=c4b676e3daa0ddcb86d0bcb321b7166d59f920f9#c4b676e3daa0ddcb86d0bcb321b7166d59f920f9"
 dependencies = [
  "darling 0.21.3",
  "easy-ext",
@@ -5716,7 +5716,7 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 [[package]]
 name = "std_ext"
 version = "0.0.0"
-source = "git+https://github.com/grandinetech/grandine?rev=64afdee3c6be79fceffb66933dcb69a943f3f1ae#64afdee3c6be79fceffb66933dcb69a943f3f1ae"
+source = "git+https://github.com/grandinetech/grandine?rev=c4b676e3daa0ddcb86d0bcb321b7166d59f920f9#c4b676e3daa0ddcb86d0bcb321b7166d59f920f9"
 dependencies = [
  "easy-ext",
  "triomphe",
@@ -6302,7 +6302,7 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 [[package]]
 name = "try_from_iterator"
 version = "0.0.0"
-source = "git+https://github.com/grandinetech/grandine?rev=64afdee3c6be79fceffb66933dcb69a943f3f1ae#64afdee3c6be79fceffb66933dcb69a943f3f1ae"
+source = "git+https://github.com/grandinetech/grandine?rev=c4b676e3daa0ddcb86d0bcb321b7166d59f920f9#c4b676e3daa0ddcb86d0bcb321b7166d59f920f9"
 
 [[package]]
 name = "twox-hash"
@@ -6319,7 +6319,7 @@ checksum = "562d481066bde0658276a35467c4af00bdc6ee726305698a55b86e61d7ad82bb"
 [[package]]
 name = "types"
 version = "0.0.0"
-source = "git+https://github.com/grandinetech/grandine?rev=64afdee3c6be79fceffb66933dcb69a943f3f1ae#64afdee3c6be79fceffb66933dcb69a943f3f1ae"
+source = "git+https://github.com/grandinetech/grandine?rev=c4b676e3daa0ddcb86d0bcb321b7166d59f920f9#c4b676e3daa0ddcb86d0bcb321b7166d59f920f9"
 dependencies = [
  "anyhow",
  "arithmetic",

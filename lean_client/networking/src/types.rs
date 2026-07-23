@@ -35,6 +35,8 @@ pub type StatusProvider = Arc<RwLock<Status>>;
 
 pub type NetworkFinalizedSlot = Arc<Mutex<Option<u64>>>;
 
+pub type NetworkHeadSlot = Arc<Mutex<Option<u64>>>;
+
 /// 1-byte domain for gossip message-id isolation of valid snappy messages.
 /// Per leanSpec, prepended to the message hash when decompression succeeds.
 pub const MESSAGE_DOMAIN_VALID_SNAPPY: &[u8; 1] = &[0x01];

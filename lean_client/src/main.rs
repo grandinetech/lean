@@ -15,8 +15,9 @@ use features::Feature;
 use fork_choice::{
     block_cache::BlockCache,
     handlers::{
-        apply_verified_block, on_aggregated_attestation_async, on_attestation,
-        on_gossip_attestation, on_tick, verify_and_transition,
+        BLOCK_PROPOSAL_MAX_HEAD_LAG_SLOTS, apply_verified_block, on_aggregated_attestation_async,
+        on_attestation, on_gossip_attestation, on_tick, should_suppress_proposal_for_head_lag,
+        verify_and_transition,
     },
     store::{
         INTERVALS_PER_SLOT, MILLIS_PER_INTERVAL, Store, execute_block_production,
@@ -32,7 +33,8 @@ use networking::gossipsub::topic::{compute_subnet_id, get_subscription_topics};
 use networking::network::{NetworkService, NetworkServiceConfig};
 use networking::types::{
     CanonicalBlocksProvider, ChainMessage, MAX_BLOCK_CACHE_SIZE, NetworkFinalizedSlot,
-    OutboundP2pRequest, SignedBlockProvider, StatusProvider, ValidatorChainMessage,
+    NetworkHeadSlot, OutboundP2pRequest, SignedBlockProvider, StatusProvider,
+    ValidatorChainMessage,
 };
 use parking_lot::{Mutex, RwLock};
 use ssz::{PersistentList, SszHash, SszReadDefault as _};
@@ -420,6 +422,14 @@ struct Args {
     #[arg(long)]
     checkpoint_sync_url: Option<String>,
 
+    /// Merge same-`AttestationData` proofs into a single recursive proof at
+    /// proposal time. Off by default: the proposer keeps only the single
+    /// best-coverage proof per attestation data and skips the leanVM merge,
+    /// which trades a small per-block coverage loss for a lower proposal
+    /// deadline miss rate.
+    #[arg(long, default_value_t = false)]
+    enable_proposer_aggregation: bool,
+
     #[cfg(shadow_mode)]
     #[command(flatten)]
     shadow: ShadowOptions,
@@ -556,7 +566,7 @@ async fn main() -> Result<()> {
     // (output discarded). `DedicatedExecutor::Drop` joins worker threads, so no
     // verify thread leaks past process shutdown.
     let (verify_result_tx, mut verify_result_rx) =
-        mpsc::channel::<(H256, SignedBlock, bool, Result<State>)>(1024);
+        mpsc::channel::<(H256, SignedBlock, bool, Result<State>, Instant)>(1024);
 
     let (genesis_time, validators, genesis_log_inv_rate, genesis_attestation_committee_count) =
         if let Some(genesis_path) = &args.genesis {
@@ -865,6 +875,9 @@ async fn main() -> Result<()> {
     let network_finalized_slot: NetworkFinalizedSlot = Arc::new(Mutex::new(None));
     let network_finalized_slot_for_network = network_finalized_slot.clone();
 
+    let network_head_slot: NetworkHeadSlot = Arc::new(Mutex::new(None));
+    let network_head_slot_for_network = network_head_slot.clone();
+
     let canonical_blocks_provider: CanonicalBlocksProvider = {
         let block_provider = signed_block_provider.clone();
         let status = status_provider.clone();
@@ -916,6 +929,7 @@ async fn main() -> Result<()> {
                     status_provider_for_network,
                     canonical_blocks_provider.clone(),
                     network_finalized_slot_for_network,
+                    network_head_slot_for_network,
                     status_notify.clone(),
                 )
                 .await
@@ -932,6 +946,7 @@ async fn main() -> Result<()> {
                     status_provider_for_network,
                     canonical_blocks_provider.clone(),
                     network_finalized_slot_for_network,
+                    network_head_slot_for_network,
                     status_notify.clone(),
                 )
                 .await
@@ -948,6 +963,7 @@ async fn main() -> Result<()> {
             status_provider_for_network,
             canonical_blocks_provider.clone(),
             network_finalized_slot_for_network,
+            network_head_slot_for_network,
             status_notify.clone(),
         )
         .await
@@ -1162,6 +1178,7 @@ async fn main() -> Result<()> {
     };
 
     let chain_log_inv_rate = genesis_log_inv_rate as usize;
+    let chain_enable_proposer_aggregation = args.enable_proposer_aggregation;
 
     // ── Aggregation background task ────────────────────────────────────────────
     // XMSS aggregation takes 1-3 s. Running it inside the tick loop via .await
@@ -1204,6 +1221,11 @@ async fn main() -> Result<()> {
         // Tracks the previous tick instant so the duration between consecutive
         // chain-task ticks can be observed at the top of each tick arm.
         let mut last_tick_instant: Option<Instant> = None;
+        // Single-flight guard for ProduceBlock: caps concurrent block-build
+        // spawns to 1. Messages arriving while a build is in flight are
+        // rejected via the oneshot sender, which surfaces to the caller as an
+        // rx error; the caller can retry on the next tick.
+        let mut current_produce_block: Option<(Slot, tokio::task::JoinHandle<()>)> = None;
         let mut block_cache = BlockCache::new();
         let mut sync_state = if has_aggregator {
             SyncState::Syncing
@@ -1360,7 +1382,7 @@ async fn main() -> Result<()> {
                 // would pick it every iteration, and verified blocks would never land in
                 // store.blocks (observed live: depth 200+ growing, store_blocks_size frozen).
                 result = verify_result_rx.recv() => {
-                    let Some((block_root, signed_block, should_gossip, outcome)) = result else { break };
+                    let Some((block_root, signed_block, should_gossip, outcome, block_processing_start)) = result else { break };
                     METRICS
                         .get()
                         .map(|m| m.grandine_verify_result_channel_depth.dec());
@@ -1410,6 +1432,11 @@ async fn main() -> Result<()> {
                                 new_state,
                                 block_root,
                             );
+
+                            METRICS.get().map(|m| {
+                                m.lean_fork_choice_block_processing_time_seconds
+                                    .observe(block_processing_start.elapsed().as_secs_f64())
+                            });
 
                             match apply_result {
                                 Ok(()) => {
@@ -1485,6 +1512,7 @@ async fn main() -> Result<()> {
                                                 let parent_state_for_child =
                                                     cascade_parent_state.clone();
                                                 let child_for_verify = child_block.clone();
+                                                let cascade_block_processing_start = Instant::now();
                                                 METRICS.get().map(|m| {
                                                     m.grandine_verify_result_channel_depth.inc()
                                                 });
@@ -1506,6 +1534,7 @@ async fn main() -> Result<()> {
                                                             child_for_send,
                                                             false, // cascade: never re-gossip
                                                             outcome,
+                                                            cascade_block_processing_start,
                                                         ))
                                                         .await
                                                         .is_err()
@@ -1724,6 +1753,7 @@ async fn main() -> Result<()> {
                             let result_tx = verify_result_tx.clone();
                             let signed_block_for_verify = signed_block.clone();
                             let verify_signatures = !is_trusted;
+                            let block_processing_start = Instant::now();
                             METRICS
                                 .get()
                                 .map(|m| m.grandine_verify_result_channel_depth.inc());
@@ -1740,7 +1770,7 @@ async fn main() -> Result<()> {
                                     })
                                 };
                                 if result_tx
-                                    .send((block_root, signed_block_for_send, should_gossip, outcome))
+                                    .send((block_root, signed_block_for_send, should_gossip, outcome, block_processing_start))
                                     .await
                                     .is_err()
                                 {
@@ -1890,10 +1920,61 @@ async fn main() -> Result<()> {
                     METRICS.get().map(|m| m.grandine_validator_chain_message_channel_depth.dec());
                     match v_message {
                         ValidatorChainMessage::ProduceBlock { slot, proposer_index, sender } => {
+                            if let Some((_, ref h)) = current_produce_block {
+                                if h.is_finished() {
+                                    current_produce_block = None;
+                                }
+                            }
+                            if let Some((in_flight_slot, _)) = &current_produce_block {
+                                let in_flight = in_flight_slot.0;
+                                info!(
+                                    new_slot = slot.0,
+                                    in_flight_slot = in_flight,
+                                    "ProduceBlock skipped: previous build still in flight"
+                                );
+                                let _ = sender.send(Err(anyhow::anyhow!(
+                                    "produce_block dropped: previous build still in flight for slot {in_flight}"
+                                )));
+                            } else {
+                            let (head_slot, latest_justified_slot) = {
+                                let s = store.read();
+                                let head_slot = s.blocks.get(&s.head).map(|b| b.slot.0).unwrap_or(0);
+                                (head_slot, s.latest_justified.slot.0)
+                            };
+                            let wall_head_lag = slot.0.saturating_sub(head_slot);
+                            let peer_head = *network_head_slot.lock();
+                            let has_fresher_peer_near_wall = peer_head
+                                .map(|h| h.saturating_add(BLOCK_PROPOSAL_MAX_HEAD_LAG_SLOTS) >= slot.0)
+                                .unwrap_or(false);
+                            if should_suppress_proposal_for_head_lag(
+                                wall_head_lag,
+                                BLOCK_PROPOSAL_MAX_HEAD_LAG_SLOTS,
+                                latest_justified_slot,
+                                has_fresher_peer_near_wall,
+                            ) {
+                                warn!(
+                                    slot = slot.0,
+                                    proposer_index,
+                                    wall_head_lag,
+                                    head_slot,
+                                    latest_justified_slot,
+                                    "Skipping block production: local head is {wall_head_lag} wall-clock slots behind"
+                                );
+                                let _ = sender.send(Err(anyhow::anyhow!(
+                                    "produce_block suppressed: head {wall_head_lag} slots behind wall"
+                                )));
+                                continue;
+                            }
                             let block_build_start = Instant::now();
                             let prepare_result = {
                                 let mut w = store.write();
-                                prepare_block_production(&mut *w, slot, proposer_index, chain_log_inv_rate)
+                                prepare_block_production(
+                                    &mut *w,
+                                    slot,
+                                    proposer_index,
+                                    chain_log_inv_rate,
+                                    chain_enable_proposer_aggregation,
+                                )
                             };
 
                             match prepare_result {
@@ -1906,7 +1987,7 @@ async fn main() -> Result<()> {
                                     let validators = inputs.head_state.validators.clone();
                                     let exec = cpu_normal_executor.clone();
                                     let exec_start = Instant::now();
-                                    tokio::spawn(async move {
+                                    let handle = tokio::spawn(async move {
                                         let job = exec.spawn(async move {
                                             execute_block_production(inputs)
                                                 .map(|(_, block, post_state, sigs)| (block, post_state, sigs))
@@ -1951,7 +2032,9 @@ async fn main() -> Result<()> {
                                         }
                                         let _ = sender.send(result);
                                     });
+                                    current_produce_block = Some((slot, handle));
                                 }
+                            }
                             }
                         }
                         ValidatorChainMessage::BuildAttestationData { slot, sender } => {
@@ -1990,6 +2073,8 @@ async fn main() -> Result<()> {
         let mut last_proposal_slot: Option<u64> = None;
         let mut last_attestation_slot: Option<u64> = None;
         let mut propose_handle: Option<tokio::task::JoinHandle<()>> = None;
+        let mut prebuild_handle: Option<tokio::task::JoinHandle<()>> = None;
+        let last_prebuild_success: Arc<Mutex<Option<u64>>> = Arc::new(Mutex::new(None));
 
         loop {
             v_tick_interval.tick().await;
@@ -2005,7 +2090,8 @@ async fn main() -> Result<()> {
 
             match current_interval {
                 0 => {
-                    if last_proposal_slot != Some(current_slot) {
+                    let prebuilt = *last_prebuild_success.lock() == Some(current_slot);
+                    if last_proposal_slot != Some(current_slot) && !prebuilt {
                         if current_slot > 0 {
                             if let Some(proposer_idx) = vs.get_proposer_for_slot(Slot(current_slot))
                             {
@@ -2015,6 +2101,15 @@ async fn main() -> Result<()> {
                                         info!(
                                             slot = current_slot,
                                             "Validator task: aborting prior in-flight propose"
+                                        );
+                                    }
+                                }
+                                if let Some(prev) = prebuild_handle.take() {
+                                    if !prev.is_finished() {
+                                        prev.abort();
+                                        info!(
+                                            slot = current_slot,
+                                            "Validator task: aborting stale pre-build before interval-0 fallback"
                                         );
                                     }
                                 }
@@ -2096,6 +2191,24 @@ async fn main() -> Result<()> {
                                     {
                                         Ok(signed_block) => {
                                             let block_root = signed_block.block.hash_tree_root();
+                                            let target_slot_start_ms = genesis_millis_for_spawn
+                                                + propose_slot
+                                                    * (MILLIS_PER_INTERVAL * INTERVALS_PER_SLOT);
+                                            let now_ms = SystemTime::now()
+                                                .duration_since(UNIX_EPOCH)
+                                                .unwrap()
+                                                .as_millis()
+                                                as u64;
+                                            if now_ms < target_slot_start_ms {
+                                                let sleep_ms = target_slot_start_ms - now_ms;
+                                                info!(
+                                                    slot = propose_slot,
+                                                    sleep_ms,
+                                                    "Validator task: block built early, holding until slot boundary"
+                                                );
+                                                tokio::time::sleep(Duration::from_millis(sleep_ms))
+                                                    .await;
+                                            }
                                             info!(
                                                 slot = propose_slot,
                                                 block_root = %format!("0x{:x}", block_root),
@@ -2227,6 +2340,153 @@ async fn main() -> Result<()> {
                             ),
                         }
                         last_attestation_slot = Some(current_slot);
+                    }
+                }
+                4 => {
+                    // Pre-build the next slot's block one interval early if we
+                    // propose it. The marker is set synchronously at dispatch,
+                    // before the spawn is created, so interval-0 of the next
+                    // slot always sees "pre-build in progress" and no-ops.
+                    // If any step in the spawn errors, the marker is cleared
+                    // in the error arm so a later tick can retry — but there
+                    // is no interval-0 fallback for the failing slot itself.
+                    let next_slot = current_slot + 1;
+                    if *last_prebuild_success.lock() != Some(next_slot) {
+                        if let Some(next_proposer_idx) = vs.get_proposer_for_slot(Slot(next_slot)) {
+                            info!(
+                                slot = next_slot,
+                                proposer = next_proposer_idx,
+                                "Validator task: pre-building block one interval early"
+                            );
+
+                            let (tx, rx) = oneshot::channel();
+                            let send_result =
+                                validator_chain_sender.send(ValidatorChainMessage::ProduceBlock {
+                                    slot: Slot(next_slot),
+                                    proposer_index: next_proposer_idx,
+                                    sender: tx,
+                                });
+                            if send_result.is_ok() {
+                                METRICS.get().map(|m| {
+                                    m.grandine_validator_chain_message_channel_depth.inc()
+                                });
+                            }
+                            if send_result.is_err() {
+                                warn!("Validator task: chain channel closed, stopping");
+                                break;
+                            }
+
+                            *last_prebuild_success.lock() = Some(next_slot);
+
+                            let vs_for_spawn = vs.clone();
+                            let chain_sender_for_spawn = chain_msg_sender_for_validator.clone();
+                            let log_inv_rate = chain_log_inv_rate;
+                            let propose_slot = next_slot;
+                            let genesis_millis_for_spawn = genesis_millis;
+                            let last_prebuild_success_for_spawn =
+                                Arc::clone(&last_prebuild_success);
+
+                            prebuild_handle = Some(tokio::spawn(async move {
+                                let (block, signatures, validators, cached_post_state) = match rx
+                                    .await
+                                {
+                                    Ok(Ok(tuple)) => tuple,
+                                    Ok(Err(e)) => {
+                                        warn!(slot = propose_slot, error = %e, "Validator task: chain failed to pre-build block");
+                                        let mut guard = last_prebuild_success_for_spawn.lock();
+                                        if *guard == Some(propose_slot) {
+                                            *guard = None;
+                                        }
+                                        return;
+                                    }
+                                    Err(_) => {
+                                        warn!(
+                                            slot = propose_slot,
+                                            "Validator task: no response to pre-build ProduceBlock"
+                                        );
+                                        let mut guard = last_prebuild_success_for_spawn.lock();
+                                        if *guard == Some(propose_slot) {
+                                            *guard = None;
+                                        }
+                                        return;
+                                    }
+                                };
+
+                                match vs_for_spawn
+                                    .sign_block_with_data(
+                                        block,
+                                        next_proposer_idx,
+                                        signatures,
+                                        validators,
+                                        log_inv_rate,
+                                    )
+                                    .await
+                                {
+                                    Ok(signed_block) => {
+                                        let block_root = signed_block.block.hash_tree_root();
+                                        let target_slot_start_ms = genesis_millis_for_spawn
+                                            + propose_slot
+                                                * (MILLIS_PER_INTERVAL * INTERVALS_PER_SLOT);
+                                        let now_ms = SystemTime::now()
+                                            .duration_since(UNIX_EPOCH)
+                                            .unwrap()
+                                            .as_millis()
+                                            as u64;
+                                        if now_ms < target_slot_start_ms {
+                                            let sleep_ms = target_slot_start_ms - now_ms;
+                                            info!(
+                                                slot = propose_slot,
+                                                sleep_ms,
+                                                "Validator task: pre-built block ready, holding until slot boundary"
+                                            );
+                                            tokio::time::sleep(Duration::from_millis(sleep_ms))
+                                                .await;
+                                        } else {
+                                            warn!(
+                                                slot = propose_slot,
+                                                overrun_ms = now_ms - target_slot_start_ms,
+                                                "Pre-build overran target slot, publishing immediately"
+                                            );
+                                        }
+                                        info!(
+                                            slot = propose_slot,
+                                            block_root = %format!("0x{:x}", block_root),
+                                            "Validator task: pre-built block signed, sending to chain"
+                                        );
+                                        let send_result = chain_sender_for_spawn
+                                            .send(ChainMessage::ProcessBlock {
+                                                signed_block,
+                                                is_trusted: true,
+                                                should_gossip: true,
+                                                cached_post_state: Some(cached_post_state),
+                                            })
+                                            .await;
+                                        if send_result.is_ok() {
+                                            METRICS.get().map(|m| {
+                                                m.grandine_chain_message_channel_depth.inc()
+                                            });
+                                        }
+                                        if send_result.is_err() {
+                                            warn!(
+                                                slot = propose_slot,
+                                                "Validator task: chain message channel closed after pre-build"
+                                            );
+                                            let mut guard = last_prebuild_success_for_spawn.lock();
+                                            if *guard == Some(propose_slot) {
+                                                *guard = None;
+                                            }
+                                        }
+                                    }
+                                    Err(e) => {
+                                        warn!(slot = propose_slot, error = %e, "Validator task: failed to sign pre-built block");
+                                        let mut guard = last_prebuild_success_for_spawn.lock();
+                                        if *guard == Some(propose_slot) {
+                                            *guard = None;
+                                        }
+                                    }
+                                }
+                            }));
+                        }
                     }
                 }
                 _ => {}

@@ -233,6 +233,11 @@ pub struct Metrics {
     /// of 1 mean the worker is continuously busy (XMSS slower than slot rate).
     pub lean_aggregation_in_flight_snapshots: IntGauge,
 
+    /// Per-job pre-SNARK setup wall-clock: children_arg construction, validator
+    /// index sort/dedup, participants bitfield, raw pubkey/sig cloning.
+    /// Observed once per job in `maybe_aggregate` right before the SNARK call.
+    pub grandine_aggregation_job_setup_seconds: Histogram,
+
     /// Time the chain task spends processing one `ChainMessage` (block,
     /// attestation, aggregated attestation, etc.). Captures total work done
     /// inside the `chain_message_receiver.recv() => { … }` select arm body
@@ -662,6 +667,13 @@ impl Metrics {
                 "lean_aggregation_in_flight_snapshots",
                 "Snapshots currently held by the aggregation spawn_blocking worker (0 or 1 expected)",
             )?,
+            grandine_aggregation_job_setup_seconds: Histogram::with_opts(histogram_opts!(
+                "grandine_aggregation_job_setup_seconds",
+                "Per-job pre-SNARK setup wall-clock in maybe_aggregate before aggregate_with_children",
+                vec![
+                    0.0001, 0.0005, 0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5
+                ],
+            ))?,
             lean_chain_task_chain_message_seconds: Histogram::with_opts(histogram_opts!(
                 "lean_chain_task_chain_message_seconds",
                 "Wall-clock time the chain task spends inside one ChainMessage select-arm body",
@@ -966,6 +978,9 @@ impl Metrics {
             self.lean_aggregation_snapshot_size_entries.clone(),
         ))?;
         default_registry.register(Box::new(self.lean_aggregation_in_flight_snapshots.clone()))?;
+        default_registry.register(Box::new(
+            self.grandine_aggregation_job_setup_seconds.clone(),
+        ))?;
         default_registry.register(Box::new(self.lean_chain_task_chain_message_seconds.clone()))?;
         default_registry.register(Box::new(self.lean_chain_task_apply_seconds.clone()))?;
         default_registry.register(Box::new(self.grandine_store_blocks_size.clone()))?;

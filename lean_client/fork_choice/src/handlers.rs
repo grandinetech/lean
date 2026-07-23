@@ -14,9 +14,27 @@ use xmss::PublicKey;
 
 use crate::block_cache::BlockCache;
 use crate::store::{
-    BLOCKS_TO_KEEP, GOSSIP_DISPARITY_INTERVALS, HEAD_RETENTION_SLOTS, INTERVALS_PER_SLOT,
-    MILLIS_PER_INTERVAL, STATE_PRUNE_BUFFER, STATES_TO_KEEP, Store, tick_interval, update_head,
+    BLOCKS_TO_KEEP, GOSSIP_DISPARITY_INTERVALS, HEAD_RETENTION_SLOTS, HISTORICAL_ROOTS_LIMIT,
+    INTERVALS_PER_SLOT, MILLIS_PER_INTERVAL, STATE_PRUNE_BUFFER, STATES_TO_KEEP, Store,
+    tick_interval, update_head,
 };
+
+pub const BLOCK_PROPOSAL_MAX_HEAD_LAG_SLOTS: u64 = 4;
+
+pub fn should_suppress_proposal_for_head_lag(
+    wall_head_lag_slots: u64,
+    max_proposal_head_lag_slots: u64,
+    latest_justified_slot: u64,
+    has_fresher_peer_near_wall: bool,
+) -> bool {
+    if latest_justified_slot == 0 {
+        return false;
+    }
+    if !has_fresher_peer_near_wall {
+        return false;
+    }
+    wall_head_lag_slots > max_proposal_head_lag_slots
+}
 
 #[inline]
 pub fn on_tick(store: &mut Store, time_millis: u64, has_proposal: bool) {
@@ -97,6 +115,14 @@ fn validate_attestation_data(store: &Store, data: &AttestationData) -> Result<()
         data.target.slot.0,
         data.head.root,
         data.head.slot.0,
+    );
+    ensure!(
+        checkpoint_is_ancestor(store, &store.latest_finalized, &data.head),
+        "Head checkpoint {} (slot {}) does not descend from latest finalized {} (slot {})",
+        data.head.root,
+        data.head.slot.0,
+        store.latest_finalized.root,
+        store.latest_finalized.slot.0,
     );
 
     // Honest validators emit votes only after their slot has begun. Allow exactly
@@ -673,6 +699,26 @@ pub fn on_block(
         );
     }
 
+    let block_slot = signed_block.block.slot.0;
+    if let Some(parent_state) = store.states.get(&parent_root) {
+        let slot_gap = block_slot.saturating_sub(parent_state.slot.0);
+        ensure!(
+            slot_gap <= HISTORICAL_ROOTS_LIMIT,
+            "block slot gap {} exceeds HISTORICAL_ROOTS_LIMIT {} (block.slot={}, parent.slot={})",
+            slot_gap,
+            HISTORICAL_ROOTS_LIMIT,
+            block_slot,
+            parent_state.slot.0,
+        );
+    }
+    let current_slot = store.time / INTERVALS_PER_SLOT;
+    ensure!(
+        block_slot <= current_slot + 1,
+        "block slot {} is more than one slot beyond current slot {}",
+        block_slot,
+        current_slot,
+    );
+
     process_block_internal(store, signed_block, block_root, verify_signatures)?;
     process_pending_blocks(store, cache, vec![block_root], verify_signatures);
 
@@ -692,12 +738,6 @@ pub fn verify_and_transition(
     signed_block: SignedBlock,
     verify_signatures: bool,
 ) -> Result<State> {
-    let _timer = METRICS.get().map(|metrics| {
-        metrics
-            .lean_fork_choice_block_processing_time_seconds
-            .start_timer()
-    });
-
     if verify_signatures {
         signed_block.verify_signatures(&parent_state)?;
     }

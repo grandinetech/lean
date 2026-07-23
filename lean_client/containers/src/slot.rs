@@ -35,17 +35,12 @@ impl Slot {
     ///
     /// # Returns
     ///
-    /// True if the slot is justifiable, False otherwise.
-    ///
-    /// # Panics
-    ///
-    /// Panics if this slot is earlier than the finalized slot.
+    /// True if the slot is justifiable, False otherwise (including any slot
+    /// before the finalized slot).
     pub fn is_justifiable_after(self, finalized: Slot) -> bool {
-        assert!(
-            self >= finalized,
-            "Candidate slot must not be before finalized slot"
-        );
-        let delta = self.0 - finalized.0;
+        let Some(delta) = self.0.checked_sub(finalized.0) else {
+            return false;
+        };
 
         // Rule 1: The first 5 slots after finalization are always justifiable.
         // Examples: delta = 0, 1, 2, 3, 4, 5

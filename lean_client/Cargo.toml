@@ -238,7 +238,7 @@ anyhow = "1.0.100"
 async-trait = "0.1"
 axum = "0.8.8"
 bitvec = "1.0.1"
-bls = { git = "https://github.com/grandinetech/grandine", package = "bls", features = ["blst"], rev = "64afdee3c6be79fceffb66933dcb69a943f3f1ae" }
+bls = { git = "https://github.com/grandinetech/grandine", package = "bls", features = ["blst"], rev = "c4b676e3daa0ddcb86d0bcb321b7166d59f920f9" }
 clap = { version = "4", features = ["derive"] }
 derive_more = "2.1.1"
 discv5 = "0.10.2"
@@ -246,12 +246,12 @@ enr = { version = "0.13", features = ["k256"] }
 eth_ssz = { package = "ethereum_ssz", version = "0.10.0" }
 ethereum-types = "0.14"
 futures = "0.3"
-features = { git = "https://github.com/grandinetech/grandine", rev = "64afdee3c6be79fceffb66933dcb69a943f3f1ae" }
+features = { git = "https://github.com/grandinetech/grandine", rev = "c4b676e3daa0ddcb86d0bcb321b7166d59f920f9" }
 git-version = "0.3"
 hex = "0.4.3"
 indexmap = "2"
 http-body-util = "0.1"
-http_api_utils = { git = "https://github.com/grandinetech/grandine", rev = "64afdee3c6be79fceffb66933dcb69a943f3f1ae" }
+http_api_utils = { git = "https://github.com/grandinetech/grandine", rev = "c4b676e3daa0ddcb86d0bcb321b7166d59f920f9" }
 k256 = "0.13"
 rec_aggregation = { git = "https://github.com/leanEthereum/leanVM.git", rev = "e2592df4e30fdddbbf8ae26a333116c68cec7026" }
 backend = { git = "https://github.com/leanEthereum/leanVM.git", rev = "e2592df4e30fdddbbf8ae26a333116c68cec7026" }
@@ -279,7 +279,7 @@ parking_lot = "0.12"
 paste = "1.0.15"
 pretty_assertions = "1.4"
 prometheus = { version = "0.14", features = ["process"] }
-prometheus_metrics = { git = "https://github.com/grandinetech/grandine", rev = "64afdee3c6be79fceffb66933dcb69a943f3f1ae" }
+prometheus_metrics = { git = "https://github.com/grandinetech/grandine", rev = "c4b676e3daa0ddcb86d0bcb321b7166d59f920f9" }
 rand = "0.10"
 rand_chacha = "0.10"
 rayon = "1"
@@ -290,7 +290,7 @@ serde_json = "1.0"
 serde_yaml = "0.9"
 sha2 = "0.10"
 snap = "1.1"
-ssz = { git = "https://github.com/grandinetech/grandine", package = "ssz", rev = "64afdee3c6be79fceffb66933dcb69a943f3f1ae" }
+ssz = { git = "https://github.com/grandinetech/grandine", package = "ssz", rev = "c4b676e3daa0ddcb86d0bcb321b7166d59f920f9" }
 ssz-types = "0.3"
 itertools = "0.14"
 test-generator = "0.3.1"
@@ -303,7 +303,7 @@ tower-http = { version = '0.6', features = ['cors', 'trace'] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
 tree-hash = "0.4.0"
-try_from_iterator = { git = "https://github.com/grandinetech/grandine", package = "try_from_iterator", rev = "64afdee3c6be79fceffb66933dcb69a943f3f1ae" }
+try_from_iterator = { git = "https://github.com/grandinetech/grandine", package = "try_from_iterator", rev = "c4b676e3daa0ddcb86d0bcb321b7166d59f920f9" }
 typenum = "1.19"
 yamux = "0.12"
 zeroize = "1.8"

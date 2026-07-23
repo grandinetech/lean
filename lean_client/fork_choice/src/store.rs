@@ -24,6 +24,10 @@ pub const MILLIS_PER_INTERVAL: u64 = (SECONDS_PER_SLOT * 1000) / INTERVALS_PER_S
 /// analogue of mainnet's MAXIMUM_GOSSIP_CLOCK_DISPARITY.
 pub const GOSSIP_DISPARITY_INTERVALS: u64 = 1;
 
+/// Maximum permitted slot gap between a block and its parent.
+/// Must equal the `HistoricalRootsLimit` typenum in `containers/src/state.rs`.
+pub const HISTORICAL_ROOTS_LIMIT: u64 = 262_144;
+
 /// Forkchoice store tracking chain state and validator attestations
 
 #[derive(Debug, Clone, Default)]
@@ -78,16 +82,13 @@ pub struct Store {
     /// Aggregated signature proofs from block bodies (on-chain).
     /// These are attestations that have been included in blocks and are part of
     /// the "known" pool for safe target computation.
-    /// Keyed by attestation data root (H256). `IndexMap` preserves insertion
-    /// order so same-slot equivocation tie-breaks are deterministic and match
-    /// leanSpec's first-vote-wins semantics (Python dict insertion order).
+    /// Keyed by attestation data root (H256).
     pub latest_known_aggregated_payloads: IndexMap<H256, Vec<AggregatedSignatureProof>>,
 
     /// Aggregated signature proofs from gossip aggregation topic.
     /// These are newly received aggregations that haven't been migrated to "known" yet.
     /// At interval 3, we merge this with latest_known_aggregated_payloads for safe target.
-    /// Keyed by attestation data root (H256). See note on the `known` pool above
-    /// for why this is `IndexMap`.
+    /// Keyed by attestation data root (H256).
     pub latest_new_aggregated_payloads: IndexMap<H256, Vec<AggregatedSignatureProof>>,
 
     /// Attestation data indexed by hash (data_root).
@@ -498,28 +499,26 @@ fn extract_attestations_from_aggregated_payloads(
 ) -> HashMap<u64, AttestationData> {
     let mut attestations: HashMap<u64, AttestationData> = HashMap::new();
 
-    for (data_root, proofs) in payloads {
-        // Look up the attestation data for this data root
-        let Some(attestation_data) = attestation_data_by_root.get(data_root) else {
-            continue;
-        };
+    let mut ordered: Vec<(&H256, &AttestationData, &Vec<AggregatedSignatureProof>)> = payloads
+        .iter()
+        .filter_map(|(root, proofs)| {
+            attestation_data_by_root
+                .get(root)
+                .map(|data| (root, data, proofs))
+        })
+        .filter(|(_, data, _)| data.head.slot > latest_finalized_slot)
+        .collect();
 
-        if attestation_data.head.slot <= latest_finalized_slot {
-            continue;
-        }
+    ordered.sort_unstable_by(|a, b| (b.1.slot, b.0).cmp(&(a.1.slot, a.0)));
 
-        // For each proof, extract participating validators
+    for (_data_root, attestation_data, proofs) in ordered {
         for proof in proofs {
             for (bit_idx, bit) in proof.participants.0.iter().enumerate() {
                 if *bit {
                     let validator_id = bit_idx as u64;
-                    // Only update if this is a newer attestation for this validator
-                    if attestations
-                        .get(&validator_id)
-                        .map_or(true, |existing| existing.slot < attestation_data.slot)
-                    {
-                        attestations.insert(validator_id, attestation_data.clone());
-                    }
+                    attestations
+                        .entry(validator_id)
+                        .or_insert_with(|| attestation_data.clone());
                 }
             }
         }
@@ -639,6 +638,7 @@ pub struct BlockProductionInputs {
     /// counted in `lean_build_block_pool_missing_att_data`.
     pub aggregated_payloads: HashMap<H256, (AttestationData, Vec<AggregatedSignatureProof>)>,
     pub log_inv_rate: usize,
+    pub enable_proposer_aggregation: bool,
     pub store_latest_justified: Checkpoint,
 }
 
@@ -647,6 +647,7 @@ pub fn prepare_block_production(
     slot: Slot,
     validator_index: u64,
     log_inv_rate: usize,
+    enable_proposer_aggregation: bool,
 ) -> Result<BlockProductionInputs> {
     let head_root = get_proposal_head(store, slot);
     let head_state = store
@@ -697,6 +698,7 @@ pub fn prepare_block_production(
         known_block_roots,
         aggregated_payloads,
         log_inv_rate,
+        enable_proposer_aggregation,
         store_latest_justified: store.latest_justified.clone(),
     })
 }
@@ -712,6 +714,7 @@ pub fn execute_block_production(
         known_block_roots,
         aggregated_payloads,
         log_inv_rate,
+        enable_proposer_aggregation,
         store_latest_justified,
     } = inputs;
 
@@ -740,6 +743,7 @@ pub fn execute_block_production(
             &known_block_roots,
             &aggregated_payloads,
             log_inv_rate,
+            enable_proposer_aggregation,
         )?;
 
     info!(
@@ -772,7 +776,14 @@ pub fn produce_block_with_signatures(
     slot: Slot,
     validator_index: u64,
     log_inv_rate: usize,
+    enable_proposer_aggregation: bool,
 ) -> Result<(H256, Block, Vec<AggregatedSignatureProof>)> {
-    let inputs = prepare_block_production(store, slot, validator_index, log_inv_rate)?;
+    let inputs = prepare_block_production(
+        store,
+        slot,
+        validator_index,
+        log_inv_rate,
+        enable_proposer_aggregation,
+    )?;
     execute_block_production(inputs).map(|(root, block, _post_state, sigs)| (root, block, sigs))
 }
