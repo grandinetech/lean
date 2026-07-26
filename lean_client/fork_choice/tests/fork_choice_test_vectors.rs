@@ -480,6 +480,11 @@ fn forkchoice(spec_file: &str) {
                     checks,
                     block: test_block,
                 } => {
+                    // Capture the fixture's label for this block before the
+                    // value is consumed by the conversion below. Later steps
+                    // reference applied blocks by this label (e.g. a check that
+                    // the head is still `block_3` after a competing fork lands).
+                    let block_root_label = test_block.block_root_label.clone();
                     let result = std::panic::catch_unwind(AssertUnwindSafe(|| {
                         let block: Block = test_block.into();
                         let signed_block = SignedBlock {
@@ -519,6 +524,9 @@ fn forkchoice(spec_file: &str) {
                     }
 
                     if valid && result.is_ok() {
+                        if let Some(label) = block_root_label {
+                            block_labels.insert(label, *result.as_ref().unwrap());
+                        }
                         verify_checks(&store, &checks, &block_labels, step_idx).expect(&format!(
                             "Step: {step_idx}: Should be valid but checks failed"
                         ));
