@@ -473,6 +473,8 @@ fn forkchoice(spec_file: &str) {
         let mut cache = BlockCache::new();
         let mut block_labels: HashMap<String, H256> = HashMap::new();
 
+        block_labels.insert("genesis".to_string(), store.head);
+
         for (step_idx, step) in case.steps.into_iter().enumerate() {
             match step {
                 ForkChoiceStep::Block {
@@ -480,10 +482,6 @@ fn forkchoice(spec_file: &str) {
                     checks,
                     block: test_block,
                 } => {
-                    // Capture the fixture's label for this block before the
-                    // value is consumed by the conversion below. Later steps
-                    // reference applied blocks by this label (e.g. a check that
-                    // the head is still `block_3` after a competing fork lands).
                     let block_root_label = test_block.block_root_label.clone();
                     let result = std::panic::catch_unwind(AssertUnwindSafe(|| {
                         let block: Block = test_block.into();
