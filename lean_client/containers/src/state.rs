@@ -19,7 +19,7 @@ use crate::{
 
 /// Maximum number of distinct AttestationData entries per block (spec: chain/config.py:36).
 /// Used by the import-side validation so we accept any spec-valid block from other clients.
-pub(crate) const MAX_ATTESTATIONS_DATA: usize = 8;
+pub(crate) const MAX_ATTESTATIONS_DATA: usize = 16;
 
 /// Producer-side cap on distinct AttestationData entries when *we* build a block.
 /// Lower than the spec ceiling so the per-block Type-2 MultiMessageAggregate prove
