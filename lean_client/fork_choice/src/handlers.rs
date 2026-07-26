@@ -690,6 +690,17 @@ pub fn on_block(
         return Ok(BlockOutcome::AlreadyKnown);
     }
 
+    let attestations = &signed_block.block.body.attestations;
+    let distinct = attestations
+        .into_iter()
+        .map(|attestation| attestation.data.hash_tree_root())
+        .collect::<HashSet<_>>()
+        .len();
+    ensure!(
+        distinct == attestations.len_usize(),
+        "block contains duplicate AttestationData"
+    );
+
     let parent_root = signed_block.block.parent_root;
 
     if !store.states.contains_key(&parent_root) && !parent_root.is_zero() {
