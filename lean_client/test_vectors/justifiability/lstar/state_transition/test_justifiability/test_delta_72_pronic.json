@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_72_pronic[fork_Lstar][fork_Lstar-justifiability]": {
+    "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_72_pronic[fork_Lstar][fork_Lstar-justifiability_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "slot": 72,
         "finalizedSlot": 0,
         "output": {
@@ -9,11 +10,12 @@
             "isJustifiable": true
         },
         "_info": {
-            "hash": "0x0acf68ad05b37640982c8a820b4c3098b9c202fe0158fe2afd8e58fd7ba433d3",
+            "hash": "0xcbde41bf757a7c63ab6728b4efc1478488d81d1ed5ec4168e29ec8a951ba6862",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_72_pronic[fork_Lstar]",
-            "description": "Delta 72: pronic number (8*9).",
-            "fixtureFormat": "justifiability"
+            "description": "Delta 72 is justifiable as a pronic number.\n\n    Given\n    -----\n    - the finalized slot is 0.\n    - the candidate slot is 72.\n    - the delta is 72, pronic (8*9).\n\n    When\n    ----\n    - the candidate is checked for justifiability.\n\n    Then\n    ----\n    - the candidate is justifiable.",
+            "fixtureFormat": "justifiability_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

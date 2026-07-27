@@ -1,17 +1,19 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_boolean_false[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_boolean_false[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "Boolean",
         "value": false,
         "serialized": "0x00",
         "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "_info": {
-            "hash": "0x3746325e9de9567ad88aa999496ceada0fce2bc3dc6e75c4487aa2be8970a1ae",
+            "hash": "0x718e3c4b8254dda2097f18e191fe1a31d9b28d41e00aae78d2bbf61e12ca8445",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_boolean_false[fork_Lstar]",
-            "description": "Boolean false encodes as 0x00.",
-            "fixtureFormat": "ssz"
+            "description": "The boolean false round-trips through encoding unchanged.\n\n    Given\n    -----\n    - the boolean value false.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the encoding is the byte 0x00.\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

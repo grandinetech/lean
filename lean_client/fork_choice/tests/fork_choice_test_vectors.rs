@@ -182,10 +182,10 @@ struct TestDataWrapper<T> {
 #[serde(rename_all = "camelCase")]
 struct TestValidator {
     #[allow(dead_code)]
-    #[serde(alias = "pubkey")]
+    #[serde(alias = "pubkey", alias = "attestationPublicKey")]
     attestation_pubkey: String,
     #[allow(dead_code)]
-    #[serde(default)]
+    #[serde(default, alias = "proposalPublicKey")]
     proposal_pubkey: Option<String>,
     #[allow(dead_code)]
     #[serde(default)]
@@ -443,7 +443,7 @@ fn verify_checks(
     Ok(())
 }
 
-#[test_resources("test_vectors/fork_choice/*/fc/*/*.json")]
+#[test_resources("test_vectors/fork_choice/*/fork_choice/*/*.json")]
 fn forkchoice(spec_file: &str) {
     let spec_path = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("..")

@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/networking/test_gossipsub_handlers.py::test_message_duplicate_not_forwarded[fork_Lstar][fork_Lstar-gossipsub_handler]": {
+    "tests/consensus/lstar/networking/test_gossipsub_handlers.py::test_message_duplicate_not_forwarded[fork_Lstar][fork_Lstar-gossipsub_handler_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "handlerName": "message",
         "params": {
             "d": 4,
@@ -13,30 +14,42 @@
             "subscriptions": [
                 "test_topic"
             ],
+            "peers": {
+                "senderX": {
+                    "subscriptions": [
+                        "test_topic"
+                    ],
+                    "withStream": true,
+                    "backoff": {},
+                    "dontWantIds": []
+                },
+                "peerAx": {
+                    "subscriptions": [
+                        "test_topic"
+                    ],
+                    "withStream": true,
+                    "backoff": {},
+                    "dontWantIds": []
+                }
+            },
             "meshes": {
                 "test_topic": [
                     "senderX",
                     "peerAx"
                 ]
             },
-            "peers": {
-                "senderX": {
-                    "subscriptions": [
-                        "test_topic"
-                    ]
-                },
-                "peerAx": {
-                    "subscriptions": [
-                        "test_topic"
-                    ]
-                }
-            },
             "seenMessageIds": [
                 "0x8dc6bba09a9550cdccb1b1b432bb04919901ce1e"
-            ]
+            ],
+            "cachedMessages": []
         },
         "event": {
             "fromPeer": "senderX",
+            "graft": [],
+            "prune": [],
+            "ihave": [],
+            "iwant": [],
+            "idontwant": [],
             "publish": [
                 {
                     "topic": "test_topic",
@@ -55,11 +68,12 @@
             }
         },
         "_info": {
-            "hash": "0xfa6604e8d0e7c3776f7710783e859b9fc58f8f53e24ddf7c191ae872daa7c9ec",
+            "hash": "0xfb7d8a07f289fbfe463efbabee2024ee6b4571ff89da0092a05d4cfe42c43aaf",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossipsub_handlers.py::test_message_duplicate_not_forwarded[fork_Lstar]",
-            "description": "Duplicate message (already in seen cache) is not forwarded.",
-            "fixtureFormat": "gossipsub_handler"
+            "description": "A duplicate message is not forwarded.\n\n    Given\n    -----\n    - the node is subscribed to the topic.\n    - the mesh holds senderX and peerAx.\n    - the seen cache already holds the message id.\n\n    When\n    ----\n    - senderX publishes that already-seen message on the topic.\n\n    Then\n    ----\n    - the message is not forwarded to any peer.",
+            "fixtureFormat": "gossipsub_handler_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

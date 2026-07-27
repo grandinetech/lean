@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_snappy_codec.py::test_snappy_block_incompressible[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_snappy_codec.py::test_snappy_block_incompressible[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "snappy_block",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "snappy_block",
             "data": "0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
         },
         "output": {
@@ -12,11 +13,12 @@
             "uncompressedLength": 256
         },
         "_info": {
-            "hash": "0xf01e1b012c0eb37ebbec56e526340eaf068c7a2f0f92526156895accb771946e",
+            "hash": "0x2b48ca868ad7d129c17d2ef6f9377bb980a4e1b8f6ad9955c74ebfa94b515f7f",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_snappy_codec.py::test_snappy_block_incompressible[fork_Lstar]",
-            "description": "Sequential bytes 0x00-0xFF (256 bytes). Low compressibility, mostly literals.",
-            "fixtureFormat": "networking_codec"
+            "description": "Low-compressibility data roundtrips through the snappy block format.\n\n    Given\n    -----\n    - 256 bytes of sequential values 0x00 to 0xff.\n\n    When\n    ----\n    - the input is compressed then decompressed.\n\n    Then\n    ----\n    - the output equals the original.\n    - the data is mostly literals.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

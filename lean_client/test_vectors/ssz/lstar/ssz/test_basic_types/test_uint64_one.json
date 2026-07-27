@@ -1,17 +1,19 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_uint64_one[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_uint64_one[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "Uint64",
         "value": "1",
         "serialized": "0x0100000000000000",
         "root": "0x0100000000000000000000000000000000000000000000000000000000000000",
         "_info": {
-            "hash": "0xb55ae0ecec2d613efad0bb0f482ad644950bb54cf1da6e32a44c5ddb6a0dff12",
+            "hash": "0xf72f68c4b626eaaaf238ceb67e8fdc6ac6ed192630f059003ee1b2de0d45a0cd",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_uint64_one[fork_Lstar]",
-            "description": "Uint64 smallest nonzero value (1).",
-            "fixtureFormat": "ssz"
+            "description": "The smallest non-zero eight-byte uint round-trips unchanged.\n\n    Given\n    -----\n    - the value 1 as an eight-byte uint.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

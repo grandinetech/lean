@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_consensus_containers.py::test_state_minimal[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_consensus_containers.py::test_state_minimal[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "State",
         "value": {
             "config": {
@@ -32,8 +33,8 @@
             "validators": {
                 "data": [
                     {
-                        "attestationPubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-                        "proposalPubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                        "attestationPublicKey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                        "proposalPublicKey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
                         "index": 0
                     }
                 ]
@@ -48,11 +49,12 @@
         "serialized": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e4000000e4000000e50000005501000055010000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001",
         "root": "0x19bc1a19f5786590d500ee591f03bfaf41c1b7079cc3b3e8f3a07f53e3e66edc",
         "_info": {
-            "hash": "0x15022404253a5b2022c07e8b1ab28f00dc2e3d12943cdf2dda981a5f4e7e9646",
+            "hash": "0x6d1487ab1ccc1fd17a27cc8b23ace9fff8451a0c9930676ae89708d7ba9b9c9d",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_consensus_containers.py::test_state_minimal[fork_Lstar]",
-            "description": "SSZ roundtrip for State with minimal values.",
-            "fixtureFormat": "ssz"
+            "description": "A state with minimal values round-trips unchanged.\n\n    Given\n    -----\n    - a state at slot zero with a zero block header and zero checkpoints.\n    - a single validator and empty history lists.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

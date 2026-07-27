@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/api/test_api_endpoints.py::test_aggregator_status_disabled[fork_Lstar][fork_Lstar-api_endpoint]": {
+    "tests/consensus/lstar/api/test_api_endpoints.py::test_aggregator_status_disabled[fork_Lstar][fork_Lstar-api_endpoint_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "endpoint": "/lean/v0/admin/aggregator",
         "method": "GET",
         "genesisParams": {
@@ -15,11 +16,12 @@
             "is_aggregator": false
         },
         "_info": {
-            "hash": "0x3b98b021603b378eb62491911c54d587507891b267c9b824687041d0234e8a54",
+            "hash": "0x26ba6bceba166de59b0ac27306217f42a1de4f848c014f2e01445a59baf42b18",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/api/test_api_endpoints.py::test_aggregator_status_disabled[fork_Lstar]",
-            "description": "GET aggregator status on a node started with aggregator disabled.",
-            "fixtureFormat": "api_endpoint"
+            "description": "The aggregator-status endpoint reports the disabled role.\n\n    Given\n    -----\n    - a node started with the aggregator role disabled.\n\n    When\n    ----\n    - the aggregator-status endpoint is queried.\n\n    Then\n    ----\n    - the response reports the aggregator as disabled.",
+            "fixtureFormat": "api_endpoint_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

@@ -1,24 +1,24 @@
 {
-    "tests/consensus/lstar/networking/test_varint_invalid.py::test_varint_longer_than_ten_bytes_rejected[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_varint_invalid.py::test_varint_longer_than_ten_bytes_rejected[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "expectException": "VarintError",
-        "codecName": "decode_failure",
-        "input": {
+        "rejectionReason": "DECODE_ERROR",
+        "proofSetting": 0,
+        "codec": {
+            "kind": "decode_failure",
             "decoder": "varint",
-            "bytes": "0x8080808080808080808080"
+            "rawBytes": "0x8080808080808080808080"
         },
         "output": {
-            "decoder": "varint",
-            "errorType": "VarintError",
-            "errorMessage": "Varint too long"
+            "decoder": "varint"
         },
         "_info": {
-            "hash": "0xb1456826091cc4141f5edecd3661711ff18fe4914a9c9fcb9bd075e0dc042226",
+            "hash": "0xd0e4f5d84d762cdd213267887f339a474eb0a68a75b6dcf399b4a043e019bb6c",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_varint_invalid.py::test_varint_longer_than_ten_bytes_rejected[fork_Lstar]",
-            "description": "A varint running eleven continuation bytes exceeds the 64-bit cap and is rejected.\n\n    A uint64 fits in at most ten varint bytes (70 bits with 6 unused). Eleven\n    continuation bytes means the decoder cannot represent the value and must\n    raise `VarintError(\"Varint too long\")`.",
-            "fixtureFormat": "networking_codec"
+            "description": "A varint running past ten bytes exceeds the 64-bit cap and is rejected.\n\n    Given\n    -----\n    - eleven continuation bytes.\n    - a 64-bit value fits in at most ten varint bytes.\n\n    When\n    ----\n    - the bytes are decoded as a varint.\n\n    Then\n    ----\n    - decoding is rejected because the varint is too long to represent.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

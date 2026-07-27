@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_enr_and_peer_id.py::test_peer_id_ecdsa[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_enr_and_peer_id.py::test_peer_id_ecdsa[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "peer_id",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "peer_id",
             "keyType": "ecdsa",
             "publicKey": "0x3059301306072a8648ce3d020106082a8648ce3d03010703420004de3d300fa36ae0e8f5d530899d83abab44abf3161f162a4bc901d8e6ecda020e8b6d5f8da30525e71d6851510c098e5c47c646a597fb4dcec034e9f77c409e62"
         },
@@ -12,11 +13,12 @@
             "peerId": "QmVMT29id3TUASyfZZ6k9hmNyc2nYabCo4uMSpDw4zrgDk"
         },
         "_info": {
-            "hash": "0x87a7ec7b9c57eb50bc454cd5a56f56e0513f75d45d4a57da0b8ddf62bae07373",
+            "hash": "0x964b12277d7832b63a8c25d74a0a45d1c5d32d5d17f72473e00fde89e1b13062",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_enr_and_peer_id.py::test_peer_id_ecdsa[fork_Lstar]",
-            "description": "ECDSA PeerId from libp2p spec. 91-byte key, SHA256 multihash (over 42 bytes).",
-            "fixtureFormat": "networking_codec"
+            "description": "An ECDSA key derives the libp2p peer_id with a hashed multihash.\n\n    Given\n    -----\n    - a 91-byte ECDSA public key from the libp2p test vectors.\n\n    When\n    ----\n    - the peer_id is derived from the key.\n\n    Then\n    ----\n    - the derived peer_id uses a SHA-256 multihash (digest is 42 bytes).",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

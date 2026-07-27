@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_attestation_subnets_partial[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_attestation_subnets_partial[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "AttestationSubnets",
         "value": {
             "data": [
@@ -74,11 +75,12 @@
         "serialized": "0x8180008000000080",
         "root": "0x8180008000000080000000000000000000000000000000000000000000000000",
         "_info": {
-            "hash": "0x1d0ab8f007dd605b6d6bfdc45849b2572f1d1eacf540f91ebe4243b383e3f657",
+            "hash": "0x8ef271b5962ab81521eb09eba1bae02940b45c582f8241de3c97bdd201035d4c",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_attestation_subnets_partial[fork_Lstar]",
-            "description": "Attestation subnets with 5 selected IDs spanning the full 64-bit range.",
-            "fixtureFormat": "ssz"
+            "description": "An attestation subnet bitfield with some subscriptions round-trips unchanged.\n\n    Given\n    -----\n    - a subnet bitfield with five subnet identifiers set.\n    - the set identifiers spanning the full 64-bit range.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

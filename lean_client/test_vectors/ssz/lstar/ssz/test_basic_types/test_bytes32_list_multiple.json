@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_bytes32_list_multiple[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_bytes32_list_multiple[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "SampleBytes32List8",
         "value": {
             "data": [
@@ -13,11 +14,12 @@
         "serialized": "0x010101010101010101010101010101010101010101010101010101010101010102020202020202020202020202020202020202020202020202020202020202020000000000000000000000000000000000000000000000000000000000000000",
         "root": "0x7248549abd0a6b2898dc656f323165dd1fd973bb3234727d384b0575fbeaa517",
         "_info": {
-            "hash": "0x613d60ff241a532662132e20531f7dbcab7583b25807d4168dac902995586f23",
+            "hash": "0xca1b37c9f4820ad8f24e60826065c0dcac9ceec42377304e57ca4e448ce5cd30",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_bytes32_list_multiple[fork_Lstar]",
-            "description": "Bytes32 list with three elements. Tests multi-chunk Merkle tree with mix-in.",
-            "fixtureFormat": "ssz"
+            "description": "A 32-byte-element list with three entries round-trips unchanged.\n\n    Given\n    -----\n    - a list holding three distinct 32-byte elements.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

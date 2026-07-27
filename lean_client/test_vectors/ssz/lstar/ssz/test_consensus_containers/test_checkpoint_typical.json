@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_consensus_containers.py::test_checkpoint_typical[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_consensus_containers.py::test_checkpoint_typical[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "Checkpoint",
         "value": {
             "root": "0xabababababababababababababababababababababababababababababababab",
@@ -10,11 +11,12 @@
         "serialized": "0xabababababababababababababababababababababababababababababababab3930000000000000",
         "root": "0x557716e5408e1d20aea4bdd080f5673b2ed9931a6dd950f81aab9d5688eee15e",
         "_info": {
-            "hash": "0x31b1c4a2f900886533f0a8dc595a6dac38ee5367215b56a1177ed519c13fcb2b",
+            "hash": "0x59d473b816c288ac76c8ae05b436c23f2f23d0396078c372e8a268027ad25ab0",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_consensus_containers.py::test_checkpoint_typical[fork_Lstar]",
-            "description": "SSZ roundtrip for Checkpoint with typical values.",
-            "fixtureFormat": "ssz"
+            "description": "A checkpoint with non-zero values round-trips unchanged.\n\n    Given\n    -----\n    - a checkpoint with a non-zero root at slot 12345.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

@@ -1,17 +1,19 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_uint32_one[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_uint32_one[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "Uint32",
         "value": "1",
         "serialized": "0x01000000",
         "root": "0x0100000000000000000000000000000000000000000000000000000000000000",
         "_info": {
-            "hash": "0x3e5c5b5856ebc134f5c49db13119ea5a497f7bc89fb2e6da3f711cca4f73d479",
+            "hash": "0x952079558f045643fa0894de7c02867e70c1a405d3f4e0d6e9da757e0abc9290",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_uint32_one[fork_Lstar]",
-            "description": "Uint32 smallest nonzero value (1).",
-            "fixtureFormat": "ssz"
+            "description": "The smallest non-zero four-byte uint round-trips unchanged.\n\n    Given\n    -----\n    - the value 1 as a four-byte uint.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

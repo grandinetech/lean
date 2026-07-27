@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_bytes32_list_single[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_bytes32_list_single[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "SampleBytes32List8",
         "value": {
             "data": [
@@ -11,11 +12,12 @@
         "serialized": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "root": "0x23f61250eb803aed609f6b7b760298c3abfc31c6ef3019271b3fdf4fdb59011f",
         "_info": {
-            "hash": "0x2ca35475e3b9848c465de6c60a58621393ebb7b6d6010be714ba1f0049c3b8c8",
+            "hash": "0xaa5a361021df70c11f89977ffd0200e1a225bb44394139a31129a548c1a31f30",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_bytes32_list_single[fork_Lstar]",
-            "description": "Bytes32 list with one element. Single chunk plus length mix-in.",
-            "fixtureFormat": "ssz"
+            "description": "A 32-byte-element list with one entry round-trips unchanged.\n\n    Given\n    -----\n    - a list holding a single 32-byte element.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

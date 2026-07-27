@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_ihave_multiple_ids[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_ihave_multiple_ids[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "gossipsub_rpc",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "gossipsub_rpc",
             "subscriptions": [],
             "publish": [],
             "control": {
@@ -16,18 +17,23 @@
                             "0xcccccccccccccccccccccccccccccccccccccccc"
                         ]
                     }
-                ]
+                ],
+                "iwant": [],
+                "graft": [],
+                "prune": [],
+                "idontwant": []
             }
         },
         "output": {
             "encoded": "0x1a700a6e0a2a2f6c65616e636f6e73656e7375732f307831323334353637382f626c6f636b2f73737a5f736e617070791214aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1214bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb1214cccccccccccccccccccccccccccccccccccccccc"
         },
         "_info": {
-            "hash": "0xf98717f329f2210fcb6fa0b839cc5f2b443c494691b1b6ab0f026f314549dac3",
+            "hash": "0x8b31e351a3d501648b29122e54823e9344cd8e133dc39ed6e4be882bae9aef34",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_ihave_multiple_ids[fork_Lstar]",
-            "description": "IHAVE advertising three cached message IDs.",
-            "fixtureFormat": "networking_codec"
+            "description": "An IHAVE advertising three message ids round-trips.\n\n    Given\n    -----\n    - an RPC whose control message holds an IHAVE with three message ids.\n\n    When\n    ----\n    - the RPC is encoded and decoded.\n\n    Then\n    ----\n    - the decoded RPC matches the input.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

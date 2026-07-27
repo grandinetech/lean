@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_bytes32_list_empty[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_bytes32_list_empty[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "SampleBytes32List8",
         "value": {
             "data": []
@@ -9,11 +10,12 @@
         "serialized": "0x",
         "root": "0xe8e527e84f666163a90ef900e013f56b0a4d020148b2224057b719f351b003a6",
         "_info": {
-            "hash": "0x94521e6a2bc24a686a474ffd6a801a5abc8d53abcfcb4fe127ddf1c6c210b0eb",
+            "hash": "0xfd3c224db2102132e9c4a423cb3663953ba8aeb7799936dd3d14804faa46be83",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_bytes32_list_empty[fork_Lstar]",
-            "description": "Empty Bytes32 list. Each element would occupy one full chunk.",
-            "fixtureFormat": "ssz"
+            "description": "An empty 32-byte-element list round-trips unchanged.\n\n    Given\n    -----\n    - a list of 32-byte elements with no entries.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

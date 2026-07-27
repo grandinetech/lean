@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_enr_and_peer_id.py::test_enr_attnets_all_ones[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_enr_and_peer_id.py::test_enr_attnets_all_ones[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "enr",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "enr",
             "enrString": "enr:-Ia4QCqe1oTI3hKJukNRiknmVCjHYZaLdgZeUGjS0A3uF1CgbnlM-Meg6FrQL8WOH0pTY0OltuMufXVnqvcPu3Y7xh8Bh2F0dG5ldHOI__________-CaWSCdjSJc2VjcDI1NmsxoQPKY0yuDUmstAHYpMa2_oxVtw0RW_QAdpzBQA8yWM0xOA"
         },
         "output": {
@@ -83,11 +84,12 @@
             "isValid": true
         },
         "_info": {
-            "hash": "0x9fd940be89a65b376372c43fee0a6224f4cd3987b737a1b15ee5024cadf0ca73",
+            "hash": "0xa4d93f61d099a9c84a6c3117eb6a610b1b5c377ac17261b24cf73d1d5d711382",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_enr_and_peer_id.py::test_enr_attnets_all_ones[fork_Lstar]",
-            "description": "ENR with attnets bitfield all ones. Verifies all 64 subnets are subscribed.",
-            "fixtureFormat": "networking_codec"
+            "description": "A record with an all-ones attnets bitfield round-trips unchanged.\n\n    Given\n    -----\n    - an ENR whose attnets bitfield is all ones.\n\n    When\n    ----\n    - the record is decoded and re-encoded.\n\n    Then\n    ----\n    - the re-encoded record matches the input.\n    - all 64 subnets are reported as subscribed.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

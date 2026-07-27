@@ -1,24 +1,24 @@
 {
-    "tests/consensus/lstar/networking/test_snappy_frame_rejections.py::test_snappy_frame_decode_rejects_unknown_unskippable_chunk[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_snappy_frame_rejections.py::test_snappy_frame_decode_rejects_unknown_unskippable_chunk[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "expectException": "SnappyDecompressionError",
-        "codecName": "decode_failure",
-        "input": {
+        "rejectionReason": "DECODE_ERROR",
+        "proofSetting": 0,
+        "codec": {
+            "kind": "decode_failure",
             "decoder": "snappy_frame",
-            "bytes": "0xff060000734e6150705903000000"
+            "rawBytes": "0xff060000734e6150705903000000"
         },
         "output": {
-            "decoder": "snappy_frame",
-            "errorType": "SnappyDecompressionError",
-            "errorMessage": "Unknown unskippable chunk type: 0x3"
+            "decoder": "snappy_frame"
         },
         "_info": {
-            "hash": "0x2eb57190d9242bd7ba57a50300fde0e9a44bcd6fb1dbc096686aa5ddec22e833",
+            "hash": "0x4a62d6b417ff6a2f62a0e4bbced6d8e069f92d75aabee6aeab45b0248479be91",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_snappy_frame_rejections.py::test_snappy_frame_decode_rejects_unknown_unskippable_chunk[fork_Lstar]",
-            "description": "A chunk of an unassigned unskippable type is rejected.\n\n    The byte sequence begins with a valid stream identifier followed by a\n    chunk whose type byte is `0x03` with a zero-length payload. Type\n    `0x03` sits in the reserved-unskippable range, so any unrecognised\n    occurrence must force the decoder to abort.",
-            "fixtureFormat": "networking_codec"
+            "description": "A chunk of an unassigned unskippable type is rejected.\n\n    Given\n    -----\n    - a valid ten-byte stream identifier.\n    - a following chunk with type byte 0x03 and a zero-length payload.\n    - type 0x03 sits in the reserved-unskippable range.\n\n    When\n    ----\n    - the bytes are decoded as a snappy frame.\n\n    Then\n    ----\n    - decoding is rejected because the unskippable chunk type is unrecognised.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

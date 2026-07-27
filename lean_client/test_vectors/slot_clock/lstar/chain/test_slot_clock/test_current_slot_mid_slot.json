@@ -1,26 +1,28 @@
 {
-    "tests/consensus/lstar/chain/test_slot_clock.py::test_current_slot_mid_slot[fork_Lstar][fork_Lstar-slot_clock]": {
+    "tests/consensus/lstar/chain/test_slot_clock.py::test_current_slot_mid_slot[fork_Lstar][fork_Lstar-slot_clock_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "operation": "current_slot",
-        "input": {
+        "proofSetting": 0,
+        "operation": {
+            "kind": "current_slot",
             "genesisTime": 1700000000,
-            "currentTimeMs": 1700000002000
+            "currentTimeMilliseconds": 1700000002000.0
+        },
+        "config": {
+            "secondsPerSlot": 4,
+            "intervalsPerSlot": 5,
+            "millisecondsPerInterval": 800
         },
         "output": {
-            "config": {
-                "secondsPerSlot": 4,
-                "intervalsPerSlot": 5,
-                "millisecondsPerInterval": 800
-            },
             "slot": 0
         },
         "_info": {
-            "hash": "0x2324bed2956af56f5903ae6ea54e4666b911d092f3035c52309a048bebaea22d",
+            "hash": "0xdd9c39252548e8e2bc8b4e5de570146ed087a47e7368339082e5ad34370def89",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/chain/test_slot_clock.py::test_current_slot_mid_slot[fork_Lstar]",
-            "description": "2 seconds into slot 0: still slot 0.",
-            "fixtureFormat": "slot_clock"
+            "description": "A clock partway through slot 0 still reports slot 0.\n\n    Given\n    -----\n    - a wall-clock time two seconds past genesis.\n\n    When\n    ----\n    - the current slot is computed.\n\n    Then\n    ----\n    - the current slot is 0.",
+            "fixtureFormat": "slot_clock_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

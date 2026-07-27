@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_reqresp_response_stream.py::test_stream_success_then_resource_unavailable[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_reqresp_response_stream.py::test_stream_success_then_resource_unavailable[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "reqresp_response_stream",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "reqresp_response_stream",
             "chunks": [
                 {
                     "responseCode": 0,
@@ -20,11 +21,12 @@
             "chunkCount": 2
         },
         "_info": {
-            "hash": "0xa6b37e04892b873a1b242ed5a2cff329fa9f0b7a0033b012396a5d9bfe1a0532",
+            "hash": "0x7a72c6e77e7bc1f10cc4d577118a9377a2f8bd58cd30576399cf1cec009052d4",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_reqresp_response_stream.py::test_stream_success_then_resource_unavailable[fork_Lstar]",
-            "description": "A SUCCESS chunk followed by a RESOURCE_UNAVAILABLE terminator.\n\n    Real servers end a multi-chunk response early when the peer asked\n    for more items than the server holds. The vector pins the exact\n    concatenation so clients surface both the delivered payload and\n    the error terminator.",
-            "fixtureFormat": "networking_codec"
+            "description": "A success chunk followed by a resource-unavailable terminator roundtrips.\n\n    Given\n    -----\n    - a success chunk carrying a payload.\n    - a resource-unavailable chunk carrying an error message.\n    - this mirrors a server ending early when it holds fewer items than asked.\n\n    When\n    ----\n    - the concatenated chunks are read back to back until the stream closes.\n\n    Then\n    ----\n    - the delivered payload record is produced.\n    - the error terminator record is produced.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

@@ -1,24 +1,24 @@
 {
-    "tests/consensus/lstar/networking/test_decode_failure_smoke.py::test_decode_failure_varint_truncated[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_decode_failure_smoke.py::test_decode_failure_varint_truncated[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "expectException": "Exception",
-        "codecName": "decode_failure",
-        "input": {
+        "rejectionReason": "DECODE_ERROR",
+        "proofSetting": 0,
+        "codec": {
+            "kind": "decode_failure",
             "decoder": "varint",
-            "bytes": "0x80"
+            "rawBytes": "0x80"
         },
         "output": {
-            "decoder": "varint",
-            "errorType": "VarintError",
-            "errorMessage": "Truncated varint"
+            "decoder": "varint"
         },
         "_info": {
-            "hash": "0x64a1d231d26ccfb9eee92652b57f3e8e560ee5e336ae3a99c02902cd5215620a",
+            "hash": "0x020677826a3b34b986b0398a07bf07da77bbd279db8e6dfedf0100caa9458bca",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_decode_failure_smoke.py::test_decode_failure_varint_truncated[fork_Lstar]",
-            "description": "A truncated varint (continuation bit set on the final byte) must fail to decode.\n\n    Pins the new `decode_failure` codec dispatch path on the\n    networking_codec fixture.",
-            "fixtureFormat": "networking_codec"
+            "description": "A truncated varint is rejected.\n\n    Given\n    -----\n    - a single varint byte with the continuation bit set on its final byte.\n\n    When\n    ----\n    - the bytes are decoded.\n\n    Then\n    ----\n    - decoding is rejected because more bytes were expected.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

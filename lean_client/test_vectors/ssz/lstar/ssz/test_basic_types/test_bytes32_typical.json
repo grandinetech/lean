@@ -1,17 +1,19 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_bytes32_typical[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_bytes32_typical[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "Bytes32",
         "value": "0xabababababababababababababababababababababababababababababababab",
         "serialized": "0xabababababababababababababababababababababababababababababababab",
         "root": "0xabababababababababababababababababababababababababababababababab",
         "_info": {
-            "hash": "0x1a62776928ef471792e2916c1a36a588f96d41ced14f3c56b1c400035d0b1e57",
+            "hash": "0xf33df3ab50a9d2e6a4c30c30c78daf6182c3701f4d94c0bb14759b8fe479bf1a",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_bytes32_typical[fork_Lstar]",
-            "description": "Bytes32 with uniform nonzero content (0xAB repeated).",
-            "fixtureFormat": "ssz"
+            "description": "A 32-byte array with uniform content round-trips unchanged.\n\n    Given\n    -----\n    - a 32-byte array of the repeated byte 0xab.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

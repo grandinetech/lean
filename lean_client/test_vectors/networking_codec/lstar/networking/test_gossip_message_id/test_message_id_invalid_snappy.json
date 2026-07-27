@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_gossip_message_id.py::test_message_id_invalid_snappy[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_gossip_message_id.py::test_message_id_invalid_snappy[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "gossip_message_id",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "gossip_message_id",
             "topic": "0x2f6c65616e636f6e73656e7375732f31323334353637382f626c6f636b2f73737a5f736e61707079",
             "data": "0xdeadbeef",
             "domain": "0x00000000"
@@ -12,11 +13,12 @@
             "messageId": "0x2aff5124db8064dd9ddcdd7fc251397ab02527c7"
         },
         "_info": {
-            "hash": "0x6f01fa39cc9d7af2b38c8551d74c4df3e159ee15749a174970e71a6e6037d1bd",
+            "hash": "0x7571fbb0962a4a1a1097da02dc6be4e6b52d854262275eb60b613cc5e2cf0960",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossip_message_id.py::test_message_id_invalid_snappy[fork_Lstar]",
-            "description": "Message ID with invalid-snappy domain and same data as the valid test.",
-            "fixtureFormat": "networking_codec"
+            "description": "The invalid-snappy domain yields its own message id for the same data.\n\n    Given\n    -----\n    - a block topic.\n    - the same short payload used in the valid-snappy case.\n    - the invalid-snappy domain prefix.\n\n    When\n    ----\n    - the message id is computed.\n\n    Then\n    ----\n    - the message id matches the expected digest.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

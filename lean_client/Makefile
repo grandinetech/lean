@@ -56,15 +56,6 @@ generate-test-vectors:
 		git remote add origin https://github.com/leanEthereum/leanSpec.git && \
 		git fetch --depth 1 origin $(LEAN_SPEC_COMMIT) && \
 		git switch --detach FETCH_HEAD
-	# Pre-download prod keys. The pinned leanSpec commit predates leanSpec PR #745,
-	# whose `download_keys` reads the still-open release URL. Remove once the pin
-	# moves past PR #745.
-	cd spec && \
-		KEYS_URL=$$(uv run python -c "from consensus_testing.keys import KEY_DOWNLOAD_URLS; print(KEY_DOWNLOAD_URLS['prod'])") && \
-		KEYS_DIR=packages/testing/src/consensus_testing/test_keys && \
-		mkdir -p $$KEYS_DIR && \
-		curl -sSL "$$KEYS_URL" -o /tmp/prod_scheme.tar.gz && \
-		tar -xzf /tmp/prod_scheme.tar.gz -C $$KEYS_DIR
 	cd spec && uv run fill --clean --fork=Lstar --scheme prod || echo "run failed"
 	@for d in ./spec/fixtures/consensus/*/; do \
 		f=$$(basename $$d); \

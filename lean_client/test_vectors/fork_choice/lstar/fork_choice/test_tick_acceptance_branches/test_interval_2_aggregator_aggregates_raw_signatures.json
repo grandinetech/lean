@@ -1,0 +1,471 @@
+{
+    "tests/consensus/lstar/fork_choice/test_tick_acceptance_branches.py::test_interval_2_aggregator_aggregates_raw_signatures[fork_Lstar][fork_Lstar-fork_choice_test]": {
+        "network": "Lstar",
+        "leanEnv": "prod",
+        "proofSetting": 0,
+        "anchorState": {
+            "config": {
+                "genesisTime": 0
+            },
+            "slot": 0,
+            "latestBlockHeader": {
+                "slot": 0,
+                "proposerIndex": 0,
+                "parentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "stateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "bodyRoot": "0xdba9671bac9513c9482f1416a53aabd2c6ce90d5a5f865ce5a55c775325c9136"
+            },
+            "latestJustified": {
+                "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "slot": 0
+            },
+            "latestFinalized": {
+                "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "slot": 0
+            },
+            "historicalBlockHashes": {
+                "data": []
+            },
+            "justifiedSlots": {
+                "data": []
+            },
+            "validators": {
+                "data": [
+                    {
+                        "attestationPublicKey": "0x6c9dc94cb124fd7eac91680ca6f7c131d7b02f1629ca842b0e714d557da1276b2e5f3d110aab9d6eb8c10c7d1ba0f93cd849c82e",
+                        "proposalPublicKey": "0x4f0098552e05e766afeb0d021742f626de106215bd0c5a5d2516fc75dc3ffc121159b63b6664354dc4eb353631b54a5ad0cc7b14",
+                        "index": 0
+                    },
+                    {
+                        "attestationPublicKey": "0xadc304243eb9f60ad1016e6610f11420dba97e450171971dda35bf50d4f14117ad3b9f06083c9d05f73d5e12f9e9ce1e7aa65866",
+                        "proposalPublicKey": "0xe2508c4edcc47c50505281470653e6555fe9785380e97c427e99b677f949b125d17f2c58a45c1b5349f20c27db10ea78d2fceb37",
+                        "index": 1
+                    },
+                    {
+                        "attestationPublicKey": "0x44095a46c1dd521b2e37c626b3401045f2a41713b034d95e9888fb34a15c280a8045b7043b6cca1c3353a6089ae5aa027c548d4b",
+                        "proposalPublicKey": "0xd72b9b4bf39f805d637c855bb3266b373aa97e262cea76359b84e70805268b520cbe62284be2f81da2069b0c5298912169fa935f",
+                        "index": 2
+                    },
+                    {
+                        "attestationPublicKey": "0xc6ce413056aff1787a8d01575b11781c08ab595fea7cb46372fd8376e054f829da06c251d8e13643e751d9737d52e4474fddab5c",
+                        "proposalPublicKey": "0xd763f750d84c1840a6e2fb16b9f5e13f372e1f4646588a0d0ab96e483b42161f47858d5acb6d3a6bdae7e65a672cd2233fe77c16",
+                        "index": 3
+                    }
+                ]
+            },
+            "justificationsRoots": {
+                "data": []
+            },
+            "justificationsValidators": {
+                "data": []
+            }
+        },
+        "anchorBlock": {
+            "slot": 0,
+            "proposerIndex": 0,
+            "parentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "stateRoot": "0xf57f326a070f9b503629266556489cd36463dbd8e80e60c8567bc971ab171919",
+            "body": {
+                "attestations": {
+                    "data": []
+                }
+            }
+        },
+        "steps": [
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 1,
+                    "headRootLabel": "block_1"
+                },
+                "storeSnapshot": {
+                    "time": 5,
+                    "headRoot": "0x23838434468b5aad473aae9918dbf7c0e7069ea27ee835e41ec6fd9f04322618",
+                    "safeTargetRoot": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                    "latestJustified": {
+                        "root": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                        "slot": 0
+                    },
+                    "latestFinalized": {
+                        "root": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                        "slot": 0
+                    },
+                    "blockRoots": [
+                        "0x23838434468b5aad473aae9918dbf7c0e7069ea27ee835e41ec6fd9f04322618",
+                        "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x23838434468b5aad473aae9918dbf7c0e7069ea27ee835e41ec6fd9f04322618",
+                            "weight": 0
+                        }
+                    ],
+                    "attestationSignatures": [],
+                    "newAggregatedPayloads": [],
+                    "knownAggregatedPayloads": []
+                },
+                "stepType": "block",
+                "tickToSlot": true,
+                "block": {
+                    "slot": 1,
+                    "proposerIndex": 1,
+                    "parentRoot": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                    "stateRoot": "0x811dbad5bf38c53918fd5f415cb8a14d0e9b7455a06c22f7a71f02b47cdb6d49",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    },
+                    "blockRootLabel": "block_1"
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 2,
+                    "headRootLabel": "block_2"
+                },
+                "storeSnapshot": {
+                    "time": 10,
+                    "headRoot": "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443",
+                    "safeTargetRoot": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                    "latestJustified": {
+                        "root": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                        "slot": 0
+                    },
+                    "latestFinalized": {
+                        "root": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                        "slot": 0
+                    },
+                    "blockRoots": [
+                        "0x23838434468b5aad473aae9918dbf7c0e7069ea27ee835e41ec6fd9f04322618",
+                        "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                        "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x23838434468b5aad473aae9918dbf7c0e7069ea27ee835e41ec6fd9f04322618",
+                            "weight": 0
+                        },
+                        {
+                            "root": "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443",
+                            "weight": 0
+                        }
+                    ],
+                    "attestationSignatures": [],
+                    "newAggregatedPayloads": [],
+                    "knownAggregatedPayloads": []
+                },
+                "stepType": "block",
+                "tickToSlot": true,
+                "block": {
+                    "slot": 2,
+                    "proposerIndex": 2,
+                    "parentRoot": "0x23838434468b5aad473aae9918dbf7c0e7069ea27ee835e41ec6fd9f04322618",
+                    "stateRoot": "0xb847275fc26c2f2481a84bb0b08451873bce6fea55b05da2492e3b1f0e377aed",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    },
+                    "blockRootLabel": "block_2"
+                }
+            },
+            {
+                "valid": true,
+                "storeSnapshot": {
+                    "time": 14,
+                    "headRoot": "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443",
+                    "safeTargetRoot": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                    "latestJustified": {
+                        "root": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                        "slot": 0
+                    },
+                    "latestFinalized": {
+                        "root": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                        "slot": 0
+                    },
+                    "blockRoots": [
+                        "0x23838434468b5aad473aae9918dbf7c0e7069ea27ee835e41ec6fd9f04322618",
+                        "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                        "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x23838434468b5aad473aae9918dbf7c0e7069ea27ee835e41ec6fd9f04322618",
+                            "weight": 0
+                        },
+                        {
+                            "root": "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443",
+                            "weight": 0
+                        }
+                    ],
+                    "attestationSignatures": [],
+                    "newAggregatedPayloads": [],
+                    "knownAggregatedPayloads": []
+                },
+                "stepType": "tick",
+                "interval": 14,
+                "hasProposal": false
+            },
+            {
+                "valid": true,
+                "storeSnapshot": {
+                    "time": 14,
+                    "headRoot": "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443",
+                    "safeTargetRoot": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                    "latestJustified": {
+                        "root": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                        "slot": 0
+                    },
+                    "latestFinalized": {
+                        "root": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                        "slot": 0
+                    },
+                    "blockRoots": [
+                        "0x23838434468b5aad473aae9918dbf7c0e7069ea27ee835e41ec6fd9f04322618",
+                        "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                        "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x23838434468b5aad473aae9918dbf7c0e7069ea27ee835e41ec6fd9f04322618",
+                            "weight": 0
+                        },
+                        {
+                            "root": "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443",
+                            "weight": 0
+                        }
+                    ],
+                    "attestationSignatures": [
+                        {
+                            "dataRoot": "0x96831e8514006d01f1c76a4c34e2f73081f96a35a0c48810da19b42619278cdc",
+                            "validatorIndices": [
+                                0
+                            ]
+                        }
+                    ],
+                    "newAggregatedPayloads": [],
+                    "knownAggregatedPayloads": []
+                },
+                "stepType": "attestation",
+                "attestation": {
+                    "validatorIndex": 0,
+                    "data": {
+                        "slot": 3,
+                        "head": {
+                            "root": "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443",
+                            "slot": 2
+                        },
+                        "target": {
+                            "root": "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443",
+                            "slot": 2
+                        },
+                        "source": {
+                            "root": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                            "slot": 0
+                        }
+                    },
+                    "signature": "0x24000000f7ca5e64ac0c0814f3ff5729396c4253f2aac03b466f2f40c180fc7c28040000040000000d019257c269f31286b639143ecdd762425e7906400565319ace566287d9d4244726d40b421a3f5d43747936c6a8ed07c39f9c34114831570f2de00f6d5c802b5c7fef4d341e57301dddd77ada94921c1d8af57146affe6ccbf80a50cd7e7a007d346f06b35a9431b39a12282d0b9c6161722a75909ca34e25b6b34f88ff1847ea2b2c445c86ef4b099d48751915826723aa534b78eda76bb3fa153a36377957d92b8f7770a508365751c95b968d46274cdadf46b061234f3b62640689aad9169cc8645048b4954e3301222a1d20a47e9e78e56a508e9626c36de26999ab272aa2794b70a475af64f96af52eb25aae784c87ce5998d4d519369b280f20c874604526b51a7e35672d1ffaae434c197c1abbce780441157d6e185ac451060634780c1cfe112ea7fe10721a9e125342f8414b6edd473bd5df7cd6553e0da56aed5e1268133979919a0da2a1960e17a9aa53a2456145befdf761885abd1bbcbaf13f8ef3cc5427251a792eb89351037da713b41eff4b8839b924a1185d20a0799a695edab959af3e395d78053102aca9cf543dcacb064076fb60a0ee684cc3b1a30679484f722989a576f4c20d18abb9c310c37eee198a40dc17874bef5b3dd4c63da8a88558b0218c154598cf2ddac6af060cf0f351dac9e83f4f440a5b6404df269a8b6311ed7e54110eaf3414e587e64645885b467d2bf42fc343d075107ba80d4c68d404872d5b058547420a2ac9492d3909465470f3ed7874b4240edfb9401cff9e354a8b9cc24364abc557d08b521c91bcaa29edeb15157e28092420f61e15bc2f08037753ac1d1ea1902d7d39d17cb6e15670fdacc04ab9a0042b13ab364c12a876541b10be70f6bacd2c99b583239d24361f221cf2559ca5501076ae20334e7be91c10eb256e06d93662b36ecc01bedfd40552189a5535157f1bd67c3c71edec82211904d23cc5a931164b7f456aefde270eba123d6b61c44f4c106d9869c52401648d350e2ff9053c2662be7c57e5a27609246e8d27fa9915592ce23b16ecee9602bcd035531215634a21d18a2ab1d14a726d101575ec129f23a456716cfbff7a4f68771d63e23c6514996d890285d72972593396672662e54060bed760dfdb4f68bd24f31f3e0414653c969b5c6596f361cfcc6e79b99d653011904d7024a1344a9ff54370df18327365d9ff776aa2ae47117b8a4643eb524dda68016b7e8db40a83d42753a1e36d652d83c50f6e5e9e4e94747b430d7911719f9e7c74d56a6c1ccee5d640c2985e65ca9940442b892733ce5352004001b31ffbd63d603797aa1dd036ce189976b041ecc45f0dda074313a872bd0f8eeb694845d0421607cd19585a9f3c1d00a2504000b9b3432e77b227393ecf166d2486534abbd4263edea60b17462368a974824fad9f6e3229b2d262a66ace497bc98b729c850c4e826ef9284172b124fd0893762f102505f419d4379290ce72a276be0218bc1567f4807b0f2c491e1e655bbb1c8f95c05c43b59311744e9144f140092ee88f331e3cb71a0714a2fb7ad388e55346139660cabc13601c5b7d0f35ffe960cb5af73f5a7bec4d2b495e140c68d001e172740d0a892a63bd0c093f5e10646f1383655ff49cc7212d2ba969329afc76a857a2798c6cf66ea058ef5605cc6901ca203b7c5fe1290cfedd753214789c7d585cce048d2e014affd9d3092edec40e5d46bb001276cf08c84b46734ea68036be5f9d69e0efe84efa00a3792216f50957063305fca33046b6f7027dd6bffb71311cc31891100c4d9360df7564756517da2a0c704062675ed6b8b619050b146e3f1f4876d376ad5b10e7a316ce6ac446adff25641e73ad166028e04a0186a57173644e2e131bec1b5eeda3736de9c95ccb34cc08db079e50ce2bd52553c7ee362b350d681544e37652aab922650d9e6c2895d64cf05f8000519e605e235d3e7cf992410d200ace0f16931a3b93d4eb221de1c1207a874e5192aca40418e4f84829617608d0883c420b9686330535472b092d3557739b954fa500b56ee251073914a4b72de1d63b6d317c5519d107a51988584c10c55d2015ba488a1e9b0a69499c34a14bf8aa2372b427047548db9f343718cc337109ec0af3afe817de36d036efff9e623f8ca82d93a476191d0bfb4132956407717dce4eed9d9e1b84d37d041f57d15a9c74087e597a412ee726a443f97ee4182ca98a08035f0e6b81f36e66c11b567b417eef52b649f44182719e1dc301903717a9f515d964446fd2fda81ba5b5c03219f02d5281f49f0d4ef3644e720c9544d2f33563161d9c594abc4f5ff52e0a1d6eac98669739335b812b815f4d09704a4e7c1957a0b9134f6d2f8733c1a6482ea00a3b06d36bd40c5d884f2b53dc2d32a52d5f5eae63e55244fd0c162357c1083ed9c323971d831a01826b596a50ee20ccdb2d10f5074a5e2ca59b6a9787c0284bdfb60cff94985ff6b6082611ae2b097228370dc705a647eae9294e900fe73e4e3140428094794614a87e7d8b59611a4455b60b7fd4a12068fa0d213251d63c9089af07fca3966c846df617cda9fb4839de361e1720484ee75d374dbf4353335d8a8d51b8c51a3a0b65f42f1c5167345cb15575dcdc3c51bf29f817a77ab70385034728e8ebc54eb9dce732c56e556a5d028f650604971e72b0b83a3b53b53731c45a2404fab64d2550b2196936e90f43a706157fe51a0fec430d3c60825b5c04c6c91a2255f01acca50e591fc7006f3e4ec510d230fa2edb9bb925e751f621aa9b31794bd050259ab1044fe568576cf26f2b38ca19f53e4395cf7999809c5ec08f265fcb0f4637234345325d7cb1562e51283dfefc883d261725793faf5c1afc01af2360a7e6399ab1155ec811670716650276e0bc4b6c649ec10a6dcb686cd42c0e35a6803f627699ef3a5a3b3224f818203011885171728d3e056b6ea10ee895b54b67ff55433824076f9de8f52178d6305ecf01033219108038251f07066c683b23db1ab533040ea53dfd231b328256310d725705478d8e613d1b71844cda2eae680fff6c7845f5b14207cb010abf99b005ef6f4673e0272940a1e2fa2801a0f233202825721c3448704b00335266de8e0a5396150f7d78e75fa09f9e3ee2e1b16adf197a3bee91e96907fd736a41287f72ab00e5542f3eea52e7417e2b4127d440f11477775218dd066020422a36203d698d1f2249a985e201b2033f403639e2157a12492332409b4ea61db5137743a9329f7bbe25b675613fca94554b8ac9517b02226e0d065031713ed4246dd664e166a3a14b3768c0a80b6ed37a505d19f02bef166b567ee8e722c9c2ff13d271240687e28272508d407844bd644542871b5325070e4904ca3d353cb34d30e1abab6ff2e82930f0fd211e5a587f1de20ed2378529133eacffd460e3c8c058e07e4d3e54bed6423250c276482b932e840c145ce9d2d2514fbc3c4a27b7ac646226ec1575e85e5bc916d865c915a2734b177f4365519253e6400e7e41429e6e"
+                },
+                "isAggregator": true
+            },
+            {
+                "valid": true,
+                "storeSnapshot": {
+                    "time": 14,
+                    "headRoot": "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443",
+                    "safeTargetRoot": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                    "latestJustified": {
+                        "root": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                        "slot": 0
+                    },
+                    "latestFinalized": {
+                        "root": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                        "slot": 0
+                    },
+                    "blockRoots": [
+                        "0x23838434468b5aad473aae9918dbf7c0e7069ea27ee835e41ec6fd9f04322618",
+                        "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                        "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x23838434468b5aad473aae9918dbf7c0e7069ea27ee835e41ec6fd9f04322618",
+                            "weight": 0
+                        },
+                        {
+                            "root": "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443",
+                            "weight": 0
+                        }
+                    ],
+                    "attestationSignatures": [
+                        {
+                            "dataRoot": "0x96831e8514006d01f1c76a4c34e2f73081f96a35a0c48810da19b42619278cdc",
+                            "validatorIndices": [
+                                0,
+                                1
+                            ]
+                        }
+                    ],
+                    "newAggregatedPayloads": [],
+                    "knownAggregatedPayloads": []
+                },
+                "stepType": "attestation",
+                "attestation": {
+                    "validatorIndex": 1,
+                    "data": {
+                        "slot": 3,
+                        "head": {
+                            "root": "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443",
+                            "slot": 2
+                        },
+                        "target": {
+                            "root": "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443",
+                            "slot": 2
+                        },
+                        "source": {
+                            "root": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                            "slot": 0
+                        }
+                    },
+                    "signature": "0x24000000788d162a2a0da3203f4a760ee289d05be9fd1723b18f416348a4a4492804000004000000d25a055ab9562e3e09742f1f92b5d20c0effca7ce4e19210a52f8d045da55e44fbfdee7be03496496e5f7b355dab1a5dac592819582f451047586d2855fe1200e848ed6bdadcc6737f7d5f4b842222649dea9474713d666906e3aa4828dfc848e0a967543e6476592635de6977162417482c8b7b258629281f90ca73e96985644b328160da82f5129aa4c02d573a2009de80e820ea133d1b20be471a50e5f05c217a22354123cd59dacac32c17ad121f19aeef59dd12564c59766c2080346d09517c693220e937507537786b32bdea6d00034e19b845c949604bc7120f9bed229d545e3c210bf502d827d67dcbc978480f5a9a05a0f74d741087772eb93cd91501f6cd64707c042bfe47b966d1919732fd57863cbb49b430fa247206c99dd8252ad0aa5a6d34281e82517f0415ec014b69b4637ef32f665c605e36021b06f11348f914617cd18d519682a35049c0173cecb7021b3d7a805af365676f81ba8a7a32d4354833ce1d2e3bae620423f69370ca0d1f11ebf6e51cf57d5e13ca4cb9449bc53f2271c773618d974b4cdf55ad133628d02f1018c922dce5d947fd4a650a5212643fedbc2760038ea76c062d274cb8a5cf09d8f2602027de3a46657fa36973e9871528cef24bad7e9257e8f3ca4ffbf89a432c33f525df3273522c344f131f771c34fbe25064791aa864750f931673766e2089961818595e6836be7039570648123ef4476b4a2cc6c703cb6ba37d4549b95eaf241a3b7eea9964b1e69b219854d567e73fd04806547c31a2d8213f8d592214eaf318297eb8be47b40d206c1ccca327fd0f407eb9783c246a8e2d6f5b722111ebd19f02f29cc34560535e06677ee85bc72a24111a2f4134d169372cd712f9674c887b46a6d68207b643a4650ee303580975dc67488f3d570df62751c1a1f4514aad850b532e8b3079025879a7133a5f92967c6014dfb941bd9054788f74562093ca22203c843e684cfb0433844aa071e7f19322a6ab8c606156304519d10a67db867547c78ff3439bcd150ce5c796182478e77c610503659605b920cfcc5f6559bdb13a6df9be2aabfaf35179e392079f9b535362194600af9e5f6563a4b103f5cbdf26fdf8644904625f441977c83fd2d86a5a598a314c37ff5d524f9ff76e0a1fa641f9a47e3dd458d6243965e542d24b1b639a41ef437678e06bfea83c68bbd847175873684756b1d75606e472717b025c5a371bdf23306eb8268c262a140a7f7567c24205461c88f00033632817c2d4026d890e1b1f086b3445f264fb070f5ad617a2d11874949a6f107343fb76463ac1073410442a8250e056d5b1412b3af6b11bdbd34823a024f8098452bd48633cc95de2f13625ecc15a14a5a95d7bcfeaad1b39ca4848c77e951c17aa2518a04e4f0a8aa87b076585b539e5370f09bf83ce43fb8e2841faa57737230163200d2aae73c956d31207fb29190a8c985db014f66551027b0097b0da64359b3d0fc5385d70f227dd6d97a3e67bc936af1974a5fc2845e4643a37205b6daf98df521287e969ce59d44324a38c1b1da9787432680e00914dd50f6c4ceb1d54b4d066730cb04cf543e02b0758e5129bc25813bc0bb42adaafe84b5b30291333b6f8029f7a7d6f43eb3742fde174154e22ee6ccb09c67ae052b115ba16c04606794f3160302d1e4e1a1807aae08d5785627200be0a4967ac462e6709c1b91fa1a80839e315a51238c78c069a8b8a389638574f15c94b7c7940bd4455010118d1b33b7dae91106ef3ce0e4da7924428ec55fa3d9339f660f8498e4b2d7343232d6dbc0ea7c8d77129825d24f09cac562b959d76185dbb58a806a671f7d59015f3e7837ed3e6ac101343021bf7cf54551a3bcf090788817cef819b78a942be55933de151a4e5af7c1edcb44cd442860edd5fb7575dbae3363451383a8e60cc4ddabe5c7cdd52f956f67ff33d16c91b49de353c7beedfa41a02f6542972a4fd038fe8581c741c9966eb3b7e1f6da5b572322041193be6f41e492fca3c18a0af1946bcb6565399c97e0108f80fe3e5d704aa218a7628c26a172885b64b7f73085888d93b30681f110c6253852065befd775623ac5f3671b92cd6ae0d6427e9dd4d84d78a24d746e22a5790603a514c375d66baa336a76a064c826522076590d964b38a1250927b6e620cfa9f2c5468b0113830513300b3d708c3a346035c772633ef24f860dbe42c05318101511e6663526beb4526f3e0e32dfa4c75737811fc0c5ff48d15a190604fdc015d1ab35cb011cc7eab0f729e5f3701fab47c02c96d760d2e9d317d645d0f196ad9767eed286398dfe16d71a4ef3f01bf985f21414b79dd86d16cc4cdbb5c5348f94f96fbcf13ae528e02c519315a3b0c0d2d753d6351a9112f5c3715c67c592aa347f289141790b5946c1a8bb2654650c62afbbc504389b03d547cfd672245bf7c6413a6054479a8fb2db859242b34d86166d2725e2e7327146cf1cc6c16dc7fdd22d76b5465bbcf0c528f9b254e5cd363244ef2504379bcee28287e6460e698fd685db8f05cc2fd2b0b0276d33a4aa5ce0bfe15512258b4000f93c315052cc65d7b39fb571ca710577e76450b6ae31f806820de1f1fb86ccb69c520083879b05636706116222aa38e4ed2089b1fb32e524d9ba8b04d8a70e26723868d4b4e06b952b226c62726fcec4e384ec71e3a61b1608cac237b7f80f43d8a9e9d76718cd13399de382c6726712af4d11141fbe97511dd316b633aeb3b4662cb7856bc5090601cbe642b712709775ed4336391eb7b16a65fcc057cd2d01e7668d55ee71c7945c946ba15a204bb2758fbaf624b5563006146f21c0f5e5b7b7013fc29ecc6a3127f153d1c8004b6109955902e5ad5ea4ece2b300d28ce7f32904a6174ef58584c75846d5e32b77f79bb1e503e28acf52cfb480d3774d65d05b92bfa457f83b0512eb32069cfe94f081584404867b304544d15e10e5b842e1a1b57f019fbe4b325025f973baf076829e12c01797f9578555f2fc30850fa517e21bc2d7d6d7e041b04e75b067e81176983470f077733004e599efb0b2830906a5eabe84783b14737ee688067c4795a349a6094587435d00c153b822f3e7adf5889f83f530f62ed6197a97e5d87ab33491e859c009b2a3e71e984c051d6e7490fe7c90454663fe6179435b614a38c3062cff268493c93427ba72bac1ae2865c40d2f81438547230443190987a395b2849a37f9526eee42f3c7c8311113d5590328774467475479c318338c92b5c91f7343d7ed647b9dbbf31f8b51065531a5a5a528b073be07677243f18350ca0527714b383ca11cf7fe031b148407977363148a291a31ae9a5ad6b719294423dee9171758ce06425eb351f571cf43dba3be717aabe4a7790f63c26147d7d73276dcc15d3b21d306f52591c6c4e1672ea5fb5086cfa112b1d6af460dea506127d24122a563ff75df3adc558a8c5a81028930879e2a3696ad1754600b27a3928057b7b031bee267af2b61123c452ec07"
+                },
+                "isAggregator": true
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "attestationSignatureTargetSlots": [
+                        2
+                    ],
+                    "latestNewAggregatedTargetSlots": []
+                },
+                "storeSnapshot": {
+                    "time": 14,
+                    "headRoot": "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443",
+                    "safeTargetRoot": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                    "latestJustified": {
+                        "root": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                        "slot": 0
+                    },
+                    "latestFinalized": {
+                        "root": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                        "slot": 0
+                    },
+                    "blockRoots": [
+                        "0x23838434468b5aad473aae9918dbf7c0e7069ea27ee835e41ec6fd9f04322618",
+                        "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                        "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x23838434468b5aad473aae9918dbf7c0e7069ea27ee835e41ec6fd9f04322618",
+                            "weight": 0
+                        },
+                        {
+                            "root": "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443",
+                            "weight": 0
+                        }
+                    ],
+                    "attestationSignatures": [
+                        {
+                            "dataRoot": "0x96831e8514006d01f1c76a4c34e2f73081f96a35a0c48810da19b42619278cdc",
+                            "validatorIndices": [
+                                0,
+                                1,
+                                2
+                            ]
+                        }
+                    ],
+                    "newAggregatedPayloads": [],
+                    "knownAggregatedPayloads": []
+                },
+                "stepType": "attestation",
+                "attestation": {
+                    "validatorIndex": 2,
+                    "data": {
+                        "slot": 3,
+                        "head": {
+                            "root": "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443",
+                            "slot": 2
+                        },
+                        "target": {
+                            "root": "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443",
+                            "slot": 2
+                        },
+                        "source": {
+                            "root": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                            "slot": 0
+                        }
+                    },
+                    "signature": "0x240000001f5a5d37bd90620a01f0495079626e3be504971279b96200899eea232804000004000000716d363b2a44fc6599aca444d3a77a5dd496d54652e2537e2f11d961198a486464a46c17f36db1706c31393521677e1896c99d1b1e37af223b59f11d11d2192ed5ce0b4abdfda25567ae201739843932568aaf44e4ddbb77786ad67486d6c9609e059c1ec454c942be3cd41421ac1e4331e55435a997163ee3d1783b8de31335f26ea144354bc153aed84a3072271752cadcbc3a0b5dd253949ff60247e3560d4def9362329ded6e49522000334cfc4cf2c2af062f139543a892877d00c71973a6d9a206adb49f62e2366f66e428253439337242ecf69533612bcb7b59adad3ef44c48639eeff166da96c504fc27085bc987130c70cf75348d469248604d5e3d4085241fd9072b1268811c357f97913b533e240199d8e3628609e4482c58e06d59fbf60cdf48046e835bea27c6ba5f25a72de81211b9b1716df7df1af6e7ca26791ab327a74f5414098b6b535113ef43a4254829bfe2f12ecce96c3380da6c269b5e2439f379293f1c1cde3646244f2a7e0610478b50894581cdb16ef5a57f2d57a9844ee85a957cfc3d743eafeafa547f786357ede1cc04995ab17268430f426ff1ea6aa1a48a69c5446b3942fe144d4c3c100e36c711420861361a804c2b34ff3e2218e5d4e4311d144703d793f95a7788be66bc4f3e057bf41c300f4c632b6f7f2506d84a8f59750fff1b66caf85ffe185f0b87a1424601374f76cdd41175f7aee23ae3758c563bc95853103266439a527c69e9bfee438915c169a6206f5bb86ed964b54e9e14f63f0a0ec7985903d3fffb0bc6ed05599ac3fa75afa9171aa502ac5d1bc32d0698928e6669bf9376a6c5f916d84ca132390e770bd3f2a56772dfaf2586cf40732e2622358dd1766cdf9c4d18e549930ba6cd567888eb0b0fc9d83247f9ed414ff343f70342ec66112a21cb345ff9a10dc925e76cc70e0f2bd7b7d64cf2aae7110d85df5fccfd751e1eec3134c80851720ccffd05cb3c21403092115455ab92282b549a4011787b382b046c24a1b7ef651407f3509532c2668f780214e43c7f03a9ec61690d526220acad536b8adfdb11469ea6656374827e5113174e8b26e716a241e12ae1794b4d01d7a8009afe4f4b6333a622b9d24f3bcd42b87e0204a72d36b297011747eb1f5b922800aacd2c625e8d965201085f00fd4934472d3afd2f5a002f67cc87db0083d49d2941621d05559b662703bf4d7268e4021c498ae243f5d54b5da79921405f028f13d10a7f541f0c162a243ea31a35d7250334b91d7e4de27848e8b49b523553bf63bd33e8799308787776e6f631df4f9747a4ab811ce5e30848e50bc476d67be7195aa1cc34e3b4036f6e703222c662675d4bf5b04d50da8c6f2cddf269f6c77b662032d52e598a0c6546f18d06a68b9c186aa9703f902fbe1266d1023ebc767451480f5a62ab420c143771ad69fda4f3384dda685f78c2830761f9463cb6442a1708778f22b060ef0aaceeba7af948ed2240bae033d337a44c4c920867563cfb49cb24395d2abacc03b01a6e3ebb2c494720801b1c73e2a822f490c625f72a3c0745ea0167dc6455352cff5f5386f7ab62fe4bf90e7d61df286ef54e2e8043f036f75b7c0afc4f8825d0595b051911cb1375e57405050caf7231dc9d01c6c7813ce5665334a102e22ccff37a1ac446a52febf0fc040614f147f8983b7d1c2548430feaba3ce1d5ee232fb5b7422a648e1e3f3f17661a996d7cb4736b0b6fd63859ea1f1a5e990f3d4192249a307e884b4a93b5a5502a68464b74757b497956e636e197ad2aac251215b136544485c1b74357b94e3274f3d44c3322d25e10377a6b9e4b6b2e83526f1fcf4c4e542e1302024079a06344636f26d2643b77325ea912bfb271787a34ee401164a876324122564e57714eec9505054ee35f07a043a116765c4c154781fb5be20c095131019c1ce13cf43539e5404644b0881eb897b41841de4326d748c36e5f21096a859d370768c0d673c67d173102f1b03e1312703a7dd39e48ae22255f0e58b41740b60d764dac67377eaa9f5b1cbadb5abe739c2379a9ff0c18263750c32f7410c32ae24e469ed51d1bfc791451a67f2c7605187818ce1a74c37fb330ce6f6431680a592af18d6a3b24a64a554bcc815e6bed2211faa8ac14e08be47b73bb90057c790704cc013c7b70d3b84fae268c6021422137d28aa11c456a3a404f403e5bd0bc4a4b881bd157dd7eb20ec9f47431a48df803b74b63078d9c831ea69543287f4f2c3ca21df103c346276d769f15471a8ba94617f7244e0925d703b8423d515dae47618c2d08408af87579e42f0a6c53baf95bb24d3258ff84f1783e9f346f2a0ff12c86ed76375c3ff67045366e705a20264baefba1117a2b34477724091c3e49d5566ef0893d8052803b626fc23e85215d77c1a73b69100356252b273605fb55d60aad8c4c546f9b1060105f263563389d56acae4b16b9c5ca568ab9ba51415d18519d0752454bb78e5ef648e47493d0795c34e31e6a05dedb58a903060b25cb9168726ead0d4d928d2f7b9d5e2b427df13adc273f67aca28e29ce0e9947e800ca3d8dc2c23b368cd5125a26ce550724093626d1b863f0b0c6402211214533004542f7d58a569d66bb0b75d38008b2499137eab4083a3636c83d034f3f6e50e93d03575f4d74ce694378257a1632d19fcf3b492a0079d43e4546a90a62636290f5416c228c281b18d04e86c885713183ee35a418e27550857153c530c233ae57a52133d91748ad92ca3f9a64974b9fe814366b88386f6868a94559ea0e231c6c15560d04b0296d3a2541f136ea678f34080fa2e4c84388cf581180cb1b782b973e2df6f87a2ed1245f4003abbe3172d2da3482529270e3830d7be4141e1c2c5c6e4e3c6776653543bf3caad46823f79cbe0ad4df373cf173416a24e8e246c72b623186f7443aedae2b1e98d9a03302ba06312fff027c748a7866c1a4d366e0a8a873d77bfa5f509ec349b5365f47da4c8a676a016835bc5af2768ce7b37172e0d03cd9e7763c678a63027d9096449f0d9757294bac18c3294904a681a9221e57a10ac8e4d46c3461cf683174e36c5a8fb819c1c521517ae3711101c6807c5e4f9f1a5f60bf3b9815e16b84dd3043e2e1533afbe5f803c932ce382af2ae6ef24c2f76be826c3bd3c29901226239129bee495f2d4f9f442828bb1e4fb5222f786efa0e9a5d48384565536a0edad04d51c93f3aede0111ee6c6fd17e5da3e52f674884ea1a4211b39b5fb1c75ad864bff6f2574d096ef2ff998f22e1d05cc11be8e644bbc0ec3541c813b353b13a66039207932ce27104f32b40f651ad805496311c962e6c7937bbe70156b2eba6170641ce55970cfbd483cb17a0f881e38364b72916636801908b647037a4a25a036a71e907e9600c95d8bab080632858407b373027850fac62e57060444e51e5973b61f4260bf3f7e1b6c1e4d3d8f4e8f7943bd8e02f56c0360a8b34312fe082072bce6d630d2a2fa6b87173953857d0a1c"
+                },
+                "isAggregator": true
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "attestationSignatureTargetSlots": [],
+                    "latestNewAggregatedTargetSlots": [
+                        2
+                    ]
+                },
+                "storeSnapshot": {
+                    "time": 17,
+                    "headRoot": "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443",
+                    "safeTargetRoot": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                    "latestJustified": {
+                        "root": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                        "slot": 0
+                    },
+                    "latestFinalized": {
+                        "root": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                        "slot": 0
+                    },
+                    "blockRoots": [
+                        "0x23838434468b5aad473aae9918dbf7c0e7069ea27ee835e41ec6fd9f04322618",
+                        "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                        "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x23838434468b5aad473aae9918dbf7c0e7069ea27ee835e41ec6fd9f04322618",
+                            "weight": 0
+                        },
+                        {
+                            "root": "0xe2508fd0866ebc6a338f995b5b8e233a1ec0d4177edaae5e77c6d9b847ba6443",
+                            "weight": 0
+                        }
+                    ],
+                    "attestationSignatures": [],
+                    "newAggregatedPayloads": [
+                        {
+                            "dataRoot": "0x96831e8514006d01f1c76a4c34e2f73081f96a35a0c48810da19b42619278cdc",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        }
+                    ],
+                    "knownAggregatedPayloads": []
+                },
+                "stepType": "tick",
+                "interval": 17,
+                "hasProposal": false
+            }
+        ],
+        "maxSlot": 3,
+        "_info": {
+            "hash": "0x3c40949309924c767508916d1abf3e6b7940bb4a4bd81e5f31fe5dbd28d08a61",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/lstar/fork_choice/test_tick_acceptance_branches.py::test_interval_2_aggregator_aggregates_raw_signatures[fork_Lstar]",
+            "description": "Interval 2 turns raw gossip signatures into a pending aggregate.\n\n    Given\n    -----\n    - 4 validators.\n    - the chain:\n        block_1(1) -> block_2(2)\n    - V0, V1, V2 gossip raw signatures for block_2, kept in the raw signature pool.\n    - the new aggregate pool starts empty.\n\n    When\n    ----\n    - time crosses slot 3 interval 2, the aggregator action.\n\n    Then\n    ----\n    - the aggregator folds the raw signatures into one pending aggregate.\n    - the new aggregate pool now carries the block_2 target.\n    - the raw signature pool drops the absorbed copies.",
+            "fixtureFormat": "fork_choice_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
+        }
+    }
+}

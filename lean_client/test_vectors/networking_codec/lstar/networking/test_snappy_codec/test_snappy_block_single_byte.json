@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_snappy_codec.py::test_snappy_block_single_byte[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_snappy_codec.py::test_snappy_block_single_byte[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "snappy_block",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "snappy_block",
             "data": "0x42"
         },
         "output": {
@@ -12,11 +13,12 @@
             "uncompressedLength": 1
         },
         "_info": {
-            "hash": "0x8015763ffdfe7f432c3fd4f691a24ba3ddc6b326e125a350363b7b85721b71e4",
+            "hash": "0xdd9c6c94652d74eb1ba8ad3af5efd1fef08a902661f702bc6abe83ed736eaf22",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_snappy_codec.py::test_snappy_block_single_byte[fork_Lstar]",
-            "description": "Single byte. Too short for copy commands, must use a literal.",
-            "fixtureFormat": "networking_codec"
+            "description": "A single byte roundtrips through the snappy block format.\n\n    Given\n    -----\n    - a one-byte input.\n    - one byte is too short for copy commands.\n\n    When\n    ----\n    - the input is compressed then decompressed.\n\n    Then\n    ----\n    - the output equals the original.\n    - the byte is encoded as a literal.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

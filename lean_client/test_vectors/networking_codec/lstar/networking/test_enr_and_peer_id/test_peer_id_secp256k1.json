@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_enr_and_peer_id.py::test_peer_id_secp256k1[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_enr_and_peer_id.py::test_peer_id_secp256k1[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "peer_id",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "peer_id",
             "keyType": "secp256k1",
             "publicKey": "0x037777e994e452c21604f91de093ce415f5432f701dd8cd1a7a6fea0e630bfca99"
         },
@@ -12,11 +13,12 @@
             "peerId": "16Uiu2HAmLhLvBoYaoZfaMUKuibM6ac163GwKY74c5kiSLg5KvLpY"
         },
         "_info": {
-            "hash": "0x04d3eeec975921ab448a945fb3521bf2dd793b2510ca31148d6457b53937522b",
+            "hash": "0x3593409df88d006f924e82e1dc7bbd4d6df1447854cbe2f3e65457633e8cea72",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_enr_and_peer_id.py::test_peer_id_secp256k1[fork_Lstar]",
-            "description": "secp256k1 PeerId from libp2p spec. 33-byte key, identity multihash.",
-            "fixtureFormat": "networking_codec"
+            "description": "A secp256k1 key derives the libp2p peer_id.\n\n    Given\n    -----\n    - a 33-byte secp256k1 public key from the libp2p test vectors.\n\n    When\n    ----\n    - the peer_id is derived from the key.\n\n    Then\n    ----\n    - the derived peer_id uses an identity multihash over the key.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

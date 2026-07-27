@@ -1,17 +1,19 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_fp_one[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_fp_one[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "Fp",
-        "value": "1",
+        "value": "Fp(value=1)",
         "serialized": "0x01000000",
         "root": "0x0100000000000000000000000000000000000000000000000000000000000000",
         "_info": {
-            "hash": "0xe8974b6b6e26934847c425f64e3326ca7d78685f4660228e68d8c577b74c112d",
+            "hash": "0x214ad843c91f3ccba9207ccac9611dafe7a494d7b6b5c8fa3882e2847463b1a6",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_fp_one[fork_Lstar]",
-            "description": "Field element one. The multiplicative identity.",
-            "fixtureFormat": "ssz"
+            "description": "The one field element round-trips unchanged.\n\n    Given\n    -----\n    - the field element one.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

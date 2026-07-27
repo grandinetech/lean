@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_25_square[fork_Lstar][fork_Lstar-justifiability]": {
+    "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_25_square[fork_Lstar][fork_Lstar-justifiability_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "slot": 25,
         "finalizedSlot": 0,
         "output": {
@@ -9,11 +10,12 @@
             "isJustifiable": true
         },
         "_info": {
-            "hash": "0xf0f1a0edc5661104bee77d342ef0b722ccb10fc1bc4086445416971c3b135f78",
+            "hash": "0x2e38e47821a6edb3cf68b0b36d3e7f4b94f0a1288aa64cee65854e77692844dd",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_25_square[fork_Lstar]",
-            "description": "Delta 25: perfect square (5^2).",
-            "fixtureFormat": "justifiability"
+            "description": "Delta 25 is justifiable as a perfect square.\n\n    Given\n    -----\n    - the finalized slot is 0.\n    - the candidate slot is 25.\n    - the delta is 25, a perfect square (5*5).\n\n    When\n    ----\n    - the candidate is checked for justifiability.\n\n    Then\n    ----\n    - the candidate is justifiable.",
+            "fixtureFormat": "justifiability_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

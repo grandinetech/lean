@@ -1,10 +1,11 @@
 {
-    "tests/consensus/lstar/ssz/test_consensus_containers.py::test_attestation_typical[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_consensus_containers.py::test_attestation_typical[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "Attestation",
         "value": {
-            "validatorId": 42,
+            "validatorIndex": 42,
             "data": {
                 "slot": 100,
                 "head": {
@@ -24,11 +25,12 @@
         "serialized": "0x2a000000000000006400000000000000010101010101010101010101010101010101010101010101010101010101010164000000000000000202020202020202020202020202020202020202020202020202020202020202630000000000000003030303030303030303030303030303030303030303030303030303030303033200000000000000",
         "root": "0xff39fb2ef16bbd80a3f47b387cf74573219efbeecc84d56ca15262f6541d3a57",
         "_info": {
-            "hash": "0x88aca1b79d5b51f6483cdfa06adc1d6d224e07e4ed4c333bf5f107898aeb088e",
+            "hash": "0xa084da946df58a78cd185e20d81ea39c8a167651d9c12c4de56d42045b5bc32c",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_consensus_containers.py::test_attestation_typical[fork_Lstar]",
-            "description": "SSZ roundtrip for Attestation with typical values.",
-            "fixtureFormat": "ssz"
+            "description": "An attestation with non-zero values round-trips unchanged.\n\n    Given\n    -----\n    - an attestation from validator index 42 with distinct attestation data.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

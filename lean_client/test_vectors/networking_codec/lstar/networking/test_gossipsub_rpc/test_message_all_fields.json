@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_message_all_fields[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_message_all_fields[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "gossipsub_rpc",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "gossipsub_rpc",
             "subscriptions": [],
             "publish": [
                 {
@@ -20,11 +21,12 @@
             "encoded": "0x12c3010a2001010101010101010101010101010101010101010101010101010101010101011204deadbeef1a080000000000000001222a2f6c65616e636f6e73656e7375732f307831323334353637382f626c6f636b2f73737a5f736e617070792a40ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3221020202020202020202020202020202020202020202020202020202020202020202"
         },
         "_info": {
-            "hash": "0xdf1d9b06660a8d6cc99dd8248693f1bfd62faec81dd87cc61be0fb9f8c740f46",
+            "hash": "0xac2de41ea572aca48c9e95b5f54b7c3dd18e75dae261875c0740c77322b8907c",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_message_all_fields[fork_Lstar]",
-            "description": "Published message with every optional field populated.",
-            "fixtureFormat": "networking_codec"
+            "description": "A published message with every field round-trips.\n\n    Given\n    -----\n    - an RPC with one published message.\n    - the from_peer, data, seqno, topic, signature, and key fields are all set.\n\n    When\n    ----\n    - the RPC is encoded and decoded.\n\n    Then\n    ----\n    - the decoded RPC matches the input.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

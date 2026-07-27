@@ -1,26 +1,28 @@
 {
-    "tests/consensus/lstar/chain/test_slot_clock.py::test_from_unix_time_genesis_zero[fork_Lstar][fork_Lstar-slot_clock]": {
+    "tests/consensus/lstar/chain/test_slot_clock.py::test_from_unix_time_genesis_zero[fork_Lstar][fork_Lstar-slot_clock_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "operation": "from_unix_time",
-        "input": {
-            "unixSeconds": 100,
-            "genesisTime": 0
+        "proofSetting": 0,
+        "operation": {
+            "kind": "from_unix_time",
+            "genesisTime": 0,
+            "unixSeconds": 100.0
+        },
+        "config": {
+            "secondsPerSlot": 4,
+            "intervalsPerSlot": 5,
+            "millisecondsPerInterval": 800
         },
         "output": {
-            "config": {
-                "secondsPerSlot": 4,
-                "intervalsPerSlot": 5,
-                "millisecondsPerInterval": 800
-            },
             "interval": 125
         },
         "_info": {
-            "hash": "0x0f457e5547aaef945bbb273ae0de4bde6fa3c8bea9a0c052bd52df8ca12a1b8f",
+            "hash": "0xa8845e8fcd454398f5b05a6c8463b3ac7607dfbe09c5a9c52696f07e0ef4e4c7",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/chain/test_slot_clock.py::test_from_unix_time_genesis_zero[fork_Lstar]",
-            "description": "Genesis at Unix epoch 0. 100 seconds elapsed = 125 intervals.",
-            "fixtureFormat": "slot_clock"
+            "description": "A timestamp 100 seconds past a zero genesis maps to interval 125.\n\n    Given\n    -----\n    - a genesis time at Unix epoch 0.\n    - a timestamp 100 seconds past genesis.\n\n    When\n    ----\n    - the interval for that timestamp is computed.\n\n    Then\n    ----\n    - the interval is 125.",
+            "fixtureFormat": "slot_clock_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

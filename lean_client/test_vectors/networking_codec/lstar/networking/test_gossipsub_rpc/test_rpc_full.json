@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_rpc_full[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_rpc_full[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "gossipsub_rpc",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "gossipsub_rpc",
             "subscriptions": [
                 {
                     "subscribe": true,
@@ -12,16 +13,19 @@
             ],
             "publish": [
                 {
-                    "topic": "/leanconsensus/0x12345678/block/ssz_snappy",
-                    "data": "0xdeadbeef"
+                    "data": "0xdeadbeef",
+                    "topic": "/leanconsensus/0x12345678/block/ssz_snappy"
                 }
             ],
             "control": {
+                "ihave": [],
+                "iwant": [],
                 "graft": [
                     {
                         "topicId": "/leanconsensus/0x12345678/aggregation/ssz_snappy"
                     }
                 ],
+                "prune": [],
                 "idontwant": [
                     {
                         "messageIds": [
@@ -35,11 +39,12 @@
             "encoded": "0x0a2e0801122a2f6c65616e636f6e73656e7375732f307831323334353637382f626c6f636b2f73737a5f736e6170707912321204deadbeef222a2f6c65616e636f6e73656e7375732f307831323334353637382f626c6f636b2f73737a5f736e617070791a4c1a320a302f6c65616e636f6e73656e7375732f307831323334353637382f6167677265676174696f6e2f73737a5f736e617070792a160a14aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         },
         "_info": {
-            "hash": "0xa0fb939c58d7dbdc4923c8ebd5329ac371b377d7faf0387916b99da65e18becd",
+            "hash": "0x5123f3bd1af30294f40d25182e472eca71770c7a1254e7c5cd97b28afa0ade5b",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_rpc_full[fork_Lstar]",
-            "description": "RPC with subscriptions, published messages, and control all present.",
-            "fixtureFormat": "networking_codec"
+            "description": "A full RPC carrying every section round-trips.\n\n    Given\n    -----\n    - an RPC with a subscription, a published message, and a control message.\n    - the control message holds a GRAFT and an IDONTWANT.\n\n    When\n    ----\n    - the RPC is encoded and decoded.\n\n    Then\n    ----\n    - the decoded RPC matches the input.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/networking/test_gossipsub_handlers.py::test_ihave_seen_no_iwant[fork_Lstar][fork_Lstar-gossipsub_handler]": {
+    "tests/consensus/lstar/networking/test_gossipsub_handlers.py::test_ihave_seen_no_iwant[fork_Lstar][fork_Lstar-gossipsub_handler_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "handlerName": "ihave",
         "params": {
             "d": 4,
@@ -13,14 +14,17 @@
             "subscriptions": [
                 "test_topic"
             ],
-            "meshes": {},
             "peers": {
                 "peerAx": {
                     "subscriptions": [
                         "test_topic"
-                    ]
+                    ],
+                    "withStream": true,
+                    "backoff": {},
+                    "dontWantIds": []
                 }
             },
+            "meshes": {},
             "seenMessageIds": [
                 "0x8dc6bba09a9550cdccb1b1b432bb04919901ce1e"
             ],
@@ -28,6 +32,8 @@
         },
         "event": {
             "fromPeer": "peerAx",
+            "graft": [],
+            "prune": [],
             "ihave": [
                 {
                     "topicId": "test_topic",
@@ -35,7 +41,10 @@
                         "0x8dc6bba09a9550cdccb1b1b432bb04919901ce1e"
                     ]
                 }
-            ]
+            ],
+            "iwant": [],
+            "idontwant": [],
+            "publish": []
         },
         "now": 1000.0,
         "expected": {
@@ -45,11 +54,12 @@
             }
         },
         "_info": {
-            "hash": "0xdf76265aaf0f1bdc36bb1ceabf6b2039ced7d8336272756d63ccb4b42fdc0d36",
+            "hash": "0xf27544c95cc105c2e4cb8f0b9ab5f82453be39d6e0615de20f395459156e4525",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossipsub_handlers.py::test_ihave_seen_no_iwant[fork_Lstar]",
-            "description": "IHAVE for an already-seen message produces no IWANT.",
-            "fixtureFormat": "gossipsub_handler"
+            "description": "An IHAVE for an already-seen message produces no IWANT.\n\n    Given\n    -----\n    - the node is subscribed to the topic.\n    - the seen cache already holds the advertised message id.\n    - peerAx is subscribed.\n\n    When\n    ----\n    - peerAx sends an IHAVE advertising that seen message id.\n\n    Then\n    ----\n    - the node sends no IWANT.",
+            "fixtureFormat": "gossipsub_handler_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

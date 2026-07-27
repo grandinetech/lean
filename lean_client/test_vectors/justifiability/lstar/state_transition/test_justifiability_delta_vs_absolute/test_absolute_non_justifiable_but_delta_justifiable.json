@@ -1,0 +1,21 @@
+{
+    "tests/consensus/lstar/state_transition/test_justifiability_delta_vs_absolute.py::test_absolute_non_justifiable_but_delta_justifiable[fork_Lstar][fork_Lstar-justifiability_test]": {
+        "network": "Lstar",
+        "leanEnv": "prod",
+        "proofSetting": 0,
+        "slot": 7,
+        "finalizedSlot": 3,
+        "output": {
+            "delta": 4,
+            "isJustifiable": true
+        },
+        "_info": {
+            "hash": "0xff4ab602e3e98920041d3967afc55de1e3827451462dc9d25b0ec9f76ee9c23d",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/lstar/state_transition/test_justifiability_delta_vs_absolute.py::test_absolute_non_justifiable_but_delta_justifiable[fork_Lstar]",
+            "description": "A slot non-justifiable from genesis is justifiable on its delta from finalization.\n\n    Given\n    -----\n    - the finalized slot is 3.\n    - the candidate slot is 7.\n    - measured from genesis the distance is 7, neither square nor pronic.\n    - measured from finalization the delta is 4, a perfect square.\n\n    When\n    ----\n    - the candidate is checked for justifiability.\n\n    Then\n    ----\n    - the candidate is justifiable, proving the rule reads the delta.",
+            "fixtureFormat": "justifiability_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
+        }
+    }
+}

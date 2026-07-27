@@ -2,6 +2,7 @@
     "tests/consensus/lstar/state_transition/test_finalization.py::test_rebased_finalization_prunes_stale_votes_and_preserves_future_votes[fork_Lstar][fork_Lstar-state_transition_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "pre": {
             "config": {
                 "genesisTime": 0
@@ -31,23 +32,23 @@
             "validators": {
                 "data": [
                     {
-                        "attestationPubkey": "0x6c9dc94cb124fd7eac91680ca6f7c131d7b02f1629ca842b0e714d557da1276b2e5f3d110aab9d6eb8c10c7d1ba0f93cd849c82e",
-                        "proposalPubkey": "0x4f0098552e05e766afeb0d021742f626de106215bd0c5a5d2516fc75dc3ffc121159b63b6664354dc4eb353631b54a5ad0cc7b14",
+                        "attestationPublicKey": "0x6c9dc94cb124fd7eac91680ca6f7c131d7b02f1629ca842b0e714d557da1276b2e5f3d110aab9d6eb8c10c7d1ba0f93cd849c82e",
+                        "proposalPublicKey": "0x4f0098552e05e766afeb0d021742f626de106215bd0c5a5d2516fc75dc3ffc121159b63b6664354dc4eb353631b54a5ad0cc7b14",
                         "index": 0
                     },
                     {
-                        "attestationPubkey": "0xadc304243eb9f60ad1016e6610f11420dba97e450171971dda35bf50d4f14117ad3b9f06083c9d05f73d5e12f9e9ce1e7aa65866",
-                        "proposalPubkey": "0xe2508c4edcc47c50505281470653e6555fe9785380e97c427e99b677f949b125d17f2c58a45c1b5349f20c27db10ea78d2fceb37",
+                        "attestationPublicKey": "0xadc304243eb9f60ad1016e6610f11420dba97e450171971dda35bf50d4f14117ad3b9f06083c9d05f73d5e12f9e9ce1e7aa65866",
+                        "proposalPublicKey": "0xe2508c4edcc47c50505281470653e6555fe9785380e97c427e99b677f949b125d17f2c58a45c1b5349f20c27db10ea78d2fceb37",
                         "index": 1
                     },
                     {
-                        "attestationPubkey": "0x44095a46c1dd521b2e37c626b3401045f2a41713b034d95e9888fb34a15c280a8045b7043b6cca1c3353a6089ae5aa027c548d4b",
-                        "proposalPubkey": "0xd72b9b4bf39f805d637c855bb3266b373aa97e262cea76359b84e70805268b520cbe62284be2f81da2069b0c5298912169fa935f",
+                        "attestationPublicKey": "0x44095a46c1dd521b2e37c626b3401045f2a41713b034d95e9888fb34a15c280a8045b7043b6cca1c3353a6089ae5aa027c548d4b",
+                        "proposalPublicKey": "0xd72b9b4bf39f805d637c855bb3266b373aa97e262cea76359b84e70805268b520cbe62284be2f81da2069b0c5298912169fa935f",
                         "index": 2
                     },
                     {
-                        "attestationPubkey": "0xc6ce413056aff1787a8d01575b11781c08ab595fea7cb46372fd8376e054f829da06c251d8e13643e751d9737d52e4474fddab5c",
-                        "proposalPubkey": "0xd763f750d84c1840a6e2fb16b9f5e13f372e1f4646588a0d0ab96e483b42161f47858d5acb6d3a6bdae7e65a672cd2233fe77c16",
+                        "attestationPublicKey": "0xc6ce413056aff1787a8d01575b11781c08ab595fea7cb46372fd8376e054f829da06c251d8e13643e751d9737d52e4474fddab5c",
+                        "proposalPublicKey": "0xd763f750d84c1840a6e2fb16b9f5e13f372e1f4646588a0d0ab96e483b42161f47858d5acb6d3a6bdae7e65a672cd2233fe77c16",
                         "index": 3
                     }
                 ]
@@ -388,12 +389,14 @@
                 ]
             }
         },
+        "postStateRoot": "0xc4ae47502e332b628d79aab99e7ae5566455109616b64b431e2666443731f03e",
         "_info": {
-            "hash": "0x60d2ecfb0a7a86c6191668c836d6b8217057d27755bf7aeca56c757a9eabbfb2",
+            "hash": "0x2029bac13e4df804f0cb24607b151a9585a5ad31397992a1438075417b4359e9",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/state_transition/test_finalization.py::test_rebased_finalization_prunes_stale_votes_and_preserves_future_votes[fork_Lstar]",
-            "description": "Test the post-state when a second rebase leaves one future pending tally.\n\n    Scenario\n    --------\n    1. Justify block_1 in block_3\n    2. Record a pending tally for block_4 in block_5\n    3. Process block_8 so slots 2 and 7 are justified and slot 1 is finalized\n    4. Build the chain through block_13\n    5. Process block_14 with a partial attestation to block_13\n       and a supermajority attestation to block_10\n\n    Expected Behavior\n    -----------------\n    1. The post-state slot is 14\n    2. latest_justified_slot is 10\n    3. latest_justified_root is block_10\n    4. latest_finalized_slot is 7\n    5. latest_finalized_root is block_7\n    6. justified_slots equals [False, False, True, False, False, False] relative to slot 7\n    7. justifications_roots contains block_13\n    8. justifications_validators contains a single 1-of-4 pending tally",
-            "fixtureFormat": "state_transition_test"
+            "description": "A second rebase prunes stale votes but keeps a future pending tally.\n\n    Given\n    -----\n    - 4 validators; a slot needs 3 votes (2/3) to be justified.\n    - the chain:\n        genesis -> block_1(1) -> ... -> block_14(14)\n    - block_3 includes V0, V1, V2's votes for block_1.\n    - block_3 justifies slot 1.\n    - block_5 includes V0, V1's votes for block_4.\n    - block_5's partial tally for block_4 stays pending.\n    - block_8 includes V0, V1, V2's votes for block_2.\n    - block_8 includes V0, V1, V2's votes for block_7.\n    - block_8 justifies slots 2 and 7 and finalizes slot 1.\n    - block_14 includes V0's vote for block_13.\n    - block_14 includes V0, V1, V2's votes for block_10.\n    - block_14 justifies slot 10 and finalizes slot 7, which rebases again.\n\n    When\n    ----\n    - the chain processes block_1 through block_14.\n\n    Then\n    ----\n    - the state slot is 14.\n    - justified slot is 10, rooted at block_10.\n    - finalized slot is 7, rooted at block_7.\n    - the justified-slots bitfield is [False, False, True, False, False, False] relative to slot 7.\n    - the pending-vote roots hold block_13.\n    - the pending tally for block_13 is 1 of 4.",
+            "fixtureFormat": "state_transition_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

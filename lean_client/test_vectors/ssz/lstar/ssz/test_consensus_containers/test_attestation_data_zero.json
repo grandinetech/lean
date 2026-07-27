@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_consensus_containers.py::test_attestation_data_zero[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_consensus_containers.py::test_attestation_data_zero[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "AttestationData",
         "value": {
             "slot": 0,
@@ -21,11 +22,12 @@
         "serialized": "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
         "root": "0xca909c56a34abf66a9ab8fe87b09a6a35d973564d1a32e462b2ffd9ee097a300",
         "_info": {
-            "hash": "0xc2836f3e41343940c4278c26afd17eb3fb71a572a96ba3673b048dcc3e47926f",
+            "hash": "0xe89939fd860e480c60d306c2f6847bb95040addd9b4113860c729d22d16dfb01",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_consensus_containers.py::test_attestation_data_zero[fork_Lstar]",
-            "description": "SSZ roundtrip for AttestationData with zero values.",
-            "fixtureFormat": "ssz"
+            "description": "Attestation data with zero values round-trips unchanged.\n\n    Given\n    -----\n    - attestation data with all checkpoints and slot at zero.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

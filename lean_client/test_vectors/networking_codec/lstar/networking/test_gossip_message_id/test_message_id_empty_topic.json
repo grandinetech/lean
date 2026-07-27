@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_gossip_message_id.py::test_message_id_empty_topic[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_gossip_message_id.py::test_message_id_empty_topic[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "gossip_message_id",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "gossip_message_id",
             "topic": "0x",
             "data": "0xdeadbeef",
             "domain": "0x01000000"
@@ -12,11 +13,12 @@
             "messageId": "0x285f038cae99a63f9861ed5868790bf251ee0904"
         },
         "_info": {
-            "hash": "0xe96113e84ce09f833009a5ebeb4f77f979689871c0c30f9a2691ccd84447f389",
+            "hash": "0x35a886e70d40f79e3f36e0284d9369942bcd488a68b14caf14e112d5162f2894",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossip_message_id.py::test_message_id_empty_topic[fork_Lstar]",
-            "description": "Message ID with empty topic string.",
-            "fixtureFormat": "networking_codec"
+            "description": "An empty topic still yields a message id.\n\n    Given\n    -----\n    - an empty topic.\n    - a short payload.\n    - the valid-snappy domain prefix.\n\n    When\n    ----\n    - the message id is computed.\n\n    Then\n    ----\n    - the message id matches the expected digest.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

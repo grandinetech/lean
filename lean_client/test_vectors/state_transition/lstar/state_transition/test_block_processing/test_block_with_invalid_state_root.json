@@ -2,7 +2,8 @@
     "tests/consensus/lstar/state_transition/test_block_processing.py::test_block_with_invalid_state_root[fork_Lstar][fork_Lstar-state_transition_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "expectException": "AssertionError",
+        "rejectionReason": "STATE_ROOT_MISMATCH",
+        "proofSetting": 0,
         "pre": {
             "config": {
                 "genesisTime": 0
@@ -32,23 +33,23 @@
             "validators": {
                 "data": [
                     {
-                        "attestationPubkey": "0x6c9dc94cb124fd7eac91680ca6f7c131d7b02f1629ca842b0e714d557da1276b2e5f3d110aab9d6eb8c10c7d1ba0f93cd849c82e",
-                        "proposalPubkey": "0x4f0098552e05e766afeb0d021742f626de106215bd0c5a5d2516fc75dc3ffc121159b63b6664354dc4eb353631b54a5ad0cc7b14",
+                        "attestationPublicKey": "0x6c9dc94cb124fd7eac91680ca6f7c131d7b02f1629ca842b0e714d557da1276b2e5f3d110aab9d6eb8c10c7d1ba0f93cd849c82e",
+                        "proposalPublicKey": "0x4f0098552e05e766afeb0d021742f626de106215bd0c5a5d2516fc75dc3ffc121159b63b6664354dc4eb353631b54a5ad0cc7b14",
                         "index": 0
                     },
                     {
-                        "attestationPubkey": "0xadc304243eb9f60ad1016e6610f11420dba97e450171971dda35bf50d4f14117ad3b9f06083c9d05f73d5e12f9e9ce1e7aa65866",
-                        "proposalPubkey": "0xe2508c4edcc47c50505281470653e6555fe9785380e97c427e99b677f949b125d17f2c58a45c1b5349f20c27db10ea78d2fceb37",
+                        "attestationPublicKey": "0xadc304243eb9f60ad1016e6610f11420dba97e450171971dda35bf50d4f14117ad3b9f06083c9d05f73d5e12f9e9ce1e7aa65866",
+                        "proposalPublicKey": "0xe2508c4edcc47c50505281470653e6555fe9785380e97c427e99b677f949b125d17f2c58a45c1b5349f20c27db10ea78d2fceb37",
                         "index": 1
                     },
                     {
-                        "attestationPubkey": "0x44095a46c1dd521b2e37c626b3401045f2a41713b034d95e9888fb34a15c280a8045b7043b6cca1c3353a6089ae5aa027c548d4b",
-                        "proposalPubkey": "0xd72b9b4bf39f805d637c855bb3266b373aa97e262cea76359b84e70805268b520cbe62284be2f81da2069b0c5298912169fa935f",
+                        "attestationPublicKey": "0x44095a46c1dd521b2e37c626b3401045f2a41713b034d95e9888fb34a15c280a8045b7043b6cca1c3353a6089ae5aa027c548d4b",
+                        "proposalPublicKey": "0xd72b9b4bf39f805d637c855bb3266b373aa97e262cea76359b84e70805268b520cbe62284be2f81da2069b0c5298912169fa935f",
                         "index": 2
                     },
                     {
-                        "attestationPubkey": "0xc6ce413056aff1787a8d01575b11781c08ab595fea7cb46372fd8376e054f829da06c251d8e13643e751d9737d52e4474fddab5c",
-                        "proposalPubkey": "0xd763f750d84c1840a6e2fb16b9f5e13f372e1f4646588a0d0ab96e483b42161f47858d5acb6d3a6bdae7e65a672cd2233fe77c16",
+                        "attestationPublicKey": "0xc6ce413056aff1787a8d01575b11781c08ab595fea7cb46372fd8376e054f829da06c251d8e13643e751d9737d52e4474fddab5c",
+                        "proposalPublicKey": "0xd763f750d84c1840a6e2fb16b9f5e13f372e1f4646588a0d0ab96e483b42161f47858d5acb6d3a6bdae7e65a672cd2233fe77c16",
                         "index": 3
                     }
                 ]
@@ -74,11 +75,12 @@
             }
         ],
         "_info": {
-            "hash": "0x5d1d04373ddb4cad58a56f4d08972595858c9f275c6248d880b06dfe566b878f",
+            "hash": "0xc90048fadf6f97cdab5827904efd8cf55dc8dccb2788f6cae4b674b4269225f7",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/state_transition/test_block_processing.py::test_block_with_invalid_state_root[fork_Lstar]",
-            "description": "Test that blocks with wrong state root commitment are rejected.\n\n    Scenario\n    --------\n    Create a block with state root that doesn't match the actual\n    post-state hash.\n\n    Expected Behavior\n    -----------------\n    Block processing fails with AssertionError: \"Invalid block state root\"\n\n    Why This Matters\n    ----------------\n    Cryptographic state commitment is fundamental:\n    - Proves correct state execution\n    - Prevents state manipulation\n\n    This is a critical validation - without it, proposers could claim any arbitrary state.",
-            "fixtureFormat": "state_transition_test"
+            "description": "A block must commit to the actual post-state root.\n\n    Given\n    -----\n    - the default genesis state.\n\n    When\n    ----\n    - a block at slot 1 claims a state root that is not the actual post-state root.\n\n    Then\n    ----\n    - the claimed state root does not match the computed post-state.\n    - the block is rejected as a state root mismatch.",
+            "fixtureFormat": "state_transition_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

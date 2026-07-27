@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_reqresp_codec.py::test_response_success_small[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_reqresp_codec.py::test_response_success_small[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "reqresp_response",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "reqresp_response",
             "responseCode": 0,
             "sszData": "0x01020304"
         },
@@ -11,11 +12,12 @@
             "encoded": "0x0004ff060000734e6150705901080000393d6bbc01020304"
         },
         "_info": {
-            "hash": "0x45071744f9e63b5f6862a19501bbaff421b605842e1930e03ee5c480bc17f4c9",
+            "hash": "0x8575846d32c65a98b9f43ea231729db8e31089ccd611b601db875058c29177a9",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_reqresp_codec.py::test_response_success_small[fork_Lstar]",
-            "description": "SUCCESS response with 4-byte SSZ payload.",
-            "fixtureFormat": "networking_codec"
+            "description": "A success response with a four-byte payload roundtrips.\n\n    Given\n    -----\n    - response code 0 (success).\n    - a four-byte SSZ payload.\n\n    When\n    ----\n    - the response is encoded then decoded.\n\n    Then\n    ----\n    - the decoded code and payload equal the originals.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

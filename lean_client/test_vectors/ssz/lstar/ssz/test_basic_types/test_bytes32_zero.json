@@ -1,17 +1,19 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_bytes32_zero[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_bytes32_zero[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "Bytes32",
         "value": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "serialized": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "_info": {
-            "hash": "0xdc907b80b0ab6b7452a475a45fa2c88f9c4b22e200f87a8b7979f4ce4a135bd9",
+            "hash": "0x01841e55fe38b9641d65a24b42eddaa0a396aa8851fc65255bbe286ba3c3db3a",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_bytes32_zero[fork_Lstar]",
-            "description": "Bytes32 all zeros. One full chunk of zero bytes.",
-            "fixtureFormat": "ssz"
+            "description": "A 32-byte array of zeros round-trips unchanged.\n\n    Given\n    -----\n    - a 32-byte array of all-zero bytes.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

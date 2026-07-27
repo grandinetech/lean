@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_consensus_containers.py::test_checkpoint_max_slot[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_consensus_containers.py::test_checkpoint_max_slot[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "Checkpoint",
         "value": {
             "root": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -10,11 +11,12 @@
         "serialized": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
         "root": "0xf0b46c4ab8cd5720de9457addeff0a7267e475c09fd5abb6661e32faf9dd30cd",
         "_info": {
-            "hash": "0xf948207b81cdce94111b10262b7380ff9e16c2f0791da8f90dd87560f4a000f8",
+            "hash": "0x8476ff0e437bd005d1ef8d41676452976f4640aa5baba26b3ca3573804081771",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_consensus_containers.py::test_checkpoint_max_slot[fork_Lstar]",
-            "description": "SSZ roundtrip for Checkpoint at the maximum 64-bit slot and all-0xff root.",
-            "fixtureFormat": "ssz"
+            "description": "A checkpoint at the maximum slot round-trips unchanged.\n\n    Given\n    -----\n    - a checkpoint with an all-0xff root.\n    - the maximum 64-bit slot value.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

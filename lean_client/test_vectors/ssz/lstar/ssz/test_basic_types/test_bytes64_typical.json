@@ -1,17 +1,19 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_bytes64_typical[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_bytes64_typical[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "Bytes64",
         "value": "0xefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefef",
         "serialized": "0xefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefef",
         "root": "0xbcc682bf21a9a12a4357a35453d9d87391f3418ca3c2d69f68567c93d3e1d142",
         "_info": {
-            "hash": "0x8b312d7bb29963a2c7df5f7f6a595934d0e6c1218a652c2f5a184d09ef4ff627",
+            "hash": "0x7abefdd39b5aae42adfa306af8c732653df7b00afb9106cd9ef97bcd329158f3",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_bytes64_typical[fork_Lstar]",
-            "description": "Bytes64 with uniform nonzero content (0xEF repeated).",
-            "fixtureFormat": "ssz"
+            "description": "A 64-byte array with uniform content round-trips unchanged.\n\n    Given\n    -----\n    - a 64-byte array of the repeated byte 0xef.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

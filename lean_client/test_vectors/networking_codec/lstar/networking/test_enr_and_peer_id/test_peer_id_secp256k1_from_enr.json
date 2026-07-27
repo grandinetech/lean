@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_enr_and_peer_id.py::test_peer_id_secp256k1_from_enr[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_enr_and_peer_id.py::test_peer_id_secp256k1_from_enr[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "peer_id",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "peer_id",
             "keyType": "secp256k1",
             "publicKey": "0x03ca634cae0d49acb401d8a4c6b6fe8c55b70d115bf400769cc1400f3258cd3138"
         },
@@ -12,11 +13,12 @@
             "peerId": "16Uiu2HAmSH2XVgZqYHWucap5kuPzLnt2TsNQkoppVxB5eJGvaXwm"
         },
         "_info": {
-            "hash": "0x7f96eeabf5b77cd8e419e25843940eb64a71de92570d654f02cacb38e5d4ec2b",
+            "hash": "0xf605ab928e4df162281417f97bcca329b89f335ad9eb20aa0dee4989134aca56",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_enr_and_peer_id.py::test_peer_id_secp256k1_from_enr[fork_Lstar]",
-            "description": "secp256k1 PeerId using the public key from the official EIP-778 ENR.",
-            "fixtureFormat": "networking_codec"
+            "description": "The secp256k1 key from the official record derives its peer_id.\n\n    Given\n    -----\n    - the secp256k1 public key taken from the official EIP-778 ENR.\n\n    When\n    ----\n    - the peer_id is derived from the key.\n\n    Then\n    ----\n    - the derived peer_id uses an identity multihash over the key.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

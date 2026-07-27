@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_varint.py::test_varint_256[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_varint.py::test_varint_256[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "varint",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "varint",
             "value": 256
         },
         "output": {
@@ -11,11 +12,12 @@
             "byteLength": 2
         },
         "_info": {
-            "hash": "0x96dae5edacc2a6a0daa3250e58237ab680ccbca77369377239c4acf65013b307",
+            "hash": "0xf8654f71f727db27f92010a1687493eef0c87dcf859746fc84cc66367f4e6786",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_varint.py::test_varint_256[fork_Lstar]",
-            "description": "Varint 256. First value past Uint8 range.",
-            "fixtureFormat": "networking_codec"
+            "description": "The value 256 roundtrips.\n\n    Given\n    -----\n    - the value 256.\n    - 256 is the first value past the 8-bit range.\n\n    When\n    ----\n    - the value is encoded then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

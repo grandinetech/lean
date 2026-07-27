@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_sub_opts_unsubscribe[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_sub_opts_unsubscribe[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "gossipsub_rpc",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "gossipsub_rpc",
             "subscriptions": [
                 {
                     "subscribe": false,
@@ -16,11 +17,12 @@
             "encoded": "0x0a2e0800122a2f6c65616e636f6e73656e7375732f307831323334353637382f626c6f636b2f73737a5f736e61707079"
         },
         "_info": {
-            "hash": "0x888c263aa19707c8e39f5dd27a1766e4099bb73823bd592ef1c432ce62d48259",
+            "hash": "0xec8c6b076d9c14193482049a509dbb585e436c4e7caaefe441b5615f88652435",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_sub_opts_unsubscribe[fork_Lstar]",
-            "description": "SubOpts encoding for a topic unsubscription.",
-            "fixtureFormat": "networking_codec"
+            "description": "An unsubscribe entry round-trips through the RPC encoding.\n\n    Given\n    -----\n    - an RPC with one subscription entry that unsubscribes from a topic.\n\n    When\n    ----\n    - the RPC is encoded and decoded.\n\n    Then\n    ----\n    - the decoded RPC matches the input.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

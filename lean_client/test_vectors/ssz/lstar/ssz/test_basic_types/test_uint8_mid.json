@@ -1,17 +1,19 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_uint8_mid[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_uint8_mid[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "Uint8",
         "value": "128",
         "serialized": "0x80",
         "root": "0x8000000000000000000000000000000000000000000000000000000000000000",
         "_info": {
-            "hash": "0x17f3e6a7a75036ca355674e7fea7418edbcbce5869909c4efad2bcd0a9c4efb7",
+            "hash": "0x48177c3e1c884e6a526409c0798cce1e711469408c0cc6c68ea61a500270c31d",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_uint8_mid[fork_Lstar]",
-            "description": "Uint8 midpoint with high bit set (128).",
-            "fixtureFormat": "ssz"
+            "description": "A one-byte uint with its high bit set round-trips unchanged.\n\n    Given\n    -----\n    - the value 128 as a one-byte uint.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

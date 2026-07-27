@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_enr_and_peer_id.py::test_enr_high_seq[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_enr_and_peer_id.py::test_enr_high_seq[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "enr",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "enr",
             "enrString": "enr:-Hm4QIijml7AMdlciWFY1S7qh7egBawTx_IqvFhHI4xQh6jdDEJv9Slx_lVGPznU65wh0BzwxMGkbEpzuzO2K7Z_xfSE_____4JpZIJ2NIlzZWNwMjU2azGhA8pjTK4NSay0Adikxrb-jFW3DRFb9AB2nMFADzJYzTE4"
         },
         "output": {
@@ -17,11 +18,12 @@
             "isValid": true
         },
         "_info": {
-            "hash": "0xe04844a6923421e9db38b7e0c4e5b30696d3e34dc41da115e16d5e3021850abe",
+            "hash": "0x406fbd5cf4ce754ea46b28d326819b39806b82b60e797f34f732607f9580688f",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_enr_and_peer_id.py::test_enr_high_seq[fork_Lstar]",
-            "description": "ENR with high sequence number (2^32 - 1). Verifies large seq parsing.",
-            "fixtureFormat": "networking_codec"
+            "description": "A record with a large sequence number round-trips unchanged.\n\n    Given\n    -----\n    - an ENR whose seq field is 2^32 - 1.\n\n    When\n    ----\n    - the record is decoded and re-encoded.\n\n    Then\n    ----\n    - the re-encoded record matches the input.\n    - the large seq value survives the round-trip.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

@@ -1,20 +1,22 @@
 {
-    "tests/consensus/lstar/networking/test_reqresp_codec.py::test_request_all_zeros[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_reqresp_codec.py::test_request_all_zeros[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "reqresp_request",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "reqresp_request",
             "sszData": "0x0000000000000000000000000000000000000000000000000000000000000000"
         },
         "output": {
             "encoded": "0x20ff060000734e61507059000a0000faffd70f2000007a0100"
         },
         "_info": {
-            "hash": "0xabcb1b1481f9bfb4a42618bfb849fd76f831f430876578630a6007e2b1c05385",
+            "hash": "0x9c5a220595d4b4ab86f55c901791e7f12b4c84812b07024739bdc71c706d806e",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_reqresp_codec.py::test_request_all_zeros[fork_Lstar]",
-            "description": "Request with 32 zero bytes. Tests CRC32C on uniform input.",
-            "fixtureFormat": "networking_codec"
+            "description": "A request with uniform zero data roundtrips.\n\n    Given\n    -----\n    - a 32-byte payload of zero bytes.\n\n    When\n    ----\n    - the request is encoded then decoded.\n\n    Then\n    ----\n    - the decoded payload equals the original.\n    - the checksum is computed over uniform input.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

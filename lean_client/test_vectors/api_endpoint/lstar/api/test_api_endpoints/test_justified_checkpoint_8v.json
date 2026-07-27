@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/api/test_api_endpoints.py::test_justified_checkpoint_8v[fork_Lstar][fork_Lstar-api_endpoint]": {
+    "tests/consensus/lstar/api/test_api_endpoints.py::test_justified_checkpoint_8v[fork_Lstar][fork_Lstar-api_endpoint_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "endpoint": "/lean/v0/checkpoints/justified",
         "method": "GET",
         "genesisParams": {
@@ -16,11 +17,12 @@
             "root": "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2"
         },
         "_info": {
-            "hash": "0x388b41bb024dd1cb5dfb0160a5c6430251f219a00c378e876c561537d590fc0e",
+            "hash": "0x7d783fadd5ec09bdba19985443498af9fd5773ec5de11a5b04098555089486a6",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/api/test_api_endpoints.py::test_justified_checkpoint_8v[fork_Lstar]",
-            "description": "Justified checkpoint at genesis with 8 validators. Root differs from 4v.",
-            "fixtureFormat": "api_endpoint"
+            "description": "The justified-checkpoint endpoint reports genesis with eight validators.\n\n    Given\n    -----\n    - a node started from an 8-validator genesis.\n\n    When\n    ----\n    - the justified-checkpoint endpoint is queried.\n\n    Then\n    ----\n    - the response reports the genesis checkpoint.\n    - the checkpoint root differs from the four-validator case.",
+            "fixtureFormat": "api_endpoint_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

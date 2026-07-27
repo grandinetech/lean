@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_reqresp_response_stream.py::test_stream_two_success_chunks[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_reqresp_response_stream.py::test_stream_two_success_chunks[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "reqresp_response_stream",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "reqresp_response_stream",
             "chunks": [
                 {
                     "responseCode": 0,
@@ -20,11 +21,12 @@
             "chunkCount": 2
         },
         "_info": {
-            "hash": "0x4f28f7385aacb69e1c7627bde12ead4b0689436babcf4d7c2b4d3aa9d2da2419",
+            "hash": "0x47e60007cf455f08c320ede9bc1a38fdecba999fb38bd1c82aa93bc569e522e7",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_reqresp_response_stream.py::test_stream_two_success_chunks[fork_Lstar]",
-            "description": "Stream with two SUCCESS chunks carrying distinct payload bytes.\n\n    Pins the concatenation of two independent response frames. Clients\n    must read both records before signalling EOF, so a receiver that\n    stops after the first chunk drops half the response.",
-            "fixtureFormat": "networking_codec"
+            "description": "A stream of two success chunks roundtrips to both records in order.\n\n    Given\n    -----\n    - a first success chunk carrying distinct payload bytes.\n    - a second success chunk carrying distinct payload bytes.\n\n    When\n    ----\n    - the concatenated chunks are read back to back until the stream closes.\n\n    Then\n    ----\n    - both records are produced in order.\n    - a receiver that stops after the first chunk drops half the response.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

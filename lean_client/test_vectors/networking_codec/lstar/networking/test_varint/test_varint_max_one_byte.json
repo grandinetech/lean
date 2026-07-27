@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_varint.py::test_varint_max_one_byte[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_varint.py::test_varint_max_one_byte[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "varint",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "varint",
             "value": 127
         },
         "output": {
@@ -11,11 +12,12 @@
             "byteLength": 1
         },
         "_info": {
-            "hash": "0x06f8777f2bd4be1eb29279c4d5f9b1a491863d9c151503135392d094a14f7af4",
+            "hash": "0x2ffa23f865bb09635f97df27be98548de30547c4b2802fd8ce517acfa9b1c031",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_varint.py::test_varint_max_one_byte[fork_Lstar]",
-            "description": "Varint 127 is the largest value fitting in a single byte.",
-            "fixtureFormat": "networking_codec"
+            "description": "The largest single-byte value roundtrips.\n\n    Given\n    -----\n    - the value 127.\n    - 127 is the largest value fitting in one byte.\n\n    When\n    ----\n    - the value is encoded then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

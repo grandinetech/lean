@@ -1,0 +1,132 @@
+{
+    "tests/consensus/lstar/state_transition/test_small_validator_quorums.py::test_three_validators_two_votes_justify[fork_Lstar][fork_Lstar-state_transition_test]": {
+        "network": "Lstar",
+        "leanEnv": "prod",
+        "proofSetting": 0,
+        "pre": {
+            "config": {
+                "genesisTime": 0
+            },
+            "slot": 0,
+            "latestBlockHeader": {
+                "slot": 0,
+                "proposerIndex": 0,
+                "parentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "stateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "bodyRoot": "0xdba9671bac9513c9482f1416a53aabd2c6ce90d5a5f865ce5a55c775325c9136"
+            },
+            "latestJustified": {
+                "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "slot": 0
+            },
+            "latestFinalized": {
+                "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "slot": 0
+            },
+            "historicalBlockHashes": {
+                "data": []
+            },
+            "justifiedSlots": {
+                "data": []
+            },
+            "validators": {
+                "data": [
+                    {
+                        "attestationPublicKey": "0x6c9dc94cb124fd7eac91680ca6f7c131d7b02f1629ca842b0e714d557da1276b2e5f3d110aab9d6eb8c10c7d1ba0f93cd849c82e",
+                        "proposalPublicKey": "0x4f0098552e05e766afeb0d021742f626de106215bd0c5a5d2516fc75dc3ffc121159b63b6664354dc4eb353631b54a5ad0cc7b14",
+                        "index": 0
+                    },
+                    {
+                        "attestationPublicKey": "0xadc304243eb9f60ad1016e6610f11420dba97e450171971dda35bf50d4f14117ad3b9f06083c9d05f73d5e12f9e9ce1e7aa65866",
+                        "proposalPublicKey": "0xe2508c4edcc47c50505281470653e6555fe9785380e97c427e99b677f949b125d17f2c58a45c1b5349f20c27db10ea78d2fceb37",
+                        "index": 1
+                    },
+                    {
+                        "attestationPublicKey": "0x44095a46c1dd521b2e37c626b3401045f2a41713b034d95e9888fb34a15c280a8045b7043b6cca1c3353a6089ae5aa027c548d4b",
+                        "proposalPublicKey": "0xd72b9b4bf39f805d637c855bb3266b373aa97e262cea76359b84e70805268b520cbe62284be2f81da2069b0c5298912169fa935f",
+                        "index": 2
+                    }
+                ]
+            },
+            "justificationsRoots": {
+                "data": []
+            },
+            "justificationsValidators": {
+                "data": []
+            }
+        },
+        "blocks": [
+            {
+                "slot": 1,
+                "proposerIndex": 1,
+                "parentRoot": "0x892cc0351adb4c5c5ee62462fb93e01c6cdab1893f56d06ee59c075b580722b7",
+                "stateRoot": "0x21f6a1dd9af2accd343337a6cbe66e6df474711ba94193022007b23615172168",
+                "body": {
+                    "attestations": {
+                        "data": []
+                    }
+                }
+            },
+            {
+                "slot": 2,
+                "proposerIndex": 2,
+                "parentRoot": "0xf113ac89d4294e09a6c3c9e01017da21f83261b882ee97896c588dfb695d0ede",
+                "stateRoot": "0x1cceddfbc50694f56a64a0e2f5c3446000a7093af4f3867362ccca3dc0a87cd9",
+                "body": {
+                    "attestations": {
+                        "data": [
+                            {
+                                "aggregationBits": {
+                                    "data": [
+                                        true,
+                                        true
+                                    ]
+                                },
+                                "data": {
+                                    "slot": 2,
+                                    "head": {
+                                        "root": "0xf113ac89d4294e09a6c3c9e01017da21f83261b882ee97896c588dfb695d0ede",
+                                        "slot": 1
+                                    },
+                                    "target": {
+                                        "root": "0xf113ac89d4294e09a6c3c9e01017da21f83261b882ee97896c588dfb695d0ede",
+                                        "slot": 1
+                                    },
+                                    "source": {
+                                        "root": "0x892cc0351adb4c5c5ee62462fb93e01c6cdab1893f56d06ee59c075b580722b7",
+                                        "slot": 0
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        ],
+        "post": {
+            "slot": 2,
+            "latestJustifiedSlot": 1,
+            "latestFinalizedSlot": 0,
+            "justifiedSlots": {
+                "data": [
+                    true
+                ]
+            },
+            "justificationsRoots": {
+                "data": []
+            },
+            "justificationsValidators": {
+                "data": []
+            }
+        },
+        "postStateRoot": "0x1cceddfbc50694f56a64a0e2f5c3446000a7093af4f3867362ccca3dc0a87cd9",
+        "_info": {
+            "hash": "0x30dddd851b78ca688baa9800008c515e5b327c1d7442c68a022d40082b9743d6",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/lstar/state_transition/test_small_validator_quorums.py::test_three_validators_two_votes_justify[fork_Lstar]",
+            "description": "With three validators, two votes clear the two-thirds threshold.\n\n    Given\n    -----\n    - 3 validators; a slot needs 2 votes (2/3) to be justified.\n    - the chain:\n        genesis -> block_1(1) -> block(2)\n    - block(2) includes V0, V1's votes for block_1.\n    - 2 of 3 clears the threshold, since 2*3 = 6 is at least 3*2 = 6.\n\n    When\n    ----\n    - the chain processes both blocks.\n\n    Then\n    ----\n    - block_1's slot is justified.\n    - finalized stays at slot 0.\n    - the justified-slots bitfield marks slot 1 alone.\n    - no pending votes remain.",
+            "fixtureFormat": "state_transition_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
+        }
+    }
+}

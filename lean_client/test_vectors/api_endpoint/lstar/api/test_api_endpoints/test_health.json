@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/api/test_api_endpoints.py::test_health[fork_Lstar][fork_Lstar-api_endpoint]": {
+    "tests/consensus/lstar/api/test_api_endpoints.py::test_health[fork_Lstar][fork_Lstar-api_endpoint_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "endpoint": "/lean/v0/health",
         "method": "GET",
         "genesisParams": {
@@ -16,11 +17,12 @@
             "service": "lean-rpc-api"
         },
         "_info": {
-            "hash": "0x4432dc43e2b3cf2ffb8540a1251600e72273469366ba5b4b4b54616251f9fecb",
+            "hash": "0xfdac3aefe66d768663d00ff1bf1b3f5cb7d9066cf9279a90f00a9ad85e610207",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/api/test_api_endpoints.py::test_health[fork_Lstar]",
-            "description": "Health returns a fixed payload independent of consensus state.",
-            "fixtureFormat": "api_endpoint"
+            "description": "The health endpoint returns a fixed payload.\n\n    Given\n    -----\n    - a node started from a 4-validator genesis.\n\n    When\n    ----\n    - the health endpoint is queried.\n\n    Then\n    ----\n    - the response is a fixed payload independent of consensus state.",
+            "fixtureFormat": "api_endpoint_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

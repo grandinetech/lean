@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_consensus_containers.py::test_signed_aggregated_attestation_minimal[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_consensus_containers.py::test_signed_aggregated_attestation_minimal[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "SignedAggregatedAttestation",
         "value": {
             "data": {
@@ -25,19 +26,20 @@
                         true
                     ]
                 },
-                "proofData": {
+                "proof": {
                     "data": "0x"
                 }
             }
         },
         "serialized": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000084000000080000000900000003",
-        "root": "0xc289193d12505d3a14121bd9567d72c1b488832906b04bc56e39f157f176560f",
+        "root": "0x4fc0516aa1b4f2573d43cefaa59fd8d52ce68d4291660c8a8c9b13a3bebffa1a",
         "_info": {
-            "hash": "0x940eff2260161e0826634443d103d63533f0876f8db17c01d026a100cb28ece7",
+            "hash": "0xc58bbb908adfd3ca152555d7ca1e4f8c8c2f38b681e339c521467748d91fabc7",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_consensus_containers.py::test_signed_aggregated_attestation_minimal[fork_Lstar]",
-            "description": "SSZ roundtrip for SignedAggregatedAttestation with one participant and empty proof.",
-            "fixtureFormat": "ssz"
+            "description": "A signed aggregated attestation with one participant round-trips unchanged.\n\n    Given\n    -----\n    - a signed aggregated attestation over zero attestation data.\n    - a proof with one participant and empty proof bytes.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

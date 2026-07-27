@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_merkleization_boundaries.py::test_bitvector_length_seven_all_set[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_merkleization_boundaries.py::test_bitvector_length_seven_all_set[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "BoundaryBitvector7",
         "value": {
             "data": [
@@ -17,11 +18,12 @@
         "serialized": "0x7f",
         "root": "0x7f00000000000000000000000000000000000000000000000000000000000000",
         "_info": {
-            "hash": "0x7033a373ee746969b73a1f2b5bda8314d039b28de513c98bac4cb01ce223ad70",
+            "hash": "0x005645812caa3d3195c5533094b8d1ef825d13606a0db4947dc67684e4c7048c",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_merkleization_boundaries.py::test_bitvector_length_seven_all_set[fork_Lstar]",
-            "description": "Seven-bit vector exercises the pre-byte-boundary pad bit.",
-            "fixtureFormat": "ssz"
+            "description": "A seven-bit vector merkleizes to a stable root.\n\n    Given\n    -----\n    - a seven-bit vector with all bits set.\n    - one pad bit before the byte boundary.\n\n    When\n    ----\n    - the value is merkleized.\n\n    Then\n    ----\n    - the root matches the expected single-chunk layout.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

@@ -1,26 +1,28 @@
 {
-    "tests/consensus/lstar/chain/test_slot_clock.py::test_current_slot_before_boundary[fork_Lstar][fork_Lstar-slot_clock]": {
+    "tests/consensus/lstar/chain/test_slot_clock.py::test_current_slot_before_boundary[fork_Lstar][fork_Lstar-slot_clock_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "operation": "current_slot",
-        "input": {
+        "proofSetting": 0,
+        "operation": {
+            "kind": "current_slot",
             "genesisTime": 1700000000,
-            "currentTimeMs": 1700000003999
+            "currentTimeMilliseconds": 1700000003999.0
+        },
+        "config": {
+            "secondsPerSlot": 4,
+            "intervalsPerSlot": 5,
+            "millisecondsPerInterval": 800
         },
         "output": {
-            "config": {
-                "secondsPerSlot": 4,
-                "intervalsPerSlot": 5,
-                "millisecondsPerInterval": 800
-            },
             "slot": 0
         },
         "_info": {
-            "hash": "0x8d8e984976cb2669cb9168a8959ade6c75c3b522164bd0d29b8f54e3f623ae90",
+            "hash": "0xc0b509d2bacdf9b2dee045dc655afc48d4f99d8e761e06c5a52088dc59c3a756",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/chain/test_slot_clock.py::test_current_slot_before_boundary[fork_Lstar]",
-            "description": "One ms before slot 1 boundary: still slot 0 (integer division floors).",
-            "fixtureFormat": "slot_clock"
+            "description": "A clock one millisecond before the slot 1 boundary still reports slot 0.\n\n    Given\n    -----\n    - a wall-clock time one millisecond before the slot 1 boundary.\n\n    When\n    ----\n    - the current slot is computed.\n\n    Then\n    ----\n    - the current slot is 0.\n    - the floor of the division keeps the slot below 1.",
+            "fixtureFormat": "slot_clock_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

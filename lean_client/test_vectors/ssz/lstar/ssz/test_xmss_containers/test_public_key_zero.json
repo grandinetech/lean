@@ -1,39 +1,19 @@
 {
-    "tests/consensus/lstar/ssz/test_xmss_containers.py::test_public_key_zero[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_xmss_containers.py::test_public_key_zero[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "PublicKey",
-        "value": {
-            "root": {
-                "data": [
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0
-                ]
-            },
-            "parameter": {
-                "data": [
-                    0,
-                    0,
-                    0,
-                    0,
-                    0
-                ]
-            }
-        },
+        "value": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
         "serialized": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
         "root": "0xf5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b",
         "_info": {
-            "hash": "0x51f3264507e39f3f9e7e15502825b01ace549bb2277b6d0217098f389750c571",
+            "hash": "0xf995b96dc947ec095c788df997e03efef6515e773a0e2ff9d30e022be31a86d7",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_xmss_containers.py::test_public_key_zero[fork_Lstar]",
-            "description": "SSZ roundtrip for PublicKey with zero values.",
-            "fixtureFormat": "ssz"
+            "description": "A public key with zero values round-trips unchanged.\n\n    Given\n    -----\n    - a public key whose root and parameter are all-zero field elements.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

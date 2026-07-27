@@ -1,26 +1,28 @@
 {
-    "tests/consensus/lstar/chain/test_slot_clock.py::test_current_interval_at_slot_start[fork_Lstar][fork_Lstar-slot_clock]": {
+    "tests/consensus/lstar/chain/test_slot_clock.py::test_current_interval_at_slot_start[fork_Lstar][fork_Lstar-slot_clock_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "operation": "current_interval",
-        "input": {
+        "proofSetting": 0,
+        "operation": {
+            "kind": "current_interval",
             "genesisTime": 1700000000,
-            "currentTimeMs": 1700000000000
+            "currentTimeMilliseconds": 1700000000000.0
+        },
+        "config": {
+            "secondsPerSlot": 4,
+            "intervalsPerSlot": 5,
+            "millisecondsPerInterval": 800
         },
         "output": {
-            "config": {
-                "secondsPerSlot": 4,
-                "intervalsPerSlot": 5,
-                "millisecondsPerInterval": 800
-            },
             "interval": 0
         },
         "_info": {
-            "hash": "0x11adc8af9661b4340ed1b96b36c7b901413684550d01d5e2ec0c3e3e1786c28e",
+            "hash": "0x1b450fba3b5a58d9f4e439d02536cc2edc939d966d1c84c76f84c9c11bb7dff3",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/chain/test_slot_clock.py::test_current_interval_at_slot_start[fork_Lstar]",
-            "description": "Exactly at slot start: interval 0.",
-            "fixtureFormat": "slot_clock"
+            "description": "A clock exactly at a slot start reports interval 0.\n\n    Given\n    -----\n    - a wall-clock time at the start of a slot.\n\n    When\n    ----\n    - the interval within the slot is computed.\n\n    Then\n    ----\n    - the interval is 0.",
+            "fixtureFormat": "slot_clock_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

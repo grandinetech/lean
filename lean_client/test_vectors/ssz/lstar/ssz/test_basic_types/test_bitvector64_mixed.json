@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_bitvector64_mixed[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_bitvector64_mixed[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "SampleBitvector64",
         "value": {
             "data": [
@@ -74,11 +75,12 @@
         "serialized": "0x5555555555555555",
         "root": "0x5555555555555555000000000000000000000000000000000000000000000000",
         "_info": {
-            "hash": "0xac93698b009d753c4bd2e851467d690a71b689653c3a12e23d369904a6b1f51d",
+            "hash": "0x99316407882c98fd45d3a87c43bae9d27e847e834783808636b89f2c594d61a6",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_bitvector64_mixed[fork_Lstar]",
-            "description": "64-bit bitvector, alternating bits. Tests bit ordering across byte boundaries.",
-            "fixtureFormat": "ssz"
+            "description": "A 64-bit vector with alternating bits round-trips unchanged.\n\n    Given\n    -----\n    - a 64-bit vector with alternating set and clear bits.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.\n    - bit ordering is preserved across byte boundaries.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

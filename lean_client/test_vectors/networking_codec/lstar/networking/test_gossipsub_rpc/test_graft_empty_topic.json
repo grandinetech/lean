@@ -1,28 +1,34 @@
 {
-    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_graft_empty_topic[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_graft_empty_topic[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "gossipsub_rpc",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "gossipsub_rpc",
             "subscriptions": [],
             "publish": [],
             "control": {
+                "ihave": [],
+                "iwant": [],
                 "graft": [
                     {
                         "topicId": ""
                     }
-                ]
+                ],
+                "prune": [],
+                "idontwant": []
             }
         },
         "output": {
             "encoded": "0x1a021a00"
         },
         "_info": {
-            "hash": "0x9d8c5b05eeb90662d022c94e0875d1a0859e90c45eb5ee4a4d9e374c8d3855af",
+            "hash": "0x02097d3088efed183c3b20306237b5d88c8e2876f3a08a2f1c231ab25bda6485",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_graft_empty_topic[fork_Lstar]",
-            "description": "GRAFT with an empty topic string.",
-            "fixtureFormat": "networking_codec"
+            "description": "A GRAFT with an empty topic round-trips.\n\n    Given\n    -----\n    - an RPC whose control message holds a GRAFT with an empty topic.\n\n    When\n    ----\n    - the RPC is encoded and decoded.\n\n    Then\n    ----\n    - the decoded RPC matches the input.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

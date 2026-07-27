@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_enr_and_peer_id.py::test_enr_minimal_seq_zero[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_enr_and_peer_id.py::test_enr_minimal_seq_zero[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "enr",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "enr",
             "enrString": "enr:-HW4QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgmlkgnY0iXNlY3AyNTZrMaEDymNMrg1JrLQB2KTGtv6MVbcNEVv0AHacwUAPMljNMTg"
         },
         "output": {
@@ -17,11 +18,12 @@
             "isValid": true
         },
         "_info": {
-            "hash": "0x92ead0c16b136fe3645711ea0cb622aec74ac891360a7d43999f1cfdedb6ba23",
+            "hash": "0xba748430f34ecb8f1f0abceca848ad9856a0b8dde2b637aa6059773d4b8c3ea1",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_enr_and_peer_id.py::test_enr_minimal_seq_zero[fork_Lstar]",
-            "description": "Minimal ENR with seq=0. Only required keys (id + secp256k1).",
-            "fixtureFormat": "networking_codec"
+            "description": "A minimal record with only required keys round-trips unchanged.\n\n    Given\n    -----\n    - an ENR with seq=0.\n    - only the required id and secp256k1 keys are present.\n\n    When\n    ----\n    - the record is decoded and re-encoded.\n\n    Then\n    ----\n    - the re-encoded record matches the input.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

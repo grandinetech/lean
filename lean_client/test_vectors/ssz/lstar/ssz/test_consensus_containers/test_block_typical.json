@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_consensus_containers.py::test_block_typical[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_consensus_containers.py::test_block_typical[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "Block",
         "value": {
             "slot": 100,
@@ -40,11 +41,12 @@
         "serialized": "0x640000000000000003000000000000000101010101010101010101010101010101010101010101010101010101010101020202020202020202020202020202020202020202020202020202020202020254000000040000000400000084000000640000000000000001010101010101010101010101010101010101010101010101010101010101016400000000000000020202020202020202020202020202020202020202020202020202020202020263000000000000000303030303030303030303030303030303030303030303030303030303030303320000000000000003",
         "root": "0x7f74ef839e818248b0219c0eeafaf777bc847147449cd7e87edb90994e599ab9",
         "_info": {
-            "hash": "0xef598b4ee805142f84e78d24ce841260fff50aa5447af1da0a141f95ef1535e2",
+            "hash": "0x6eedd2513b1e8a7801537aecdf01f3b665c4c26ec1d754ce1fcb7103ca4435eb",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_consensus_containers.py::test_block_typical[fork_Lstar]",
-            "description": "SSZ roundtrip for Block with attestations.",
-            "fixtureFormat": "ssz"
+            "description": "A block carrying one attestation round-trips unchanged.\n\n    Given\n    -----\n    - a block at slot 100 with distinct roots.\n    - a body holding a single aggregated attestation.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

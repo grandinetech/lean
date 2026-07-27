@@ -1,26 +1,28 @@
 {
-    "tests/consensus/lstar/chain/test_slot_clock.py::test_total_intervals_before_genesis[fork_Lstar][fork_Lstar-slot_clock]": {
+    "tests/consensus/lstar/chain/test_slot_clock.py::test_total_intervals_before_genesis[fork_Lstar][fork_Lstar-slot_clock_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "operation": "total_intervals",
-        "input": {
+        "proofSetting": 0,
+        "operation": {
+            "kind": "total_intervals",
             "genesisTime": 1700000000,
-            "currentTimeMs": 1699999999000
+            "currentTimeMilliseconds": 1699999999000.0
+        },
+        "config": {
+            "secondsPerSlot": 4,
+            "intervalsPerSlot": 5,
+            "millisecondsPerInterval": 800
         },
         "output": {
-            "config": {
-                "secondsPerSlot": 4,
-                "intervalsPerSlot": 5,
-                "millisecondsPerInterval": 800
-            },
             "totalIntervals": 0
         },
         "_info": {
-            "hash": "0x2048bb8e72b45b7f6a4b82214393dc3f0332f8610a2894d1ad5c823fd23711ed",
+            "hash": "0x7e3f8a1f04c9235e2ed1be4009f6fe68a170685d785fd13d0fa581c97f9c2603",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/chain/test_slot_clock.py::test_total_intervals_before_genesis[fork_Lstar]",
-            "description": "Before genesis: 0 intervals.",
-            "fixtureFormat": "slot_clock"
+            "description": "A clock before genesis counts 0 total intervals.\n\n    Given\n    -----\n    - a wall-clock time one second before genesis.\n\n    When\n    ----\n    - the total intervals elapsed since genesis are computed.\n\n    Then\n    ----\n    - the count is 0.",
+            "fixtureFormat": "slot_clock_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

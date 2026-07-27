@@ -1,10 +1,12 @@
 {
-    "tests/consensus/lstar/sync/test_checkpoint_verify.py::test_checkpoint_verify_rejects_empty_validator_set[fork_Lstar][fork_Lstar-sync]": {
+    "tests/consensus/lstar/sync/test_checkpoint_verify.py::test_checkpoint_verify_rejects_empty_validator_set[fork_Lstar][fork_Lstar-sync_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "operation": "verify_checkpoint",
-        "input": {
-            "numValidators": 0
+        "proofSetting": 0,
+        "operation": {
+            "kind": "verify_checkpoint",
+            "numValidators": 0,
+            "anchorSlot": 0
         },
         "output": {
             "valid": false,
@@ -13,11 +15,12 @@
             "anchorSlot": 0
         },
         "_info": {
-            "hash": "0x006d45bebb7dc711ad862dc62a9478b2446f974141faefdf6ad5e566cdac42b3",
+            "hash": "0xc7d23bac8cbeb1725bd1f62c12f6b82477108ea90c962a6b2d89bacc643fec4e",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/sync/test_checkpoint_verify.py::test_checkpoint_verify_rejects_empty_validator_set[fork_Lstar]",
-            "description": "A checkpoint state with zero validators is rejected.\n\n    A state without validators cannot produce blocks, so seeding a\n    fork-choice store with it would be useless and mask configuration\n    errors. Clients must refuse the anchor before any store setup.",
-            "fixtureFormat": "sync"
+            "description": "A checkpoint state with zero validators is rejected.\n\n    Given\n    -----\n    - an anchor state fetched from a checkpoint provider.\n    - the state carries zero validators.\n\n    When\n    ----\n    - the state is verified before seeding a fork-choice store.\n\n    Then\n    ----\n    - the state is rejected.\n    - the reason is that a state with no validators cannot produce blocks.",
+            "fixtureFormat": "sync_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

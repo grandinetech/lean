@@ -1,17 +1,19 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_uint32_zero[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_uint32_zero[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "Uint32",
         "value": "0",
         "serialized": "0x00000000",
         "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "_info": {
-            "hash": "0x10fc7a251a6030d883ba9ca867ebff36af6c3ec8d10733b122003484a0f99f9c",
+            "hash": "0x7c125939fe170bf37c85e71d8bda9b76a1d8fe9cedcb6a4e73b3e0ec04515b7d",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_uint32_zero[fork_Lstar]",
-            "description": "Uint32 lower bound (0).",
-            "fixtureFormat": "ssz"
+            "description": "A four-byte uint at its lower bound round-trips unchanged.\n\n    Given\n    -----\n    - the value 0 as a four-byte uint.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

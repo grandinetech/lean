@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_consensus_containers.py::test_aggregated_attestation_single[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_consensus_containers.py::test_aggregated_attestation_single[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "AggregatedAttestation",
         "value": {
             "aggregationBits": {
@@ -28,11 +29,12 @@
         "serialized": "0x84000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003",
         "root": "0x672d6298d0e7317ab91f48a9f6e81e62cdd9386ca4c720909c2c74c8cca1b1c0",
         "_info": {
-            "hash": "0x80c94d57e3449d01a1616752ca7cd4cf5130cb49344055e316381fdddb3862d5",
+            "hash": "0xf664aa9b5e519977a2b53f48fe07e8ccdc7756102dc7e2677a82f2365aa7b76b",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_consensus_containers.py::test_aggregated_attestation_single[fork_Lstar]",
-            "description": "SSZ roundtrip for AggregatedAttestation with single validator.",
-            "fixtureFormat": "ssz"
+            "description": "An aggregated attestation with one participant round-trips unchanged.\n\n    Given\n    -----\n    - an aggregated attestation with a single set participation bit.\n    - zero attestation data.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

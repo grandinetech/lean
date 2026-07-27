@@ -1,21 +1,23 @@
 {
-    "tests/consensus/lstar/networking/test_gossip_topic.py::test_block_topic_zero_digest[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_gossip_topic.py::test_block_topic_zero_digest[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "gossip_topic",
-        "input": {
-            "kind": "block",
-            "forkDigest": "00000000"
+        "proofSetting": 0,
+        "codec": {
+            "kind": "gossip_topic",
+            "topicKind": "block",
+            "networkName": "00000000"
         },
         "output": {
             "topicString": "/leanconsensus/00000000/block/ssz_snappy"
         },
         "_info": {
-            "hash": "0x841aecc006ee4319cd9cb903b02122523eb3140574772245873ad9dc67cf597a",
+            "hash": "0xc63e27f5ddad403709a5a200e7cd70bd38b20424deaa3a914ae04240eb5861ac",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossip_topic.py::test_block_topic_zero_digest[fork_Lstar]",
-            "description": "Block topic with all-zero fork digest.",
-            "fixtureFormat": "networking_codec"
+            "description": "A block topic with an all-zero fork digest round-trips.\n\n    Given\n    -----\n    - a block topic kind.\n    - an all-zero fork digest.\n\n    When\n    ----\n    - the topic is formatted to a string and parsed back.\n\n    Then\n    ----\n    - the parsed topic matches the input.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

@@ -1,19 +1,21 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_bytelist_empty[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_bytelist_empty[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "typeName": "ByteListMiB",
+        "proofSetting": 0,
+        "typeName": "ByteList512KiB",
         "value": {
             "data": "0x"
         },
         "serialized": "0x",
-        "root": "0x6c78c0273b0b3dfbb221adb19ed9fcd8eac9e995c2210795a0580442e70bab0a",
+        "root": "0xe05ac02c0a8f889909fdb5ff44a8267e088b0e7eb6c11bbea096023884da27b8",
         "_info": {
-            "hash": "0x2a2e4d4cc64ba0ffd4204d5cd721ac3a10a21cd0e92ff0b9a709684701f74c29",
+            "hash": "0xa982f1e7786b1fa5b29998ff93c1a15e18ae0f866918421c7a42189994287ba4",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_bytelist_empty[fork_Lstar]",
-            "description": "Empty byte list. Zero-length content with length mix-in of zero.",
-            "fixtureFormat": "ssz"
+            "description": "An empty byte list round-trips unchanged.\n\n    Given\n    -----\n    - a byte list with no content.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

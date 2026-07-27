@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_bitlist_single_true[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_bitlist_single_true[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "SampleBitlist16",
         "value": {
             "data": [
@@ -11,11 +12,12 @@
         "serialized": "0x03",
         "root": "0x56d8a66fbae0300efba7ec2c531973aaae22e7a2ed6ded081b5b32d07a32780a",
         "_info": {
-            "hash": "0x41ec05b5d924b04b521c9b93a1ada655c898abc63b0eb49e25e110b20c545cf0",
+            "hash": "0x3b7b3f2a7d0e5220654b1f77f34684cb8959c5063e216688b1f64cd0b2c56490",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_bitlist_single_true[fork_Lstar]",
-            "description": "Bitlist with one set bit. Sentinel immediately follows the data bit.",
-            "fixtureFormat": "ssz"
+            "description": "A bitlist with one set bit round-trips unchanged.\n\n    Given\n    -----\n    - a bitlist holding a single set bit.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.\n    - the sentinel immediately follows the data bit.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

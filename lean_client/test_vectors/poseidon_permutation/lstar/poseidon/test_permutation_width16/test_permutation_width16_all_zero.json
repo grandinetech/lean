@@ -1,0 +1,52 @@
+{
+    "tests/consensus/lstar/poseidon/test_permutation_width16.py::test_permutation_width16_all_zero[fork_Lstar][fork_Lstar-poseidon_permutation_test]": {
+        "network": "Lstar",
+        "leanEnv": "prod",
+        "proofSetting": 0,
+        "width": 16,
+        "inputState": [
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+        ],
+        "outputState": [
+            "2096630793",
+            "502841916",
+            "2048234017",
+            "615698125",
+            "1716747525",
+            "1717817948",
+            "194562273",
+            "959725011",
+            "1720971930",
+            "2093224065",
+            "1607677051",
+            "1849387246",
+            "2054104179",
+            "1529778884",
+            "1740781079",
+            "92100382"
+        ],
+        "_info": {
+            "hash": "0x0deb2edd9e78129c951eabd6b849399fea352f62bd7d3067120d6a03350f9b60",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/lstar/poseidon/test_permutation_width16.py::test_permutation_width16_all_zero[fork_Lstar]",
+            "description": "An all-zero input pins the output that depends only on the round constants.\n\n    Given\n    -----\n    - a width-16 input state of all zeros.\n\n    When\n    ----\n    - the permutation runs once.\n\n    Then\n    ----\n    - the output state equals the reference vector.\n    - the output is a sensitive diff for any round-constant table drift.",
+            "fixtureFormat": "poseidon_permutation_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
+        }
+    }
+}

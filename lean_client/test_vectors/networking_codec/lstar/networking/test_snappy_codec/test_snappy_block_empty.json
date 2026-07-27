@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_snappy_codec.py::test_snappy_block_empty[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_snappy_codec.py::test_snappy_block_empty[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "snappy_block",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "snappy_block",
             "data": "0x"
         },
         "output": {
@@ -12,11 +13,12 @@
             "uncompressedLength": 0
         },
         "_info": {
-            "hash": "0x467df8673d7e06b6358feb3158325eb9e6bef30639f3a6cfe37e7b41c09c9eff",
+            "hash": "0x59a87b4a2b3f1e47ecab3e65f35594eb5a79218f7e701b869a761abae5800f82",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_snappy_codec.py::test_snappy_block_empty[fork_Lstar]",
-            "description": "Empty input. Compressed output is just the varint-encoded uncompressed length (0).",
-            "fixtureFormat": "networking_codec"
+            "description": "Empty input roundtrips through the snappy block format.\n\n    Given\n    -----\n    - empty input.\n\n    When\n    ----\n    - the input is compressed then decompressed.\n\n    Then\n    ----\n    - the output equals the original.\n    - the compressed form is just the varint-encoded uncompressed length 0.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

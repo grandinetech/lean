@@ -1,20 +1,22 @@
 {
-    "tests/consensus/lstar/networking/test_reqresp_codec.py::test_request_status[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_reqresp_codec.py::test_request_status[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "reqresp_request",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "reqresp_request",
             "sszData": "0x0101010101010101010101010101010101010101010101010101010101010101640000000000000002020202020202020202020202020202020202020202020202020202020202020296000000000000"
         },
         "output": {
             "encoded": "0x50ff060000734e61507059001c00003eb9d26b5000017a0100046400090100027e01001896000000000000"
         },
         "_info": {
-            "hash": "0x8dda854d0e8fd0cab74d6d85b229695c0db386df277825a2c01d923d5876ce7a",
+            "hash": "0xb0c256345497632950879f287600fbec818d2f1fc029f1c2b7df81dc107741bb",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_reqresp_codec.py::test_request_status[fork_Lstar]",
-            "description": "Status request through the full wire pipeline. Protocol: /leanconsensus/req/status/1.",
-            "fixtureFormat": "networking_codec"
+            "description": "A status request roundtrips through the full wire pipeline.\n\n    Given\n    -----\n    - an SSZ-encoded status message.\n    - the status request protocol.\n\n    When\n    ----\n    - the request is encoded then decoded.\n\n    Then\n    ----\n    - the decoded payload equals the original.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

@@ -1,24 +1,24 @@
 {
-    "tests/consensus/lstar/networking/test_enr_rejections.py::test_enr_decode_rejects_malformed_rlp[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_enr_rejections.py::test_enr_decode_rejects_malformed_rlp[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "expectException": "ValueError",
-        "codecName": "decode_failure",
-        "input": {
+        "rejectionReason": "DECODE_ERROR",
+        "proofSetting": 0,
+        "codec": {
+            "kind": "decode_failure",
             "decoder": "enr",
-            "bytes": "0x00"
+            "rawBytes": "0x00"
         },
         "output": {
-            "decoder": "enr",
-            "errorType": "ValueError",
-            "errorMessage": "Invalid RLP encoding: Expected RLP list"
+            "decoder": "enr"
         },
         "_info": {
-            "hash": "0xac242f71c7afa1c58a681948517587baeb1104e91d0e8e6130c5f285d51245c7",
+            "hash": "0x9168d00ff31fa68e2942bc101de10c8b4ee559bedac019e6db51cfade7297c5f",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_enr_rejections.py::test_enr_decode_rejects_malformed_rlp[fork_Lstar]",
-            "description": "An input that cannot be parsed as an RLP list is rejected.\n\n    The byte 0x00 is valid RLP for the single byte value 0x00, not for a\n    list structure. The ENR decoder requires a list header, so the parse\n    fails and the error surfaces as a ValueError on the ENR API.",
-            "fixtureFormat": "networking_codec"
+            "description": "An input that is not an RLP list is rejected.\n\n    Given\n    -----\n    - the single byte 0x00.\n    - this is valid RLP for the value 0x00, but not for a list.\n\n    When\n    ----\n    - the bytes are decoded.\n\n    Then\n    ----\n    - decoding is rejected because a list header was required.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }
