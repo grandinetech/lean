@@ -641,9 +641,8 @@ fn produce_and_apply(
     let num_validators = store.states[&store.head].validators.len_u64();
     let proposer = slot.0 % num_validators;
     let _ = keys;
-    let (_block_root, block, _sigs) =
-        produce_block_with_signatures(&mut store, slot, proposer, 1, true)
-            .expect("block production failed");
+    let (_block_root, block, _sigs) = produce_block_with_signatures(store, slot, proposer, 1, true)
+        .expect("block production failed");
     let signed = SignedBlock {
         block,
         proof: MultiMessageAggregate::default(),
@@ -752,6 +751,7 @@ fn test_produce_block_closes_justification_gap() {
             &known_block_roots,
             &aggregated_payloads,
             1,
+            false,
         )
         .expect("build_block for sibling block_6 failed");
     let signed_block_6 = SignedBlock {

@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use anyhow::{Result, anyhow, ensure};
 use containers::{
-    AggregatedSignatureProof, AttestationData, Block, BlockHeader, Checkpoint, Config,
+    AggregatedSignatureProof, AttestationData, Block, Checkpoint, Config,
     SignatureKey, SignedAggregatedAttestation, SignedAttestation, SignedBlock, Slot, State,
 };
 use indexmap::IndexMap;
@@ -230,24 +230,7 @@ pub fn get_forkchoice_store(
     let block = anchor_block.block.clone();
     let block_slot = block.slot;
 
-    // Compute block root differently for genesis vs checkpoint sync:
-    // - Genesis (slot 0): Use block.hash_tree_root() directly — block and state are consistent.
-    // - Checkpoint sync (slot > 0): Reconstruct BlockHeader from state.latest_block_header,
-    //   using anchor_state.hash_tree_root() as state_root.  This guarantees the root stored
-    //   as the key in store.blocks / store.states is the canonical one committed to by the
-    //   downloaded state, independent of what the real block's state_root field contains.
-    let block_root = if block_slot.0 == 0 {
-        block.hash_tree_root()
-    } else {
-        let block_header = BlockHeader {
-            slot: anchor_state.latest_block_header.slot,
-            proposer_index: anchor_state.latest_block_header.proposer_index,
-            parent_root: anchor_state.latest_block_header.parent_root,
-            state_root: anchor_state.hash_tree_root(),
-            body_root: anchor_state.latest_block_header.body_root,
-        };
-        block_header.hash_tree_root()
-    };
+    let block_root = block.hash_tree_root();
 
     // Seed both checkpoints from the anchor block itself: (root=anchor_root,
     // slot=anchor_slot). The store treats the anchor as the new "genesis" for

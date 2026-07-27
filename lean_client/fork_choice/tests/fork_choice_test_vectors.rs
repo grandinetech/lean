@@ -182,10 +182,10 @@ struct TestDataWrapper<T> {
 #[serde(rename_all = "camelCase")]
 struct TestValidator {
     #[allow(dead_code)]
-    #[serde(alias = "pubkey")]
+    #[serde(alias = "pubkey", alias = "attestationPublicKey")]
     attestation_pubkey: String,
     #[allow(dead_code)]
-    #[serde(default)]
+    #[serde(default, alias = "proposalPublicKey")]
     proposal_pubkey: Option<String>,
     #[allow(dead_code)]
     #[serde(default)]
@@ -473,6 +473,8 @@ fn forkchoice(spec_file: &str) {
         let mut cache = BlockCache::new();
         let mut block_labels: HashMap<String, H256> = HashMap::new();
 
+        block_labels.insert("genesis".to_string(), store.head);
+
         for (step_idx, step) in case.steps.into_iter().enumerate() {
             match step {
                 ForkChoiceStep::Block {
@@ -480,6 +482,7 @@ fn forkchoice(spec_file: &str) {
                     checks,
                     block: test_block,
                 } => {
+                    let block_root_label = test_block.block_root_label.clone();
                     let result = std::panic::catch_unwind(AssertUnwindSafe(|| {
                         let block: Block = test_block.into();
                         let signed_block = SignedBlock {
@@ -519,6 +522,9 @@ fn forkchoice(spec_file: &str) {
                     }
 
                     if valid && result.is_ok() {
+                        if let Some(label) = block_root_label {
+                            block_labels.insert(label, *result.as_ref().unwrap());
+                        }
                         verify_checks(&store, &checks, &block_labels, step_idx).expect(&format!(
                             "Step: {step_idx}: Should be valid but checks failed"
                         ));
