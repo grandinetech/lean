@@ -182,10 +182,10 @@ struct TestDataWrapper<T> {
 #[serde(rename_all = "camelCase")]
 struct TestValidator {
     #[allow(dead_code)]
-    #[serde(alias = "pubkey")]
+    #[serde(alias = "pubkey", alias = "attestationPublicKey")]
     attestation_pubkey: String,
     #[allow(dead_code)]
-    #[serde(default)]
+    #[serde(default, alias = "proposalPublicKey")]
     proposal_pubkey: Option<String>,
     #[allow(dead_code)]
     #[serde(default)]
