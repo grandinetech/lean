@@ -97,6 +97,7 @@ pub fn parse_root(hex_str: &str) -> H256 {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TestAttestation {
+    #[serde(alias = "validatorIndex")]
     pub validator_id: u64,
     pub data: TestAttestationData,
 }
