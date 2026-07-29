@@ -460,7 +460,7 @@ fn hex_root(root: &ssz::H256) -> String {
 fn build_signed_aggregated_attestation(
     step: GossipAggregatedAttestationStep,
 ) -> Result<SignedAggregatedAttestation, String> {
-    let proof_hex = step.proof.proof_data.data.trim_start_matches("0x");
+    let proof_hex = step.proof.proof.data.trim_start_matches("0x");
     let proof_bytes = hex::decode(proof_hex)
         .map_err(|err| format!("invalid hex in aggregate proof_data: {err}"))?;
     let proof_data = AggregatedSignature::new(&proof_bytes)
