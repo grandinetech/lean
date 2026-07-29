@@ -2,7 +2,7 @@
 
 # Commit of lean specification. Allows to specify which spec version to use,
 #   when generating test vectors.
-LEAN_SPEC_COMMIT ?= f12000bd68a9640cffdfbd9a07503c9112d32bee
+LEAN_SPEC_COMMIT ?= 0f5b8e58e58c0e155ae8b95eabbbde0b9ad8840a
 # Docker image name. Used for both release (with publish) and local builds.
 DOCKER_REPO ?= sifrai/lean
 # Image tag.

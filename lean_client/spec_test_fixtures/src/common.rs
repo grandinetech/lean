@@ -97,15 +97,14 @@ pub fn parse_root(hex_str: &str) -> H256 {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TestAttestation {
-    #[serde(alias = "validatorIndex")]
-    pub validator_id: u64,
+    pub validator_index: u64,
     pub data: TestAttestationData,
 }
 
 impl From<TestAttestation> for Attestation {
     fn from(value: TestAttestation) -> Self {
         Self {
-            validator_id: value.validator_id,
+            validator_id: value.validator_index,
             data: value.data.into(),
         }
     }

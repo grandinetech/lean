@@ -88,11 +88,11 @@ impl Into<State> for TestAnchorState {
         let mut validators = Validators::default();
         for test_validator in &self.validators.data {
             let attestation_pubkey: PublicKey = test_validator
-                .attestation_pubkey
+                .attestation_public_key
                 .parse()
                 .expect("Failed to parse validator attestation_pubkey");
             let proposal_pubkey: PublicKey = test_validator
-                .proposal_pubkey
+                .proposal_public_key
                 .as_deref()
                 .map(|s| {
                     s.parse()
@@ -182,11 +182,11 @@ struct TestDataWrapper<T> {
 #[serde(rename_all = "camelCase")]
 struct TestValidator {
     #[allow(dead_code)]
-    #[serde(alias = "pubkey", alias = "attestationPublicKey")]
-    attestation_pubkey: String,
+    #[serde(alias = "pubkey")]
+    attestation_public_key: String,
     #[allow(dead_code)]
-    #[serde(default, alias = "proposalPublicKey")]
-    proposal_pubkey: Option<String>,
+    #[serde(default)]
+    proposal_public_key: Option<String>,
     #[allow(dead_code)]
     #[serde(default)]
     index: u64,

@@ -163,6 +163,5 @@ pub struct GossipAggregatedAttestationStep {
 #[serde(rename_all = "camelCase")]
 pub struct GossipProofJSON {
     pub participants: TestAggregationBits,
-    #[serde(alias = "proof")]
-    pub proof_data: HexBytesJSON,
+    pub proof: HexBytesJSON,
 }
