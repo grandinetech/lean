@@ -1692,8 +1692,10 @@ where
 
                     if count == 0 || count > req_resp::MAX_REQUEST_BLOCKS as u64 {
                         info!(peer = %peer, start_slot, count, "Rejecting BlocksByRange: invalid count");
-                        // Send an empty response — peer will treat as no data.
-                        let response = LeanResponse::BlocksByRange(Vec::new());
+                        let response = LeanResponse::Error {
+                            code: req_resp::RESPONSE_INVALID_REQUEST,
+                            message: "invalid_count".to_string(),
+                        };
                         if let Err(e) = self
                             .swarm
                             .behaviour_mut()
