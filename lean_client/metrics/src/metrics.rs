@@ -266,6 +266,13 @@ pub struct Metrics {
     pub lean_gossip_block_size_bytes: Histogram,
     pub lean_gossip_attestation_size_bytes: Histogram,
     pub lean_gossip_aggregation_size_bytes: Histogram,
+
+    pub lean_gossip_block_arrival_delay_seconds: Histogram,
+    pub lean_gossip_attestation_arrival_delay_seconds: Histogram,
+    pub lean_gossip_aggregation_arrival_delay_seconds: Histogram,
+    pub lean_gossip_block_arrival_total: IntCounterVec,
+    pub lean_gossip_attestation_arrival_total: IntCounterVec,
+    pub lean_gossip_aggregation_arrival_total: IntCounterVec,
 }
 
 impl Metrics {
@@ -781,6 +788,54 @@ impl Metrics {
                     1_048_576.0,
                 ]
             ))?,
+
+            // Gossip Arrival Metrics
+            lean_gossip_block_arrival_delay_seconds: Histogram::with_opts(histogram_opts!(
+                "lean_gossip_block_arrival_delay_seconds",
+                "Absolute delay between a gossip block's arrival and the start of the interval \
+                 it was due in",
+                gossip_arrival_delay_buckets()
+            ))?,
+            lean_gossip_attestation_arrival_delay_seconds: Histogram::with_opts(histogram_opts!(
+                "lean_gossip_attestation_arrival_delay_seconds",
+                "Absolute delay between a gossip attestation's arrival and the start of the \
+                 interval it was due in",
+                gossip_arrival_delay_buckets()
+            ))?,
+            lean_gossip_aggregation_arrival_delay_seconds: Histogram::with_opts(histogram_opts!(
+                "lean_gossip_aggregation_arrival_delay_seconds",
+                "Absolute delay between an aggregate becoming available, whether received on \
+                 gossip or produced locally, and the most recent aggregation-interval boundary \
+                 at or before it. Local aggregation starts at that boundary, so a locally \
+                 produced aggregate reports its proving latency past it",
+                gossip_arrival_delay_buckets()
+            ))?,
+            lean_gossip_block_arrival_total: IntCounterVec::new(
+                opts!(
+                    "lean_gossip_block_arrival_total",
+                    "Gossip blocks by arrival position relative to the interval they were due in"
+                ),
+                &["position"],
+            )?,
+            lean_gossip_attestation_arrival_total: IntCounterVec::new(
+                opts!(
+                    "lean_gossip_attestation_arrival_total",
+                    "Gossip attestations by arrival position relative to the interval they were \
+                     due in"
+                ),
+                &["position"],
+            )?,
+            lean_gossip_aggregation_arrival_total: IntCounterVec::new(
+                opts!(
+                    "lean_gossip_aggregation_arrival_total",
+                    "Aggregates, received on gossip or produced locally, by arrival position \
+                     relative to the most recent aggregation-interval boundary. Anchored to the \
+                     latest such boundary rather than the aggregate's own data slot, so an \
+                     arrival can never precede it: only `inside` and `after` occur, never \
+                     `before`."
+                ),
+                &["position"],
+            )?,
         })
     }
 
@@ -1012,6 +1067,31 @@ impl Metrics {
         default_registry.register(Box::new(self.lean_gossip_attestation_size_bytes.clone()))?;
         default_registry.register(Box::new(self.lean_gossip_aggregation_size_bytes.clone()))?;
 
+        // Gossip Arrival Metrics
+        default_registry.register(Box::new(
+            self.lean_gossip_block_arrival_delay_seconds.clone(),
+        ))?;
+        default_registry.register(Box::new(
+            self.lean_gossip_attestation_arrival_delay_seconds.clone(),
+        ))?;
+        default_registry.register(Box::new(
+            self.lean_gossip_aggregation_arrival_delay_seconds.clone(),
+        ))?;
+        default_registry.register(Box::new(self.lean_gossip_block_arrival_total.clone()))?;
+        default_registry.register(Box::new(self.lean_gossip_attestation_arrival_total.clone()))?;
+        default_registry.register(Box::new(self.lean_gossip_aggregation_arrival_total.clone()))?;
+
+        for position in ["before", "inside", "after"] {
+            self.lean_gossip_block_arrival_total
+                .with_label_values(&[position]);
+            self.lean_gossip_attestation_arrival_total
+                .with_label_values(&[position]);
+        }
+        for position in ["inside", "after"] {
+            self.lean_gossip_aggregation_arrival_total
+                .with_label_values(&[position]);
+        }
+
         Ok(())
     }
 
@@ -1100,4 +1180,114 @@ pub enum DisconnectReason {
     RemoteClose,
     LocalClose,
     Error,
+}
+
+fn gossip_arrival_delay_buckets() -> Vec<f64> {
+    vec![0.05, 0.1, 0.2, 0.4, 0.8, 1.2, 1.6, 2.4, 4.0, 8.0, 16.0]
+}
+
+const BLOCK_INTERVAL_INDEX: u64 = 0;
+const ATTESTATION_INTERVAL_INDEX: u64 = 1;
+const AGGREGATION_INTERVAL_INDEX: u64 = 2;
+
+#[derive(Clone, Copy, Debug)]
+struct GossipArrivalClock {
+    genesis_ms: u64,
+    millis_per_interval: u64,
+    millis_per_slot: u64,
+}
+
+static GOSSIP_ARRIVAL_CLOCK: OnceCell<GossipArrivalClock> = OnceCell::new();
+
+pub fn set_gossip_arrival_clock(
+    genesis_ms: u64,
+    millis_per_interval: u64,
+    intervals_per_slot: u64,
+) {
+    let _ = GOSSIP_ARRIVAL_CLOCK.set(GossipArrivalClock {
+        genesis_ms,
+        millis_per_interval,
+        millis_per_slot: millis_per_interval * intervals_per_slot,
+    });
+}
+
+pub fn unix_now_ms() -> u64 {
+    SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0)
+}
+
+fn interval_delta_ms(
+    clock: GossipArrivalClock,
+    arrival_ms: u64,
+    anchor_slot: u64,
+    interval_index: u64,
+) -> i64 {
+    let expected_ms = clock.genesis_ms
+        + anchor_slot * clock.millis_per_slot
+        + interval_index * clock.millis_per_interval;
+    arrival_ms as i64 - expected_ms as i64
+}
+
+fn latest_interval_delta_ms(
+    clock: GossipArrivalClock,
+    arrival_ms: u64,
+    interval_index: u64,
+) -> i64 {
+    let since_genesis = arrival_ms.saturating_sub(clock.genesis_ms) as i64;
+    let anchor_offset = (interval_index * clock.millis_per_interval) as i64;
+    (since_genesis - anchor_offset).rem_euclid(clock.millis_per_slot as i64)
+}
+
+fn position_from_delta(clock: GossipArrivalClock, delta_ms: i64) -> &'static str {
+    if delta_ms < 0 {
+        "before"
+    } else if delta_ms < clock.millis_per_interval as i64 {
+        "inside"
+    } else {
+        "after"
+    }
+}
+
+pub fn observe_gossip_block_arrival(arrival_ms: u64, block_slot: u64) {
+    let (Some(clock), Some(metrics)) = (GOSSIP_ARRIVAL_CLOCK.get(), METRICS.get()) else {
+        return;
+    };
+    let delta_ms = interval_delta_ms(*clock, arrival_ms, block_slot, BLOCK_INTERVAL_INDEX);
+    metrics
+        .lean_gossip_block_arrival_delay_seconds
+        .observe(delta_ms.unsigned_abs() as f64 / 1000.0);
+    metrics
+        .lean_gossip_block_arrival_total
+        .with_label_values(&[position_from_delta(*clock, delta_ms)])
+        .inc();
+}
+
+pub fn observe_gossip_attestation_arrival(arrival_ms: u64, data_slot: u64) {
+    let (Some(clock), Some(metrics)) = (GOSSIP_ARRIVAL_CLOCK.get(), METRICS.get()) else {
+        return;
+    };
+    let delta_ms = interval_delta_ms(*clock, arrival_ms, data_slot, ATTESTATION_INTERVAL_INDEX);
+    metrics
+        .lean_gossip_attestation_arrival_delay_seconds
+        .observe(delta_ms.unsigned_abs() as f64 / 1000.0);
+    metrics
+        .lean_gossip_attestation_arrival_total
+        .with_label_values(&[position_from_delta(*clock, delta_ms)])
+        .inc();
+}
+
+pub fn observe_gossip_aggregation_arrival(arrival_ms: u64) {
+    let (Some(clock), Some(metrics)) = (GOSSIP_ARRIVAL_CLOCK.get(), METRICS.get()) else {
+        return;
+    };
+    let delta_ms = latest_interval_delta_ms(*clock, arrival_ms, AGGREGATION_INTERVAL_INDEX);
+    metrics
+        .lean_gossip_aggregation_arrival_delay_seconds
+        .observe(delta_ms.unsigned_abs() as f64 / 1000.0);
+    metrics
+        .lean_gossip_aggregation_arrival_total
+        .with_label_values(&[position_from_delta(*clock, delta_ms)])
+        .inc();
 }

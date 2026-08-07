@@ -12,17 +12,13 @@ derive_more = { workspace = true }
 eth_ssz = { workspace = true }
 ethereum-types = { workspace = true }
 hex = { workspace = true }
-rec_aggregation = { workspace = true }
-backend = { workspace = true }
-leansig = { workspace = true }
-leansig_wrapper = { workspace = true }
+lean_multisig = { workspace = true }
 metrics = { workspace = true }
+postcard = { workspace = true }
 rand = { workspace = true }
-rayon = { workspace = true }
 ssz = { workspace = true }
 typenum = { workspace = true }
 serde = { workspace = true }
-zeroize = { workspace = true, features = ["derive"] }
 
 [dev-dependencies]
 rand_chacha = { workspace = true }

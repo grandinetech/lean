@@ -639,12 +639,14 @@ where
                 ..
             } => {
                 let data_len = message.data.len();
+                let arrival_ms = metrics::unix_now_ms();
                 match GossipsubMessage::decode(&message.topic, &message.data) {
                     Ok(GossipsubMessage::Block(signed_block)) => {
                         METRICS
                             .get()
                             .map(|m| m.lean_gossip_block_size_bytes.observe(data_len as f64));
                         let slot = signed_block.block.slot.0;
+                        metrics::observe_gossip_block_arrival(arrival_ms, slot);
                         info!(slot, block_root = %signed_block.block.hash_tree_root(), "received block via gossip");
 
                         if let Err(err) = self
@@ -677,6 +679,7 @@ where
                             "received attestation via subnet gossip"
                         );
                         let slot = attestation.message.slot.0;
+                        metrics::observe_gossip_attestation_arrival(arrival_ms, slot);
 
                         if let Err(err) = self
                             .chain_message_sink
@@ -702,6 +705,7 @@ where
                             "received aggregated attestation via gossip"
                         );
                         let slot = signed_aggregated_attestation.data.slot.0;
+                        metrics::observe_gossip_aggregation_arrival(arrival_ms);
 
                         if let Err(err) = self
                             .chain_message_sink

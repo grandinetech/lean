@@ -3,16 +3,18 @@ use std::str::FromStr;
 
 use anyhow::{Context, Error, Result, anyhow, bail};
 use ethereum_types::H256;
-use leansig_wrapper::XmssPublicKey;
-use rec_aggregation::{
-    MultiMessageAggregateSignature, merge_single_message_aggregates,
-    split_multi_message_aggregate_by_message, verify_multi_message_aggregate,
+use lean_multisig::{
+    MultiMessageAggregateSignature, XmssPublicKey, merge_single_message_aggregates,
+    split_multi_message_aggregate, verify_multi_message_aggregate,
 };
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 use ssz::{ByteList, Ssz};
 use typenum::U524288;
 
-use crate::{AggregatedSignature, PublicKey, aggregated_signature::setup_aggregation};
+use crate::{
+    AggregatedSignature, PublicKey,
+    aggregated_signature::{acquire_prover, setup_aggregation},
+};
 
 type MultiMessageAggregateSizeLimit = U524288;
 
@@ -64,8 +66,10 @@ impl MultiMessageAggregate {
             })
             .collect::<Result<Vec<_>>>()?;
 
+        let _permit = acquire_prover();
+
         let merged = merge_single_message_aggregates(parts_lean, log_inv_rate)?;
-        let bytes = merged.compress_without_pubkeys();
+        let bytes = merged.to_bytes_without_pubkeys();
         Self::new(&bytes)
     }
 
@@ -91,7 +95,7 @@ impl MultiMessageAggregate {
 
         let pubkeys_per_info = sorted_dedup_lean_pubkeys(pubkeys_per_message);
 
-        let sig = MultiMessageAggregateSignature::decompress_without_pubkeys(
+        let sig = MultiMessageAggregateSignature::from_bytes_without_pubkeys(
             self.proof.as_bytes(),
             pubkeys_per_info,
         )
@@ -105,10 +109,10 @@ impl MultiMessageAggregate {
             );
         }
         for (i, (expected_message, expected_slot)) in messages.iter().enumerate() {
-            if sig.info[i].without_pubkeys.message != *expected_message.as_fixed_bytes() {
+            if sig.info[i].core.message != *expected_message.as_fixed_bytes() {
                 bail!("component {i} bound to a different message than expected");
             }
-            if sig.info[i].without_pubkeys.slot != *expected_slot {
+            if sig.info[i].core.slot != *expected_slot {
                 bail!("component {i} bound to a different slot than expected");
             }
         }
@@ -138,15 +142,28 @@ impl MultiMessageAggregate {
         }
 
         let pubkeys_per_info = sorted_dedup_lean_pubkeys(pubkeys_per_message);
-        let sig = MultiMessageAggregateSignature::decompress_without_pubkeys(
+        let sig = MultiMessageAggregateSignature::from_bytes_without_pubkeys(
             self.proof.as_bytes(),
             pubkeys_per_info,
         )
         .ok_or_else(|| anyhow!("invalid multi-message aggregate bytes"))?;
 
-        let recovered =
-            split_multi_message_aggregate_by_message(sig, *message.as_fixed_bytes(), log_inv_rate)?;
-        let bytes = recovered.compress_without_pubkeys();
+        let matches: Vec<usize> = sig
+            .info
+            .iter()
+            .enumerate()
+            .filter_map(|(i, info)| (info.core.message == *message.as_fixed_bytes()).then_some(i))
+            .collect();
+        let index = match matches.as_slice() {
+            [i] => *i,
+            [] => bail!("split-by-message target not found in multi-message components"),
+            _ => bail!("split-by-message target matched multiple components"),
+        };
+
+        let _permit = acquire_prover();
+
+        let recovered = split_multi_message_aggregate(sig, index, log_inv_rate)?;
+        let bytes = recovered.to_bytes_without_pubkeys();
         AggregatedSignature::new(&bytes)
     }
 }

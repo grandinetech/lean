@@ -1,13 +1,6 @@
-use std::sync::Mutex;
-
 use anyhow::{Error, Result, anyhow};
 use derive_more::Debug;
-use leansig::serialization::Serializable;
-use leansig::signature::generalized_xmss::instantiations_aborting::lifetime_2_to_the_32::{
-    SIGAbortingTargetSumLifetime32Dim46Base8 as XmssScheme,
-    SecretKeyAbortingTargetSumLifetime32Dim46Base8 as XmssSecretKey,
-};
-use leansig::signature::{SignatureScheme, SignatureSchemeSecretKey};
+use lean_multisig::{XmssSecretKey, xmss_key_gen, xmss_sign};
 use rand::CryptoRng;
 use ssz::H256;
 
@@ -15,36 +8,20 @@ use crate::{PublicKey, Signature};
 
 // TODO(zeroize): upstream `XmssSecretKey` does not derive `Zeroize`, so we cannot
 // derive `ZeroizeOnDrop` on the wrapper. Acceptable for devnet bring-up; before
-// mainnet, either upstream a `Zeroize` derive on `GeneralizedXMSSSecretKey` or
-// implement `Drop` here manually (zeroize the inner buffers via accessor).
+// mainnet, either upstream a `Zeroize` derive on `XmssSecretKey` or implement
+// `Drop` here manually (zeroize the inner buffers via accessor).
 #[derive(Debug)]
 #[debug("[REDACTED]")]
-pub struct SecretKey(Mutex<XmssSecretKey>);
+pub struct SecretKey(XmssSecretKey);
 
 impl SecretKey {
     pub fn sign(&self, message: H256, epoch: u32) -> Result<Signature> {
-        let mut sk = self
-            .0
-            .lock()
-            .map_err(|_| anyhow!("failed to acquire secret key lock"))?;
-        let target = epoch as u64;
-
-        if !sk.get_activation_interval().contains(&target) {
+        if !self.0.activation_slots().contains(&epoch) {
             return Err(anyhow!("epoch {epoch} outside key activation window"));
         }
 
-        while !sk.get_prepared_interval().contains(&target) {
-            let before = sk.get_prepared_interval();
-            sk.advance_preparation();
-            if sk.get_prepared_interval() == before {
-                return Err(anyhow!(
-                    "advance_preparation made no progress for epoch {epoch}"
-                ));
-            }
-        }
-
-        let sig = XmssScheme::sign(&sk, epoch, message.as_fixed_bytes())
-            .map_err(|_| anyhow!("failed to sign message"))?;
+        let sig = xmss_sign(&self.0, epoch, message.as_fixed_bytes())
+            .map_err(|err| anyhow!("failed to sign message: {err:?}"))?;
         Ok(Signature::from_lean(sig))
     }
 
@@ -53,9 +30,9 @@ impl SecretKey {
         activation_epoch: u32,
         num_active_epochs: u32,
     ) -> (PublicKey, SecretKey) {
-        let (pk, sk) =
-            XmssScheme::key_gen(rng, activation_epoch as usize, num_active_epochs as usize);
-        (PublicKey::from_lean(pk), SecretKey(Mutex::new(sk)))
+        let (pk, sk) = xmss_key_gen(rng, activation_epoch as u64, num_active_epochs as u64)
+            .expect("activation range must fit within the 2^32 key lifetime");
+        (PublicKey::from_lean(pk), SecretKey(sk))
     }
 }
 
@@ -63,8 +40,8 @@ impl TryFrom<&[u8]> for SecretKey {
     type Error = Error;
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        let sk = XmssSecretKey::from_bytes(value)
+        let sk = postcard::from_bytes::<XmssSecretKey>(value)
             .map_err(|_| anyhow!("value is not valid secret key"))?;
-        Ok(Self(Mutex::new(sk)))
+        Ok(Self(sk))
     }
 }
