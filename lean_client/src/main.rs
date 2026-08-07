@@ -430,6 +430,13 @@ struct Args {
     #[arg(long, default_value_t = false)]
     enable_proposer_aggregation: bool,
 
+    /// Run the leanVM prover on its bump arena: faster proving, but the arena
+    /// never returns pages to the OS, so RSS ratchets to the allocation
+    /// high-water mark for the process lifetime. Off by default (system
+    /// allocator: slower proving, bounded memory).
+    #[arg(long, default_value_t = false)]
+    prover_arena: bool,
+
     #[cfg(shadow_mode)]
     #[command(flatten)]
     shadow: ShadowOptions,
@@ -461,10 +468,6 @@ struct ShadowOptions {
 #[cfg_attr(shadow_mode, tokio::main(flavor = "current_thread"))]
 #[cfg_attr(not(shadow_mode), tokio::main)]
 async fn main() -> Result<()> {
-    let rayon_threads = num_cpus::get().saturating_sub(3).max(1);
-    xmss::configure_rayon_pool(rayon_threads);
-    xmss::setup_aggregation();
-
     tracing_subscriber::fmt()
         .with_ansi(std::io::stdout().is_terminal())
         .with_env_filter(
@@ -481,6 +484,9 @@ async fn main() -> Result<()> {
     );
 
     let args = Args::parse();
+
+    xmss::set_prover_arena(args.prover_arena);
+    xmss::setup_aggregation();
 
     #[cfg(shadow_mode)]
     {
@@ -641,6 +647,8 @@ async fn main() -> Result<()> {
     };
 
     let config = Config { genesis_time };
+
+    metrics::set_gossip_arrival_clock(genesis_time * 1000, MILLIS_PER_INTERVAL, INTERVALS_PER_SLOT);
 
     // ── Anchor state: download checkpoint or use genesis ─────────────────────────────────────
     // For checkpoint sync: state is downloaded now; the anchor block is fetched from the
@@ -1583,6 +1591,7 @@ async fn main() -> Result<()> {
                     aggregator.as_mut().unwrap().recv().await
                 }, if aggregator.is_some() => {
                     if let Some((aggregations, consumed_data_roots)) = maybe_agg {
+                        let arrival_ms = metrics::unix_now_ms();
                         let mut to_publish = Vec::with_capacity(aggregations.len());
                         {
                             let mut s = store.write();
@@ -1603,6 +1612,7 @@ async fn main() -> Result<()> {
                             });
                         }
                         for aggregation in to_publish {
+                            metrics::observe_gossip_aggregation_arrival(arrival_ms);
                             if let Err(e) = chain_outbound_sender.send(
                                 OutboundP2pRequest::GossipAggregation(aggregation)
                             ) {

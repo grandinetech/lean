@@ -6,16 +6,16 @@ use core::{
 
 use crate::public_key::PublicKey;
 use anyhow::{Error, Result, anyhow};
-use eth_ssz::DecodeError;
-use leansig_wrapper::{XmssSignature, xmss_signature_from_ssz, xmss_signature_to_ssz, xmss_verify};
+use eth_ssz::{Decode as _, DecodeError, Encode as _};
+use lean_multisig::{XmssSignature, xmss_verify};
 use metrics::METRICS;
-use serde::de;
+use serde::de::{self, Visitor};
 use serde::{Deserialize, Serialize};
 use ssz::{ByteVector, H256, Ssz};
-use typenum::{Sum, U8, U32, U64, U128, U256, U2048};
+use typenum::{Sum, U8, U16, U32, U128, U1024};
 
-// 2536 = 2048 + 256 + 128 + 64 + 32 + 8
-type SignatureSize = Sum<Sum<Sum<Sum<Sum<U2048, U256>, U128>, U64>, U32>, U8>;
+// 1208 = 1024 + 128 + 32 + 16 + 8
+type SignatureSize = Sum<Sum<Sum<Sum<U1024, U128>, U32>, U16>, U8>;
 
 type LeanSigSignature = XmssSignature;
 
@@ -26,11 +26,11 @@ pub struct Signature(ByteVector<SignatureSize>);
 
 impl Signature {
     pub fn new(inner: &[u8]) -> Result<Self, DecodeError> {
-        xmss_signature_from_ssz(inner)
+        XmssSignature::from_ssz_bytes(inner)
             .map_err(|_| DecodeError::BytesInvalid("invalid xmss signature".to_string()))?;
 
         Ok(Self(inner.try_into().expect(
-            "slice of length != 2536 shouldn't deserialize as valid leansig signature",
+            "slice of length != 1208 shouldn't deserialize as valid xmss signature",
         )))
     }
 
@@ -47,31 +47,31 @@ impl Signature {
                 });
                 Ok(())
             }
-            Err(()) => {
+            Err(err) => {
                 METRICS.get().map(|metrics| {
                     metrics
                         .lean_pq_sig_attestation_signatures_invalid_total
                         .inc();
                 });
-                Err(anyhow!("invalid signature"))
+                Err(anyhow!("invalid signature: {err:?}"))
             }
         }
     }
 
     pub(crate) fn from_lean(signature: LeanSigSignature) -> Self {
-        let bytes = xmss_signature_to_ssz(&signature);
+        let bytes = signature.as_ssz_bytes();
 
         Self(
             bytes
                 .as_slice()
                 .try_into()
-                .expect("slice of length != 2536 shouldn't deserialize as valid leansig signature"),
+                .expect("slice of length != 1208 shouldn't deserialize as valid xmss signature"),
         )
     }
 
     pub(crate) fn as_lean(&self) -> LeanSigSignature {
-        xmss_signature_from_ssz(self.0.as_bytes())
-            .expect("signature internal representation must be valid leansig signature")
+        XmssSignature::from_ssz_bytes(self.0.as_bytes())
+            .expect("signature internal representation must be valid xmss signature")
     }
 }
 
@@ -121,84 +121,31 @@ impl<'de> Deserialize<'de> for Signature {
     where
         D: serde::Deserializer<'de>,
     {
-        #[derive(Deserialize)]
-        struct DataWrapper<T> {
-            data: T,
-        }
+        struct SignatureVisitor;
 
-        #[derive(Deserialize)]
-        struct XmssSignatureJson {
-            path: XmssPath,
-            rho: DataWrapper<Vec<u32>>,
-            hashes: DataWrapper<Vec<DataWrapper<Vec<u32>>>>,
-        }
+        impl Visitor<'_> for SignatureVisitor {
+            type Value = Signature;
 
-        #[derive(Deserialize)]
-        struct XmssPath {
-            siblings: DataWrapper<Vec<DataWrapper<Vec<u32>>>>,
-        }
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                write!(formatter, "hex-encoded xmss signature")
+            }
 
-        let xmss_sig = XmssSignatureJson::deserialize(deserializer)?;
-        let mut rho_bytes = Vec::new();
-        for val in &xmss_sig.rho.data {
-            rho_bytes.extend_from_slice(&val.to_le_bytes());
-        }
-        let rho_len = rho_bytes.len(); // Should be 28 (7 * 4)
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                v.parse().map_err(de::Error::custom)
+            }
 
-        // 2. Serialize Path/Siblings (Variable length)
-        let mut path_bytes = Vec::new();
-        // Prepend 4 bytes (containing 4) as an offset which would come with real SSZ serialization
-        let inner_offset: u32 = 4;
-        path_bytes.extend_from_slice(&inner_offset.to_le_bytes()); // [04 00 00 00]
-        for sibling in &xmss_sig.path.siblings.data {
-            for val in &sibling.data {
-                path_bytes.extend_from_slice(&val.to_le_bytes());
+            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                self.visit_str(&v)
             }
         }
 
-        // 3. Serialize Hashes (Variable length)
-        let mut hashes_bytes = Vec::new();
-        for hash in &xmss_sig.hashes.data {
-            for val in &hash.data {
-                hashes_bytes.extend_from_slice(&val.to_le_bytes());
-            }
-        }
-
-        // --- STEP 2: CALCULATE OFFSETS ---
-
-        // The fixed part contains:
-        // 1. Path Offset (4 bytes)
-        // 2. Rho Data (rho_len bytes)
-        // 3. Hashes Offset (4 bytes)
-        let fixed_part_size = 4 + rho_len + 4;
-
-        // Offset to 'path' starts immediately after the fixed part
-        let offset_path = fixed_part_size as u32;
-
-        // Offset to 'hashes' starts after 'path' data
-        let offset_hashes = offset_path + (path_bytes.len() as u32);
-
-        // --- STEP 3: CONSTRUCT FINAL SSZ BYTES ---
-
-        let mut ssz_bytes = Vec::new();
-
-        // 1. Write Offset to Path (u32, Little Endian)
-        ssz_bytes.extend_from_slice(&offset_path.to_le_bytes());
-
-        // 2. Write Rho Data (Fixed)
-        ssz_bytes.extend_from_slice(&rho_bytes);
-
-        // 3. Write Offset to Hashes (u32, Little Endian)
-        ssz_bytes.extend_from_slice(&offset_hashes.to_le_bytes());
-
-        // 4. Write Path Data (Variable)
-        ssz_bytes.extend_from_slice(&path_bytes);
-
-        // 5. Write Hashes Data (Variable)
-        ssz_bytes.extend_from_slice(&hashes_bytes);
-
-        Signature::try_from(ssz_bytes.as_slice())
-            .map_err(|err| de::Error::custom(format!("invalid signature: {err:?}")))
+        deserializer.deserialize_str(SignatureVisitor)
     }
 }
 
@@ -209,6 +156,6 @@ mod test {
 
     #[test]
     fn valid_signature_size() {
-        assert_eq!(SignatureSize::U64, 2536);
+        assert_eq!(SignatureSize::U64, 1208);
     }
 }

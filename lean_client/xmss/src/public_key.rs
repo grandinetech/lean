@@ -5,16 +5,16 @@ use core::{
 };
 
 use anyhow::{Error, anyhow};
-use eth_ssz::DecodeError;
-use leansig_wrapper::{XmssPublicKey, xmss_public_key_from_ssz, xmss_public_key_to_ssz};
+use eth_ssz::{Decode as _, DecodeError, Encode as _};
+use lean_multisig::XmssPublicKey;
 use serde::{
     Deserialize, Serialize,
     de::{self, Visitor},
 };
 use ssz::{BytesToDepth, MerkleTree, SszHash, SszRead, SszSize, SszWrite};
-use typenum::{U1, U52, Unsigned};
+use typenum::{U1, U32, Unsigned};
 
-type PublicKeySize = U52;
+type PublicKeySize = U32;
 
 type LeanSigPublicKey = XmssPublicKey;
 
@@ -61,26 +61,26 @@ impl SszHash for PublicKey {
 
 impl PublicKey {
     pub fn new(bytes: &[u8]) -> Result<Self, DecodeError> {
-        xmss_public_key_from_ssz(bytes)
+        XmssPublicKey::from_ssz_bytes(bytes)
             .map_err(|_| DecodeError::BytesInvalid("invalid xmss public key".to_string()))?;
 
         Ok(Self(bytes.try_into().expect(
-            "slice of length != 52 shouldn't deserialize as valid leansig public key",
+            "slice of length != 32 shouldn't deserialize as valid xmss public key",
         )))
     }
 
     pub(crate) fn from_lean(key: LeanSigPublicKey) -> Self {
-        let bytes = xmss_public_key_to_ssz(&key);
+        let bytes = key.as_ssz_bytes();
         Self(
             bytes
                 .as_slice()
                 .try_into()
-                .expect("slice of length != 52 shouldn't deserialize as valid leansig public key"),
+                .expect("slice of length != 32 shouldn't deserialize as valid xmss public key"),
         )
     }
 
     pub(crate) fn as_lean(&self) -> LeanSigPublicKey {
-        xmss_public_key_from_ssz(&self.0).expect("PublicKey was instantiated incorrectly")
+        XmssPublicKey::from_ssz_bytes(&self.0).expect("PublicKey was instantiated incorrectly")
     }
 }
 

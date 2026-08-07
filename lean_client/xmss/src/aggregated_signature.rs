@@ -1,15 +1,20 @@
 use core::fmt::{self, Display};
-use std::{str::FromStr, sync::Once};
+use std::{
+    str::FromStr,
+    sync::{
+        Mutex, MutexGuard, Once,
+        atomic::{AtomicBool, Ordering},
+    },
+};
 
 use crate::{PublicKey, Signature};
 use anyhow::{Context, Error, Result, anyhow, bail};
 use ethereum_types::H256;
-use leansig_wrapper::XmssPublicKey;
-use metrics::{METRICS, stop_and_discard};
-use rec_aggregation::{
-    SingleMessageAggregateSignature, aggregate_single_message_signatures,
-    init_aggregation_bytecode, verify_single_message_aggregate,
+use lean_multisig::{
+    SingleMessageAggregateSignature, XmssPublicKey, aggregate_single_message_signatures,
+    verify_single_message_aggregate,
 };
+use metrics::{METRICS, stop_and_discard};
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 use ssz::{ByteList, ReadError, Size, SszHash, SszRead, SszSize, SszWrite, U1, WriteError};
 use typenum::U524288;
@@ -19,7 +24,7 @@ type AggregatedSignatureSizeLimit = U524288;
 
 /// Cryptographic proof that a set of validators signed a message.
 ///
-/// Wire form: the lean-multisig `compress_without_pubkeys()` output. Pubkeys
+/// Wire form: the lean-multisig `to_bytes_without_pubkeys()` output. Pubkeys
 /// are not baked into the bytes — verifiers must supply them externally,
 /// matching `SingleMessageAggregate.proof: ByteList512KiB` in leanSpec
 /// (`forks/lstar/containers/aggregation.py`) and zeam's `xmss_verify_type_1`
@@ -52,22 +57,36 @@ impl SszHash for AggregatedSignature {
     }
 }
 
+static USE_ARENA: AtomicBool = AtomicBool::new(false);
+
+/// Select the prover allocator before the first crypto operation. The leanVM arena
+/// is faster but never returns pages to the OS, so RSS ratchets to the allocation
+/// high-water mark; the system allocator (default) trades throughput for bounded
+/// memory. No effect once `setup_aggregation` has run.
+pub fn set_prover_arena(enable: bool) {
+    USE_ARENA.store(enable, Ordering::Relaxed);
+}
+
 pub fn setup_aggregation() {
     static SETUP: Once = Once::new();
     SETUP.call_once(|| {
-        init_aggregation_bytecode();
-        backend::precompute_dft_twiddles::<backend::KoalaBear>(1 << 24);
+        if USE_ARENA.load(Ordering::Relaxed) {
+            lean_multisig::setup_prover();
+        } else {
+            lean_multisig::setup_prover_without_arena();
+        }
     });
 }
 
-/// Cap the global rayon pool so the leansig prover doesn't oversubscribe physical
-/// cores. Idempotent; safe to call once at process startup before any aggregation.
-pub fn configure_rayon_pool(num_threads: usize) {
-    drop(
-        rayon::ThreadPoolBuilder::new()
-            .num_threads(num_threads)
-            .build_global(),
-    );
+/// Claims the exclusive right to prove. leanVM allows one proof at a time per
+/// process; a second concurrent one panics. Verification needs no permit. The
+/// permit guards no data, so a poisoned lock is recovered rather than propagated:
+/// one panicking prover must not brick every later proof.
+pub(crate) fn acquire_prover() -> MutexGuard<'static, ()> {
+    static PROVER_PERMIT: Mutex<()> = Mutex::new(());
+    PROVER_PERMIT
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
 }
 
 impl AggregatedSignature {
@@ -159,6 +178,8 @@ impl AggregatedSignature {
             .map(|(pks, agg)| agg.as_lean(sorted_dedup_lean_pubkeys(pks)))
             .collect::<Result<Vec<_>>>()?;
 
+        let _permit = acquire_prover();
+
         let agg = aggregate_single_message_signatures(
             &children_arg,
             raw_xmss,
@@ -173,7 +194,7 @@ impl AggregatedSignature {
                 .inc_by(sig_count as u64)
         });
 
-        let bytes = agg.compress_without_pubkeys();
+        let bytes = agg.to_bytes_without_pubkeys();
         Ok(Self(ByteList::try_from(bytes).context(
             "aggregated proof too large - exceeds 512 KiB cap",
         )?))
@@ -211,10 +232,10 @@ impl AggregatedSignature {
 
         let agg = self.as_lean(expected_pubkeys)?;
 
-        if agg.info.without_pubkeys.message != *message.as_fixed_bytes() {
+        if agg.info.core.message != *message.as_fixed_bytes() {
             bail!("aggregated signature bound to a different message than expected");
         }
-        if agg.info.without_pubkeys.slot != slot {
+        if agg.info.core.slot != slot {
             bail!("aggregated signature bound to a different slot than expected");
         }
 
@@ -243,7 +264,7 @@ impl AggregatedSignature {
         &self,
         pubkeys: Vec<XmssPublicKey>,
     ) -> Result<SingleMessageAggregateSignature> {
-        SingleMessageAggregateSignature::decompress_without_pubkeys(self.0.as_bytes(), pubkeys)
+        SingleMessageAggregateSignature::from_bytes_without_pubkeys(self.0.as_bytes(), pubkeys)
             .ok_or_else(|| anyhow!("invalid aggregated XMSS signature"))
     }
 
