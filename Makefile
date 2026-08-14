@@ -32,3 +32,7 @@ docker-local:
 .PHONY: release
 release:
 	$(MAKE) -C lean_client release
+
+.PHONY: test-hive
+test-hive:
+	$(MAKE) -C lean_client test-hive

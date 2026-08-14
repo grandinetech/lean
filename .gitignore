@@ -2,6 +2,7 @@ lean_client/target/*
 lean_client/tests/mainnet
 lean_client/bin
 lean_client/spec/
+lean_client/hive/
 target/*
 *.local*
 
