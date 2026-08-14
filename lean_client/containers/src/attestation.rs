@@ -168,11 +168,6 @@ impl AggregationBits {
             .filter_map(|(i, bit)| if *bit { Some(i as u64) } else { None })
             .collect();
 
-        assert!(
-            !indices.is_empty(),
-            "Aggregated attestation must reference at least one validator"
-        );
-
         indices
     }
 }

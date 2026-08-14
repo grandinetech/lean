@@ -23,7 +23,7 @@ impl From<TestCase> for PracticalCase {
             pre: case.pre.into(),
             blocks: case.blocks.map(|v| v.into_iter().map(Into::into).collect()),
             post: case.post,
-            expect_exception: case.expect_exception,
+            expect_exception: case.rejection_reason,
             info: case.info.unwrap_or_else(default_info),
         }
     }
@@ -136,12 +136,14 @@ impl TestRunner {
 
             // Verify post-state conditions
             if let Some(post) = test_case.post {
-                if state.slot != post.slot {
-                    return Err(format!(
-                        "Post-state slot mismatch: expected {:?}, got {:?}",
-                        post.slot, state.slot
-                    )
-                    .into());
+                if let Some(expected_slot) = post.slot {
+                    if state.slot != expected_slot {
+                        return Err(format!(
+                            "Post-state slot mismatch: expected {:?}, got {:?}",
+                            expected_slot, state.slot
+                        )
+                        .into());
+                    }
                 }
 
                 // Only check validator count if specified in post-state
@@ -254,12 +256,14 @@ impl TestRunner {
 
             // Verify post-state conditions
             if let Some(post) = test_case.post {
-                if state.slot != post.slot {
-                    return Err(format!(
-                        "Post-state slot mismatch: expected {:?}, got {:?}",
-                        post.slot, state.slot
-                    )
-                    .into());
+                if let Some(expected_slot) = post.slot {
+                    if state.slot != expected_slot {
+                        return Err(format!(
+                            "Post-state slot mismatch: expected {:?}, got {:?}",
+                            expected_slot, state.slot
+                        )
+                        .into());
+                    }
                 }
 
                 println!("\n✓ All post-state checks passed");
@@ -369,12 +373,14 @@ impl TestRunner {
 
             // Verify post-state conditions
             if let Some(post) = test_case.post {
-                if state.slot != post.slot {
-                    return Err(format!(
-                        "Post-state slot mismatch: expected {:?}, got {:?}",
-                        post.slot, state.slot
-                    )
-                    .into());
+                if let Some(expected_slot) = post.slot {
+                    if state.slot != expected_slot {
+                        return Err(format!(
+                            "Post-state slot mismatch: expected {:?}, got {:?}",
+                            expected_slot, state.slot
+                        )
+                        .into());
+                    }
                 }
 
                 println!("\n✓ All post-state checks passed");
@@ -648,12 +654,14 @@ impl TestRunner {
     ) -> Result<(), Box<dyn std::error::Error>> {
         if let Some(ref post) = test_case.post {
             // Verify slot
-            if state.slot != post.slot {
-                return Err(format!(
-                    "Post-state slot mismatch: expected {:?}, got {:?}",
-                    post.slot, state.slot
-                )
-                .into());
+            if let Some(expected_slot) = post.slot {
+                if state.slot != expected_slot {
+                    return Err(format!(
+                        "Post-state slot mismatch: expected {:?}, got {:?}",
+                        expected_slot, state.slot
+                    )
+                    .into());
+                }
             }
 
             // Verify validator count if specified

@@ -268,10 +268,21 @@ async fn run_state_transition(body: Bytes) -> Json<StateTransitionResponse> {
     // slot must be rejected. When that's the shape, exercise
     // `process_slots(state.slot)` so the invariant fires and the resulting
     // error surfaces as `succeeded: false`.
-    if last_err.is_none() && blocks_was_empty && case.expect_exception.is_some() {
-        let target_slot = state.slot;
-        if let Err(err) = state.clone().process_slots(target_slot) {
-            last_err = Some(format!("process_slots({target_slot:?}) failed: {err}"));
+    if last_err.is_none() && blocks_was_empty && case.rejection_reason.is_some() {
+        let next_slot = containers::Slot(state.slot.0 + 1);
+        let probe = containers::Block {
+            slot: next_slot,
+            proposer_index: 0,
+            parent_root: ssz::H256::zero(),
+            state_root: ssz::H256::zero(),
+            body: containers::BlockBody::default(),
+        };
+        let result = state
+            .clone()
+            .process_slots(next_slot)
+            .and_then(|advanced| advanced.process_block_header(&probe));
+        if let Err(err) = result {
+            last_err = Some(err.to_string());
         }
     }
 

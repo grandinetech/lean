@@ -369,6 +369,11 @@ impl State {
         );
 
         ensure!(
+            self.validators.len_u64() > 0,
+            "Cannot schedule a proposer for an empty validator registry"
+        );
+
+        ensure!(
             is_proposer_for(block.proposer_index, self.slot, self.validators.len_u64()),
             "Incorrect block proposer"
         );
@@ -510,6 +515,11 @@ impl State {
             let target = attestation.data.target.clone();
             let head = attestation.data.head.clone();
 
+            ensure!(
+                attestation.aggregation_bits.0.iter().any(|bit| *bit),
+                "empty aggregation bits"
+            );
+
             if !justified_slots.is_slot_justified(finalized_slot, source.slot)? {
                 info!("skipping attestation, source slot is not justified");
                 continue;
@@ -522,6 +532,15 @@ impl State {
 
             if source.root.is_zero() || target.root.is_zero() || head.root.is_zero() {
                 info!("skipping attestation, source/target/head root is zero");
+                continue;
+            }
+
+            let chain_length = self.historical_block_hashes.len_u64();
+            if source.slot.0 >= chain_length
+                || target.slot.0 >= chain_length
+                || head.slot.0 >= chain_length
+            {
+                info!("skipping attestation, source/target/head slot past chain view");
                 continue;
             }
 
