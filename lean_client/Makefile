@@ -148,7 +148,7 @@ test-hive: hive/hive docker-local
 	fi; \
 	if ! command -v jq >/dev/null 2>&1; then \
 		echo "jq not found; skipping summary. Raw results under $$logs"; \
-		exit 0; \
+		exit $$hive_status; \
 	fi; \
 	summary=$$( \
 		echo "==================== Hive test summary ===================="; \
@@ -174,7 +174,8 @@ test-hive: hive/hive docker-local
 	printf '%s\n' "$$summary"; \
 	if [ -n "$$GITHUB_STEP_SUMMARY" ]; then \
 		{ echo '```'; printf '%s\n' "$$summary"; echo '```'; } >> "$$GITHUB_STEP_SUMMARY"; \
-	fi
+	fi; \
+	exit $$hive_status
 
 hive/hive: hive/.hive-ref-$(HIVE_VERSION)
 	@echo "==> Building hive binary (go build)..."
