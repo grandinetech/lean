@@ -13,7 +13,7 @@ use typenum::U524288;
 
 use crate::{
     AggregatedSignature, PublicKey,
-    aggregated_signature::{acquire_prover, setup_aggregation},
+    aggregated_signature::{PROVER_PERMIT, setup_aggregation},
 };
 
 type MultiMessageAggregateSizeLimit = U524288;
@@ -66,7 +66,7 @@ impl MultiMessageAggregate {
             })
             .collect::<Result<Vec<_>>>()?;
 
-        let _permit = acquire_prover();
+        let _permit = PROVER_PERMIT.lock().unwrap();
 
         let merged = merge_single_message_aggregates(parts_lean, log_inv_rate)?;
         let bytes = merged.to_bytes_without_pubkeys();
@@ -160,7 +160,7 @@ impl MultiMessageAggregate {
             _ => bail!("split-by-message target matched multiple components"),
         };
 
-        let _permit = acquire_prover();
+        let _permit = PROVER_PERMIT.lock().unwrap();
 
         let recovered = split_multi_message_aggregate(sig, index, log_inv_rate)?;
         let bytes = recovered.to_bytes_without_pubkeys();
