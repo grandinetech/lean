@@ -2,7 +2,7 @@ use core::fmt::{self, Display};
 use std::{
     str::FromStr,
     sync::{
-        Mutex, MutexGuard, Once,
+        Mutex, Once,
         atomic::{AtomicBool, Ordering},
     },
 };
@@ -64,13 +64,13 @@ static USE_ARENA: AtomicBool = AtomicBool::new(false);
 /// high-water mark; the system allocator (default) trades throughput for bounded
 /// memory. No effect once `setup_aggregation` has run.
 pub fn set_prover_arena(enable: bool) {
-    USE_ARENA.store(enable, Ordering::Relaxed);
+    USE_ARENA.store(enable, Ordering::SeqCst);
 }
 
 pub fn setup_aggregation() {
     static SETUP: Once = Once::new();
     SETUP.call_once(|| {
-        if USE_ARENA.load(Ordering::Relaxed) {
+        if USE_ARENA.load(Ordering::SeqCst) {
             lean_multisig::setup_prover();
         } else {
             lean_multisig::setup_prover_without_arena();
@@ -78,16 +78,9 @@ pub fn setup_aggregation() {
     });
 }
 
-/// Claims the exclusive right to prove. leanVM allows one proof at a time per
-/// process; a second concurrent one panics. Verification needs no permit. The
-/// permit guards no data, so a poisoned lock is recovered rather than propagated:
-/// one panicking prover must not brick every later proof.
-pub(crate) fn acquire_prover() -> MutexGuard<'static, ()> {
-    static PROVER_PERMIT: Mutex<()> = Mutex::new(());
-    PROVER_PERMIT
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner())
-}
+/// leanVM allows one proof at a time per process; a second concurrent one
+/// panics. Hold this lock across every prove call; verification needs no permit.
+pub(crate) static PROVER_PERMIT: Mutex<()> = Mutex::new(());
 
 impl AggregatedSignature {
     pub fn new(bytes: &[u8]) -> Result<Self> {
@@ -178,7 +171,7 @@ impl AggregatedSignature {
             .map(|(pks, agg)| agg.as_lean(sorted_dedup_lean_pubkeys(pks)))
             .collect::<Result<Vec<_>>>()?;
 
-        let _permit = acquire_prover();
+        let _permit = PROVER_PERMIT.lock().unwrap();
 
         let agg = aggregate_single_message_signatures(
             &children_arg,

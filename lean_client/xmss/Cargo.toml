@@ -12,7 +12,7 @@ derive_more = { workspace = true }
 eth_ssz = { workspace = true }
 ethereum-types = { workspace = true }
 hex = { workspace = true }
-lean_multisig = { workspace = true }
+lean-multisig = { workspace = true }
 metrics = { workspace = true }
 postcard = { workspace = true }
 rand = { workspace = true }
