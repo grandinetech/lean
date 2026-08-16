@@ -410,8 +410,7 @@ pub fn on_attestation(
 /// it in `latest_new_aggregated_payloads`. At interval 3, these are merged with
 /// `latest_known_aggregated_payloads` (from blocks) to compute safe target.
 ///
-/// `verify_proof` gates only the XMSS SNARK check (production: `true`; mocked
-/// spec-test proofs: `false`).
+/// `verify_proof` gates only the XMSS SNARK check.
 #[inline]
 pub fn on_aggregated_attestation(
     store: &mut Store,

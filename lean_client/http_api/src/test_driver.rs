@@ -34,6 +34,8 @@ use spec_test_fixtures::{
 use ssz::SszHash;
 use xmss::{AggregatedSignature, Signature};
 
+const MOCK_AGGREGATION_PROOF_MARKER: &[u8] = b"MOCKED-AGGREGATION-PROOF";
+
 /// Shared state for test-driver routes. Carries a writable handle to the
 /// fork-choice store plus the `BlockCache` that `on_block` requires.
 ///
@@ -461,10 +463,6 @@ fn hex_root(root: &ssz::H256) -> String {
     format!("0x{}", hex::encode(root.as_bytes()))
 }
 
-/// Sentinel emitted by the leanSpec fixture generator for `proofSetting: 0`
-/// (mocked) aggregation proofs. Real proofs never contain it.
-const MOCK_AGGREGATION_PROOF_MARKER: &[u8] = b"MOCKED-AGGREGATION-PROOF";
-
 /// Build a `SignedAggregatedAttestation` from the fixture-supplied
 /// `gossipAggregatedAttestation` step payload.
 ///
@@ -474,8 +472,7 @@ const MOCK_AGGREGATION_PROOF_MARKER: &[u8] = b"MOCKED-AGGREGATION-PROOF";
 /// wrap with the participants bitfield from the same payload.
 ///
 /// Returns the attestation and whether its proof should be XMSS-verified —
-/// `false` when the proof is the mocked sentinel, since the simulator (in the
-/// hive repo) does not forward the fixture's `proofSetting`.
+/// `false` when the proof is the mocked sentinel.
 fn build_signed_aggregated_attestation(
     step: GossipAggregatedAttestationStep,
 ) -> Result<(SignedAggregatedAttestation, bool), String> {
