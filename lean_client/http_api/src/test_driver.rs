@@ -412,8 +412,8 @@ fn apply_step(
                 // `Checks` steps still see a snapshot.
                 return Ok(());
             };
-            let signed = build_signed_aggregated_attestation(step)?;
-            on_aggregated_attestation(store, signed).map_err(|err| err.to_string())
+            let (signed, verify_proof) = build_signed_aggregated_attestation(step)?;
+            on_aggregated_attestation(store, signed, verify_proof).map_err(|err| err.to_string())
         }
         ForkChoiceStep::Checks { .. } => {
             // Pure-assertion step. The simulator validates against the
@@ -461,6 +461,10 @@ fn hex_root(root: &ssz::H256) -> String {
     format!("0x{}", hex::encode(root.as_bytes()))
 }
 
+/// Sentinel emitted by the leanSpec fixture generator for `proofSetting: 0`
+/// (mocked) aggregation proofs. Real proofs never contain it.
+const MOCK_AGGREGATION_PROOF_MARKER: &[u8] = b"MOCKED-AGGREGATION-PROOF";
+
 /// Build a `SignedAggregatedAttestation` from the fixture-supplied
 /// `gossipAggregatedAttestation` step payload.
 ///
@@ -468,20 +472,30 @@ fn hex_root(root: &ssz::H256) -> String {
 /// string (the harness cannot re-aggregate without the signers' private
 /// keys), so we decode it directly into an [`AggregatedSignature`] and
 /// wrap with the participants bitfield from the same payload.
+///
+/// Returns the attestation and whether its proof should be XMSS-verified —
+/// `false` when the proof is the mocked sentinel, since the simulator (in the
+/// hive repo) does not forward the fixture's `proofSetting`.
 fn build_signed_aggregated_attestation(
     step: GossipAggregatedAttestationStep,
-) -> Result<SignedAggregatedAttestation, String> {
+) -> Result<(SignedAggregatedAttestation, bool), String> {
     let proof_hex = step.proof.proof.data.trim_start_matches("0x");
     let proof_bytes = hex::decode(proof_hex)
         .map_err(|err| format!("invalid hex in aggregate proof_data: {err}"))?;
+    let verify_proof = !proof_bytes
+        .windows(MOCK_AGGREGATION_PROOF_MARKER.len())
+        .any(|window| window == MOCK_AGGREGATION_PROOF_MARKER);
     let proof_data = AggregatedSignature::new(&proof_bytes)
         .map_err(|err| format!("failed to construct aggregated signature: {err}"))?;
 
-    Ok(SignedAggregatedAttestation {
-        data: step.data.into(),
-        proof: AggregatedSignatureProof {
-            participants: step.proof.participants.into(),
-            proof_data,
+    Ok((
+        SignedAggregatedAttestation {
+            data: step.data.into(),
+            proof: AggregatedSignatureProof {
+                participants: step.proof.participants.into(),
+                proof_data,
+            },
         },
-    })
+        verify_proof,
+    ))
 }
