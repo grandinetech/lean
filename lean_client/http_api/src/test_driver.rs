@@ -377,20 +377,26 @@ fn apply_step(
             on_tick(store, target_time_millis, has_proposal.unwrap_or(false));
             Ok(())
         }
-        ForkChoiceStep::Block { block, .. } => {
+        ForkChoiceStep::Block {
+            block,
+            tick_to_slot,
+            ..
+        } => {
             let block: containers::Block = block.into();
             let signed = SignedBlock {
                 block,
                 proof: MultiMessageAggregate::default(),
             };
 
-            // Advance store time to the block's slot before applying it.
-            // Mirrors the local fork-choice test: attestations embedded in
-            // the block reference the slot, so the store needs to be at or
-            // past that interval.
-            let slot_time_millis =
-                (store.config.genesis_time + signed.block.slot.0 * SECONDS_PER_SLOT) * 1000;
-            on_tick(store, slot_time_millis, false);
+            // Advance store time to the block's slot before applying it, but
+            // only when the fixture requests it. Fixtures with
+            // `tickToSlot: false` deliberately keep the clock behind the block
+            // to exercise early-arrival and future-horizon handling.
+            if tick_to_slot {
+                let slot_time_millis =
+                    (store.config.genesis_time + signed.block.slot.0 * SECONDS_PER_SLOT) * 1000;
+                on_tick(store, slot_time_millis, false);
+            }
 
             // Skip XMSS signature verification — fork_choice fixtures ship
             // unsigned step blocks, so we apply them with a placeholder

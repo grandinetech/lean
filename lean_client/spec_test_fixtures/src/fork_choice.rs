@@ -43,7 +43,7 @@ pub enum ForkChoiceStep {
         time: Option<u64>,
         #[serde(default)]
         interval: Option<u64>,
-        #[serde(default)]
+        #[serde(default, rename = "hasProposal")]
         has_proposal: Option<bool>,
         #[serde(default)]
         checks: Option<StoreChecks>,
@@ -58,7 +58,7 @@ pub enum ForkChoiceStep {
         time: Option<u64>,
         #[serde(default)]
         interval: Option<u64>,
-        #[serde(default)]
+        #[serde(default, rename = "hasProposal")]
         has_proposal: Option<bool>,
         #[serde(default)]
         checks: Option<StoreChecks>,
@@ -69,6 +69,8 @@ pub enum ForkChoiceStep {
         valid: bool,
         #[serde(default)]
         checks: Option<StoreChecks>,
+        #[serde(default, rename = "tickToSlot")]
+        tick_to_slot: bool,
         block: TestBlockWithAttestation,
     },
     /// Apply a single-validator gossip attestation to the store.

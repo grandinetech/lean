@@ -3,8 +3,8 @@ use std::sync::Arc;
 
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use containers::{
-    AttestationData, Checkpoint, SignatureKey, SignedAggregatedAttestation, SignedAttestation,
-    SignedBlock, State,
+    AggregatedAttestation, AttestationData, Checkpoint, SignatureKey, SignedAggregatedAttestation,
+    SignedAttestation, SignedBlock, State,
 };
 use metrics::METRICS;
 use parking_lot::RwLock;
@@ -72,6 +72,14 @@ fn validate_attestation_data(store: &Store, data: &AttestationData) -> Result<()
         "Head slot {} must not be older than target slot {}",
         data.head.slot.0,
         data.target.slot.0
+    );
+
+    // A head in a future slot relative to the attestation slot is invalid.
+    ensure!(
+        data.slot >= data.head.slot,
+        "Attestation slot {} precedes head slot {}",
+        data.slot.0,
+        data.head.slot.0
     );
 
     // Validate checkpoint slots match block slots.
@@ -225,6 +233,20 @@ pub fn on_gossip_attestation(
                 .inc()
         });
     })?;
+
+    // Reject validators outside the registry (independent of signature checks).
+    let num_validators = store
+        .states
+        .get(&attestation_data.target.root)
+        .ok_or_else(|| anyhow!("no state for target block {}", attestation_data.target.root))?
+        .validators
+        .len_u64();
+    ensure!(
+        validator_id < num_validators,
+        "validator {} out of range (max {})",
+        validator_id,
+        num_validators
+    );
 
     // Non-aggregators validate attestation data but do not store or verify individual
     // signatures. Per leanSpec: only aggregators import gossip attestations for aggregation.
@@ -722,6 +744,13 @@ pub fn on_block(
         "block slot {} is more than one slot beyond current slot {}",
         block_slot,
         current_slot,
+    );
+
+    // Reject block bodies carrying duplicate AttestationData (the state
+    // transition only bounds the distinct count, it does not dedup).
+    ensure!(
+        !AggregatedAttestation::has_duplicate_data(&signed_block.block.body.attestations),
+        "block body has duplicate AttestationData"
     );
 
     process_block_internal(store, signed_block, block_root, verify_signatures)?;
