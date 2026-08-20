@@ -409,10 +409,13 @@ pub fn on_attestation(
 /// Verifies the aggregated XMSS proof against participant public keys and stores
 /// it in `latest_new_aggregated_payloads`. At interval 3, these are merged with
 /// `latest_known_aggregated_payloads` (from blocks) to compute safe target.
+///
+/// `verify_proof` gates only the XMSS SNARK check.
 #[inline]
 pub fn on_aggregated_attestation(
     store: &mut Store,
     signed_aggregated_attestation: SignedAggregatedAttestation,
+    verify_proof: bool,
 ) -> Result<()> {
     // Structure: { data: AttestationData, proof: AggregatedSignatureProof }
     let attestation_data = signed_aggregated_attestation.data.clone();
@@ -472,9 +475,11 @@ pub fn on_aggregated_attestation(
         })
         .collect::<Result<Vec<_>>>()?;
 
-    proof
-        .verify(public_keys, data_root, attestation_data.slot.0 as u32)
-        .context("aggregated attestation proof verification failed")?;
+    if verify_proof {
+        proof
+            .verify(public_keys, data_root, attestation_data.slot.0 as u32)
+            .context("aggregated attestation proof verification failed")?;
+    }
 
     let attestation_slot = attestation_data.slot;
     for vid in &validator_ids {
@@ -796,7 +801,7 @@ pub fn apply_verified_block(
         .remove(&block_root)
         .unwrap_or_default();
     for signed_agg in pending_agg {
-        if let Err(err) = on_aggregated_attestation(store, signed_agg) {
+        if let Err(err) = on_aggregated_attestation(store, signed_agg, true) {
             warn!(%err, "Pending aggregated attestation retry failed after block arrival");
         }
     }
