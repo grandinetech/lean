@@ -34,6 +34,8 @@ use spec_test_fixtures::{
 use ssz::SszHash;
 use xmss::{AggregatedSignature, Signature};
 
+const MOCK_AGGREGATION_PROOF_MARKER: &[u8] = b"MOCKED-AGGREGATION-PROOF";
+
 /// Shared state for test-driver routes. Carries a writable handle to the
 /// fork-choice store plus the `BlockCache` that `on_block` requires.
 ///
@@ -375,20 +377,26 @@ fn apply_step(
             on_tick(store, target_time_millis, has_proposal.unwrap_or(false));
             Ok(())
         }
-        ForkChoiceStep::Block { block, .. } => {
+        ForkChoiceStep::Block {
+            block,
+            tick_to_slot,
+            ..
+        } => {
             let block: containers::Block = block.into();
             let signed = SignedBlock {
                 block,
                 proof: MultiMessageAggregate::default(),
             };
 
-            // Advance store time to the block's slot before applying it.
-            // Mirrors the local fork-choice test: attestations embedded in
-            // the block reference the slot, so the store needs to be at or
-            // past that interval.
-            let slot_time_millis =
-                (store.config.genesis_time + signed.block.slot.0 * SECONDS_PER_SLOT) * 1000;
-            on_tick(store, slot_time_millis, false);
+            // Advance store time to the block's slot before applying it, but
+            // only when the fixture requests it. Fixtures with
+            // `tickToSlot: false` deliberately keep the clock behind the block
+            // to exercise early-arrival and future-horizon handling.
+            if tick_to_slot {
+                let slot_time_millis =
+                    (store.config.genesis_time + signed.block.slot.0 * SECONDS_PER_SLOT) * 1000;
+                on_tick(store, slot_time_millis, false);
+            }
 
             // Skip XMSS signature verification — fork_choice fixtures ship
             // unsigned step blocks, so we apply them with a placeholder
@@ -412,8 +420,8 @@ fn apply_step(
                 // `Checks` steps still see a snapshot.
                 return Ok(());
             };
-            let signed = build_signed_aggregated_attestation(step)?;
-            on_aggregated_attestation(store, signed).map_err(|err| err.to_string())
+            let (signed, verify_proof) = build_signed_aggregated_attestation(step)?;
+            on_aggregated_attestation(store, signed, verify_proof).map_err(|err| err.to_string())
         }
         ForkChoiceStep::Checks { .. } => {
             // Pure-assertion step. The simulator validates against the
@@ -468,20 +476,29 @@ fn hex_root(root: &ssz::H256) -> String {
 /// string (the harness cannot re-aggregate without the signers' private
 /// keys), so we decode it directly into an [`AggregatedSignature`] and
 /// wrap with the participants bitfield from the same payload.
+///
+/// Returns the attestation and whether its proof should be XMSS-verified —
+/// `false` when the proof is the mocked sentinel.
 fn build_signed_aggregated_attestation(
     step: GossipAggregatedAttestationStep,
-) -> Result<SignedAggregatedAttestation, String> {
+) -> Result<(SignedAggregatedAttestation, bool), String> {
     let proof_hex = step.proof.proof.data.trim_start_matches("0x");
     let proof_bytes = hex::decode(proof_hex)
         .map_err(|err| format!("invalid hex in aggregate proof_data: {err}"))?;
+    let verify_proof = !proof_bytes
+        .windows(MOCK_AGGREGATION_PROOF_MARKER.len())
+        .any(|window| window == MOCK_AGGREGATION_PROOF_MARKER);
     let proof_data = AggregatedSignature::new(&proof_bytes)
         .map_err(|err| format!("failed to construct aggregated signature: {err}"))?;
 
-    Ok(SignedAggregatedAttestation {
-        data: step.data.into(),
-        proof: AggregatedSignatureProof {
-            participants: step.proof.participants.into(),
-            proof_data,
+    Ok((
+        SignedAggregatedAttestation {
+            data: step.data.into(),
+            proof: AggregatedSignatureProof {
+                participants: step.proof.participants.into(),
+                proof_data,
+            },
         },
-    })
+        verify_proof,
+    ))
 }

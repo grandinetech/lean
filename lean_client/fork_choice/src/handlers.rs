@@ -3,8 +3,8 @@ use std::sync::Arc;
 
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use containers::{
-    AttestationData, Checkpoint, SignatureKey, SignedAggregatedAttestation, SignedAttestation,
-    SignedBlock, State,
+    AggregatedAttestation, AttestationData, Checkpoint, SignatureKey, SignedAggregatedAttestation,
+    SignedAttestation, SignedBlock, State,
 };
 use metrics::METRICS;
 use parking_lot::RwLock;
@@ -72,6 +72,14 @@ fn validate_attestation_data(store: &Store, data: &AttestationData) -> Result<()
         "Head slot {} must not be older than target slot {}",
         data.head.slot.0,
         data.target.slot.0
+    );
+
+    // A head in a future slot relative to the attestation slot is invalid.
+    ensure!(
+        data.slot >= data.head.slot,
+        "Attestation slot {} precedes head slot {}",
+        data.slot.0,
+        data.head.slot.0
     );
 
     // Validate checkpoint slots match block slots.
@@ -225,6 +233,20 @@ pub fn on_gossip_attestation(
                 .inc()
         });
     })?;
+
+    // Reject validators outside the registry (independent of signature checks).
+    let num_validators = store
+        .states
+        .get(&attestation_data.target.root)
+        .ok_or_else(|| anyhow!("no state for target block {}", attestation_data.target.root))?
+        .validators
+        .len_u64();
+    ensure!(
+        validator_id < num_validators,
+        "validator {} out of range (max {})",
+        validator_id,
+        num_validators
+    );
 
     // Non-aggregators validate attestation data but do not store or verify individual
     // signatures. Per leanSpec: only aggregators import gossip attestations for aggregation.
@@ -409,10 +431,13 @@ pub fn on_attestation(
 /// Verifies the aggregated XMSS proof against participant public keys and stores
 /// it in `latest_new_aggregated_payloads`. At interval 3, these are merged with
 /// `latest_known_aggregated_payloads` (from blocks) to compute safe target.
+///
+/// `verify_proof` gates only the XMSS SNARK check.
 #[inline]
 pub fn on_aggregated_attestation(
     store: &mut Store,
     signed_aggregated_attestation: SignedAggregatedAttestation,
+    verify_proof: bool,
 ) -> Result<()> {
     // Structure: { data: AttestationData, proof: AggregatedSignatureProof }
     let attestation_data = signed_aggregated_attestation.data.clone();
@@ -472,9 +497,11 @@ pub fn on_aggregated_attestation(
         })
         .collect::<Result<Vec<_>>>()?;
 
-    proof
-        .verify(public_keys, data_root, attestation_data.slot.0 as u32)
-        .context("aggregated attestation proof verification failed")?;
+    if verify_proof {
+        proof
+            .verify(public_keys, data_root, attestation_data.slot.0 as u32)
+            .context("aggregated attestation proof verification failed")?;
+    }
 
     let attestation_slot = attestation_data.slot;
     for vid in &validator_ids {
@@ -719,6 +746,13 @@ pub fn on_block(
         current_slot,
     );
 
+    // Reject block bodies carrying duplicate AttestationData (the state
+    // transition only bounds the distinct count, it does not dedup).
+    ensure!(
+        !AggregatedAttestation::has_duplicate_data(&signed_block.block.body.attestations),
+        "block body has duplicate AttestationData"
+    );
+
     process_block_internal(store, signed_block, block_root, verify_signatures)?;
     process_pending_blocks(store, cache, vec![block_root], verify_signatures);
 
@@ -796,7 +830,7 @@ pub fn apply_verified_block(
         .remove(&block_root)
         .unwrap_or_default();
     for signed_agg in pending_agg {
-        if let Err(err) = on_aggregated_attestation(store, signed_agg) {
+        if let Err(err) = on_aggregated_attestation(store, signed_agg, true) {
             warn!(%err, "Pending aggregated attestation retry failed after block arrival");
         }
     }
