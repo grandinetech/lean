@@ -64,6 +64,11 @@ fn dispatch_backfill(
     orphan_count: usize,
     outbound_p2p_sender: &mpsc::UnboundedSender<OutboundP2pRequest>,
 ) {
+    if !missing.is_empty() {
+        if let Err(e) = outbound_p2p_sender.send(OutboundP2pRequest::RequestBlocksByRoot(missing)) {
+            warn!("Failed to dispatch BlocksByRoot backfill: {}", e);
+        }
+    }
     if orphan_count >= BACKFILL_ORPHAN_TRIGGER {
         let request = OutboundP2pRequest::RequestBlocksByRange {
             start_slot: local_head_slot.saturating_add(1),
@@ -71,10 +76,6 @@ fn dispatch_backfill(
         };
         if let Err(e) = outbound_p2p_sender.send(request) {
             warn!("Failed to dispatch BlocksByRange backfill: {}", e);
-        }
-    } else if !missing.is_empty() {
-        if let Err(e) = outbound_p2p_sender.send(OutboundP2pRequest::RequestBlocksByRoot(missing)) {
-            warn!("Failed to dispatch BlocksByRoot backfill: {}", e);
         }
     }
 }
