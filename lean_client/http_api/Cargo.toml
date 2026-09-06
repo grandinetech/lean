@@ -24,6 +24,7 @@ tracing = { workspace = true }
 xmss = { workspace = true }
 
 [dev-dependencies]
+database = { workspace = true }
 fork_choice = { workspace = true }
 http-body-util = { workspace = true }
 parking_lot = { workspace = true }

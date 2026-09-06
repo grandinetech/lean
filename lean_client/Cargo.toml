@@ -2,6 +2,7 @@
 members = [
     "chain",
     "containers",
+    "database",
     "env-config",
     "fork_choice",
     "http_api",
@@ -225,6 +226,7 @@ private_intra_doc_links = 'allow'
 [workspace.dependencies]
 chain = { path = "./chain" }
 containers = { path = "./containers" }
+database = { path = "./database" }
 env-config = { path = "./env-config" }
 fork_choice = { path = "./fork_choice" }
 http_api = { path = "./http_api" }
@@ -245,6 +247,7 @@ discv5 = "0.10.2"
 enr = { version = "0.13", features = ["k256"] }
 eth_ssz = { package = "ethereum_ssz", version = "0.10.0" }
 ethereum-types = "0.14"
+fs-err = "3"
 futures = "0.3"
 features = { git = "https://github.com/grandinetech/grandine", rev = "c4b676e3daa0ddcb86d0bcb321b7166d59f920f9" }
 git-version = "0.3"
@@ -257,6 +260,7 @@ rec_aggregation = { git = "https://github.com/leanEthereum/leanVM.git", rev = "e
 backend = { git = "https://github.com/leanEthereum/leanVM.git", rev = "e2592df4e30fdddbbf8ae26a333116c68cec7026" }
 leansig = { git = "https://github.com/leanEthereum/leanSig", branch = "devnet4" }
 leansig_wrapper = { git = "https://github.com/leanEthereum/leanVM.git", rev = "e2592df4e30fdddbbf8ae26a333116c68cec7026" }
+libmdbx = { git = "https://github.com/paradigmxyz/reth.git", package = "reth-libmdbx", rev = "6f8e7258f4733279080e4bd8345ce50538a40d6e" }
 libp2p = { git = "https://github.com/libp2p/rust-libp2p.git", rev = "91e8931e275bcd1c72791d18b09fea8b77209baf", default-features = false, features = [
     'dns',
     'gossipsub',
@@ -270,6 +274,7 @@ libp2p = { git = "https://github.com/libp2p/rust-libp2p.git", rev = "91e8931e275
     'yamux'
 ] }
 libp2p-identity = { version = "0.2.13", features = ["secp256k1"] }
+lz4_flex = "0.13"
 dedicated_executor = { path = "dedicated_executor" }
 num-bigint = "0.4"
 num-traits = "0.2"
@@ -293,6 +298,7 @@ snap = "1.1"
 ssz = { git = "https://github.com/grandinetech/grandine", package = "ssz", rev = "c4b676e3daa0ddcb86d0bcb321b7166d59f920f9" }
 ssz-types = "0.3"
 itertools = "0.14"
+tempfile = "3"
 test-generator = "0.3.1"
 thiserror = "2"
 tikv-jemallocator = { version = "0.6", features = ["stats", "unprefixed_malloc_on_supported_platforms"] }
@@ -307,6 +313,7 @@ try_from_iterator = { git = "https://github.com/grandinetech/grandine", package 
 typenum = "1.19"
 yamux = "0.12"
 zeroize = "1.8"
+zstd = "0.13.3"
 
 [package]
 name = "lean_client"
@@ -319,6 +326,7 @@ bls = { workspace = true }
 chain = { workspace = true }
 clap = { workspace = true }
 containers = { workspace = true }
+database = { workspace = true }
 dedicated_executor = { workspace = true }
 ethereum-types = { workspace = true }
 features = { workspace = true }

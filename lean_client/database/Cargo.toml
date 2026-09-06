@@ -1,0 +1,14 @@
+[package]
+name = "database"
+edition = { workspace = true }
+
+[dependencies]
+anyhow = { workspace = true }
+containers = { workspace = true }
+libmdbx = { workspace = true }
+lz4_flex = { workspace = true }
+ssz = { workspace = true }
+zstd = { workspace = true }
+
+[lints]
+workspace = true

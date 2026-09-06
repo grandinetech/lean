@@ -179,7 +179,11 @@ async fn init_fork_choice(
         genesis_time: anchor_state.config.genesis_time,
     };
 
-    let new_store = get_forkchoice_store(anchor_state, anchor_block, config, false, 1);
+    let std::result::Result::Ok(new_store) =
+        get_forkchoice_store(anchor_state, anchor_block, config, false, 1)
+    else {
+        return StatusCode::INTERNAL_SERVER_ERROR;
+    };
 
     *state.store.write() = new_store;
     *state.cache.write() = BlockCache::new();
