@@ -1813,6 +1813,7 @@ async fn main() -> Result<()> {
                                 on_attestation(&mut *store.write(), signed_attestation.clone(), false)
                             } else {
                                 on_gossip_attestation(&mut *store.write(), signed_attestation.clone())
+                                        .map(|_| ())
                             };
                             match result {
                                 Ok(()) => {
