@@ -2,6 +2,7 @@
     "tests/consensus/lstar/state_transition/test_genesis.py::test_genesis_single_validator[fork_Lstar][fork_Lstar-state_transition_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "pre": {
             "config": {
                 "genesisTime": 0
@@ -31,8 +32,8 @@
             "validators": {
                 "data": [
                     {
-                        "attestationPubkey": "0x6c9dc94cb124fd7eac91680ca6f7c131d7b02f1629ca842b0e714d557da1276b2e5f3d110aab9d6eb8c10c7d1ba0f93cd849c82e",
-                        "proposalPubkey": "0x4f0098552e05e766afeb0d021742f626de106215bd0c5a5d2516fc75dc3ffc121159b63b6664354dc4eb353631b54a5ad0cc7b14",
+                        "attestationPublicKey": "0x6c9dc94cb124fd7eac91680ca6f7c131d7b02f1629ca842b0e714d557da1276b2e5f3d110aab9d6eb8c10c7d1ba0f93cd849c82e",
+                        "proposalPublicKey": "0x4f0098552e05e766afeb0d021742f626de106215bd0c5a5d2516fc75dc3ffc121159b63b6664354dc4eb353631b54a5ad0cc7b14",
                         "index": 0
                     }
                 ]
@@ -132,12 +133,14 @@
             "validatorCount": 1,
             "latestBlockHeaderProposerIndex": 0
         },
+        "postStateRoot": "0x18b7e49ff232706dc3d6c76081c2188d9c44a6baab060a82bac6b403a09e4e59",
         "_info": {
-            "hash": "0x91b957fcbed3e6b10e1175e7c5f713e68fcbdd2d08b204093dfec20b66702ff3",
+            "hash": "0xb8218f3a2604ebc481362df67c5e9d4eea271a94f9b34338d6aa31a2d721e0cf",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/state_transition/test_genesis.py::test_genesis_single_validator[fork_Lstar]",
-            "description": "Genesis with exactly 1 validator; justification and finalization in 3 blocks.\n\n    Scenario\n    --------\n    Single validator. Proposer for every slot (slot % 1 == 0, always).\n    Supermajority threshold trivially met: 3*1=3 >= 2*1=2.\n\n    - Block 1: empty (creates attestation target)\n    - Block 2: V0 attests to slot 1 -> justifies slot 1\n    - Block 3: V0 attests to slot 2 -> justifies slot 2, finalizes slot 1\n\n    Expected post-state\n    -------------------\n    - Validator count: 1\n    - Justified slot: 2\n    - Finalized slot: 1\n    - Proposer index: always 0",
-            "fixtureFormat": "state_transition_test"
+            "description": "A single validator justifies and finalizes within three blocks.\n\n    Given\n    -----\n    - 1 validator, which proposes every slot, since the slot modulo 1 is always 0.\n    - a slot needs 1 vote (2/3) to be justified, since 3*1 = 3 is at least 2*1 = 2.\n    - the chain:\n        genesis -> block_1(1) -> block_2(2) -> block_3(3)\n    - block_1 carries no votes.\n    - block_2 includes V0's vote for block_1.\n    - block_2 justifies slot 1.\n    - block_3 includes V0's vote for block_2.\n    - block_3 justifies slot 2.\n    - block_3 then finalizes slot 1.\n\n    When\n    ----\n    - the chain processes block_1, block_2, and block_3.\n\n    Then\n    ----\n    - the validator count is 1.\n    - justified slot is 2.\n    - finalized slot is 1.\n    - every block proposer is V0.",
+            "fixtureFormat": "state_transition_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

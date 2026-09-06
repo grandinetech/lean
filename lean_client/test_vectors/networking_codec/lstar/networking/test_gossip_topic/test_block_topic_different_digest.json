@@ -1,21 +1,23 @@
 {
-    "tests/consensus/lstar/networking/test_gossip_topic.py::test_block_topic_different_digest[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_gossip_topic.py::test_block_topic_different_digest[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "gossip_topic",
-        "input": {
-            "kind": "block",
-            "forkDigest": "aabbccdd"
+        "proofSetting": 0,
+        "codec": {
+            "kind": "gossip_topic",
+            "topicKind": "block",
+            "networkName": "aabbccdd"
         },
         "output": {
             "topicString": "/leanconsensus/aabbccdd/block/ssz_snappy"
         },
         "_info": {
-            "hash": "0xa9c645ab66c55aa07fa7015e009df2da55adfbdca7ecc2ef9339efa10083d3c0",
+            "hash": "0xcdf6c578609e22a3828c88bd0cc1869047f1cdd7034316613a244b42d504e053",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossip_topic.py::test_block_topic_different_digest[fork_Lstar]",
-            "description": "Block topic with a different fork digest to verify digest embedding.",
-            "fixtureFormat": "networking_codec"
+            "description": "A block topic embeds and recovers a different fork digest.\n\n    Given\n    -----\n    - a block topic kind.\n    - a fork digest distinct from the default.\n\n    When\n    ----\n    - the topic is formatted to a string and parsed back.\n\n    Then\n    ----\n    - the parsed topic matches the input.\n    - the embedded digest survives the round-trip.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

@@ -2,6 +2,7 @@
     "tests/consensus/lstar/state_transition/test_genesis.py::test_genesis_custom_validator_set[fork_Lstar][fork_Lstar-state_transition_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "pre": {
             "config": {
                 "genesisTime": 0
@@ -31,43 +32,43 @@
             "validators": {
                 "data": [
                     {
-                        "attestationPubkey": "0x6c9dc94cb124fd7eac91680ca6f7c131d7b02f1629ca842b0e714d557da1276b2e5f3d110aab9d6eb8c10c7d1ba0f93cd849c82e",
-                        "proposalPubkey": "0x4f0098552e05e766afeb0d021742f626de106215bd0c5a5d2516fc75dc3ffc121159b63b6664354dc4eb353631b54a5ad0cc7b14",
+                        "attestationPublicKey": "0x6c9dc94cb124fd7eac91680ca6f7c131d7b02f1629ca842b0e714d557da1276b2e5f3d110aab9d6eb8c10c7d1ba0f93cd849c82e",
+                        "proposalPublicKey": "0x4f0098552e05e766afeb0d021742f626de106215bd0c5a5d2516fc75dc3ffc121159b63b6664354dc4eb353631b54a5ad0cc7b14",
                         "index": 0
                     },
                     {
-                        "attestationPubkey": "0xadc304243eb9f60ad1016e6610f11420dba97e450171971dda35bf50d4f14117ad3b9f06083c9d05f73d5e12f9e9ce1e7aa65866",
-                        "proposalPubkey": "0xe2508c4edcc47c50505281470653e6555fe9785380e97c427e99b677f949b125d17f2c58a45c1b5349f20c27db10ea78d2fceb37",
+                        "attestationPublicKey": "0xadc304243eb9f60ad1016e6610f11420dba97e450171971dda35bf50d4f14117ad3b9f06083c9d05f73d5e12f9e9ce1e7aa65866",
+                        "proposalPublicKey": "0xe2508c4edcc47c50505281470653e6555fe9785380e97c427e99b677f949b125d17f2c58a45c1b5349f20c27db10ea78d2fceb37",
                         "index": 1
                     },
                     {
-                        "attestationPubkey": "0x44095a46c1dd521b2e37c626b3401045f2a41713b034d95e9888fb34a15c280a8045b7043b6cca1c3353a6089ae5aa027c548d4b",
-                        "proposalPubkey": "0xd72b9b4bf39f805d637c855bb3266b373aa97e262cea76359b84e70805268b520cbe62284be2f81da2069b0c5298912169fa935f",
+                        "attestationPublicKey": "0x44095a46c1dd521b2e37c626b3401045f2a41713b034d95e9888fb34a15c280a8045b7043b6cca1c3353a6089ae5aa027c548d4b",
+                        "proposalPublicKey": "0xd72b9b4bf39f805d637c855bb3266b373aa97e262cea76359b84e70805268b520cbe62284be2f81da2069b0c5298912169fa935f",
                         "index": 2
                     },
                     {
-                        "attestationPubkey": "0xc6ce413056aff1787a8d01575b11781c08ab595fea7cb46372fd8376e054f829da06c251d8e13643e751d9737d52e4474fddab5c",
-                        "proposalPubkey": "0xd763f750d84c1840a6e2fb16b9f5e13f372e1f4646588a0d0ab96e483b42161f47858d5acb6d3a6bdae7e65a672cd2233fe77c16",
+                        "attestationPublicKey": "0xc6ce413056aff1787a8d01575b11781c08ab595fea7cb46372fd8376e054f829da06c251d8e13643e751d9737d52e4474fddab5c",
+                        "proposalPublicKey": "0xd763f750d84c1840a6e2fb16b9f5e13f372e1f4646588a0d0ab96e483b42161f47858d5acb6d3a6bdae7e65a672cd2233fe77c16",
                         "index": 3
                     },
                     {
-                        "attestationPubkey": "0x360741734b03c828c5a1270372626b30dc98a6531f67351ede52ff5a50938c30cf1db60c6f104f3b56be9a657b3915008d76f24e",
-                        "proposalPubkey": "0x6584bb091a18c35c6ba0547cba3ed53fd508d07405ee993ae439c22250a91d5e2aa2ea5339aae555bcb84b63f2df412018cc4209",
+                        "attestationPublicKey": "0x360741734b03c828c5a1270372626b30dc98a6531f67351ede52ff5a50938c30cf1db60c6f104f3b56be9a657b3915008d76f24e",
+                        "proposalPublicKey": "0x6584bb091a18c35c6ba0547cba3ed53fd508d07405ee993ae439c22250a91d5e2aa2ea5339aae555bcb84b63f2df412018cc4209",
                         "index": 4
                     },
                     {
-                        "attestationPubkey": "0x56091e769f12363a79e1ff49c4b2aa53ed16ad334eac7b07cd2f195210486f48f524aa53778dd969597e58153ab1ee28c343a843",
-                        "proposalPubkey": "0x5d60ad3eb0c05176656444547894232598978a076996cb32132a0b43298707346fcb0b7baf732d514f44fd395837d252fbb32c28",
+                        "attestationPublicKey": "0x56091e769f12363a79e1ff49c4b2aa53ed16ad334eac7b07cd2f195210486f48f524aa53778dd969597e58153ab1ee28c343a843",
+                        "proposalPublicKey": "0x5d60ad3eb0c05176656444547894232598978a076996cb32132a0b43298707346fcb0b7baf732d514f44fd395837d252fbb32c28",
                         "index": 5
                     },
                     {
-                        "attestationPubkey": "0x85ef606669303d072c59652feedb1d0a8e046e0b8dee8e5a97f2ac5081a8f1372c972268a0673814b579306f2e1efd3531dc4e70",
-                        "proposalPubkey": "0x61cf1c7137186e381d6f0b6ee18ca35ab8b1710607e9140ee5786943c24bea1cd233ec43b97a3b0486041d3b1638b4245d3f014e",
+                        "attestationPublicKey": "0x85ef606669303d072c59652feedb1d0a8e046e0b8dee8e5a97f2ac5081a8f1372c972268a0673814b579306f2e1efd3531dc4e70",
+                        "proposalPublicKey": "0x61cf1c7137186e381d6f0b6ee18ca35ab8b1710607e9140ee5786943c24bea1cd233ec43b97a3b0486041d3b1638b4245d3f014e",
                         "index": 6
                     },
                     {
-                        "attestationPubkey": "0x47def51ebf8c3e72e891c20385ad2038a9c3ae7c32b36d750e7ec0624cf4da4593170768f78a6317027f83205011871b508ec80b",
-                        "proposalPubkey": "0x5ca13b76689e4b4054ab355196ee44479e00ab0b3e19522fe006e04bc4bfbb1e22251262c6a6796995caed2ba6a9b067545b7749",
+                        "attestationPublicKey": "0x47def51ebf8c3e72e891c20385ad2038a9c3ae7c32b36d750e7ec0624cf4da4593170768f78a6317027f83205011871b508ec80b",
+                        "proposalPublicKey": "0x5ca13b76689e4b4054ab355196ee44479e00ab0b3e19522fe006e04bc4bfbb1e22251262c6a6796995caed2ba6a9b067545b7749",
                         "index": 7
                     }
                 ]
@@ -106,12 +107,14 @@
                 "data": []
             }
         },
+        "postStateRoot": "0xf5a5fa7e63bc2c68b3c65e78f479841c747bf3423a9799a8869c371ee0747770",
         "_info": {
-            "hash": "0x05df3062d6540e26209dbcd21ddddf0a5edc9fa11457bc3c10138054cb0c93f4",
+            "hash": "0xbe23afa7c9d159df0b32d12ae2cbf30e8ed2670ede0f55225c7456d2d792fe7c",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/state_transition/test_genesis.py::test_genesis_custom_validator_set[fork_Lstar]",
-            "description": "Test genesis state with custom validator set.\n\n    Scenario\n    --------\n    Generate a genesis state with:\n    - 8 validators instead of default 4\n    - Custom validator pubkeys\n\n    Expected Behavior\n    -----------------\n    Genesis state should contain exactly 8 validators while\n    maintaining all other genesis properties.",
-            "fixtureFormat": "state_transition_test"
+            "description": "Genesis with a custom validator set holds exactly that many validators.\n\n    Given\n    -----\n    - 8 validators instead of the default 4.\n\n    When\n    ----\n    - genesis is generated and no blocks are processed.\n\n    Then\n    ----\n    - the validator count is 8.\n    - the state slot is 0.\n    - justified slot is 0.\n    - finalized slot is 0.\n    - the pending-vote tracking is empty.",
+            "fixtureFormat": "state_transition_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

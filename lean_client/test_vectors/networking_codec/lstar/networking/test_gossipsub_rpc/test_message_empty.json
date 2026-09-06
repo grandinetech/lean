@@ -1,23 +1,27 @@
 {
-    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_message_empty[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_message_empty[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "gossipsub_rpc",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "gossipsub_rpc",
             "subscriptions": [],
             "publish": [
-                {}
+                {
+                    "topic": ""
+                }
             ]
         },
         "output": {
             "encoded": "0x1200"
         },
         "_info": {
-            "hash": "0x98136f7a30aaebe64f508a2d4ca69de0e44d54dc5353dce302bb65ffcee07f1e",
+            "hash": "0x6a31145c965087af390100a1a0c347342dd962c149b4a2a599e2e66e239e633e",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_message_empty[fork_Lstar]",
-            "description": "Published message with no fields set. Encodes as zero bytes.",
-            "fixtureFormat": "networking_codec"
+            "description": "A published message with no fields encodes to zero bytes and round-trips.\n\n    Given\n    -----\n    - an RPC with one published message that sets no fields.\n\n    When\n    ----\n    - the RPC is encoded and decoded.\n\n    Then\n    ----\n    - the message encodes to zero bytes.\n    - the decoded RPC matches the input.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

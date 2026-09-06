@@ -1,19 +1,21 @@
 {
-    "tests/consensus/lstar/ssz/test_decode_rejections.py::test_bytes4_decode_rejects_extra_trailing_bytes[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_decode_rejections.py::test_bytes4_decode_rejects_extra_trailing_bytes[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "expectException": "SSZValueError",
+        "rejectionReason": "DECODE_ERROR",
+        "proofSetting": 0,
         "typeName": "Bytes4",
         "value": "0x00000000",
         "rawBytes": "0x0102030405",
         "serialized": "0x0102030405",
         "root": "",
         "_info": {
-            "hash": "0x0350f4038a4de061b60199e503eb5e9a5142b57e1d485db26fb7ed9a27f16dab",
+            "hash": "0x2b86c20bf6560c65fd206b47523dd7b86b8b8764d00756c5a62d289fd474a392",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_decode_rejections.py::test_bytes4_decode_rejects_extra_trailing_bytes[fork_Lstar]",
-            "description": "Fixed-size byte arrays reject inputs longer than their declared LENGTH.\n\n    A four-byte fixed array cannot consume five input bytes. The extra\n    trailing byte has no slot in the type, so the decoder must raise\n    rather than silently ignore the overflow.",
-            "fixtureFormat": "ssz"
+            "description": "Decoding a fixed-size byte array from a longer input is rejected.\n\n    Given\n    -----\n    - a fixed-size four-byte array type.\n    - a five-byte input with one extra trailing byte.\n\n    When\n    ----\n    - the input is decoded into that type.\n\n    Then\n    ----\n    - decoding is rejected.\n    - the reason is that the extra trailing byte has no slot in the type.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

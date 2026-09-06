@@ -1,0 +1,35 @@
+{
+    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_prune_with_two_minute_backoff[fork_Lstar][fork_Lstar-networking_codec_test]": {
+        "network": "Lstar",
+        "leanEnv": "prod",
+        "proofSetting": 0,
+        "codec": {
+            "kind": "gossipsub_rpc",
+            "subscriptions": [],
+            "publish": [],
+            "control": {
+                "ihave": [],
+                "iwant": [],
+                "graft": [],
+                "prune": [
+                    {
+                        "topicId": "/leanconsensus/0x12345678/block/ssz_snappy",
+                        "backoff": 120
+                    }
+                ],
+                "idontwant": []
+            }
+        },
+        "output": {
+            "encoded": "0x1a30222e0a2a2f6c65616e636f6e73656e7375732f307831323334353637382f626c6f636b2f73737a5f736e617070791878"
+        },
+        "_info": {
+            "hash": "0x48337ef65c3d2e21dbcbf5c33da975a86bacb70a4186e39c754a772d93643767",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_prune_with_two_minute_backoff[fork_Lstar]",
+            "description": "A PRUNE with a 120-second backoff round-trips.\n\n    Given\n    -----\n    - an RPC whose control message holds a PRUNE with a 120-second backoff.\n\n    When\n    ----\n    - the RPC is encoded and decoded.\n\n    Then\n    ----\n    - the decoded RPC matches the input.\n\n    Notes\n    -----\n    - peer exchange records are not part of the lean wire format.\n    - this vector carries no peer exchange records.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
+        }
+    }
+}

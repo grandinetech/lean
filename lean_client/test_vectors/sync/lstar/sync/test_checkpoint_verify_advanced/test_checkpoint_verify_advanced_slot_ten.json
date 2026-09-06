@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/sync/test_checkpoint_verify_advanced.py::test_checkpoint_verify_advanced_slot_ten[fork_Lstar][fork_Lstar-sync]": {
+    "tests/consensus/lstar/sync/test_checkpoint_verify_advanced.py::test_checkpoint_verify_advanced_slot_ten[fork_Lstar][fork_Lstar-sync_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "operation": "verify_checkpoint",
-        "input": {
+        "proofSetting": 0,
+        "operation": {
+            "kind": "verify_checkpoint",
             "numValidators": 4,
             "anchorSlot": 10
         },
@@ -14,11 +15,12 @@
             "anchorSlot": 10
         },
         "_info": {
-            "hash": "0x0a8bf4c398b72c37ff66c5b1a256fcf31df743791083944a303972fd62a9f7f9",
+            "hash": "0x28117b04bc2ae9886fd30335384306d36345bc9fde532eaad50cb95ca0ecafa0",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/sync/test_checkpoint_verify_advanced.py::test_checkpoint_verify_advanced_slot_ten[fork_Lstar]",
-            "description": "Advanced anchor state at slot 10 with four validators is accepted.\n\n    Ten empty blocks populate historical_block_hashes and justified_slots\n    with longer lists. Pins the verdict and state bytes at a larger\n    history than the slot-three case.",
-            "fixtureFormat": "sync"
+            "description": "An advanced anchor state at slot 10 with four validators is accepted.\n\n    Given\n    -----\n    - 4 validators.\n    - the chain walks through ten empty blocks to slot 10.\n    - the longer history fills the block-hash and justified-slot lists.\n\n    When\n    ----\n    - the anchor state is verified before seeding a fork-choice store.\n\n    Then\n    ----\n    - the state is accepted.\n    - the exact serialized state bytes are pinned.",
+            "fixtureFormat": "sync_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

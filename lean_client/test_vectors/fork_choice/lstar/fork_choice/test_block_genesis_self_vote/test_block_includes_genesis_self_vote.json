@@ -1,0 +1,179 @@
+{
+    "tests/consensus/lstar/fork_choice/test_block_genesis_self_vote.py::test_block_includes_genesis_self_vote[fork_Lstar][fork_Lstar-fork_choice_test]": {
+        "network": "Lstar",
+        "leanEnv": "prod",
+        "proofSetting": 0,
+        "anchorState": {
+            "config": {
+                "genesisTime": 0
+            },
+            "slot": 0,
+            "latestBlockHeader": {
+                "slot": 0,
+                "proposerIndex": 0,
+                "parentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "stateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "bodyRoot": "0xdba9671bac9513c9482f1416a53aabd2c6ce90d5a5f865ce5a55c775325c9136"
+            },
+            "latestJustified": {
+                "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "slot": 0
+            },
+            "latestFinalized": {
+                "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "slot": 0
+            },
+            "historicalBlockHashes": {
+                "data": []
+            },
+            "justifiedSlots": {
+                "data": []
+            },
+            "validators": {
+                "data": [
+                    {
+                        "attestationPublicKey": "0x6c9dc94cb124fd7eac91680ca6f7c131d7b02f1629ca842b0e714d557da1276b2e5f3d110aab9d6eb8c10c7d1ba0f93cd849c82e",
+                        "proposalPublicKey": "0x4f0098552e05e766afeb0d021742f626de106215bd0c5a5d2516fc75dc3ffc121159b63b6664354dc4eb353631b54a5ad0cc7b14",
+                        "index": 0
+                    },
+                    {
+                        "attestationPublicKey": "0xadc304243eb9f60ad1016e6610f11420dba97e450171971dda35bf50d4f14117ad3b9f06083c9d05f73d5e12f9e9ce1e7aa65866",
+                        "proposalPublicKey": "0xe2508c4edcc47c50505281470653e6555fe9785380e97c427e99b677f949b125d17f2c58a45c1b5349f20c27db10ea78d2fceb37",
+                        "index": 1
+                    },
+                    {
+                        "attestationPublicKey": "0x44095a46c1dd521b2e37c626b3401045f2a41713b034d95e9888fb34a15c280a8045b7043b6cca1c3353a6089ae5aa027c548d4b",
+                        "proposalPublicKey": "0xd72b9b4bf39f805d637c855bb3266b373aa97e262cea76359b84e70805268b520cbe62284be2f81da2069b0c5298912169fa935f",
+                        "index": 2
+                    },
+                    {
+                        "attestationPublicKey": "0xc6ce413056aff1787a8d01575b11781c08ab595fea7cb46372fd8376e054f829da06c251d8e13643e751d9737d52e4474fddab5c",
+                        "proposalPublicKey": "0xd763f750d84c1840a6e2fb16b9f5e13f372e1f4646588a0d0ab96e483b42161f47858d5acb6d3a6bdae7e65a672cd2233fe77c16",
+                        "index": 3
+                    }
+                ]
+            },
+            "justificationsRoots": {
+                "data": []
+            },
+            "justificationsValidators": {
+                "data": []
+            }
+        },
+        "anchorBlock": {
+            "slot": 0,
+            "proposerIndex": 0,
+            "parentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "stateRoot": "0xf57f326a070f9b503629266556489cd36463dbd8e80e60c8567bc971ab171919",
+            "body": {
+                "attestations": {
+                    "data": []
+                }
+            }
+        },
+        "steps": [
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 1,
+                    "headRootLabel": "block_1",
+                    "latestJustifiedSlot": 0,
+                    "blockAttestationCount": 1,
+                    "blockAttestations": [
+                        {
+                            "participants": [
+                                0,
+                                1
+                            ],
+                            "attestationSlot": 1,
+                            "targetSlot": 0
+                        }
+                    ]
+                },
+                "storeSnapshot": {
+                    "time": 5,
+                    "headRoot": "0x145dede65cbb27d75a3d5b7a3bead784fa07e98b1e6c2efa2d862caaad4cabb9",
+                    "safeTargetRoot": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                    "latestJustified": {
+                        "root": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                        "slot": 0
+                    },
+                    "latestFinalized": {
+                        "root": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                        "slot": 0
+                    },
+                    "blockRoots": [
+                        "0x145dede65cbb27d75a3d5b7a3bead784fa07e98b1e6c2efa2d862caaad4cabb9",
+                        "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x145dede65cbb27d75a3d5b7a3bead784fa07e98b1e6c2efa2d862caaad4cabb9",
+                            "weight": 0
+                        }
+                    ],
+                    "attestationSignatures": [],
+                    "newAggregatedPayloads": [],
+                    "knownAggregatedPayloads": [
+                        {
+                            "dataRoot": "0x9723ccf0ac97172f48aab6862cbe85ee2355ae6316a1de16b508edb11a50ea32",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                "stepType": "block",
+                "tickToSlot": true,
+                "block": {
+                    "slot": 1,
+                    "proposerIndex": 1,
+                    "parentRoot": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                    "stateRoot": "0x9d2ccafa5381eda2309100243bf4a06d26326275a7d0850a371a5db63000bacf",
+                    "body": {
+                        "attestations": {
+                            "data": [
+                                {
+                                    "aggregationBits": {
+                                        "data": [
+                                            true,
+                                            true
+                                        ]
+                                    },
+                                    "data": {
+                                        "slot": 1,
+                                        "head": {
+                                            "root": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                                            "slot": 0
+                                        },
+                                        "target": {
+                                            "root": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                                            "slot": 0
+                                        },
+                                        "source": {
+                                            "root": "0x7abe554da998339edfd2ac2b86874b1eeb200f91f11a65701bfbbadc65e1f862",
+                                            "slot": 0
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "blockRootLabel": "block_1"
+                }
+            }
+        ],
+        "maxSlot": 1,
+        "_info": {
+            "hash": "0x931d63202bd4ad5b22234ca341ae48ca3e85d2b3d49c76c066098c4130b2c60f",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/lstar/fork_choice/test_block_genesis_self_vote.py::test_block_includes_genesis_self_vote[fork_Lstar]",
+            "description": "A genesis self-vote survives block production despite slot 0 being justified.\n\n    Given\n    -----\n    - 4 validators; a slot needs 3 votes (2/3) to be justified.\n    - the chain:\n        genesis -> block_1(1)\n    - V0, V1 vote with source, target, and head all at the genesis block.\n    - genesis is already justified, so this vote justifies nothing.\n    - the vote carries head weight for fork choice.\n\n    When\n    ----\n    - block_1 is produced carrying that self-vote.\n\n    Then\n    ----\n    - the builder keeps the self-vote under the genesis exemption.\n    - the block body holds 1 aggregated vote.\n    - the vote covers V0 and V1 at target slot 0.\n    - justified stays at slot 0.",
+            "fixtureFormat": "fork_choice_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
+        }
+    }
+}

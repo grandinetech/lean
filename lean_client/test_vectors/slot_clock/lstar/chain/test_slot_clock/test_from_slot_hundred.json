@@ -1,25 +1,27 @@
 {
-    "tests/consensus/lstar/chain/test_slot_clock.py::test_from_slot_hundred[fork_Lstar][fork_Lstar-slot_clock]": {
+    "tests/consensus/lstar/chain/test_slot_clock.py::test_from_slot_hundred[fork_Lstar][fork_Lstar-slot_clock_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "operation": "from_slot",
-        "input": {
+        "proofSetting": 0,
+        "operation": {
+            "kind": "from_slot",
             "slot": 100
         },
+        "config": {
+            "secondsPerSlot": 4,
+            "intervalsPerSlot": 5,
+            "millisecondsPerInterval": 800
+        },
         "output": {
-            "config": {
-                "secondsPerSlot": 4,
-                "intervalsPerSlot": 5,
-                "millisecondsPerInterval": 800
-            },
             "interval": 500
         },
         "_info": {
-            "hash": "0x0225dd0302f1e5935afa4bca2381b804de4a3a3ed33d825e66fcb5e20c50a7b0",
+            "hash": "0xf9ad4e3fb472faace8d0c9bd2a29f3735ab0255ec2b2c5ad38f474cd2ff597d4",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/chain/test_slot_clock.py::test_from_slot_hundred[fork_Lstar]",
-            "description": "Slot 100 starts at interval 500.",
-            "fixtureFormat": "slot_clock"
+            "description": "Slot 100 starts at interval 500.\n\n    Given\n    -----\n    - slot 100.\n\n    When\n    ----\n    - the starting interval of the slot is computed.\n\n    Then\n    ----\n    - the interval is 500.",
+            "fixtureFormat": "slot_clock_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

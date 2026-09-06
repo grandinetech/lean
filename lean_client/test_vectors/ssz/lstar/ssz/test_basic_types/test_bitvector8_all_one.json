@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_bitvector8_all_one[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_bitvector8_all_one[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "SampleBitvector8",
         "value": {
             "data": [
@@ -18,11 +19,12 @@
         "serialized": "0xff",
         "root": "0xff00000000000000000000000000000000000000000000000000000000000000",
         "_info": {
-            "hash": "0x2938ef1691c603bd7892599ab87009729e7c38f902eabadae8d460accbac108e",
+            "hash": "0x41724a85b8c51aa6d43989127cda44b353ebc2a394ab49169a3bda703b0082ae",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_bitvector8_all_one[fork_Lstar]",
-            "description": "8-bit bitvector, all bits set (0xFF).",
-            "fixtureFormat": "ssz"
+            "description": "An eight-bit vector with all bits set round-trips unchanged.\n\n    Given\n    -----\n    - an eight-bit vector whose bits are all set.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.\n    - the encoding is the byte 0xff.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

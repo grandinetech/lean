@@ -1,8 +1,9 @@
 {
-    "tests/consensus/lstar/ssz/test_decode_failure_smoke.py::test_ssz_decode_failure_bitlist_exceeds_limit[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_decode_failure_smoke.py::test_ssz_decode_failure_bitlist_exceeds_limit[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "expectException": "Exception",
+        "rejectionReason": "DECODE_ERROR",
+        "proofSetting": 0,
         "typeName": "SmokeBitlist8",
         "value": {
             "data": [
@@ -13,11 +14,12 @@
         "serialized": "0x0010",
         "root": "",
         "_info": {
-            "hash": "0xe523fee590e586b3e8156894ddcb6348341e04082de679bc9363ad9c016295af",
+            "hash": "0x2cc9648ee4df2d3c531d52cc0037165bb7de54b713e97985e6cf4544c6348dc4",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_decode_failure_smoke.py::test_ssz_decode_failure_bitlist_exceeds_limit[fork_Lstar]",
-            "description": "Decoding a bitlist whose contents imply a length above its LIMIT raises.\n\n    The payload `0x0010` encodes 16 bits before the sentinel. The `LIMIT`\n    on the decoder type is 8, so SSZ decode must reject. This pins the new\n    `raw_bytes` + `expect_exception` path on the ssz fixture.",
-            "fixtureFormat": "ssz"
+            "description": "Decoding a bitlist whose contents imply too many bits is rejected.\n\n    Given\n    -----\n    - a bitlist type capped at eight bits.\n    - the input bytes 0x0010, which place the sentinel at bit sixteen.\n\n    When\n    ----\n    - the input is decoded into that type.\n\n    Then\n    ----\n    - decoding is rejected.\n    - the reason is that the implied bit-length exceeds the limit.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

@@ -1,23 +1,25 @@
 {
-    "tests/consensus/lstar/networking/test_gossip_topic_fork.py::test_gossip_topic_network_name_mismatch[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_gossip_topic_fork.py::test_gossip_topic_network_name_mismatch[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "gossip_topic",
-        "input": {
-            "kind": "block",
-            "forkDigest": "0x12345678",
-            "expectedForkDigest": "0xdeadbeef"
+        "proofSetting": 0,
+        "codec": {
+            "kind": "gossip_topic",
+            "topicKind": "block",
+            "networkName": "0x12345678",
+            "expectedNetworkName": "0xdeadbeef"
         },
         "output": {
             "topicString": "/leanconsensus/0x12345678/block/ssz_snappy",
             "forkValid": false
         },
         "_info": {
-            "hash": "0x263a37ef7ec2a4d91509546ecf88cbdddba7d6e75f031d951018deca079ef1d2",
+            "hash": "0x3367fd191a902044fb1c4ca05e8bb01e8b90f9b5bec8a735c513a8f771549758",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossip_topic_fork.py::test_gossip_topic_network_name_mismatch[fork_Lstar]",
-            "description": "Block topic with a network name different from the expected one is rejected.\n\n    Pins the reject branch of validate_fork: a topic built for one fork\n    must not pass when validated against a different network name. The\n    output reports forkValid=false so clients align on the rejection\n    verdict.",
-            "fixtureFormat": "networking_codec"
+            "description": "A topic whose network name differs from the expected value is rejected.\n\n    Given\n    -----\n    - a block topic built with one network name.\n    - an expected network name different from that name.\n\n    When\n    ----\n    - the topic is validated against the expected network name.\n\n    Then\n    ----\n    - validation fails because the network names differ.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

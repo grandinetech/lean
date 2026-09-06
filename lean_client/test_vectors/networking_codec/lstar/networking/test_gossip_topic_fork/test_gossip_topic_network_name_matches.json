@@ -1,23 +1,25 @@
 {
-    "tests/consensus/lstar/networking/test_gossip_topic_fork.py::test_gossip_topic_network_name_matches[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_gossip_topic_fork.py::test_gossip_topic_network_name_matches[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "gossip_topic",
-        "input": {
-            "kind": "block",
-            "forkDigest": "0x12345678",
-            "expectedForkDigest": "0x12345678"
+        "proofSetting": 0,
+        "codec": {
+            "kind": "gossip_topic",
+            "topicKind": "block",
+            "networkName": "0x12345678",
+            "expectedNetworkName": "0x12345678"
         },
         "output": {
             "topicString": "/leanconsensus/0x12345678/block/ssz_snappy",
             "forkValid": true
         },
         "_info": {
-            "hash": "0xa9f12b2f5bb4cdf47a5c9345c044217daa9c450cc37f51eb4f6f3e300680a649",
+            "hash": "0x356dff4f5cc51664708d1fc45d07242222d92666d72aa3ce2b678a860927ea8c",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossip_topic_fork.py::test_gossip_topic_network_name_matches[fork_Lstar]",
-            "description": "Block topic whose network name matches the expected value validates cleanly.\n\n    Pins the accept branch of validate_fork: a topic built with a network\n    name equal to the expected one must pass the check.",
-            "fixtureFormat": "networking_codec"
+            "description": "A topic whose network name matches the expected value validates.\n\n    Given\n    -----\n    - a block topic built with a network name.\n    - an expected network name equal to that name.\n\n    When\n    ----\n    - the topic is validated against the expected network name.\n\n    Then\n    ----\n    - validation passes.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

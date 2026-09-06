@@ -1,0 +1,43 @@
+name: Hive
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hive:
+    name: Run hive tests
+    runs-on: ubuntu-latest
+    # hive itself imposes no timeout; cap the job so a hang can't run forever.
+    timeout-minutes: 180
+    env:
+      # `docker-local` -> `cross` bind-mounts this into the build container.
+      LEAN_REPO_ROOT: ${{ github.workspace }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      # Needed to build the hive binary (`go build .`).
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache: false
+
+      # Needed by `docker-local` to cross-build the x86_64 client binary.
+      - name: Install cross
+        run: cargo install cross --git https://github.com/cross-rs/cross --rev 7b24b6e9f6834a3ac31d3dad1e2ff24c1b66f7cf
+
+      # hive launches client containers; restart docker to settle iptables
+      # rules on the runner (same workaround the zeam hive workflow uses).
+      - name: Restart docker
+        run: sudo systemctl restart docker
+
+      - name: Run hive tests
+        run: make test-hive

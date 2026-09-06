@@ -1,26 +1,28 @@
 {
-    "tests/consensus/lstar/chain/test_slot_clock.py::test_total_intervals_multi_slot[fork_Lstar][fork_Lstar-slot_clock]": {
+    "tests/consensus/lstar/chain/test_slot_clock.py::test_total_intervals_multi_slot[fork_Lstar][fork_Lstar-slot_clock_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "operation": "total_intervals",
-        "input": {
+        "proofSetting": 0,
+        "operation": {
+            "kind": "total_intervals",
             "genesisTime": 1700000000,
-            "currentTimeMs": 1700000014400
+            "currentTimeMilliseconds": 1700000014400.0
+        },
+        "config": {
+            "secondsPerSlot": 4,
+            "intervalsPerSlot": 5,
+            "millisecondsPerInterval": 800
         },
         "output": {
-            "config": {
-                "secondsPerSlot": 4,
-                "intervalsPerSlot": 5,
-                "millisecondsPerInterval": 800
-            },
             "totalIntervals": 18
         },
         "_info": {
-            "hash": "0x54e61ced58fc38538ceb6618ecf785add7f72c3bb58bfd693041803837ff9351",
+            "hash": "0x531e2971c138a329768becd70dc0969b64e3deeca86d9f2c546a7bdedfa58f74",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/chain/test_slot_clock.py::test_total_intervals_multi_slot[fork_Lstar]",
-            "description": "14.4 seconds = 18 intervals (14400 ms / 800 ms).",
-            "fixtureFormat": "slot_clock"
+            "description": "A clock 14400 ms past genesis counts 18 total intervals.\n\n    Given\n    -----\n    - a wall-clock time 14400 ms past genesis.\n\n    When\n    ----\n    - the total intervals elapsed since genesis are computed.\n\n    Then\n    ----\n    - the count is 18 (14400 over 800).",
+            "fixtureFormat": "slot_clock_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

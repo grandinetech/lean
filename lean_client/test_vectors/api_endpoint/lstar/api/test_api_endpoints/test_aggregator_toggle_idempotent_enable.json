@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/api/test_api_endpoints.py::test_aggregator_toggle_idempotent_enable[fork_Lstar][fork_Lstar-api_endpoint]": {
+    "tests/consensus/lstar/api/test_api_endpoints.py::test_aggregator_toggle_idempotent_enable[fork_Lstar][fork_Lstar-api_endpoint_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "endpoint": "/lean/v0/admin/aggregator",
         "method": "POST",
         "genesisParams": {
@@ -19,11 +20,12 @@
             "previous": true
         },
         "_info": {
-            "hash": "0xe7b6b4ab7035e2badbec1c6931bed854818d7d92c3b321eeab301f5b636254ab",
+            "hash": "0x1d015ed46f70d5379ecb19105a63b6368e4ebabff897bf3381a51afd0413c39a",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/api/test_api_endpoints.py::test_aggregator_toggle_idempotent_enable[fork_Lstar]",
-            "description": "POST enable=true on an already-enabled node returns previous=true and is a no-op.",
-            "fixtureFormat": "api_endpoint"
+            "description": "Posting enable on an already-enabled node is a no-op.\n\n    Given\n    -----\n    - a node started with the aggregator role enabled.\n\n    When\n    ----\n    - a request posts the role enabled again.\n\n    Then\n    ----\n    - the response reports the previous role as enabled.\n    - the role stays on.",
+            "fixtureFormat": "api_endpoint_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

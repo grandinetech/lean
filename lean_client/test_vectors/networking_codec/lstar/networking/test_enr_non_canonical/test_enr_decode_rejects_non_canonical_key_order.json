@@ -1,24 +1,24 @@
 {
-    "tests/consensus/lstar/networking/test_enr_non_canonical.py::test_enr_decode_rejects_non_canonical_key_order[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_enr_non_canonical.py::test_enr_decode_rejects_non_canonical_key_order[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "expectException": "ValueError",
-        "codecName": "decode_failure",
-        "input": {
+        "rejectionReason": "DECODE_ERROR",
+        "proofSetting": 0,
+        "codec": {
+            "kind": "decode_failure",
             "decoder": "enr",
-            "bytes": "0xf851b8400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001826970847f000001826964827634"
+            "rawBytes": "0xf851b8400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001826970847f000001826964827634"
         },
         "output": {
-            "decoder": "enr",
-            "errorType": "ValueError",
-            "errorMessage": "ENR keys must be lexicographically sorted per EIP-778: 'id' follows 'ip'"
+            "decoder": "enr"
         },
         "_info": {
-            "hash": "0x8afe720524294509f22a19e957e88a4436db82b043342c4851c705fb36bcb441",
+            "hash": "0x9338a4314d6822518650689df994beb914861e664f901aaefd934fecd81033da",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_enr_non_canonical.py::test_enr_decode_rejects_non_canonical_key_order[fork_Lstar]",
-            "description": "An ENR with keys outside lexicographic order must be rejected.\n\n    Pins EIP-778's canonical-ordering requirement. A client that decodes\n    such a record would verify a signature over bytes the signer never\n    produced.",
-            "fixtureFormat": "networking_codec"
+            "description": "An ENR with keys outside lexicographic order is rejected.\n\n    Given\n    -----\n    - an RLP-encoded ENR whose key/value pairs are not lexicographically sorted.\n    - the \"ip\" key precedes the \"id\" key, violating canonical order.\n\n    When\n    ----\n    - the bytes are decoded.\n\n    Then\n    ----\n    - decoding is rejected because the key order is non-canonical.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

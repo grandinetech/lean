@@ -1,10 +1,12 @@
 {
-    "tests/consensus/lstar/sync/test_checkpoint_verify.py::test_checkpoint_verify_accepts_small_validator_set[fork_Lstar][fork_Lstar-sync]": {
+    "tests/consensus/lstar/sync/test_checkpoint_verify.py::test_checkpoint_verify_accepts_small_validator_set[fork_Lstar][fork_Lstar-sync_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "operation": "verify_checkpoint",
-        "input": {
-            "numValidators": 4
+        "proofSetting": 0,
+        "operation": {
+            "kind": "verify_checkpoint",
+            "numValidators": 4,
+            "anchorSlot": 0
         },
         "output": {
             "valid": true,
@@ -13,11 +15,12 @@
             "anchorSlot": 0
         },
         "_info": {
-            "hash": "0xce1a0553bd73e4cb55adfd0dda6eeda7285360708653366eece711dd7f95d91b",
+            "hash": "0xad79d4650ec68ccc416e2c1c0e1d536bcb2c7e5e970dad4e425149763c146b8b",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/sync/test_checkpoint_verify.py::test_checkpoint_verify_accepts_small_validator_set[fork_Lstar]",
-            "description": "A checkpoint state with a small in-range validator set is accepted.\n\n    Four validators is the baseline size used throughout the consensus\n    test suite. Pins the happy path of the verifier so clients observe\n    the accepted branch in addition to the rejection branch above.",
-            "fixtureFormat": "sync"
+            "description": "A checkpoint state with a small in-range validator set is accepted.\n\n    Given\n    -----\n    - an anchor state with 4 validators (the baseline test size).\n\n    When\n    ----\n    - the state is verified before seeding a fork-choice store.\n\n    Then\n    ----\n    - the state is accepted.",
+            "fixtureFormat": "sync_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

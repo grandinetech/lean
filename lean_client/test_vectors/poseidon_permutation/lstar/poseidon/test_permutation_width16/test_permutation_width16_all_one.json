@@ -1,0 +1,52 @@
+{
+    "tests/consensus/lstar/poseidon/test_permutation_width16.py::test_permutation_width16_all_one[fork_Lstar][fork_Lstar-poseidon_permutation_test]": {
+        "network": "Lstar",
+        "leanEnv": "prod",
+        "proofSetting": 0,
+        "width": 16,
+        "inputState": [
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1"
+        ],
+        "outputState": [
+            "677907964",
+            "896193247",
+            "1532834291",
+            "233426539",
+            "408964270",
+            "1321210172",
+            "1175804021",
+            "265146204",
+            "1700259669",
+            "1981558035",
+            "508549287",
+            "1093132232",
+            "1427057932",
+            "1014208598",
+            "29094405",
+            "75977033"
+        ],
+        "_info": {
+            "hash": "0x58e3e31dcf2f56d2836242467df5f3d5d5cf95d9389dea1336a4176d9c206cbf",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/lstar/poseidon/test_permutation_width16.py::test_permutation_width16_all_one[fork_Lstar]",
+            "description": "An all-one input exercises uniform non-zero entries.\n\n    Given\n    -----\n    - a width-16 input state where every element is the smallest non-zero value.\n\n    When\n    ----\n    - the permutation runs once.\n\n    Then\n    ----\n    - the output state equals the reference vector.",
+            "fixtureFormat": "poseidon_permutation_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
+        }
+    }
+}

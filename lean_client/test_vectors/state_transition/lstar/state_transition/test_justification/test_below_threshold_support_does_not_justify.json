@@ -2,6 +2,7 @@
     "tests/consensus/lstar/state_transition/test_justification.py::test_below_threshold_support_does_not_justify[fork_Lstar][fork_Lstar-state_transition_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "pre": {
             "config": {
                 "genesisTime": 0
@@ -31,33 +32,33 @@
             "validators": {
                 "data": [
                     {
-                        "attestationPubkey": "0x6c9dc94cb124fd7eac91680ca6f7c131d7b02f1629ca842b0e714d557da1276b2e5f3d110aab9d6eb8c10c7d1ba0f93cd849c82e",
-                        "proposalPubkey": "0x4f0098552e05e766afeb0d021742f626de106215bd0c5a5d2516fc75dc3ffc121159b63b6664354dc4eb353631b54a5ad0cc7b14",
+                        "attestationPublicKey": "0x6c9dc94cb124fd7eac91680ca6f7c131d7b02f1629ca842b0e714d557da1276b2e5f3d110aab9d6eb8c10c7d1ba0f93cd849c82e",
+                        "proposalPublicKey": "0x4f0098552e05e766afeb0d021742f626de106215bd0c5a5d2516fc75dc3ffc121159b63b6664354dc4eb353631b54a5ad0cc7b14",
                         "index": 0
                     },
                     {
-                        "attestationPubkey": "0xadc304243eb9f60ad1016e6610f11420dba97e450171971dda35bf50d4f14117ad3b9f06083c9d05f73d5e12f9e9ce1e7aa65866",
-                        "proposalPubkey": "0xe2508c4edcc47c50505281470653e6555fe9785380e97c427e99b677f949b125d17f2c58a45c1b5349f20c27db10ea78d2fceb37",
+                        "attestationPublicKey": "0xadc304243eb9f60ad1016e6610f11420dba97e450171971dda35bf50d4f14117ad3b9f06083c9d05f73d5e12f9e9ce1e7aa65866",
+                        "proposalPublicKey": "0xe2508c4edcc47c50505281470653e6555fe9785380e97c427e99b677f949b125d17f2c58a45c1b5349f20c27db10ea78d2fceb37",
                         "index": 1
                     },
                     {
-                        "attestationPubkey": "0x44095a46c1dd521b2e37c626b3401045f2a41713b034d95e9888fb34a15c280a8045b7043b6cca1c3353a6089ae5aa027c548d4b",
-                        "proposalPubkey": "0xd72b9b4bf39f805d637c855bb3266b373aa97e262cea76359b84e70805268b520cbe62284be2f81da2069b0c5298912169fa935f",
+                        "attestationPublicKey": "0x44095a46c1dd521b2e37c626b3401045f2a41713b034d95e9888fb34a15c280a8045b7043b6cca1c3353a6089ae5aa027c548d4b",
+                        "proposalPublicKey": "0xd72b9b4bf39f805d637c855bb3266b373aa97e262cea76359b84e70805268b520cbe62284be2f81da2069b0c5298912169fa935f",
                         "index": 2
                     },
                     {
-                        "attestationPubkey": "0xc6ce413056aff1787a8d01575b11781c08ab595fea7cb46372fd8376e054f829da06c251d8e13643e751d9737d52e4474fddab5c",
-                        "proposalPubkey": "0xd763f750d84c1840a6e2fb16b9f5e13f372e1f4646588a0d0ab96e483b42161f47858d5acb6d3a6bdae7e65a672cd2233fe77c16",
+                        "attestationPublicKey": "0xc6ce413056aff1787a8d01575b11781c08ab595fea7cb46372fd8376e054f829da06c251d8e13643e751d9737d52e4474fddab5c",
+                        "proposalPublicKey": "0xd763f750d84c1840a6e2fb16b9f5e13f372e1f4646588a0d0ab96e483b42161f47858d5acb6d3a6bdae7e65a672cd2233fe77c16",
                         "index": 3
                     },
                     {
-                        "attestationPubkey": "0x360741734b03c828c5a1270372626b30dc98a6531f67351ede52ff5a50938c30cf1db60c6f104f3b56be9a657b3915008d76f24e",
-                        "proposalPubkey": "0x6584bb091a18c35c6ba0547cba3ed53fd508d07405ee993ae439c22250a91d5e2aa2ea5339aae555bcb84b63f2df412018cc4209",
+                        "attestationPublicKey": "0x360741734b03c828c5a1270372626b30dc98a6531f67351ede52ff5a50938c30cf1db60c6f104f3b56be9a657b3915008d76f24e",
+                        "proposalPublicKey": "0x6584bb091a18c35c6ba0547cba3ed53fd508d07405ee993ae439c22250a91d5e2aa2ea5339aae555bcb84b63f2df412018cc4209",
                         "index": 4
                     },
                     {
-                        "attestationPubkey": "0x56091e769f12363a79e1ff49c4b2aa53ed16ad334eac7b07cd2f195210486f48f524aa53778dd969597e58153ab1ee28c343a843",
-                        "proposalPubkey": "0x5d60ad3eb0c05176656444547894232598978a076996cb32132a0b43298707346fcb0b7baf732d514f44fd395837d252fbb32c28",
+                        "attestationPublicKey": "0x56091e769f12363a79e1ff49c4b2aa53ed16ad334eac7b07cd2f195210486f48f524aa53778dd969597e58153ab1ee28c343a843",
+                        "proposalPublicKey": "0x5d60ad3eb0c05176656444547894232598978a076996cb32132a0b43298707346fcb0b7baf732d514f44fd395837d252fbb32c28",
                         "index": 5
                     }
                 ]
@@ -122,12 +123,14 @@
             "slot": 2,
             "latestJustifiedSlot": 0
         },
+        "postStateRoot": "0x9cd9a246da8e3df134ca14cb2b5634a9a4b9bbf41c0a404949f58d889af688a3",
         "_info": {
-            "hash": "0xd1afa1b2fe88fcd52f7468dfa768bd24f1cce754f294c79340dd9e50e7c70fc0",
+            "hash": "0x94725e2d350129e03eebe52b55c2bb4cfe83f1f8472682ef54deafa51d948ca1",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/state_transition/test_justification.py::test_below_threshold_support_does_not_justify[fork_Lstar]",
-            "description": "Test that support below two-thirds does not justify a target.\n\n    Scenario\n    --------\n    1. Start from genesis with 6 validators\n    2. Process block_1 at slot 1\n    3. Process a block at slot 2 with attestations from validators 0, 1, and 2\n       targeting block_1 at slot 1\n\n    Expected Behavior\n    -----------------\n    1. Slot 1 is a justifiable target after finalized slot 0\n    2. Three of six validators are below the two-thirds threshold\n    3. The pending tally remains below supermajority\n    4. latest_justified_slot stays at genesis",
-            "fixtureFormat": "state_transition_test"
+            "description": "Support below two-thirds does not justify the target slot.\n\n    Given\n    -----\n    - 6 validators; a slot needs 4 votes (2/3) to be justified.\n    - the chain:\n        genesis -> block_1(1) -> block(2)\n    - block(2) includes V0, V1, V2's votes for block_1.\n    - 3 of 6 falls below the threshold.\n\n    When\n    ----\n    - the chain processes both blocks.\n\n    Then\n    ----\n    - justified stays at slot 0.",
+            "fixtureFormat": "state_transition_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

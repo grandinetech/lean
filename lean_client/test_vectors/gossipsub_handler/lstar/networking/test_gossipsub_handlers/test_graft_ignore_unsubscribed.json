@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/networking/test_gossipsub_handlers.py::test_graft_ignore_unsubscribed[fork_Lstar][fork_Lstar-gossipsub_handler]": {
+    "tests/consensus/lstar/networking/test_gossipsub_handlers.py::test_graft_ignore_unsubscribed[fork_Lstar][fork_Lstar-gossipsub_handler_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "handlerName": "graft",
         "params": {
             "d": 4,
@@ -11,14 +12,19 @@
         },
         "initialState": {
             "subscriptions": [],
-            "meshes": {},
             "peers": {
                 "peerAx": {
                     "subscriptions": [
                         "test_topic"
-                    ]
+                    ],
+                    "withStream": true,
+                    "backoff": {},
+                    "dontWantIds": []
                 }
-            }
+            },
+            "meshes": {},
+            "seenMessageIds": [],
+            "cachedMessages": []
         },
         "event": {
             "fromPeer": "peerAx",
@@ -26,7 +32,12 @@
                 {
                     "topicId": "test_topic"
                 }
-            ]
+            ],
+            "prune": [],
+            "ihave": [],
+            "iwant": [],
+            "idontwant": [],
+            "publish": []
         },
         "now": 1000.0,
         "expected": {
@@ -34,11 +45,12 @@
             "meshAfter": {}
         },
         "_info": {
-            "hash": "0xa43c6027c907d9fb77addff1f462451c80af1befc65fd3bf20ba8819b7d19faf",
+            "hash": "0xc31c472a2fc03f1303986813924c5d2bae8bcf8415c5d25429e2375743a4da80",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossipsub_handlers.py::test_graft_ignore_unsubscribed[fork_Lstar]",
-            "description": "Silently ignore GRAFT for a topic we are not subscribed to.",
-            "fixtureFormat": "gossipsub_handler"
+            "description": "A GRAFT for an unsubscribed topic is ignored.\n\n    Given\n    -----\n    - the node has no subscriptions and no meshes.\n    - peerAx is subscribed to the topic.\n\n    When\n    ----\n    - peerAx sends a GRAFT for the topic.\n\n    Then\n    ----\n    - the node sends no reply.\n    - no mesh is created.",
+            "fixtureFormat": "gossipsub_handler_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

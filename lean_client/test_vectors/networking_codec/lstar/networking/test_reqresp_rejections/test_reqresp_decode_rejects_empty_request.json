@@ -1,24 +1,24 @@
 {
-    "tests/consensus/lstar/networking/test_reqresp_rejections.py::test_reqresp_decode_rejects_empty_request[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_reqresp_rejections.py::test_reqresp_decode_rejects_empty_request[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "expectException": "CodecError",
-        "codecName": "decode_failure",
-        "input": {
+        "rejectionReason": "DECODE_ERROR",
+        "proofSetting": 0,
+        "codec": {
+            "kind": "decode_failure",
             "decoder": "reqresp_request",
-            "bytes": "0x"
+            "rawBytes": "0x"
         },
         "output": {
-            "decoder": "reqresp_request",
-            "errorType": "CodecError",
-            "errorMessage": "Empty request"
+            "decoder": "reqresp_request"
         },
         "_info": {
-            "hash": "0xdbbfe700b17fd4d50ac0172caa6b18d0da8cf7089bcb471891d3a5aff3ca6320",
+            "hash": "0x4be89778e55ab5804203619ecca9027313978b379bf08d4e34909421801cc906",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_reqresp_rejections.py::test_reqresp_decode_rejects_empty_request[fork_Lstar]",
-            "description": "Decoding an empty request is rejected with CodecError.\n\n    The req/resp framing demands a length-prefix varint followed by a\n    compressed payload. Zero input carries neither, so the decoder must\n    refuse before any downstream parsing.",
-            "fixtureFormat": "networking_codec"
+            "description": "Decoding an empty request is rejected.\n\n    Given\n    -----\n    - zero input bytes.\n    - the framing requires a length-prefix varint followed by a payload.\n\n    When\n    ----\n    - the bytes are decoded as a request.\n\n    Then\n    ----\n    - decoding is rejected because neither field is present.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

@@ -1,0 +1,36 @@
+{
+    "tests/consensus/lstar/ssz/test_consensus_containers.py::test_signed_block_with_proof_bytes[fork_Lstar][fork_Lstar-ssz_test]": {
+        "network": "Lstar",
+        "leanEnv": "prod",
+        "proofSetting": 0,
+        "typeName": "SignedBlock",
+        "value": {
+            "block": {
+                "slot": 2,
+                "proposerIndex": 1,
+                "parentRoot": "0x0101010101010101010101010101010101010101010101010101010101010101",
+                "stateRoot": "0x0202020202020202020202020202020202020202020202020202020202020202",
+                "body": {
+                    "attestations": {
+                        "data": []
+                    }
+                }
+            },
+            "proof": {
+                "proof": {
+                    "data": "0xdeadbeef"
+                }
+            }
+        },
+        "serialized": "0x08000000600000000200000000000000010000000000000001010101010101010101010101010101010101010101010101010101010101010202020202020202020202020202020202020202020202020202020202020202540000000400000004000000deadbeef",
+        "root": "0xad16e0fd1814f9ffcb99d9da22f63140dd7db707aeb1b513de557ca6f54477b3",
+        "_info": {
+            "hash": "0x2dad7c6dacdb69857d16980af9467d539905536fb03283fa7f9771e5a48c9aa9",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/lstar/ssz/test_consensus_containers.py::test_signed_block_with_proof_bytes[fork_Lstar]",
+            "description": "A signed block with proof bytes round-trips unchanged.\n\n    Given\n    -----\n    - a block at slot 2 with distinct roots and an empty body.\n    - a multi-message aggregate carrying four bytes of proof content.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
+        }
+    }
+}

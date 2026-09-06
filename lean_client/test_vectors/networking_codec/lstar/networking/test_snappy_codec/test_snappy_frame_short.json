@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_snappy_codec.py::test_snappy_frame_short[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_snappy_codec.py::test_snappy_frame_short[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "snappy_frame",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "snappy_frame",
             "data": "0x457468657265756d20536e6170707921"
         },
         "output": {
@@ -12,11 +13,12 @@
             "uncompressedLength": 16
         },
         "_info": {
-            "hash": "0x7275a8a2f9de8e7d4185e61df91c016dd51a4da5b0d442f37ca710b3d210a595",
+            "hash": "0xd0624f8c1c9fbb7228e2f8cd0da427c7da608cc68076ab4a8812b72e4e04e907",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_snappy_codec.py::test_snappy_frame_short[fork_Lstar]",
-            "description": "Short payload (16 bytes). Fits in a single compressed chunk.",
-            "fixtureFormat": "networking_codec"
+            "description": "A short payload roundtrips through the snappy framing format.\n\n    Given\n    -----\n    - a 16-byte payload.\n\n    When\n    ----\n    - the input is compressed then decompressed.\n\n    Then\n    ----\n    - the output equals the original.\n    - the payload fits in a single compressed chunk.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

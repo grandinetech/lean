@@ -14,7 +14,7 @@ use containers::{
 use dedicated_executor::DedicatedExecutor;
 use fork_choice::store::{INTERVALS_PER_SLOT, Store};
 use futures::stream::{FuturesUnordered, StreamExt};
-use metrics::{METRICS, stop_and_discard, stop_and_record};
+use metrics::METRICS;
 use ssz::H256;
 use ssz::SszHash;
 use tracing::{info, warn};
@@ -37,6 +37,11 @@ pub struct AggregationJob {
 
 pub struct AggregationSnapshot {
     pub jobs: Vec<AggregationJob>,
+    /// data_roots whose gossip raw signatures were dropped from job.raw_ids
+    /// because a stored child proof already covers them. Callers must remove
+    /// those gossip signatures from `store.gossip_signatures` alongside the
+    /// per-job consumed set to prevent unbounded pool growth.
+    pub settled_data_roots: HashSet<H256>,
 }
 
 pub const AGGREGATION_SLOT_LOOKBACK: u64 = 1;
@@ -66,6 +71,7 @@ pub fn snapshot_aggregation_inputs(store: &Store) -> Option<AggregationSnapshot>
     }
 
     let mut jobs: Vec<AggregationJob> = Vec::with_capacity(all_data_roots.len());
+    let mut settled_data_roots: HashSet<H256> = HashSet::new();
 
     for data_root in all_data_roots {
         let Some(attestation_data) = store.attestation_data_by_root.get(&data_root) else {
@@ -97,15 +103,17 @@ pub fn snapshot_aggregation_inputs(store: &Store) -> Option<AggregationSnapshot>
             &mut covered_by_children,
         );
 
-        let mut entries: Vec<(u64, Signature)> = gossip_groups
-            .get(&data_root)
-            .cloned()
-            .unwrap_or_default()
-            .into_iter()
+        let raw_input = gossip_groups.get(&data_root).cloned().unwrap_or_default();
+        let mut entries: Vec<(u64, Signature)> = raw_input
+            .iter()
             .filter(|(vid, _)| {
                 !covered_by_children.contains(vid) && head_validators.get(*vid).is_ok()
             })
+            .cloned()
             .collect();
+        if !raw_input.is_empty() && entries.is_empty() {
+            settled_data_roots.insert(data_root);
+        }
         entries.sort_by_key(|(vid, _)| *vid);
 
         let mut raw_ids: Vec<u64> = Vec::with_capacity(entries.len());
@@ -160,11 +168,14 @@ pub fn snapshot_aggregation_inputs(store: &Store) -> Option<AggregationSnapshot>
         });
     }
 
-    if jobs.is_empty() {
+    if jobs.is_empty() && settled_data_roots.is_empty() {
         return None;
     }
 
-    Some(AggregationSnapshot { jobs })
+    Some(AggregationSnapshot {
+        jobs,
+        settled_data_roots,
+    })
 }
 
 /// Entry in an annotated_validators.yaml file.
@@ -487,13 +498,20 @@ impl ValidatorService {
             return None;
         }
 
-        if snapshot.jobs.is_empty() {
+        if snapshot.jobs.is_empty() && snapshot.settled_data_roots.is_empty() {
             return None;
         }
 
         let mut aggregated_attestations: Vec<SignedAggregatedAttestation> =
             Vec::with_capacity(snapshot.jobs.len());
-        let mut consumed_data_roots: HashSet<H256> = HashSet::with_capacity(snapshot.jobs.len());
+        let mut consumed_data_roots: HashSet<H256> =
+            HashSet::with_capacity(snapshot.jobs.len() + snapshot.settled_data_roots.len());
+        consumed_data_roots.extend(snapshot.settled_data_roots.iter().copied());
+
+        let _session_timer = METRICS.get().map(|m| {
+            m.lean_committee_signatures_aggregation_time_seconds
+                .start_timer()
+        });
 
         for job in &snapshot.jobs {
             if cancel.load(Ordering::Relaxed) {
@@ -512,22 +530,24 @@ impl ValidatorService {
                 break;
             }
 
-            let timer = METRICS.get().map(|m| {
-                m.lean_committee_signatures_aggregation_time_seconds
-                    .start_timer()
-            });
+            let all_participants;
+            let children_arg: Vec<(&[PublicKey], &AggregatedSignatureProof)>;
+            {
+                let _setup_timer = METRICS
+                    .get()
+                    .map(|m| m.grandine_aggregation_job_setup_seconds.start_timer());
+                children_arg = job
+                    .children
+                    .iter()
+                    .map(|(pks, proof)| (pks.as_slice(), proof))
+                    .collect();
 
-            let children_arg: Vec<(&[PublicKey], &AggregatedSignatureProof)> = job
-                .children
-                .iter()
-                .map(|(pks, proof)| (pks.as_slice(), proof))
-                .collect();
-
-            let mut all_validator_ids: Vec<u64> = job.accepted_child_ids.clone();
-            all_validator_ids.extend_from_slice(&job.raw_ids);
-            all_validator_ids.sort();
-            all_validator_ids.dedup();
-            let all_participants = AggregationBits::from_validator_indices(&all_validator_ids);
+                let mut all_validator_ids: Vec<u64> = job.accepted_child_ids.clone();
+                all_validator_ids.extend_from_slice(&job.raw_ids);
+                all_validator_ids.sort();
+                all_validator_ids.dedup();
+                all_participants = AggregationBits::from_validator_indices(&all_validator_ids);
+            }
 
             let type1_start = std::time::Instant::now();
             let proof = match AggregatedSignatureProof::aggregate_with_children(
@@ -540,7 +560,6 @@ impl ValidatorService {
                 log_inv_rate,
             ) {
                 Ok(p) => {
-                    stop_and_record(timer);
                     info!(
                         slot = slot.0,
                         raws = job.raw_ids.len(),
@@ -551,7 +570,6 @@ impl ValidatorService {
                     p
                 }
                 Err(e) => {
-                    stop_and_discard(timer);
                     warn!(
                         error = %e,
                         data_root = %format!("0x{:x}", job.data_root),
@@ -579,7 +597,7 @@ impl ValidatorService {
             }
         }
 
-        if aggregated_attestations.is_empty() {
+        if aggregated_attestations.is_empty() && consumed_data_roots.is_empty() {
             return None;
         }
 
@@ -616,15 +634,9 @@ impl ValidatorService {
                 .context(format!("proposer {validator_index} not found in state"))?;
             let proposer_proposal_pubkey = proposer.proposal_pubkey.clone();
 
-            let sign_timer = METRICS.get().map(|metrics| {
-                metrics
-                    .lean_pq_sig_attestation_signing_time_seconds
-                    .start_timer()
-            });
             let proposer_raw_signature = km
                 .sign_proposal(validator_index, block_slot, block_root)
-                .context("failed to sign block root")
-                .inspect_err(|_| stop_and_discard(sign_timer))?;
+                .context("failed to sign block root")?;
 
             let proposer_type1 = AggregatedSignature::aggregate(
                 [proposer_proposal_pubkey.clone()],

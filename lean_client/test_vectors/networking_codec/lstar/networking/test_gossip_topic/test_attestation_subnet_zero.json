@@ -1,22 +1,24 @@
 {
-    "tests/consensus/lstar/networking/test_gossip_topic.py::test_attestation_subnet_zero[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_gossip_topic.py::test_attestation_subnet_zero[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "gossip_topic",
-        "input": {
-            "kind": "attestation",
-            "forkDigest": "12345678",
+        "proofSetting": 0,
+        "codec": {
+            "kind": "gossip_topic",
+            "topicKind": "attestation",
+            "networkName": "12345678",
             "subnetId": 0
         },
         "output": {
             "topicString": "/leanconsensus/12345678/attestation_0/ssz_snappy"
         },
         "_info": {
-            "hash": "0x2803b0e98efa785d897109ef7cfb039062b863fdeae566638d59e8bce0439374",
+            "hash": "0x86f78a85ada0061d4c468653ffc5331d8d4dae496d5254f70f5a76422a3a9afa",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossip_topic.py::test_attestation_subnet_zero[fork_Lstar]",
-            "description": "Attestation subnet 0. First subnet ID.",
-            "fixtureFormat": "networking_codec"
+            "description": "An attestation topic on the first subnet round-trips.\n\n    Given\n    -----\n    - an attestation topic kind.\n    - a typical fork digest.\n    - subnet 0, the first subnet.\n\n    When\n    ----\n    - the topic is formatted to a string and parsed back.\n\n    Then\n    ----\n    - the parsed topic matches the input.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

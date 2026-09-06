@@ -1,26 +1,28 @@
 {
-    "tests/consensus/lstar/chain/test_slot_clock.py::test_from_unix_time_two_seconds[fork_Lstar][fork_Lstar-slot_clock]": {
+    "tests/consensus/lstar/chain/test_slot_clock.py::test_from_unix_time_two_seconds[fork_Lstar][fork_Lstar-slot_clock_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "operation": "from_unix_time",
-        "input": {
-            "unixSeconds": 1700000002,
-            "genesisTime": 1700000000
+        "proofSetting": 0,
+        "operation": {
+            "kind": "from_unix_time",
+            "genesisTime": 1700000000,
+            "unixSeconds": 1700000002.0
+        },
+        "config": {
+            "secondsPerSlot": 4,
+            "intervalsPerSlot": 5,
+            "millisecondsPerInterval": 800
         },
         "output": {
-            "config": {
-                "secondsPerSlot": 4,
-                "intervalsPerSlot": 5,
-                "millisecondsPerInterval": 800
-            },
             "interval": 2
         },
         "_info": {
-            "hash": "0x0a40857df76b79d043cd3d8301460266c57c7a5a81f96be12cf2d9dd57dc9e4b",
+            "hash": "0x0a0b3f7d2a0cd190fb226c1cecfaea132326756bd50e66f28315b8b7319fbd2f",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/chain/test_slot_clock.py::test_from_unix_time_two_seconds[fork_Lstar]",
-            "description": "Two seconds = 2000 ms. floor(2000 / 800) = 2 intervals.",
-            "fixtureFormat": "slot_clock"
+            "description": "A timestamp two seconds past genesis maps to interval 2.\n\n    Given\n    -----\n    - a timestamp two seconds (2000 ms) past genesis.\n\n    When\n    ----\n    - the interval for that timestamp is computed.\n\n    Then\n    ----\n    - the interval is 2 (floor of 2000 over 800).",
+            "fixtureFormat": "slot_clock_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

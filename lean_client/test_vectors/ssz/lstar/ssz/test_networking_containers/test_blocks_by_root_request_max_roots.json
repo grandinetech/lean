@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_networking_containers.py::test_blocks_by_root_request_max_roots[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_networking_containers.py::test_blocks_by_root_request_max_roots[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "BlocksByRootRequest",
         "value": {
             "roots": {
@@ -22,11 +23,12 @@
         "serialized": "0x040000000101010101010101010101010101010101010101010101010101010101010101020202020202020202020202020202020202020202020202020202020202020203030303030303030303030303030303030303030303030303030303030303030404040404040404040404040404040404040404040404040404040404040404050505050505050505050505050505050505050505050505050505050505050506060606060606060606060606060606060606060606060606060606060606060707070707070707070707070707070707070707070707070707070707070707080808080808080808080808080808080808080808080808080808080808080809090909090909090909090909090909090909090909090909090909090909090a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
         "root": "0x116522b9d49abf512ee25550df7d6f36e05e8b168e238d3ed1a38afca4e06e0d",
         "_info": {
-            "hash": "0x5e4c6169912c82716410cd59570988156e4c1253b2a123ea42be98cd055746f9",
+            "hash": "0xa6972a92841b5f8053d62998761ff2bb5f9ff85351dc27ab303a6e9b319cb6e7",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_networking_containers.py::test_blocks_by_root_request_max_roots[fork_Lstar]",
-            "description": "SSZ roundtrip for BlocksByRootRequest with ten distinct roots.",
-            "fixtureFormat": "ssz"
+            "description": "A blocks-by-root request with ten roots round-trips unchanged.\n\n    Given\n    -----\n    - a request carrying ten distinct block roots.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

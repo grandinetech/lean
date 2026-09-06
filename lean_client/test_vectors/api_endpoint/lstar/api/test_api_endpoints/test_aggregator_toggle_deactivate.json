@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/api/test_api_endpoints.py::test_aggregator_toggle_deactivate[fork_Lstar][fork_Lstar-api_endpoint]": {
+    "tests/consensus/lstar/api/test_api_endpoints.py::test_aggregator_toggle_deactivate[fork_Lstar][fork_Lstar-api_endpoint_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "endpoint": "/lean/v0/admin/aggregator",
         "method": "POST",
         "genesisParams": {
@@ -19,11 +20,12 @@
             "previous": true
         },
         "_info": {
-            "hash": "0x7d85826b14c99758017b6bbd9065571b8ece7c93f10de4f8cf2b40c5a24be47f",
+            "hash": "0x2c0216e92809d15ca75ca67e4cfdf35de84c85a909a65febc53590ef5b41c072",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/api/test_api_endpoints.py::test_aggregator_toggle_deactivate[fork_Lstar]",
-            "description": "POST enable=false flips the role from on to off.",
-            "fixtureFormat": "api_endpoint"
+            "description": "Posting disable turns the aggregator role off.\n\n    Given\n    -----\n    - a node started with the aggregator role enabled.\n\n    When\n    ----\n    - a request posts the role disabled.\n\n    Then\n    ----\n    - the role flips from on to off.",
+            "fixtureFormat": "api_endpoint_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

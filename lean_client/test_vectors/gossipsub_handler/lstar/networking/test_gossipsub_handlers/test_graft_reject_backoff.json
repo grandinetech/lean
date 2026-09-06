@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/networking/test_gossipsub_handlers.py::test_graft_reject_backoff[fork_Lstar][fork_Lstar-gossipsub_handler]": {
+    "tests/consensus/lstar/networking/test_gossipsub_handlers.py::test_graft_reject_backoff[fork_Lstar][fork_Lstar-gossipsub_handler_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "handlerName": "graft",
         "params": {
             "d": 4,
@@ -13,26 +14,33 @@
             "subscriptions": [
                 "test_topic"
             ],
-            "meshes": {
-                "test_topic": [
-                    "peerAx"
-                ]
-            },
             "peers": {
                 "peerAx": {
                     "subscriptions": [
                         "test_topic"
-                    ]
+                    ],
+                    "withStream": true,
+                    "backoff": {},
+                    "dontWantIds": []
                 },
                 "peerBx": {
                     "subscriptions": [
                         "test_topic"
                     ],
+                    "withStream": true,
                     "backoff": {
                         "test_topic": 1060.0
-                    }
+                    },
+                    "dontWantIds": []
                 }
-            }
+            },
+            "meshes": {
+                "test_topic": [
+                    "peerAx"
+                ]
+            },
+            "seenMessageIds": [],
+            "cachedMessages": []
         },
         "event": {
             "fromPeer": "peerBx",
@@ -40,7 +48,12 @@
                 {
                     "topicId": "test_topic"
                 }
-            ]
+            ],
+            "prune": [],
+            "ihave": [],
+            "iwant": [],
+            "idontwant": [],
+            "publish": []
         },
         "now": 1000.0,
         "expected": {
@@ -64,11 +77,12 @@
             }
         },
         "_info": {
-            "hash": "0x48995bf5dce4b89d76933a9a04b956a586693e70e1b7374f7fbc2b39f9b2bde1",
+            "hash": "0xb02d3a9157006883dac658f6b18ce680e19a2f916625824454ff87a404c370d1",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossipsub_handlers.py::test_graft_reject_backoff[fork_Lstar]",
-            "description": "Reject GRAFT with PRUNE when peer is in backoff period.",
-            "fixtureFormat": "gossipsub_handler"
+            "description": "A GRAFT is rejected with a PRUNE while the peer is in backoff.\n\n    Given\n    -----\n    - the node is subscribed to the topic.\n    - the mesh holds peerAx.\n    - peerBx has a backoff that expires at 1060, later than now=1000.\n\n    When\n    ----\n    - peerBx sends a GRAFT for the topic.\n\n    Then\n    ----\n    - the node replies with a PRUNE.\n    - peerBx is not added to the mesh.",
+            "fixtureFormat": "gossipsub_handler_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

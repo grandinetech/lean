@@ -1,24 +1,24 @@
 {
-    "tests/consensus/lstar/networking/test_gossipsub_rpc_rejections.py::test_gossipsub_rpc_decode_rejects_length_exceeding_data[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_gossipsub_rpc_rejections.py::test_gossipsub_rpc_decode_rejects_length_exceeding_data[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "expectException": "ProtobufDecodeError",
-        "codecName": "decode_failure",
-        "input": {
+        "rejectionReason": "DECODE_ERROR",
+        "proofSetting": 0,
+        "codec": {
+            "kind": "decode_failure",
             "decoder": "gossipsub_rpc",
-            "bytes": "0x0a64"
+            "rawBytes": "0x0a64"
         },
         "output": {
-            "decoder": "gossipsub_rpc",
-            "errorType": "ProtobufDecodeError",
-            "errorMessage": "Length field 100 at position 1 exceeds data size 2"
+            "decoder": "gossipsub_rpc"
         },
         "_info": {
-            "hash": "0x27bcfc43b7534d4862619cdd9107c40777f71bba4df250f8a1bc0e187226b5d5",
+            "hash": "0x3fa663066772b5b221663d3082edccfbeca99506ac447ce44e6a53e396e09d54",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossipsub_rpc_rejections.py::test_gossipsub_rpc_decode_rejects_length_exceeding_data[fork_Lstar]",
-            "description": "A length-delimited field whose length runs past the payload is rejected.\n\n    The payload starts with tag 0x0a (field 1, length-delimited wire type)\n    followed by varint length 0x64 (100). The rest of the buffer carries\n    zero bytes, so the declared length cannot possibly be covered. The\n    decoder must raise before reading past the buffer end.",
-            "fixtureFormat": "networking_codec"
+            "description": "A length-delimited field whose length runs past the payload is rejected.\n\n    Given\n    -----\n    - a tag byte 0x0a (field 1, length-delimited wire type).\n    - a varint length 0x64 (100).\n    - no payload bytes following the length.\n\n    When\n    ----\n    - the bytes are decoded as a gossipsub RPC.\n\n    Then\n    ----\n    - decoding is rejected because the declared length runs past the buffer end.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

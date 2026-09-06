@@ -1,12 +1,14 @@
 {
-    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_iwant_multiple_ids[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_iwant_multiple_ids[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "gossipsub_rpc",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "gossipsub_rpc",
             "subscriptions": [],
             "publish": [],
             "control": {
+                "ihave": [],
                 "iwant": [
                     {
                         "messageIds": [
@@ -14,18 +16,22 @@
                             "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
                         ]
                     }
-                ]
+                ],
+                "graft": [],
+                "prune": [],
+                "idontwant": []
             }
         },
         "output": {
             "encoded": "0x1a2e122c0a14aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0a14bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         },
         "_info": {
-            "hash": "0xa919b96647aa934efd8540846d5d23c8a9e7b0afb2bcb150fc3eee8e5a7c6a17",
+            "hash": "0x56f593b681146937b6545c450f3a3f66391bb8060f40d5f9a02c0dc6a11281de",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_iwant_multiple_ids[fork_Lstar]",
-            "description": "IWANT requesting two messages by ID.",
-            "fixtureFormat": "networking_codec"
+            "description": "An IWANT requesting two message ids round-trips.\n\n    Given\n    -----\n    - an RPC whose control message holds an IWANT with two message ids.\n\n    When\n    ----\n    - the RPC is encoded and decoded.\n\n    Then\n    ----\n    - the decoded RPC matches the input.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

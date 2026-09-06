@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_networking_containers.py::test_blocks_by_root_request_multiple[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_networking_containers.py::test_blocks_by_root_request_multiple[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "BlocksByRootRequest",
         "value": {
             "roots": {
@@ -15,11 +16,12 @@
         "serialized": "0x04000000010101010101010101010101010101010101010101010101010101010101010102020202020202020202020202020202020202020202020202020202020202020303030303030303030303030303030303030303030303030303030303030303",
         "root": "0x663d3f495d86ac4c014638554c24deaf8ae4e87f5b4cc469f1eba323ba3560ac",
         "_info": {
-            "hash": "0x6a5210b9cd6486191f4dea0cf1c05ec9b8c459133347d17cf387059d16a7b450",
+            "hash": "0x9a3eb4cb45d182fdd5986ee72923c44dd4fd0eac6c395e3481b0bf8e5c89cf90",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_networking_containers.py::test_blocks_by_root_request_multiple[fork_Lstar]",
-            "description": "SSZ roundtrip for BlocksByRootRequest with multiple roots.",
-            "fixtureFormat": "ssz"
+            "description": "A blocks-by-root request with three roots round-trips unchanged.\n\n    Given\n    -----\n    - a request carrying three distinct block roots.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

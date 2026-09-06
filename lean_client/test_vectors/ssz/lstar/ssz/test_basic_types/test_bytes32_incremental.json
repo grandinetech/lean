@@ -1,17 +1,19 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_bytes32_incremental[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_bytes32_incremental[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "Bytes32",
         "value": "0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
         "serialized": "0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
         "root": "0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
         "_info": {
-            "hash": "0x1876c211df157e45ef8a8007baf4bed4e035e60b63111df6386cd647b4608720",
+            "hash": "0xf097ee2285fef32b51ea72794af112da42dc0581a01895fb5172150020f28a24",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_bytes32_incremental[fork_Lstar]",
-            "description": "Bytes32 with every byte distinct (0x00..0x1F). Catches byte-swap errors.",
-            "fixtureFormat": "ssz"
+            "description": "A 32-byte array with distinct bytes round-trips unchanged.\n\n    Given\n    -----\n    - a 32-byte array holding the bytes 0x00 through 0x1f.\n    - every byte distinct, so a byte swap would be detected.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

@@ -1,26 +1,28 @@
 {
-    "tests/consensus/lstar/chain/test_slot_clock.py::test_current_interval_800ms[fork_Lstar][fork_Lstar-slot_clock]": {
+    "tests/consensus/lstar/chain/test_slot_clock.py::test_current_interval_800ms[fork_Lstar][fork_Lstar-slot_clock_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "operation": "current_interval",
-        "input": {
+        "proofSetting": 0,
+        "operation": {
+            "kind": "current_interval",
             "genesisTime": 1700000000,
-            "currentTimeMs": 1700000000800
+            "currentTimeMilliseconds": 1700000000800.0
+        },
+        "config": {
+            "secondsPerSlot": 4,
+            "intervalsPerSlot": 5,
+            "millisecondsPerInterval": 800
         },
         "output": {
-            "config": {
-                "secondsPerSlot": 4,
-                "intervalsPerSlot": 5,
-                "millisecondsPerInterval": 800
-            },
             "interval": 1
         },
         "_info": {
-            "hash": "0x4b7bf81d08f2ffbe255adbc184bb1515baaec17cbc44e9f52e01ba65c9706c5b",
+            "hash": "0x0ef49b844d1885312aac56cc6e4d31d6de6ac86d1b883ba83f0a7d9faa0c0ecd",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/chain/test_slot_clock.py::test_current_interval_800ms[fork_Lstar]",
-            "description": "800 ms into slot: interval 1.",
-            "fixtureFormat": "slot_clock"
+            "description": "A clock 800 ms into a slot reports interval 1.\n\n    Given\n    -----\n    - a wall-clock time 800 ms into a slot.\n\n    When\n    ----\n    - the interval within the slot is computed.\n\n    Then\n    ----\n    - the interval is 1.",
+            "fixtureFormat": "slot_clock_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

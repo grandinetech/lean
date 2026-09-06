@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_merkleization_boundaries.py::test_bitlist_filled_to_chunk_boundary_limit[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_merkleization_boundaries.py::test_bitlist_filled_to_chunk_boundary_limit[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "BoundaryBitlist256",
         "value": {
             "data": [
@@ -266,11 +267,12 @@
         "serialized": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff01",
         "root": "0xbc16fae79b58a2e3dac0429d25b79cada399106276e08c5d3cfc3726db02b8ba",
         "_info": {
-            "hash": "0x4ebe892e6d73955b64caa5b118bc97a2ffee68c187ca8abf0a917fdd5413736c",
+            "hash": "0x670268a011525889355e9b543bd27098d69ef2b27e583742fcd7576cb02b664b",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_merkleization_boundaries.py::test_bitlist_filled_to_chunk_boundary_limit[fork_Lstar]",
-            "description": "Bitlist filled to a 256-bit limit places the sentinel at the start of a fresh byte.\n\n    The trailing sentinel crosses into a new chunk, exercising the length-mixin\n    ordering for bitlists whose limit sits on a Merkle-chunk edge.",
-            "fixtureFormat": "ssz"
+            "description": "A bitlist filled to a chunk-edge limit merkleizes to a stable root.\n\n    Given\n    -----\n    - a bitlist capped at 256 bits, filled to its limit.\n    - a sentinel that lands at the start of a fresh byte.\n\n    When\n    ----\n    - the value is merkleized.\n\n    Then\n    ----\n    - the root matches the expected length-mixin ordering.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_sub_opts_empty_topic[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_sub_opts_empty_topic[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "gossipsub_rpc",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "gossipsub_rpc",
             "subscriptions": [
                 {
                     "subscribe": true,
@@ -16,11 +17,12 @@
             "encoded": "0x0a0408011200"
         },
         "_info": {
-            "hash": "0xf1b29b0e3e2f4675f0aac91cd50270de39f364d71adc59007ec1640ffa45cede",
+            "hash": "0xe4b33bd1b820074e26dbacecbd5ef7a1ffe0d20c91faa229b857281ea26ebf19",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_sub_opts_empty_topic[fork_Lstar]",
-            "description": "SubOpts with an empty topic string.",
-            "fixtureFormat": "networking_codec"
+            "description": "A subscribe entry with an empty topic round-trips.\n\n    Given\n    -----\n    - an RPC with one subscription entry whose topic is an empty string.\n\n    When\n    ----\n    - the RPC is encoded and decoded.\n\n    Then\n    ----\n    - the decoded RPC matches the input.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

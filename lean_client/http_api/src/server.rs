@@ -7,7 +7,7 @@ use tracing::info;
 use crate::{
     aggregator_controller::SharedController,
     config::HttpServerConfig,
-    handlers::SharedStore,
+    handlers::{SharedSignedBlocks, SharedStore},
     routing::normal_routes,
     test_driver::{TestDriverState, test_driver_routes},
 };
@@ -15,9 +15,10 @@ use crate::{
 pub async fn run_server(
     config: HttpServerConfig,
     store: SharedStore,
+    signed_blocks: SharedSignedBlocks,
     aggregator_controller: SharedController,
 ) -> Result<()> {
-    let router = normal_routes(&config, store, aggregator_controller);
+    let router = normal_routes(&config, store, signed_blocks, aggregator_controller);
     serve(config, router).await
 }
 
@@ -32,10 +33,11 @@ pub async fn run_server(
 pub async fn run_test_driver_server(
     config: HttpServerConfig,
     store: SharedStore,
+    signed_blocks: SharedSignedBlocks,
     aggregator_controller: SharedController,
 ) -> Result<()> {
     let driver_state = TestDriverState::new(store.clone());
-    let router = normal_routes(&config, store, aggregator_controller)
+    let router = normal_routes(&config, store, signed_blocks, aggregator_controller)
         .merge(test_driver_routes(driver_state));
     serve(config, router).await
 }

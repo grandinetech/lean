@@ -1,19 +1,21 @@
 {
-    "tests/consensus/lstar/ssz/test_decode_rejections.py::test_uint32_decode_rejects_wrong_byte_length[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_decode_rejections.py::test_uint32_decode_rejects_wrong_byte_length[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "expectException": "SSZSerializationError",
+        "rejectionReason": "DECODE_ERROR",
+        "proofSetting": 0,
         "typeName": "Uint32",
         "value": "0",
         "rawBytes": "0x010203",
         "serialized": "0x010203",
         "root": "",
         "_info": {
-            "hash": "0xdbd3c97237bc015c4497266b3e29dcc04784dbe3f08e417e7d08a12be785191b",
+            "hash": "0x17f7fdc903dd743847516fc813a54d4485e57a5f0b023591a98ec2b70fcbf3ed",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_decode_rejections.py::test_uint32_decode_rejects_wrong_byte_length[fork_Lstar]",
-            "description": "Fixed-size uint types reject input whose byte length does not match the type.\n\n    A uint32 is always four bytes. A three-byte input underfills the slot\n    and cannot be safely widened. The decoder raises rather than guessing\n    a padding convention.",
-            "fixtureFormat": "ssz"
+            "description": "Decoding a four-byte uint from a shorter input is rejected.\n\n    Given\n    -----\n    - a uint type that is always four bytes.\n    - a three-byte input that underfills the value.\n\n    When\n    ----\n    - the input is decoded into that type.\n\n    Then\n    ----\n    - decoding is rejected.\n    - the reason is that the byte length does not match the fixed size.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

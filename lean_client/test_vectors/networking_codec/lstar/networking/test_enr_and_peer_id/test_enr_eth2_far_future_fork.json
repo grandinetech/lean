@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_enr_and_peer_id.py::test_enr_eth2_far_future_fork[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_enr_and_peer_id.py::test_enr_eth2_far_future_fork[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "enr",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "enr",
             "enrString": "enr:-Iu4QH9jczrZFmQYFzYOnzvoHr0x_oqo6uiVwYyfW4JqmzieRFUycscJpHoQoAudebpIM0ty96ktM0ZdV0Cb_Xc_oD4BhGV0aDKQEjRWeAAAAAD__________4JpZIJ2NIlzZWNwMjU2azGhA8pjTK4NSay0Adikxrb-jFW3DRFb9AB2nMFADzJYzTE4"
         },
         "output": {
@@ -22,11 +23,12 @@
             "isValid": true
         },
         "_info": {
-            "hash": "0xa507fd6ee8e478b3496a915f7d7a9572271ec9427fef86e35ae64d82857cacba",
+            "hash": "0x796b27b28a3fb4e4221182b0be05e9ef927e1e7b93d112a46885b4dd79e64c7a",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_enr_and_peer_id.py::test_enr_eth2_far_future_fork[fork_Lstar]",
-            "description": "ENR with eth2 where next_fork_epoch is max uint64 (far future). Verifies large epoch.",
-            "fixtureFormat": "networking_codec"
+            "description": "A record with a far-future fork epoch round-trips unchanged.\n\n    Given\n    -----\n    - an ENR whose eth2 key sets the next fork epoch to the maximum uint64.\n\n    When\n    ----\n    - the record is decoded and re-encoded.\n\n    Then\n    ----\n    - the re-encoded record matches the input.\n    - the large fork epoch survives the round-trip.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

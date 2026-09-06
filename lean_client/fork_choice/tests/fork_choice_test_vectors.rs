@@ -88,11 +88,11 @@ impl Into<State> for TestAnchorState {
         let mut validators = Validators::default();
         for test_validator in &self.validators.data {
             let attestation_pubkey: PublicKey = test_validator
-                .attestation_pubkey
+                .attestation_public_key
                 .parse()
                 .expect("Failed to parse validator attestation_pubkey");
             let proposal_pubkey: PublicKey = test_validator
-                .proposal_pubkey
+                .proposal_public_key
                 .as_deref()
                 .map(|s| {
                     s.parse()
@@ -183,10 +183,10 @@ struct TestDataWrapper<T> {
 struct TestValidator {
     #[allow(dead_code)]
     #[serde(alias = "pubkey")]
-    attestation_pubkey: String,
+    attestation_public_key: String,
     #[allow(dead_code)]
     #[serde(default)]
-    proposal_pubkey: Option<String>,
+    proposal_public_key: Option<String>,
     #[allow(dead_code)]
     #[serde(default)]
     index: u64,
@@ -443,7 +443,7 @@ fn verify_checks(
     Ok(())
 }
 
-#[test_resources("test_vectors/fork_choice/*/fc/*/*.json")]
+#[test_resources("test_vectors/fork_choice/*/fork_choice/*/*.json")]
 fn forkchoice(spec_file: &str) {
     let spec_path = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("..")
@@ -473,6 +473,7 @@ fn forkchoice(spec_file: &str) {
             .expect("failed to create test store");
         let mut cache = BlockCache::new();
         let mut block_labels: HashMap<String, H256> = HashMap::new();
+        block_labels.insert("genesis".to_string(), store.head);
 
         for (step_idx, step) in case.steps.into_iter().enumerate() {
             match step {
@@ -481,6 +482,7 @@ fn forkchoice(spec_file: &str) {
                     checks,
                     block: test_block,
                 } => {
+                    let block_root_label = test_block.block_root_label.clone();
                     let result = std::panic::catch_unwind(AssertUnwindSafe(|| {
                         let block: Block = test_block.into();
                         let signed_block = SignedBlock {
@@ -520,6 +522,9 @@ fn forkchoice(spec_file: &str) {
                     }
 
                     if valid && result.is_ok() {
+                        if let Some(label) = block_root_label {
+                            block_labels.insert(label, *result.as_ref().unwrap());
+                        }
                         verify_checks(&store, &checks, &block_labels, step_idx).expect(&format!(
                             "Step: {step_idx}: Should be valid but checks failed"
                         ));

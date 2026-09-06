@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_reqresp_error_utf8.py::test_reqresp_error_at_max_error_message_size[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_reqresp_error_utf8.py::test_reqresp_error_at_max_error_message_size[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "reqresp_response",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "reqresp_response",
             "responseCode": 1,
             "sszData": "0x65656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565"
         },
@@ -11,11 +12,12 @@
             "encoded": "0x018002ff060000734e61507059001400007858a48b80020065fe0100fe0300fe0300fa0300"
         },
         "_info": {
-            "hash": "0x736c7ef1eaa1c582971295bbb434e81b45946c3b062c04095824a7d4d9fb8859",
+            "hash": "0x8d7b6c58a095a461144f23da727c14836b0673f20722a2d33e1d7092931343b2",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_reqresp_error_utf8.py::test_reqresp_error_at_max_error_message_size[fork_Lstar]",
-            "description": "Error response carrying a payload at the maximum error-message size roundtrips.\n\n    The handler truncates server-side error strings to 256 bytes before\n    encoding. A payload at that boundary exercises the exact wire shape\n    clients may receive and must be able to decode back to the same\n    bytes without loss.",
-            "fixtureFormat": "networking_codec"
+            "description": "An error response at the maximum error-message size roundtrips.\n\n    Given\n    -----\n    - response code 1 (invalid request).\n    - a 256-byte payload.\n    - 256 bytes is the limit error strings are truncated to.\n\n    When\n    ----\n    - the response is encoded then decoded.\n\n    Then\n    ----\n    - the decoded payload equals the original byte-for-byte.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

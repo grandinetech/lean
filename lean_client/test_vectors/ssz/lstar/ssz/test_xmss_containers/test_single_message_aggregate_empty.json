@@ -1,0 +1,28 @@
+{
+    "tests/consensus/lstar/ssz/test_xmss_containers.py::test_single_message_aggregate_empty[fork_Lstar][fork_Lstar-ssz_test]": {
+        "network": "Lstar",
+        "leanEnv": "prod",
+        "proofSetting": 0,
+        "typeName": "SingleMessageAggregate",
+        "value": {
+            "participants": {
+                "data": [
+                    true
+                ]
+            },
+            "proof": {
+                "data": "0x"
+            }
+        },
+        "serialized": "0x080000000900000003",
+        "root": "0x7b8f873321942f6475483d1c91706d6eab26c897bff969548fbde5baf83825b1",
+        "_info": {
+            "hash": "0x691f1fab654c6c7397a2638d27237b90cb9d4b9a181084cdd44aacf42bee239e",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/lstar/ssz/test_xmss_containers.py::test_single_message_aggregate_empty[fork_Lstar]",
+            "description": "A single-message aggregate with empty proof bytes round-trips unchanged.\n\n    Given\n    -----\n    - a single-message aggregate with one participant.\n    - empty proof bytes.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
+        }
+    }
+}

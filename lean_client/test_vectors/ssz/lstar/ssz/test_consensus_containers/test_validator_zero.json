@@ -1,21 +1,23 @@
 {
-    "tests/consensus/lstar/ssz/test_consensus_containers.py::test_validator_zero[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_consensus_containers.py::test_validator_zero[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "Validator",
         "value": {
-            "attestationPubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-            "proposalPubkey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+            "attestationPublicKey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+            "proposalPublicKey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
             "index": 0
         },
         "serialized": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
         "root": "0xe26c1baee16b40b9c3e2966afe9991e7a7a8b8cbf87dad07d568389780e1cbc1",
         "_info": {
-            "hash": "0x861fb9b8872c99cfe8bed41a61fe9b9d4fabd125dae62797beb13dd9e62c588d",
+            "hash": "0x0ba1ebee5f5f54da59d23e611b18f82a6207e10b45366419f84b6b510d0a41f4",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_consensus_containers.py::test_validator_zero[fork_Lstar]",
-            "description": "SSZ roundtrip for Validator with zero values.",
-            "fixtureFormat": "ssz"
+            "description": "A validator with zero values round-trips unchanged.\n\n    Given\n    -----\n    - a validator at index 0 with all-zero public keys.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

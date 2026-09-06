@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_uint16_vector3_zero[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_uint16_vector3_zero[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "SampleUint16Vector3",
         "value": {
             "data": [
@@ -13,11 +14,12 @@
         "serialized": "0x000000000000",
         "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "_info": {
-            "hash": "0xd5426dc99b6205cdad3097590b48c0a5428f6259a488c8090cf7dc061980710c",
+            "hash": "0xba3707f89ec4e429b8713594ec94645406fb67ad386ea72540eafd7cff02a5d6",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_uint16_vector3_zero[fork_Lstar]",
-            "description": "3-element Uint16 vector, all zeros. 6 bytes total, padded to one chunk.",
-            "fixtureFormat": "ssz"
+            "description": "A three-element uint vector of zeros round-trips unchanged.\n\n    Given\n    -----\n    - a vector of three two-byte uints, all zero.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

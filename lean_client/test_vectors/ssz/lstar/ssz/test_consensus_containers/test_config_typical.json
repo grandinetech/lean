@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_consensus_containers.py::test_config_typical[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_consensus_containers.py::test_config_typical[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "Config",
         "value": {
             "genesisTime": 1609459200
@@ -9,11 +10,12 @@
         "serialized": "0x0066ee5f00000000",
         "root": "0x0066ee5f00000000000000000000000000000000000000000000000000000000",
         "_info": {
-            "hash": "0xb0f7353a700a5589c7bb91727d692f07e3bd169b98e2c54eeba3d371e379ee07",
+            "hash": "0x85310349b0f08c331272b9380265e6375c20950bc4be883b354639887bd58fa8",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_consensus_containers.py::test_config_typical[fork_Lstar]",
-            "description": "SSZ roundtrip for Config with typical genesis time.",
-            "fixtureFormat": "ssz"
+            "description": "A config with a non-zero genesis time round-trips unchanged.\n\n    Given\n    -----\n    - a config whose genesis time is 1609459200.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

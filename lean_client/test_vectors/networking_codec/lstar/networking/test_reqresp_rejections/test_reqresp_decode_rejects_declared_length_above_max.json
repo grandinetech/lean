@@ -1,24 +1,24 @@
 {
-    "tests/consensus/lstar/networking/test_reqresp_rejections.py::test_reqresp_decode_rejects_declared_length_above_max[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_reqresp_rejections.py::test_reqresp_decode_rejects_declared_length_above_max[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "expectException": "CodecError",
-        "codecName": "decode_failure",
-        "input": {
+        "rejectionReason": "DECODE_ERROR",
+        "proofSetting": 0,
+        "codec": {
+            "kind": "decode_failure",
             "decoder": "reqresp_request",
-            "bytes": "0x81808005"
+            "rawBytes": "0x81808005"
         },
         "output": {
-            "decoder": "reqresp_request",
-            "errorType": "CodecError",
-            "errorMessage": "Declared length too large: 10485761 > 10485760"
+            "decoder": "reqresp_request"
         },
         "_info": {
-            "hash": "0x8ec44b5083a369e19d0320ae0d1f0d10bab4ac77ec5220f4540cfa8547a18477",
+            "hash": "0xe9c3c09d51a8f80e043b4d362a884ddac5b19d9f32b2e8b1a55d5f8f9327a052",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_reqresp_rejections.py::test_reqresp_decode_rejects_declared_length_above_max[fork_Lstar]",
-            "description": "A request whose declared length exceeds the ten-mebibyte cap is rejected.\n\n    The varint 0x81 0x80 0x80 0x05 declares 10,485,761 bytes, one over the\n    ten-mebibyte protocol cap. Refusing before decompression prevents a\n    sender from forcing resource allocation proportional to a claimed size.",
-            "fixtureFormat": "networking_codec"
+            "description": "A request whose declared length exceeds the cap is rejected.\n\n    Given\n    -----\n    - a length prefix declaring 10,485,761 bytes.\n    - that is one byte over the ten-mebibyte protocol cap.\n\n    When\n    ----\n    - the bytes are decoded as a request.\n\n    Then\n    ----\n    - decoding is rejected before decompression because the length is over the cap.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

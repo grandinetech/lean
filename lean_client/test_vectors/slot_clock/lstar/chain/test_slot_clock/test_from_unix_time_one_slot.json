@@ -1,26 +1,28 @@
 {
-    "tests/consensus/lstar/chain/test_slot_clock.py::test_from_unix_time_one_slot[fork_Lstar][fork_Lstar-slot_clock]": {
+    "tests/consensus/lstar/chain/test_slot_clock.py::test_from_unix_time_one_slot[fork_Lstar][fork_Lstar-slot_clock_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "operation": "from_unix_time",
-        "input": {
-            "unixSeconds": 1700000004,
-            "genesisTime": 1700000000
+        "proofSetting": 0,
+        "operation": {
+            "kind": "from_unix_time",
+            "genesisTime": 1700000000,
+            "unixSeconds": 1700000004.0
+        },
+        "config": {
+            "secondsPerSlot": 4,
+            "intervalsPerSlot": 5,
+            "millisecondsPerInterval": 800
         },
         "output": {
-            "config": {
-                "secondsPerSlot": 4,
-                "intervalsPerSlot": 5,
-                "millisecondsPerInterval": 800
-            },
             "interval": 5
         },
         "_info": {
-            "hash": "0xff7bd013b85f5069f1509f34a990668b9b4d267a575c07190b5559e0758e8e8a",
+            "hash": "0x95761cb203dc39dd4f0e80f5103fff5e18182e0bcd42f2e91afac24eb0334d95",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/chain/test_slot_clock.py::test_from_unix_time_one_slot[fork_Lstar]",
-            "description": "One slot = 4 seconds = 4000 ms. 4000 / 800 = 5 intervals.",
-            "fixtureFormat": "slot_clock"
+            "description": "A timestamp one slot past genesis maps to interval 5.\n\n    Given\n    -----\n    - a timestamp one slot (4 seconds, 4000 ms) past genesis.\n\n    When\n    ----\n    - the interval for that timestamp is computed.\n\n    Then\n    ----\n    - the interval is 5 (4000 over 800).",
+            "fixtureFormat": "slot_clock_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

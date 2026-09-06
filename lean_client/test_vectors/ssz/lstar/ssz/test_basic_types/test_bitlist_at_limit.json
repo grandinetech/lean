@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_bitlist_at_limit[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_bitlist_at_limit[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "SampleBitlist16",
         "value": {
             "data": [
@@ -26,11 +27,12 @@
         "serialized": "0xffff01",
         "root": "0xdc8212e2404720c98554dfddc81733f88cbbe307a1d4ca5eae4b88e55e382392",
         "_info": {
-            "hash": "0x73c6c3e15010d8f1e8745a86f1123dcd15595d122051d868fdb554570c9e14b9",
+            "hash": "0xc15a1927454ae9981b96cc9ad7fe07a627ea4c387683df117eca077eb8817605",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_bitlist_at_limit[fork_Lstar]",
-            "description": "Bitlist filled to its 16-bit limit. Sentinel lands in a new byte.",
-            "fixtureFormat": "ssz"
+            "description": "A bitlist filled to its limit round-trips unchanged.\n\n    Given\n    -----\n    - a bitlist filled to its 16-bit limit.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.\n    - the sentinel lands in a new byte.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

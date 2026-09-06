@@ -1,0 +1,76 @@
+{
+    "tests/consensus/lstar/verify_signatures/test_structural_rejections.py::test_corrupt_proof_rejected[fork_Lstar][fork_Lstar-verify_signatures_test]": {
+        "network": "Lstar",
+        "leanEnv": "prod",
+        "rejectionReason": "INVALID_BLOCK_PROOF",
+        "proofSetting": 2,
+        "anchorState": {
+            "config": {
+                "genesisTime": 0
+            },
+            "slot": 0,
+            "latestBlockHeader": {
+                "slot": 0,
+                "proposerIndex": 0,
+                "parentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "stateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "bodyRoot": "0xdba9671bac9513c9482f1416a53aabd2c6ce90d5a5f865ce5a55c775325c9136"
+            },
+            "latestJustified": {
+                "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "slot": 0
+            },
+            "latestFinalized": {
+                "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "slot": 0
+            },
+            "historicalBlockHashes": {
+                "data": []
+            },
+            "justifiedSlots": {
+                "data": []
+            },
+            "validators": {
+                "data": [
+                    {
+                        "attestationPublicKey": "0x6c9dc94cb124fd7eac91680ca6f7c131d7b02f1629ca842b0e714d557da1276b2e5f3d110aab9d6eb8c10c7d1ba0f93cd849c82e",
+                        "proposalPublicKey": "0x4f0098552e05e766afeb0d021742f626de106215bd0c5a5d2516fc75dc3ffc121159b63b6664354dc4eb353631b54a5ad0cc7b14",
+                        "index": 0
+                    }
+                ]
+            },
+            "justificationsRoots": {
+                "data": []
+            },
+            "justificationsValidators": {
+                "data": []
+            }
+        },
+        "signedBlock": {
+            "block": {
+                "slot": 1,
+                "proposerIndex": 0,
+                "parentRoot": "0xc95ab27e70a56378d4277188604ecfad536095a9c245576341a1d763a72f756d",
+                "stateRoot": "0xe1a252098eb4a4e2b910e9d243939788a477de0de365c2d96aaef6a91246f8b4",
+                "body": {
+                    "attestations": {
+                        "data": []
+                    }
+                }
+            },
+            "proof": {
+                "proof": {
+                    "data": "0x00010203"
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x3e43385c59eea2caf513112c97aeffb0c37c6815d7c3706ae78dc9be31f1ca9e",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/lstar/verify_signatures/test_structural_rejections.py::test_corrupt_proof_rejected[fork_Lstar]",
+            "description": "A block whose merged proof does not decode is rejected.\n\n    Given\n    -----\n    - a registry of 1 validator.\n    - a block at slot 1 carrying only the proposer component.\n    - the merged proof is overwritten with a short blob.\n\n    When\n    ----\n    - signature verification runs.\n\n    Then\n    ----\n    - verification is rejected as an invalid block proof.\n    - the aggregate envelope cannot be decoded.",
+            "fixtureFormat": "verify_signatures_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
+        }
+    }
+}

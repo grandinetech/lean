@@ -1,18 +1,19 @@
 {
-    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_rpc_publish_only[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_rpc_publish_only[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "gossipsub_rpc",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "gossipsub_rpc",
             "subscriptions": [],
             "publish": [
                 {
-                    "topic": "/leanconsensus/0x12345678/block/ssz_snappy",
-                    "data": "0xdeadbeef"
+                    "data": "0xdeadbeef",
+                    "topic": "/leanconsensus/0x12345678/block/ssz_snappy"
                 },
                 {
-                    "topic": "/leanconsensus/0x12345678/aggregation/ssz_snappy",
-                    "data": "0xcafebabe"
+                    "data": "0xcafebabe",
+                    "topic": "/leanconsensus/0x12345678/aggregation/ssz_snappy"
                 }
             ]
         },
@@ -20,11 +21,12 @@
             "encoded": "0x12321204deadbeef222a2f6c65616e636f6e73656e7375732f307831323334353637382f626c6f636b2f73737a5f736e6170707912381204cafebabe22302f6c65616e636f6e73656e7375732f307831323334353637382f6167677265676174696f6e2f73737a5f736e61707079"
         },
         "_info": {
-            "hash": "0x6655f940693d10e083ba7f31ac1240b67cfbdd6cdd9cd4c449359c166e9c77a7",
+            "hash": "0x81c77ab3fd1fb773960c654c117e3272a917a677224a4d9b8c2da989327f55da",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_rpc_publish_only[fork_Lstar]",
-            "description": "RPC with only published messages.",
-            "fixtureFormat": "networking_codec"
+            "description": "An RPC with only published messages round-trips.\n\n    Given\n    -----\n    - an RPC with two published messages and no subscriptions or control.\n\n    When\n    ----\n    - the RPC is encoded and decoded.\n\n    Then\n    ----\n    - the decoded RPC matches the input.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

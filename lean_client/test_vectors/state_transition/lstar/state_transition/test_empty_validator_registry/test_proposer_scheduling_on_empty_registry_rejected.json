@@ -1,0 +1,53 @@
+{
+    "tests/consensus/lstar/state_transition/test_empty_validator_registry.py::test_proposer_scheduling_on_empty_registry_rejected[fork_Lstar][fork_Lstar-state_transition_test]": {
+        "network": "Lstar",
+        "leanEnv": "prod",
+        "rejectionReason": "EMPTY_VALIDATOR_REGISTRY",
+        "proofSetting": 0,
+        "pre": {
+            "config": {
+                "genesisTime": 0
+            },
+            "slot": 0,
+            "latestBlockHeader": {
+                "slot": 0,
+                "proposerIndex": 0,
+                "parentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "stateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "bodyRoot": "0xdba9671bac9513c9482f1416a53aabd2c6ce90d5a5f865ce5a55c775325c9136"
+            },
+            "latestJustified": {
+                "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "slot": 0
+            },
+            "latestFinalized": {
+                "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "slot": 0
+            },
+            "historicalBlockHashes": {
+                "data": []
+            },
+            "justifiedSlots": {
+                "data": []
+            },
+            "validators": {
+                "data": []
+            },
+            "justificationsRoots": {
+                "data": []
+            },
+            "justificationsValidators": {
+                "data": []
+            }
+        },
+        "blocks": [],
+        "_info": {
+            "hash": "0x3eb0d295e351eeb344797c02c161a81753b6a9302fd808f9391866307bd41c7c",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/lstar/state_transition/test_empty_validator_registry.py::test_proposer_scheduling_on_empty_registry_rejected[fork_Lstar]",
+            "description": "An empty validator registry has no validator to schedule as proposer.\n\n    Given\n    -----\n    - the genesis state carries zero validators.\n\n    When\n    ----\n    - a block at slot 1 is processed, driving round-robin proposer selection.\n\n    Then\n    ----\n    - proposer selection has no registry size to take a modulo against.\n    - the block is rejected as scheduling against an empty registry.",
+            "fixtureFormat": "state_transition_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
+        }
+    }
+}

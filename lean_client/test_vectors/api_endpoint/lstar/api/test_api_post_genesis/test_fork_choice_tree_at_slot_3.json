@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/api/test_api_post_genesis.py::test_fork_choice_tree_at_slot_3[fork_Lstar][fork_Lstar-api_endpoint]": {
+    "tests/consensus/lstar/api/test_api_post_genesis.py::test_fork_choice_tree_at_slot_3[fork_Lstar][fork_Lstar-api_endpoint_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "endpoint": "/lean/v0/fork_choice",
         "method": "GET",
         "genesisParams": {
@@ -35,11 +36,12 @@
             "validator_count": 4
         },
         "_info": {
-            "hash": "0xb631bac68611eb1d60ba57d0d3905590e6dc6114124302e8ce4f74ba7d06e92c",
+            "hash": "0x73224c7a61e8a5882a9afa452cc1009dee8aa7cb8542c4b4415b6d09f15bb7b0",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/api/test_api_post_genesis.py::test_fork_choice_tree_at_slot_3[fork_Lstar]",
-            "description": "Fork-choice response carries a multi-node tree once the chain advances.\n\n    With the chain at slot 3 the store holds four blocks (genesis plus\n    slots 1 through 3). The response's nodes list, head root, and\n    parent-root linkage are pinned so clients diverge only when their\n    tree traversal or SSZ root computation differs.",
-            "fixtureFormat": "api_endpoint"
+            "description": "The fork-choice endpoint returns a multi-node tree once the chain advances.\n\n    Given\n    -----\n    - 4 validators.\n    - the chain has advanced to slot 3.\n    - the store holds four blocks (genesis plus slots 1 through 3).\n\n    When\n    ----\n    - the fork-choice endpoint is queried.\n\n    Then\n    ----\n    - the response lists all four nodes.\n    - the response pins the head root.\n    - the response pins the parent-root linkage.",
+            "fixtureFormat": "api_endpoint_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

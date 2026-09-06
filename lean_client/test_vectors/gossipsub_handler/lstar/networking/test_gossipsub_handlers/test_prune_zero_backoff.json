@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/networking/test_gossipsub_handlers.py::test_prune_zero_backoff[fork_Lstar][fork_Lstar-gossipsub_handler]": {
+    "tests/consensus/lstar/networking/test_gossipsub_handlers.py::test_prune_zero_backoff[fork_Lstar][fork_Lstar-gossipsub_handler_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "handlerName": "prune",
         "params": {
             "d": 4,
@@ -13,27 +14,37 @@
             "subscriptions": [
                 "test_topic"
             ],
+            "peers": {
+                "peerAx": {
+                    "subscriptions": [
+                        "test_topic"
+                    ],
+                    "withStream": true,
+                    "backoff": {},
+                    "dontWantIds": []
+                }
+            },
             "meshes": {
                 "test_topic": [
                     "peerAx"
                 ]
             },
-            "peers": {
-                "peerAx": {
-                    "subscriptions": [
-                        "test_topic"
-                    ]
-                }
-            }
+            "seenMessageIds": [],
+            "cachedMessages": []
         },
         "event": {
             "fromPeer": "peerAx",
+            "graft": [],
             "prune": [
                 {
                     "topicId": "test_topic",
                     "backoff": 0
                 }
-            ]
+            ],
+            "ihave": [],
+            "iwant": [],
+            "idontwant": [],
+            "publish": []
         },
         "now": 1000.0,
         "expected": {
@@ -43,11 +54,12 @@
             }
         },
         "_info": {
-            "hash": "0xdb84702a2e2bd5e5c5d37701593932776dd4f06626855ae97ff87915ccc0cba9",
+            "hash": "0x0edee22ede71ced6ddeba066608b94bf762d928b43d1f94757c1056462cb5908",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossipsub_handlers.py::test_prune_zero_backoff[fork_Lstar]",
-            "description": "PRUNE with backoff=0 removes from mesh but does not set backoff timer.",
-            "fixtureFormat": "gossipsub_handler"
+            "description": "A PRUNE with zero backoff removes the peer without arming a backoff.\n\n    Given\n    -----\n    - the node is subscribed to the topic.\n    - the mesh holds peerAx.\n\n    When\n    ----\n    - peerAx sends a PRUNE for the topic with a zero backoff.\n\n    Then\n    ----\n    - peerAx is removed from the mesh.\n    - no backoff timer is set.",
+            "fixtureFormat": "gossipsub_handler_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

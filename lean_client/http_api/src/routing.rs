@@ -4,19 +4,25 @@ use crate::{
     aggregator_controller::SharedController,
     aggregator_handlers,
     config::HttpServerConfig,
-    handlers::{self, AppState, SharedStore},
+    handlers::{self, AppState, SharedSignedBlocks, SharedStore},
 };
 
 pub fn normal_routes(
     _config: &HttpServerConfig,
     store: SharedStore,
+    signed_blocks: SharedSignedBlocks,
     controller: SharedController,
 ) -> Router {
-    let app_state = AppState { store, controller };
+    let app_state = AppState {
+        store,
+        signed_blocks,
+        controller,
+    };
 
     Router::new()
         .route("/lean/v0/health", get(handlers::health))
         .route("/lean/v0/states/finalized", get(handlers::states_finalized))
+        .route("/lean/v0/blocks/finalized", get(handlers::blocks_finalized))
         .route(
             "/lean/v0/checkpoints/justified",
             get(handlers::checkpoints_justified),

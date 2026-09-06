@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_bitlist_single_false[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_bitlist_single_false[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "SampleBitlist16",
         "value": {
             "data": [
@@ -11,11 +12,12 @@
         "serialized": "0x02",
         "root": "0xcb592844121d926f1ca3ad4e1d6fb9d8e260ed6e3216361f7732e975a0e8bbf6",
         "_info": {
-            "hash": "0xacecfef7e9400ba0f0acc7fb724df151caefe169211dd3dfbab36c7bd5db9613",
+            "hash": "0x12dac72d6ebf46e70339f8e5ec960f9b0ed12b8a5433c8a4de0ca9c4e25340a0",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_bitlist_single_false[fork_Lstar]",
-            "description": "Bitlist with one clear bit. The sentinel is the only set bit in the byte.",
-            "fixtureFormat": "ssz"
+            "description": "A bitlist with one clear bit round-trips unchanged.\n\n    Given\n    -----\n    - a bitlist holding a single clear bit.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.\n    - the sentinel is the only set bit in the byte.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

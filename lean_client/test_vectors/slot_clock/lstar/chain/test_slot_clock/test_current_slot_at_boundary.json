@@ -1,26 +1,28 @@
 {
-    "tests/consensus/lstar/chain/test_slot_clock.py::test_current_slot_at_boundary[fork_Lstar][fork_Lstar-slot_clock]": {
+    "tests/consensus/lstar/chain/test_slot_clock.py::test_current_slot_at_boundary[fork_Lstar][fork_Lstar-slot_clock_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "operation": "current_slot",
-        "input": {
+        "proofSetting": 0,
+        "operation": {
+            "kind": "current_slot",
             "genesisTime": 1700000000,
-            "currentTimeMs": 1700000004000
+            "currentTimeMilliseconds": 1700000004000.0
+        },
+        "config": {
+            "secondsPerSlot": 4,
+            "intervalsPerSlot": 5,
+            "millisecondsPerInterval": 800
         },
         "output": {
-            "config": {
-                "secondsPerSlot": 4,
-                "intervalsPerSlot": 5,
-                "millisecondsPerInterval": 800
-            },
             "slot": 1
         },
         "_info": {
-            "hash": "0xf7346d67c87a17c5c6128aea4c94cb5e97df8b0059383c38ecb2d77feb5bfd09",
+            "hash": "0x2aa39c074d490d7b70cb5ee20e246c67ec2b09aaa66bbc78cec8e77b534fa317",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/chain/test_slot_clock.py::test_current_slot_at_boundary[fork_Lstar]",
-            "description": "Exactly at slot 1 boundary (4 seconds): slot 1.",
-            "fixtureFormat": "slot_clock"
+            "description": "A clock exactly at the slot 1 boundary reports slot 1.\n\n    Given\n    -----\n    - a wall-clock time four seconds past genesis.\n\n    When\n    ----\n    - the current slot is computed.\n\n    Then\n    ----\n    - the current slot is 1.",
+            "fixtureFormat": "slot_clock_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

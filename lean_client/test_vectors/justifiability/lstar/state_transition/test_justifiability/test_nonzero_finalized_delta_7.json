@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/state_transition/test_justifiability.py::test_nonzero_finalized_delta_7[fork_Lstar][fork_Lstar-justifiability]": {
+    "tests/consensus/lstar/state_transition/test_justifiability.py::test_nonzero_finalized_delta_7[fork_Lstar][fork_Lstar-justifiability_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "slot": 107,
         "finalizedSlot": 100,
         "output": {
@@ -9,11 +10,12 @@
             "isJustifiable": false
         },
         "_info": {
-            "hash": "0x83df561723b34299d3a94f3cc5ecfa5daa5cf9db3098d2c4c4062b2015f7a97e",
+            "hash": "0x3708a8c78ad90997f41cc70e721e147e225229d824fd6c2b91b87852714801e6",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/state_transition/test_justifiability.py::test_nonzero_finalized_delta_7[fork_Lstar]",
-            "description": "Finalized at slot 100, candidate at 107. Delta 7: not justifiable.",
-            "fixtureFormat": "justifiability"
+            "description": "Delta 7 is not justifiable when measured from a non-zero finalized slot.\n\n    Given\n    -----\n    - the finalized slot is 100.\n    - the candidate slot is 107.\n    - the delta is 7, neither square nor pronic.\n\n    When\n    ----\n    - the candidate is checked for justifiability.\n\n    Then\n    ----\n    - the candidate is not justifiable.",
+            "fixtureFormat": "justifiability_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

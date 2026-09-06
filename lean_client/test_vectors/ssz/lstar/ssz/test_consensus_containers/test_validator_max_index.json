@@ -1,21 +1,23 @@
 {
-    "tests/consensus/lstar/ssz/test_consensus_containers.py::test_validator_max_index[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_consensus_containers.py::test_validator_max_index[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "Validator",
         "value": {
-            "attestationPubkey": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-            "proposalPubkey": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+            "attestationPublicKey": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+            "proposalPublicKey": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
             "index": 18446744073709551615
         },
         "serialized": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
         "root": "0x748b83cdfc5929a76a32250d66d233c1f483071aefb4393898aa13c5a70d6bbb",
         "_info": {
-            "hash": "0x1bd32fef8972915588e3e7ff7384e1bcb62298f1c211e33cfa3152fe96266a3c",
+            "hash": "0x5f31654754a107749fc3dc7c5dce4a6a80e20fb710159035531b64af93e0a4e1",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_consensus_containers.py::test_validator_max_index[fork_Lstar]",
-            "description": "SSZ roundtrip for Validator at the maximum 64-bit index with all-0xff public keys.",
-            "fixtureFormat": "ssz"
+            "description": "A validator at the maximum index round-trips unchanged.\n\n    Given\n    -----\n    - a validator with all-0xff public keys.\n    - the maximum 64-bit index value.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

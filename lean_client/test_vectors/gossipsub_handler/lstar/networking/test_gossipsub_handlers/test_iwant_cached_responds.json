@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/networking/test_gossipsub_handlers.py::test_iwant_cached_responds[fork_Lstar][fork_Lstar-gossipsub_handler]": {
+    "tests/consensus/lstar/networking/test_gossipsub_handlers.py::test_iwant_cached_responds[fork_Lstar][fork_Lstar-gossipsub_handler_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "handlerName": "iwant",
         "params": {
             "d": 4,
@@ -13,14 +14,17 @@
             "subscriptions": [
                 "test_topic"
             ],
-            "meshes": {},
             "peers": {
                 "peerAx": {
                     "subscriptions": [
                         "test_topic"
-                    ]
+                    ],
+                    "withStream": true,
+                    "backoff": {},
+                    "dontWantIds": []
                 }
             },
+            "meshes": {},
             "seenMessageIds": [],
             "cachedMessages": [
                 {
@@ -32,13 +36,18 @@
         },
         "event": {
             "fromPeer": "peerAx",
+            "graft": [],
+            "prune": [],
+            "ihave": [],
             "iwant": [
                 {
                     "messageIds": [
                         "0x8dc6bba09a9550cdccb1b1b432bb04919901ce1e"
                     ]
                 }
-            ]
+            ],
+            "idontwant": [],
+            "publish": []
         },
         "now": 1000.0,
         "expected": {
@@ -58,11 +67,12 @@
             }
         },
         "_info": {
-            "hash": "0xf5b6783d0c9b0c665a8f65ab00c1ec0fc5b9c54198cec853fb07ce32b804e033",
+            "hash": "0x9d25a2e4484f771abb6b96ab870508b91b7c5a2ee34f811f99c186330fbd2009",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossipsub_handlers.py::test_iwant_cached_responds[fork_Lstar]",
-            "description": "IWANT for a cached message responds with the full message.",
-            "fixtureFormat": "gossipsub_handler"
+            "description": "An IWANT for a cached message returns the full message.\n\n    Given\n    -----\n    - the node is subscribed to the topic.\n    - the message cache holds a message under the requested id.\n    - peerAx is subscribed.\n\n    When\n    ----\n    - peerAx sends an IWANT for that message id.\n\n    Then\n    ----\n    - the node replies with the full cached message.",
+            "fixtureFormat": "gossipsub_handler_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

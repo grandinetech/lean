@@ -1,0 +1,29 @@
+{
+    "tests/consensus/lstar/ssz/test_decode_rejections.py::test_validators_decode_rejects_index_mismatched_with_position[fork_Lstar][fork_Lstar-ssz_test]": {
+        "network": "Lstar",
+        "leanEnv": "prod",
+        "rejectionReason": "DECODE_ERROR",
+        "proofSetting": 0,
+        "typeName": "Validators",
+        "value": {
+            "data": [
+                {
+                    "attestationPublicKey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                    "proposalPublicKey": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                    "index": 0
+                }
+            ]
+        },
+        "rawBytes": "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000500000000000000",
+        "serialized": "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000500000000000000",
+        "root": "",
+        "_info": {
+            "hash": "0x1c12432306bc6e64a883c1873672703488fe2927ad2c525bb936764d004ab66a",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/lstar/ssz/test_decode_rejections.py::test_validators_decode_rejects_index_mismatched_with_position[fork_Lstar]",
+            "description": "Decoding a registry whose stored index disagrees with its position is rejected.\n\n    Given\n    -----\n    - a registry of two validators packed back to back.\n    - the validator at position 0 stores index 0.\n    - the validator at position 1 stores index 5.\n\n    When\n    ----\n    - the input is decoded into the registry type.\n\n    Then\n    ----\n    - decoding is rejected.\n    - the reason is that the stored index must equal the list position.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
+        }
+    }
+}

@@ -1,26 +1,28 @@
 {
-    "tests/consensus/lstar/chain/test_slot_clock.py::test_from_unix_time_one_day[fork_Lstar][fork_Lstar-slot_clock]": {
+    "tests/consensus/lstar/chain/test_slot_clock.py::test_from_unix_time_one_day[fork_Lstar][fork_Lstar-slot_clock_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "operation": "from_unix_time",
-        "input": {
-            "unixSeconds": 1700086400,
-            "genesisTime": 1700000000
+        "proofSetting": 0,
+        "operation": {
+            "kind": "from_unix_time",
+            "genesisTime": 1700000000,
+            "unixSeconds": 1700086400.0
+        },
+        "config": {
+            "secondsPerSlot": 4,
+            "intervalsPerSlot": 5,
+            "millisecondsPerInterval": 800
         },
         "output": {
-            "config": {
-                "secondsPerSlot": 4,
-                "intervalsPerSlot": 5,
-                "millisecondsPerInterval": 800
-            },
             "interval": 108000
         },
         "_info": {
-            "hash": "0xaf27de92d0479d574daf9d77c1e4f52130010f3e2d999154376a4ac2b0641b87",
+            "hash": "0xdbcd8bf4f93dcac40042519d9baf891174835c72a8f8d3788ebbeaaad06247c3",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/chain/test_slot_clock.py::test_from_unix_time_one_day[fork_Lstar]",
-            "description": "One day = 86400 seconds = 108000 intervals.",
-            "fixtureFormat": "slot_clock"
+            "description": "A timestamp one day past genesis maps to interval 108000.\n\n    Given\n    -----\n    - a timestamp one day (86400 seconds) past genesis.\n\n    When\n    ----\n    - the interval for that timestamp is computed.\n\n    Then\n    ----\n    - the interval is 108000.",
+            "fixtureFormat": "slot_clock_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

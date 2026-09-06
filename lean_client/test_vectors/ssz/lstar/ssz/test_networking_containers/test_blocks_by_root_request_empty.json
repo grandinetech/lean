@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_networking_containers.py::test_blocks_by_root_request_empty[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_networking_containers.py::test_blocks_by_root_request_empty[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "BlocksByRootRequest",
         "value": {
             "roots": {
@@ -11,11 +12,12 @@
         "serialized": "0x04000000",
         "root": "0xceb3266bf0938bc72f8256356ddc13bccc20dd767f25448b2658135780b7da51",
         "_info": {
-            "hash": "0xbe8bf3a0636b3d6ed9f1b6bba89b4a04e658ef3df2524d3d5cea1819a333e0e5",
+            "hash": "0xf4d2bc4723ab1c3aba37ced8e74a8f55a4fc434a7a144dfbc6bd8fb1244a2d4b",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_networking_containers.py::test_blocks_by_root_request_empty[fork_Lstar]",
-            "description": "SSZ roundtrip for BlocksByRootRequest with no roots.",
-            "fixtureFormat": "ssz"
+            "description": "A blocks-by-root request with no roots round-trips unchanged.\n\n    Given\n    -----\n    - a request whose root list is empty.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

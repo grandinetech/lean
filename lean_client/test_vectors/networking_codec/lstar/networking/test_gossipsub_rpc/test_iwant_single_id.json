@@ -1,30 +1,36 @@
 {
-    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_iwant_single_id[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_iwant_single_id[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "gossipsub_rpc",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "gossipsub_rpc",
             "subscriptions": [],
             "publish": [],
             "control": {
+                "ihave": [],
                 "iwant": [
                     {
                         "messageIds": [
                             "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
                         ]
                     }
-                ]
+                ],
+                "graft": [],
+                "prune": [],
+                "idontwant": []
             }
         },
         "output": {
             "encoded": "0x1a1812160a14aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         },
         "_info": {
-            "hash": "0xb24ee817184b78725d7414d12a90d95760f1ee81ccb9d94deecd79dbcdc97c2c",
+            "hash": "0x204c3108274814e501ddd131c21e8bb299a96bb7b0e0bdd9d33641a55788c6e2",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_iwant_single_id[fork_Lstar]",
-            "description": "IWANT requesting one message by ID.",
-            "fixtureFormat": "networking_codec"
+            "description": "An IWANT requesting one message id round-trips.\n\n    Given\n    -----\n    - an RPC whose control message holds an IWANT with one message id.\n\n    When\n    ----\n    - the RPC is encoded and decoded.\n\n    Then\n    ----\n    - the decoded RPC matches the input.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

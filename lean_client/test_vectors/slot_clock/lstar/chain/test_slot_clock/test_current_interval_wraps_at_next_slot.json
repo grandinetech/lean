@@ -1,26 +1,28 @@
 {
-    "tests/consensus/lstar/chain/test_slot_clock.py::test_current_interval_wraps_at_next_slot[fork_Lstar][fork_Lstar-slot_clock]": {
+    "tests/consensus/lstar/chain/test_slot_clock.py::test_current_interval_wraps_at_next_slot[fork_Lstar][fork_Lstar-slot_clock_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "operation": "current_interval",
-        "input": {
+        "proofSetting": 0,
+        "operation": {
+            "kind": "current_interval",
             "genesisTime": 1700000000,
-            "currentTimeMs": 1700000004000
+            "currentTimeMilliseconds": 1700000004000.0
+        },
+        "config": {
+            "secondsPerSlot": 4,
+            "intervalsPerSlot": 5,
+            "millisecondsPerInterval": 800
         },
         "output": {
-            "config": {
-                "secondsPerSlot": 4,
-                "intervalsPerSlot": 5,
-                "millisecondsPerInterval": 800
-            },
             "interval": 0
         },
         "_info": {
-            "hash": "0x2d7d4ff750fdb23eb463460728e921366880d0363212e037ff0d3bbc9ef01a56",
+            "hash": "0xdee8f5fb97142323f2d81ccb146889e11038c07df30362fafa4b16da1cda0cec",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/chain/test_slot_clock.py::test_current_interval_wraps_at_next_slot[fork_Lstar]",
-            "description": "4000 ms = next slot start: interval wraps back to 0.",
-            "fixtureFormat": "slot_clock"
+            "description": "A clock at the next slot start wraps the interval back to 0.\n\n    Given\n    -----\n    - a wall-clock time 4000 ms past the slot start.\n    - 4000 ms is the start of the next slot.\n\n    When\n    ----\n    - the interval within the slot is computed.\n\n    Then\n    ----\n    - the interval wraps back to 0.",
+            "fixtureFormat": "slot_clock_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

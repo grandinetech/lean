@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_49_square[fork_Lstar][fork_Lstar-justifiability]": {
+    "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_49_square[fork_Lstar][fork_Lstar-justifiability_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "slot": 49,
         "finalizedSlot": 0,
         "output": {
@@ -9,11 +10,12 @@
             "isJustifiable": true
         },
         "_info": {
-            "hash": "0x90cf3ba7af3ee3d227d7c4d00d9a0cff61f15709b144ada957c0f277433ee39a",
+            "hash": "0xfb5c9c65eec661834d4648f63aa24b81694bd36f8412ff2e7707755d4ddfcf5a",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_49_square[fork_Lstar]",
-            "description": "Delta 49: perfect square (7^2).",
-            "fixtureFormat": "justifiability"
+            "description": "Delta 49 is justifiable as a perfect square.\n\n    Given\n    -----\n    - the finalized slot is 0.\n    - the candidate slot is 49.\n    - the delta is 49, a perfect square (7*7).\n\n    When\n    ----\n    - the candidate is checked for justifiability.\n\n    Then\n    ----\n    - the candidate is justifiable.",
+            "fixtureFormat": "justifiability_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

@@ -1,21 +1,23 @@
 {
-    "tests/consensus/lstar/networking/test_gossip_topic.py::test_aggregation_topic[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_gossip_topic.py::test_aggregation_topic[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "gossip_topic",
-        "input": {
-            "kind": "aggregation",
-            "forkDigest": "12345678"
+        "proofSetting": 0,
+        "codec": {
+            "kind": "gossip_topic",
+            "topicKind": "aggregation",
+            "networkName": "12345678"
         },
         "output": {
             "topicString": "/leanconsensus/12345678/aggregation/ssz_snappy"
         },
         "_info": {
-            "hash": "0xfebdf760b7a0bbcc9f6a238614007835da3403924560dd975da8b3000b6b9ad0",
+            "hash": "0xd8cb0e9251ace8557b60d9fb4f3f671b48e5e304657f40e396d9cd8be92881c0",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossip_topic.py::test_aggregation_topic[fork_Lstar]",
-            "description": "Committee aggregation topic.",
-            "fixtureFormat": "networking_codec"
+            "description": "An aggregation topic round-trips through its string form.\n\n    Given\n    -----\n    - an aggregation topic kind.\n    - a typical fork digest.\n\n    When\n    ----\n    - the topic is formatted to a string and parsed back.\n\n    Then\n    ----\n    - the parsed topic matches the input.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

@@ -1,0 +1,2697 @@
+{
+    "tests/consensus/lstar/fork_choice/test_store_pruning.py::test_finalization_prunes_stale_attestation_signatures[fork_Lstar][fork_Lstar-fork_choice_test]": {
+        "network": "Lstar",
+        "leanEnv": "prod",
+        "proofSetting": 0,
+        "anchorState": {
+            "config": {
+                "genesisTime": 0
+            },
+            "slot": 0,
+            "latestBlockHeader": {
+                "slot": 0,
+                "proposerIndex": 0,
+                "parentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "stateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "bodyRoot": "0xdba9671bac9513c9482f1416a53aabd2c6ce90d5a5f865ce5a55c775325c9136"
+            },
+            "latestJustified": {
+                "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "slot": 0
+            },
+            "latestFinalized": {
+                "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "slot": 0
+            },
+            "historicalBlockHashes": {
+                "data": []
+            },
+            "justifiedSlots": {
+                "data": []
+            },
+            "validators": {
+                "data": [
+                    {
+                        "attestationPublicKey": "0x6c9dc94cb124fd7eac91680ca6f7c131d7b02f1629ca842b0e714d557da1276b2e5f3d110aab9d6eb8c10c7d1ba0f93cd849c82e",
+                        "proposalPublicKey": "0x4f0098552e05e766afeb0d021742f626de106215bd0c5a5d2516fc75dc3ffc121159b63b6664354dc4eb353631b54a5ad0cc7b14",
+                        "index": 0
+                    },
+                    {
+                        "attestationPublicKey": "0xadc304243eb9f60ad1016e6610f11420dba97e450171971dda35bf50d4f14117ad3b9f06083c9d05f73d5e12f9e9ce1e7aa65866",
+                        "proposalPublicKey": "0xe2508c4edcc47c50505281470653e6555fe9785380e97c427e99b677f949b125d17f2c58a45c1b5349f20c27db10ea78d2fceb37",
+                        "index": 1
+                    },
+                    {
+                        "attestationPublicKey": "0x44095a46c1dd521b2e37c626b3401045f2a41713b034d95e9888fb34a15c280a8045b7043b6cca1c3353a6089ae5aa027c548d4b",
+                        "proposalPublicKey": "0xd72b9b4bf39f805d637c855bb3266b373aa97e262cea76359b84e70805268b520cbe62284be2f81da2069b0c5298912169fa935f",
+                        "index": 2
+                    },
+                    {
+                        "attestationPublicKey": "0xc6ce413056aff1787a8d01575b11781c08ab595fea7cb46372fd8376e054f829da06c251d8e13643e751d9737d52e4474fddab5c",
+                        "proposalPublicKey": "0xd763f750d84c1840a6e2fb16b9f5e13f372e1f4646588a0d0ab96e483b42161f47858d5acb6d3a6bdae7e65a672cd2233fe77c16",
+                        "index": 3
+                    },
+                    {
+                        "attestationPublicKey": "0x360741734b03c828c5a1270372626b30dc98a6531f67351ede52ff5a50938c30cf1db60c6f104f3b56be9a657b3915008d76f24e",
+                        "proposalPublicKey": "0x6584bb091a18c35c6ba0547cba3ed53fd508d07405ee993ae439c22250a91d5e2aa2ea5339aae555bcb84b63f2df412018cc4209",
+                        "index": 4
+                    },
+                    {
+                        "attestationPublicKey": "0x56091e769f12363a79e1ff49c4b2aa53ed16ad334eac7b07cd2f195210486f48f524aa53778dd969597e58153ab1ee28c343a843",
+                        "proposalPublicKey": "0x5d60ad3eb0c05176656444547894232598978a076996cb32132a0b43298707346fcb0b7baf732d514f44fd395837d252fbb32c28",
+                        "index": 5
+                    },
+                    {
+                        "attestationPublicKey": "0x85ef606669303d072c59652feedb1d0a8e046e0b8dee8e5a97f2ac5081a8f1372c972268a0673814b579306f2e1efd3531dc4e70",
+                        "proposalPublicKey": "0x61cf1c7137186e381d6f0b6ee18ca35ab8b1710607e9140ee5786943c24bea1cd233ec43b97a3b0486041d3b1638b4245d3f014e",
+                        "index": 6
+                    },
+                    {
+                        "attestationPublicKey": "0x47def51ebf8c3e72e891c20385ad2038a9c3ae7c32b36d750e7ec0624cf4da4593170768f78a6317027f83205011871b508ec80b",
+                        "proposalPublicKey": "0x5ca13b76689e4b4054ab355196ee44479e00ab0b3e19522fe006e04bc4bfbb1e22251262c6a6796995caed2ba6a9b067545b7749",
+                        "index": 7
+                    }
+                ]
+            },
+            "justificationsRoots": {
+                "data": []
+            },
+            "justificationsValidators": {
+                "data": []
+            }
+        },
+        "anchorBlock": {
+            "slot": 0,
+            "proposerIndex": 0,
+            "parentRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "stateRoot": "0xf5a5fa7e63bc2c68b3c65e78f479841c747bf3423a9799a8869c371ee0747770",
+            "body": {
+                "attestations": {
+                    "data": []
+                }
+            }
+        },
+        "steps": [
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 1
+                },
+                "storeSnapshot": {
+                    "time": 5,
+                    "headRoot": "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                    "safeTargetRoot": "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2",
+                    "latestJustified": {
+                        "root": "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2",
+                        "slot": 0
+                    },
+                    "latestFinalized": {
+                        "root": "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2",
+                        "slot": 0
+                    },
+                    "blockRoots": [
+                        "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                        "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                            "weight": 0
+                        }
+                    ],
+                    "attestationSignatures": [],
+                    "newAggregatedPayloads": [],
+                    "knownAggregatedPayloads": []
+                },
+                "stepType": "block",
+                "tickToSlot": true,
+                "block": {
+                    "slot": 1,
+                    "proposerIndex": 1,
+                    "parentRoot": "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2",
+                    "stateRoot": "0x0700e839c2a8f54c13ed773541812575a999c62efe0b6490c92f98c50e78bbd9",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    },
+                    "blockRootLabel": "block_1"
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 2,
+                    "latestJustifiedSlot": 1,
+                    "latestFinalizedSlot": 0
+                },
+                "storeSnapshot": {
+                    "time": 10,
+                    "headRoot": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                    "safeTargetRoot": "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2",
+                    "latestJustified": {
+                        "root": "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                        "slot": 1
+                    },
+                    "latestFinalized": {
+                        "root": "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2",
+                        "slot": 0
+                    },
+                    "blockRoots": [
+                        "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                        "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                            "weight": 0
+                        },
+                        {
+                            "root": "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                            "weight": 6
+                        }
+                    ],
+                    "attestationSignatures": [],
+                    "newAggregatedPayloads": [],
+                    "knownAggregatedPayloads": [
+                        {
+                            "dataRoot": "0x9c8c9947865631cdcdbbdee1e3579a41880445695d5028cad29b952957d93495",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2,
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                "stepType": "block",
+                "tickToSlot": true,
+                "block": {
+                    "slot": 2,
+                    "proposerIndex": 2,
+                    "parentRoot": "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                    "stateRoot": "0xf0d4e2456be06fc1af55419aab2b777527449b81d603caab14277a6cd533ab9c",
+                    "body": {
+                        "attestations": {
+                            "data": [
+                                {
+                                    "aggregationBits": {
+                                        "data": [
+                                            true,
+                                            true,
+                                            true,
+                                            true,
+                                            true,
+                                            true
+                                        ]
+                                    },
+                                    "data": {
+                                        "slot": 2,
+                                        "head": {
+                                            "root": "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                                            "slot": 1
+                                        },
+                                        "target": {
+                                            "root": "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                                            "slot": 1
+                                        },
+                                        "source": {
+                                            "root": "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2",
+                                            "slot": 0
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "blockRootLabel": "block_2"
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 3,
+                    "latestJustifiedSlot": 2,
+                    "latestFinalizedSlot": 1
+                },
+                "storeSnapshot": {
+                    "time": 15,
+                    "headRoot": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                    "safeTargetRoot": "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                    "latestJustified": {
+                        "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "slot": 2
+                    },
+                    "latestFinalized": {
+                        "root": "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                        "slot": 1
+                    },
+                    "blockRoots": [
+                        "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                        "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                            "weight": 6
+                        },
+                        {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "weight": 0
+                        }
+                    ],
+                    "attestationSignatures": [],
+                    "newAggregatedPayloads": [],
+                    "knownAggregatedPayloads": [
+                        {
+                            "dataRoot": "0xbf64cf4946d58633cd01e3f6ee8f66a932071cf75f0ba12dc65070aea90dbb90",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2,
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                "stepType": "block",
+                "tickToSlot": true,
+                "block": {
+                    "slot": 3,
+                    "proposerIndex": 3,
+                    "parentRoot": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                    "stateRoot": "0xad238920d92ea151ae57cf82b9dc4f448a0602e9397b99fcfa7ec4a64e0c44bb",
+                    "body": {
+                        "attestations": {
+                            "data": [
+                                {
+                                    "aggregationBits": {
+                                        "data": [
+                                            true,
+                                            true,
+                                            true,
+                                            true,
+                                            true,
+                                            true
+                                        ]
+                                    },
+                                    "data": {
+                                        "slot": 3,
+                                        "head": {
+                                            "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                                            "slot": 2
+                                        },
+                                        "target": {
+                                            "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                                            "slot": 2
+                                        },
+                                        "source": {
+                                            "root": "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                                            "slot": 1
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "blockRootLabel": "block_3"
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 4,
+                    "latestJustifiedSlot": 3,
+                    "latestFinalizedSlot": 2
+                },
+                "storeSnapshot": {
+                    "time": 20,
+                    "headRoot": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                    "safeTargetRoot": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                    "latestJustified": {
+                        "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "slot": 3
+                    },
+                    "latestFinalized": {
+                        "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "slot": 2
+                    },
+                    "blockRoots": [
+                        "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                        "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                        "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                            "weight": 0
+                        },
+                        {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "weight": 6
+                        }
+                    ],
+                    "attestationSignatures": [],
+                    "newAggregatedPayloads": [],
+                    "knownAggregatedPayloads": [
+                        {
+                            "dataRoot": "0x9b9b5304ed9a19b45257cdb98fa7eedb0bdf9e87c270f48a2f9b0b45865f29f8",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2,
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                "stepType": "block",
+                "tickToSlot": true,
+                "block": {
+                    "slot": 4,
+                    "proposerIndex": 4,
+                    "parentRoot": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                    "stateRoot": "0x0b8b7d0b1f40421784d757bbcfca7ea299a498956a273680ac52d3dad8651b7e",
+                    "body": {
+                        "attestations": {
+                            "data": [
+                                {
+                                    "aggregationBits": {
+                                        "data": [
+                                            true,
+                                            true,
+                                            true,
+                                            true,
+                                            true,
+                                            true
+                                        ]
+                                    },
+                                    "data": {
+                                        "slot": 4,
+                                        "head": {
+                                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                                            "slot": 3
+                                        },
+                                        "target": {
+                                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                                            "slot": 3
+                                        },
+                                        "source": {
+                                            "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                                            "slot": 2
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "blockRootLabel": "block_4"
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 5,
+                    "latestJustifiedSlot": 3,
+                    "latestFinalizedSlot": 2
+                },
+                "storeSnapshot": {
+                    "time": 25,
+                    "headRoot": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                    "safeTargetRoot": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                    "latestJustified": {
+                        "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "slot": 3
+                    },
+                    "latestFinalized": {
+                        "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "slot": 2
+                    },
+                    "blockRoots": [
+                        "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                        "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                        "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2",
+                        "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                            "weight": 0
+                        },
+                        {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "weight": 6
+                        },
+                        {
+                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                            "weight": 0
+                        }
+                    ],
+                    "attestationSignatures": [],
+                    "newAggregatedPayloads": [],
+                    "knownAggregatedPayloads": [
+                        {
+                            "dataRoot": "0x9b9b5304ed9a19b45257cdb98fa7eedb0bdf9e87c270f48a2f9b0b45865f29f8",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2,
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                "stepType": "block",
+                "tickToSlot": true,
+                "block": {
+                    "slot": 5,
+                    "proposerIndex": 5,
+                    "parentRoot": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                    "stateRoot": "0x2eca31cd64d79a2c297333ec9342ff1b267d6fdb6e84201c049c1cc806acdbe5",
+                    "body": {
+                        "attestations": {
+                            "data": []
+                        }
+                    },
+                    "blockRootLabel": "block_5"
+                }
+            },
+            {
+                "valid": true,
+                "storeSnapshot": {
+                    "time": 28,
+                    "headRoot": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                    "safeTargetRoot": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                    "latestJustified": {
+                        "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "slot": 3
+                    },
+                    "latestFinalized": {
+                        "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "slot": 2
+                    },
+                    "blockRoots": [
+                        "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                        "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                        "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2",
+                        "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                            "weight": 0
+                        },
+                        {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "weight": 6
+                        },
+                        {
+                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                            "weight": 0
+                        }
+                    ],
+                    "attestationSignatures": [],
+                    "newAggregatedPayloads": [],
+                    "knownAggregatedPayloads": [
+                        {
+                            "dataRoot": "0x9b9b5304ed9a19b45257cdb98fa7eedb0bdf9e87c270f48a2f9b0b45865f29f8",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2,
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                "stepType": "tick",
+                "time": 23,
+                "hasProposal": false
+            },
+            {
+                "valid": true,
+                "storeSnapshot": {
+                    "time": 28,
+                    "headRoot": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                    "safeTargetRoot": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                    "latestJustified": {
+                        "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "slot": 3
+                    },
+                    "latestFinalized": {
+                        "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "slot": 2
+                    },
+                    "blockRoots": [
+                        "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                        "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                        "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2",
+                        "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                            "weight": 0
+                        },
+                        {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "weight": 6
+                        },
+                        {
+                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                            "weight": 0
+                        }
+                    ],
+                    "attestationSignatures": [],
+                    "newAggregatedPayloads": [
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        }
+                    ],
+                    "knownAggregatedPayloads": [
+                        {
+                            "dataRoot": "0x9b9b5304ed9a19b45257cdb98fa7eedb0bdf9e87c270f48a2f9b0b45865f29f8",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2,
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                "stepType": "gossipAggregatedAttestation",
+                "attestation": {
+                    "data": {
+                        "slot": 5,
+                        "head": {
+                            "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                            "slot": 2
+                        },
+                        "target": {
+                            "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                            "slot": 2
+                        },
+                        "source": {
+                            "root": "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                            "slot": 1
+                        }
+                    },
+                    "proof": {
+                        "participants": {
+                            "data": [
+                                true,
+                                true,
+                                true
+                            ]
+                        },
+                        "proof": {
+                            "data": "0x004d4f434b45442d4147475245474154494f4e2d50524f4f4600faa8e0d911eb312680b5cd0ceb9f39445672db95e09039418a83c567ee2d89c1"
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "storeSnapshot": {
+                    "time": 28,
+                    "headRoot": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                    "safeTargetRoot": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                    "latestJustified": {
+                        "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "slot": 3
+                    },
+                    "latestFinalized": {
+                        "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "slot": 2
+                    },
+                    "blockRoots": [
+                        "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                        "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                        "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2",
+                        "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                            "weight": 0
+                        },
+                        {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "weight": 6
+                        },
+                        {
+                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                            "weight": 0
+                        }
+                    ],
+                    "attestationSignatures": [],
+                    "newAggregatedPayloads": [
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc62dfe95dc7386d227d948d90d606e085fe685323ebffa5c4184a88fd3a68b51",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        }
+                    ],
+                    "knownAggregatedPayloads": [
+                        {
+                            "dataRoot": "0x9b9b5304ed9a19b45257cdb98fa7eedb0bdf9e87c270f48a2f9b0b45865f29f8",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2,
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                "stepType": "gossipAggregatedAttestation",
+                "attestation": {
+                    "data": {
+                        "slot": 5,
+                        "head": {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "slot": 3
+                        },
+                        "target": {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "slot": 3
+                        },
+                        "source": {
+                            "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                            "slot": 2
+                        }
+                    },
+                    "proof": {
+                        "participants": {
+                            "data": [
+                                true,
+                                true,
+                                true
+                            ]
+                        },
+                        "proof": {
+                            "data": "0x004d4f434b45442d4147475245474154494f4e2d50524f4f46005a6b87a5bea28c28442ce31f8efb0e3066c62ebe4c227b78563792ac02a0bad0"
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "storeSnapshot": {
+                    "time": 28,
+                    "headRoot": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                    "safeTargetRoot": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                    "latestJustified": {
+                        "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "slot": 3
+                    },
+                    "latestFinalized": {
+                        "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "slot": 2
+                    },
+                    "blockRoots": [
+                        "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                        "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                        "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2",
+                        "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                            "weight": 0
+                        },
+                        {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "weight": 6
+                        },
+                        {
+                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                            "weight": 0
+                        }
+                    ],
+                    "attestationSignatures": [],
+                    "newAggregatedPayloads": [
+                        {
+                            "dataRoot": "0xa77dea68a4b12b826c1a84d7dad87a51dbab7b49a991cfef570da22679d36b8c",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc62dfe95dc7386d227d948d90d606e085fe685323ebffa5c4184a88fd3a68b51",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        }
+                    ],
+                    "knownAggregatedPayloads": [
+                        {
+                            "dataRoot": "0x9b9b5304ed9a19b45257cdb98fa7eedb0bdf9e87c270f48a2f9b0b45865f29f8",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2,
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                "stepType": "gossipAggregatedAttestation",
+                "attestation": {
+                    "data": {
+                        "slot": 5,
+                        "head": {
+                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                            "slot": 4
+                        },
+                        "target": {
+                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                            "slot": 4
+                        },
+                        "source": {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "slot": 3
+                        }
+                    },
+                    "proof": {
+                        "participants": {
+                            "data": [
+                                true,
+                                true,
+                                true
+                            ]
+                        },
+                        "proof": {
+                            "data": "0x004d4f434b45442d4147475245474154494f4e2d50524f4f460098590a852484e65a0beef3264b7b752f6d22fef0816839c974491d61606f98fa"
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "storeSnapshot": {
+                    "time": 28,
+                    "headRoot": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                    "safeTargetRoot": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                    "latestJustified": {
+                        "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "slot": 3
+                    },
+                    "latestFinalized": {
+                        "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "slot": 2
+                    },
+                    "blockRoots": [
+                        "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                        "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                        "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2",
+                        "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                            "weight": 0
+                        },
+                        {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "weight": 6
+                        },
+                        {
+                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                            "weight": 0
+                        }
+                    ],
+                    "attestationSignatures": [],
+                    "newAggregatedPayloads": [
+                        {
+                            "dataRoot": "0xa77dea68a4b12b826c1a84d7dad87a51dbab7b49a991cfef570da22679d36b8c",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc62dfe95dc7386d227d948d90d606e085fe685323ebffa5c4184a88fd3a68b51",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xd006f546e54d13ad625dd845ed52e930e37c58b33e5db98e1d6c0921dc6ab4fd",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        }
+                    ],
+                    "knownAggregatedPayloads": [
+                        {
+                            "dataRoot": "0x9b9b5304ed9a19b45257cdb98fa7eedb0bdf9e87c270f48a2f9b0b45865f29f8",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2,
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                "stepType": "gossipAggregatedAttestation",
+                "attestation": {
+                    "data": {
+                        "slot": 5,
+                        "head": {
+                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                            "slot": 5
+                        },
+                        "target": {
+                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                            "slot": 5
+                        },
+                        "source": {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "slot": 3
+                        }
+                    },
+                    "proof": {
+                        "participants": {
+                            "data": [
+                                true,
+                                true,
+                                true
+                            ]
+                        },
+                        "proof": {
+                            "data": "0x004d4f434b45442d4147475245474154494f4e2d50524f4f46002632fa799e9e61a32e0fddc17e7c34caceb83698a03def09d4bedbb2d476d681"
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "latestFinalizedSlot": 2,
+                    "attestationSignatureTargetSlots": [],
+                    "latestNewAggregatedTargetSlots": [],
+                    "latestKnownAggregatedTargetSlots": [
+                        2,
+                        3,
+                        4,
+                        5
+                    ]
+                },
+                "storeSnapshot": {
+                    "time": 30,
+                    "headRoot": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                    "safeTargetRoot": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                    "latestJustified": {
+                        "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "slot": 3
+                    },
+                    "latestFinalized": {
+                        "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "slot": 2
+                    },
+                    "blockRoots": [
+                        "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                        "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                        "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2",
+                        "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                            "weight": 3
+                        },
+                        {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "weight": 6
+                        },
+                        {
+                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                            "weight": 3
+                        }
+                    ],
+                    "attestationSignatures": [],
+                    "newAggregatedPayloads": [],
+                    "knownAggregatedPayloads": [
+                        {
+                            "dataRoot": "0x9b9b5304ed9a19b45257cdb98fa7eedb0bdf9e87c270f48a2f9b0b45865f29f8",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2,
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xa77dea68a4b12b826c1a84d7dad87a51dbab7b49a991cfef570da22679d36b8c",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc62dfe95dc7386d227d948d90d606e085fe685323ebffa5c4184a88fd3a68b51",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xd006f546e54d13ad625dd845ed52e930e37c58b33e5db98e1d6c0921dc6ab4fd",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                "stepType": "tick",
+                "time": 24,
+                "hasProposal": false
+            },
+            {
+                "valid": true,
+                "storeSnapshot": {
+                    "time": 30,
+                    "headRoot": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                    "safeTargetRoot": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                    "latestJustified": {
+                        "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "slot": 3
+                    },
+                    "latestFinalized": {
+                        "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "slot": 2
+                    },
+                    "blockRoots": [
+                        "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                        "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                        "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2",
+                        "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                            "weight": 3
+                        },
+                        {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "weight": 6
+                        },
+                        {
+                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                            "weight": 3
+                        }
+                    ],
+                    "attestationSignatures": [],
+                    "newAggregatedPayloads": [
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        }
+                    ],
+                    "knownAggregatedPayloads": [
+                        {
+                            "dataRoot": "0x9b9b5304ed9a19b45257cdb98fa7eedb0bdf9e87c270f48a2f9b0b45865f29f8",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2,
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xa77dea68a4b12b826c1a84d7dad87a51dbab7b49a991cfef570da22679d36b8c",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc62dfe95dc7386d227d948d90d606e085fe685323ebffa5c4184a88fd3a68b51",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xd006f546e54d13ad625dd845ed52e930e37c58b33e5db98e1d6c0921dc6ab4fd",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                "stepType": "gossipAggregatedAttestation",
+                "attestation": {
+                    "data": {
+                        "slot": 5,
+                        "head": {
+                            "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                            "slot": 2
+                        },
+                        "target": {
+                            "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                            "slot": 2
+                        },
+                        "source": {
+                            "root": "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                            "slot": 1
+                        }
+                    },
+                    "proof": {
+                        "participants": {
+                            "data": [
+                                false,
+                                false,
+                                false,
+                                true,
+                                true,
+                                true
+                            ]
+                        },
+                        "proof": {
+                            "data": "0x004d4f434b45442d4147475245474154494f4e2d50524f4f460018953e38ba1edc311ff54d8f41244e81b3087f4d49b21e8f8f0ddba40ac720e9"
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "storeSnapshot": {
+                    "time": 30,
+                    "headRoot": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                    "safeTargetRoot": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                    "latestJustified": {
+                        "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "slot": 3
+                    },
+                    "latestFinalized": {
+                        "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "slot": 2
+                    },
+                    "blockRoots": [
+                        "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                        "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                        "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2",
+                        "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                            "weight": 3
+                        },
+                        {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "weight": 6
+                        },
+                        {
+                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                            "weight": 3
+                        }
+                    ],
+                    "attestationSignatures": [],
+                    "newAggregatedPayloads": [
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc62dfe95dc7386d227d948d90d606e085fe685323ebffa5c4184a88fd3a68b51",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        }
+                    ],
+                    "knownAggregatedPayloads": [
+                        {
+                            "dataRoot": "0x9b9b5304ed9a19b45257cdb98fa7eedb0bdf9e87c270f48a2f9b0b45865f29f8",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2,
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xa77dea68a4b12b826c1a84d7dad87a51dbab7b49a991cfef570da22679d36b8c",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc62dfe95dc7386d227d948d90d606e085fe685323ebffa5c4184a88fd3a68b51",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xd006f546e54d13ad625dd845ed52e930e37c58b33e5db98e1d6c0921dc6ab4fd",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                "stepType": "gossipAggregatedAttestation",
+                "attestation": {
+                    "data": {
+                        "slot": 5,
+                        "head": {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "slot": 3
+                        },
+                        "target": {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "slot": 3
+                        },
+                        "source": {
+                            "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                            "slot": 2
+                        }
+                    },
+                    "proof": {
+                        "participants": {
+                            "data": [
+                                false,
+                                false,
+                                false,
+                                true,
+                                true,
+                                true
+                            ]
+                        },
+                        "proof": {
+                            "data": "0x004d4f434b45442d4147475245474154494f4e2d50524f4f4600fe6ea28e2640ffd8856514c87c33cacde217b14e591bc73c2d50a2853984a95e"
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "storeSnapshot": {
+                    "time": 30,
+                    "headRoot": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                    "safeTargetRoot": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                    "latestJustified": {
+                        "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "slot": 3
+                    },
+                    "latestFinalized": {
+                        "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "slot": 2
+                    },
+                    "blockRoots": [
+                        "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                        "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                        "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2",
+                        "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                            "weight": 3
+                        },
+                        {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "weight": 6
+                        },
+                        {
+                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                            "weight": 3
+                        }
+                    ],
+                    "attestationSignatures": [],
+                    "newAggregatedPayloads": [
+                        {
+                            "dataRoot": "0xa77dea68a4b12b826c1a84d7dad87a51dbab7b49a991cfef570da22679d36b8c",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc62dfe95dc7386d227d948d90d606e085fe685323ebffa5c4184a88fd3a68b51",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        }
+                    ],
+                    "knownAggregatedPayloads": [
+                        {
+                            "dataRoot": "0x9b9b5304ed9a19b45257cdb98fa7eedb0bdf9e87c270f48a2f9b0b45865f29f8",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2,
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xa77dea68a4b12b826c1a84d7dad87a51dbab7b49a991cfef570da22679d36b8c",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc62dfe95dc7386d227d948d90d606e085fe685323ebffa5c4184a88fd3a68b51",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xd006f546e54d13ad625dd845ed52e930e37c58b33e5db98e1d6c0921dc6ab4fd",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                "stepType": "gossipAggregatedAttestation",
+                "attestation": {
+                    "data": {
+                        "slot": 5,
+                        "head": {
+                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                            "slot": 4
+                        },
+                        "target": {
+                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                            "slot": 4
+                        },
+                        "source": {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "slot": 3
+                        }
+                    },
+                    "proof": {
+                        "participants": {
+                            "data": [
+                                false,
+                                false,
+                                false,
+                                true,
+                                true,
+                                true
+                            ]
+                        },
+                        "proof": {
+                            "data": "0x004d4f434b45442d4147475245474154494f4e2d50524f4f4600f6329f06d78c73b6e8c1030eb5ab6f2a30765c51da54d653de8691763034557d"
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "storeSnapshot": {
+                    "time": 30,
+                    "headRoot": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                    "safeTargetRoot": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                    "latestJustified": {
+                        "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "slot": 3
+                    },
+                    "latestFinalized": {
+                        "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "slot": 2
+                    },
+                    "blockRoots": [
+                        "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                        "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                        "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2",
+                        "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                            "weight": 3
+                        },
+                        {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "weight": 6
+                        },
+                        {
+                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                            "weight": 3
+                        }
+                    ],
+                    "attestationSignatures": [],
+                    "newAggregatedPayloads": [
+                        {
+                            "dataRoot": "0xa77dea68a4b12b826c1a84d7dad87a51dbab7b49a991cfef570da22679d36b8c",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc62dfe95dc7386d227d948d90d606e085fe685323ebffa5c4184a88fd3a68b51",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xd006f546e54d13ad625dd845ed52e930e37c58b33e5db98e1d6c0921dc6ab4fd",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        }
+                    ],
+                    "knownAggregatedPayloads": [
+                        {
+                            "dataRoot": "0x9b9b5304ed9a19b45257cdb98fa7eedb0bdf9e87c270f48a2f9b0b45865f29f8",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2,
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xa77dea68a4b12b826c1a84d7dad87a51dbab7b49a991cfef570da22679d36b8c",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc62dfe95dc7386d227d948d90d606e085fe685323ebffa5c4184a88fd3a68b51",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xd006f546e54d13ad625dd845ed52e930e37c58b33e5db98e1d6c0921dc6ab4fd",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                "stepType": "gossipAggregatedAttestation",
+                "attestation": {
+                    "data": {
+                        "slot": 5,
+                        "head": {
+                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                            "slot": 5
+                        },
+                        "target": {
+                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                            "slot": 5
+                        },
+                        "source": {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "slot": 3
+                        }
+                    },
+                    "proof": {
+                        "participants": {
+                            "data": [
+                                false,
+                                false,
+                                false,
+                                true,
+                                true,
+                                true
+                            ]
+                        },
+                        "proof": {
+                            "data": "0x004d4f434b45442d4147475245474154494f4e2d50524f4f46008c66bb87a5b49a5ed6ded518a42bafd2f0c9887da3b1c426d418559307c46194"
+                        }
+                    }
+                }
+            },
+            {
+                "valid": true,
+                "storeSnapshot": {
+                    "time": 30,
+                    "headRoot": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                    "safeTargetRoot": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                    "latestJustified": {
+                        "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "slot": 3
+                    },
+                    "latestFinalized": {
+                        "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "slot": 2
+                    },
+                    "blockRoots": [
+                        "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                        "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                        "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2",
+                        "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                            "weight": 3
+                        },
+                        {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "weight": 6
+                        },
+                        {
+                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                            "weight": 3
+                        }
+                    ],
+                    "attestationSignatures": [
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "validatorIndices": [
+                                6
+                            ]
+                        }
+                    ],
+                    "newAggregatedPayloads": [
+                        {
+                            "dataRoot": "0xa77dea68a4b12b826c1a84d7dad87a51dbab7b49a991cfef570da22679d36b8c",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc62dfe95dc7386d227d948d90d606e085fe685323ebffa5c4184a88fd3a68b51",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xd006f546e54d13ad625dd845ed52e930e37c58b33e5db98e1d6c0921dc6ab4fd",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        }
+                    ],
+                    "knownAggregatedPayloads": [
+                        {
+                            "dataRoot": "0x9b9b5304ed9a19b45257cdb98fa7eedb0bdf9e87c270f48a2f9b0b45865f29f8",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2,
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xa77dea68a4b12b826c1a84d7dad87a51dbab7b49a991cfef570da22679d36b8c",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc62dfe95dc7386d227d948d90d606e085fe685323ebffa5c4184a88fd3a68b51",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xd006f546e54d13ad625dd845ed52e930e37c58b33e5db98e1d6c0921dc6ab4fd",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                "stepType": "attestation",
+                "attestation": {
+                    "validatorIndex": 6,
+                    "data": {
+                        "slot": 5,
+                        "head": {
+                            "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                            "slot": 2
+                        },
+                        "target": {
+                            "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                            "slot": 2
+                        },
+                        "source": {
+                            "root": "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                            "slot": 1
+                        }
+                    },
+                    "signature": "0x240000005872935208f6432b1dbe2d2c7beada11fc434f4bb75528179243f64e2804000004000000ee28820132969c2f6b5b070d94e08d4d3eebdf237e01d053f6c26575900db651a6a4d6165074c20009619d31b279842827c59d41ac609644ece6b74709bbc5067dfa5d26086efb653926da0ecc02f96aa6b5197781082d4693feb955d998ba3d0907711fef62a50e8d82d52279b5c247982867194741cf03234c924ae8dd31380dd2d27008d46333e410607b99528746c4b5136c553a332da959573d380a1f463a071f786f8e172945bbbb207612f97b834e9f10bd59e302748c556fef4af13503a44d7d9ed7b75a9e55952c1641030d6947b7425c268c0cb8f74b44dbd2570c0035632de1c389786086204baa57e9145052cd58bdbef0576a99c8380e084c142c63ca2f21f3060cef7595607e8e742dee995279ab40fe462cbad57323452b4f5da8182d99605313f14c8569f5c7f57d9c33dd0f42fba924a4a47708beb9a12abfa90e4cefac983d59ce3730600d4945b10b467d9c29707849eaf164f2bb84578f9ce71d9d465d36deb866398855f53116d88a1d039b8a612bad1b53de86cc01ea83171e5b52bc2cb939966c80674704ce216f199ad5027afd60bd6ab4a60532b25c851cca430f75ae441d19e21adc4905975074c894eb0645b7301f7599c956468b831163176b46183e1260e4b4f0118c17d03aa7cfa847df57a2279e1818130a977b6307471b72faaa317bc2df8d23250f73089d83186ff230450123ae3b7ade036355303d3173ecbe5c3d0c02954f3b0d851a206b5d10186908681aff0b232d0e0950ea6a232ff1ff7f2b74e7e53a9bde7478f264614b683a0309f502c51cfa7fee1c9bb4956492264b24ea37772e85ca5b1614efd73c47dd92714162a8305a090e3e2001df08f311a153c38f1444be9fcc0453695f7de7dbc717a07a876452806469a55e8d179873876f53e78c5b157c7f335c6a163c5fa99f2a9dfd0568659986748c6bff0c0454355a17847425b7cb223e901e4e4aa2023d6f507596490954e66aeaf01619616ecd496d3ab52d5d61cd4ac3081a419d11b82864840e1dfab51d537e680d128d5c09629f7d200901fdbc58530b207902797529f63ff43007b3422e349fea1ed5064d2795ae0e220fe0281aef72a012ddc43451ef574d74082c5346c0fe8a2f4920705a9992de137c20290c2c2fe72d3e227a7125666933ebeb2023b6d2dd084ef6397160be99201d1f1b03349f5d046ef3f112fa9ec8286a9d4539061d6409cc887066062f7e7afae9c036f82d7d0f37ca89063de4696bc737247c1f26dd4ed369a24c00ef64060072a82e0fe5404db83b8915207fa00ddb03ab4cedecea6b5da0134cded36439c37dcc3ad8b48a59853dc6700eceae27ef595c64c28c5d4ef1a8bf529780e8566ecf327131215f5dfe1b1d7b1b47c908365d6936fe07c073670638479308011c94168179a98fc1177924ff1e1e68a84ac8077b1dd16fcf0ae1a63e65c19f197368e89344fbd056378f6df31f70376818855c0e70828fad1e579c4f3866746658b011ff0619bef6746b303474fe216300a588397df9350345d5fe804ecc183f6567e3d05314ea7f31d5074d45661aa9720fbb8913294532410af18e721f7dd94e5acefe59270bd25d0fac5d50d2b84773be2d886c0ef9772421dc3a29e2daed3678fc9b41f619d539f1bb0a4b4b3712382562950a6d694444c0b4b45507d13d4b10f93a09fc3d360543cb390f470bed7c5ffb080465109328ba816a6c15cf9111b37b207d5bcc8852024c045bd05cfc597585a2415d56937085aafb6c9edfdb17b779ae7bea2548788cbf7e5c1d09ba0c6693787988a1f42985651c750b6d7e7dcc749151f293a738a8ac84038990c230010a3d38ebd7715e17449e1313bdb942413c062edc51c73155b8a73c159d395d1959792aef2a841b18ec5e4390df1e1c98ff4144f8685f2c7000067ba3ad760f98d54423fc953268ad731f70af1d206e0a94555ddcf55f57004f5969ccfc90172d12294ed1b0932c7248951027d58177fc53c9639a8296782c4fc15419d2965ee04c1a5163502b1855cc2c2c1159095dff94770edd686c19c741ec433ac0e815affb8d3beecae26039d7e83f741f367dc5c3222798a28070fcbd5e014b70b57724e1916937b488575ab81e630773da322caa50310349d80f2674c54cd6aaef48081d6f5258b7f23c788bd017e8fb4535f4d00011e65dcc75886822432913b17a0d439a116f3ee17b60a8c95b40b6af118baf342e541506783efe72512c94307ad8ae041bb5e0c96f32508e2fee1bab394543ba6ffd6af0311269ef05321aa0231f5edb6cecc92d425d238d292907f4385759ff36f5f25567ae9b7c5a2468676ea8faa605b6fbdc5ad0f6a55643dea740aa2232726840145ad10d2e7aaebcec3c8250213630bba571fe7a074b19df0f5a9b54874b8a0e030cb41ed8209c7aee498cd0f14299ab0f12267b9334da02320d4e6358519d2e947aced9b117c835711f27d07b0fa5f2803e32c28d6db4e8da63b8bfac548fc25275846de7011d33f3747872595d64e15f329e3a9e2f8a34f50ccc64ae5a781a48114916fc008de7e74ff4d8ac3293012d7639962d3b55bcfc51a86eab0eb9b7416e3193a5179c35ae0fac43812dcfcc1a6d77f33050c3b4f879c7e4865777af497a0f335c7d38e3ca0c7d0e6726f760de04c5cf343440a99f6208fcc3577da71d2d8d44b11f45ebe053cf8144436875b008fab0270450e46450d253a6320edabc38e122083301fdaa33f0f959344ad75333871c1b6c8ff9dd5ac5857017ba2fbf00113ec21a4cdae52bb57b3d196ac8671d320c5715f8e96e594167621c8287220b3eb19a4b00acaf274584f558b72fb04cecb6205c81a50f318ee7ff74440be604d889c872ed18473553a6035ed1ecd85ee9fe964ccf302f780102f328f988c83b0b218759959ac173b5ea252384a18879f4d44b793156cd7e969edf48b122c447de0ca8762423ce2abb4b7e451c5ca018d44a423d18e8d6467f33ba16a5b5f532f9f70f15238c000fbe3566159001a05abb699e2aeef5da08cd0fd4625cc6f445567e8c6ea0bb1062f14d577be46f206a57e3fd7489516a674c756d42ff716125dd39c713ed240804ab7ae6593c49633a20d9cc5b128ee738db598f692e7cbe7222a60e6ccf25165a37ceb456c3dff7722e9beb074c4f5a45d0d675245db1985c1750e2173143e502e7ccd2452915aa7971560f6b37b84f0deca001574fb93e0e484d111fe6d90004759b2437d4fecf466386994b5681c81868f51d5b65fdad3d87d641208f287b13610c721efde3244349c7101e84bf940a5b80780253ea272479f36a6984b53157b2970b103b2152486d1bf1779ef25a576764e658bb9b911db1c7a137ad23360ed0533030d2eedd6530471946a3cd415af1638473c9c570248bb81572b7dcb7356996735058071c5dfc082b15d95d791a83738623d196605c6ba8d93b2423721bb4d65a1d16c598062cf7756cd41a543f239f0729ea868f45af0d3f6438e9fe2c"
+                },
+                "isAggregator": true
+            },
+            {
+                "valid": true,
+                "storeSnapshot": {
+                    "time": 30,
+                    "headRoot": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                    "safeTargetRoot": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                    "latestJustified": {
+                        "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "slot": 3
+                    },
+                    "latestFinalized": {
+                        "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "slot": 2
+                    },
+                    "blockRoots": [
+                        "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                        "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                        "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2",
+                        "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                            "weight": 3
+                        },
+                        {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "weight": 6
+                        },
+                        {
+                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                            "weight": 3
+                        }
+                    ],
+                    "attestationSignatures": [
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "validatorIndices": [
+                                6
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc62dfe95dc7386d227d948d90d606e085fe685323ebffa5c4184a88fd3a68b51",
+                            "validatorIndices": [
+                                6
+                            ]
+                        }
+                    ],
+                    "newAggregatedPayloads": [
+                        {
+                            "dataRoot": "0xa77dea68a4b12b826c1a84d7dad87a51dbab7b49a991cfef570da22679d36b8c",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc62dfe95dc7386d227d948d90d606e085fe685323ebffa5c4184a88fd3a68b51",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xd006f546e54d13ad625dd845ed52e930e37c58b33e5db98e1d6c0921dc6ab4fd",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        }
+                    ],
+                    "knownAggregatedPayloads": [
+                        {
+                            "dataRoot": "0x9b9b5304ed9a19b45257cdb98fa7eedb0bdf9e87c270f48a2f9b0b45865f29f8",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2,
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xa77dea68a4b12b826c1a84d7dad87a51dbab7b49a991cfef570da22679d36b8c",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc62dfe95dc7386d227d948d90d606e085fe685323ebffa5c4184a88fd3a68b51",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xd006f546e54d13ad625dd845ed52e930e37c58b33e5db98e1d6c0921dc6ab4fd",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                "stepType": "attestation",
+                "attestation": {
+                    "validatorIndex": 6,
+                    "data": {
+                        "slot": 5,
+                        "head": {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "slot": 3
+                        },
+                        "target": {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "slot": 3
+                        },
+                        "source": {
+                            "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                            "slot": 2
+                        }
+                    },
+                    "signature": "0x240000008833b6385d5c4278fe001a050a7aef63be781326a36e3149aeeb21622804000004000000ee28820132969c2f6b5b070d94e08d4d3eebdf237e01d053f6c26575900db651a6a4d6165074c20009619d31b279842827c59d41ac609644ece6b74709bbc5067dfa5d26086efb653926da0ecc02f96aa6b5197781082d4693feb955d998ba3d0907711fef62a50e8d82d52279b5c247982867194741cf03234c924ae8dd31380dd2d27008d46333e410607b99528746c4b5136c553a332da959573d380a1f463a071f786f8e172945bbbb207612f97b834e9f10bd59e302748c556fef4af13503a44d7d9ed7b75a9e55952c1641030d6947b7425c268c0cb8f74b44dbd2570c0035632de1c389786086204baa57e9145052cd58bdbef0576a99c8380e084c142c63ca2f21f3060cef7595607e8e742dee995279ab40fe462cbad57323452b4f5da8182d99605313f14c8569f5c7f57d9c33dd0f42fba924a4a47708beb9a12abfa90e4cefac983d59ce3730600d4945b10b467d9c29707849eaf164f2bb84578f9ce71d9d465d36deb866398855f53116d88a1d039b8a612bad1b53de86cc01ea83171e5b52bc2cb939966c80674704ce216f199ad5027afd60bd6ab4a60532b25c851cca430f75ae441d19e21adc4905975074c894eb0645b7301f7599c956468b831163176b46183e1260e4b4f0118c17d03aa7cfa847df57a2279e1818130a977b6307471b72faaa317bc2df8d23250f73089d83186ff230450123ae3b7ade036355303d3173ecbe5c3d0c02954f3b0d851a206b5d10186908681aff0b232d0e0950ea6a232ff1ff7f2b74e7e53a9bde7478f264614b683a0309f502c51cfa7fee1c9bb4956492264b24ea37772e85ca5b1614efd73c47dd92714162a8305a090e3e2001df08f311a153c38f1444be9fcc0453695f7de7dbc717a07a876452806469a55e8d179873876f53e78c5b157c7f335c6a163c5fa99f2a9dfd0568659986748c6bff0c0454355a17847425b7cb223e901e4e4aa2023d6f507596490954e66aeaf01619616ecd496d3ab52d5d61cd4ac3081a419d11b82864840e1dfab51d537e680d128d5c09629f7d200901fdbc58530b207902797529f63ff43007b3422e349fea1ed5064d2795ae0e220fe0281aef72a012ddc43451ef574d74082c5346c0fe8a2f4920705a9992de137c20290c2c2fe72d3e227a7125666933ebeb2023b6d2dd084ef6397160be99201d1f1b03349f5d046ef3f112fa9ec8286a9d4539061d6409cc887066062f7e7afae9c036f82d7d0f37ca89063de4696bc737247c1f26dd4ed369a24c00ef64060072a82e0fe5404db83b8915207fa00ddb03ab4cedecea6b5da0134cded36439c37dcc3ad8b48a59853dc6700eceae27ef595c64c28c5d4ef1a8bf529780e8566ecf327131215f5dfe1b1d7b1b47c908365d6936fe07c073670638479308011c94168179a98fc1177924ff1e1e68a84a1667d301dc0c984ec7715115267b34145b80af027dfb1813c7380517ac0e37002fe8c10267178540fe4a535d0bfe3436c4610d74d2d2d73eb20756645525bd7d3e2a34710c4da3198518b63a21358840e45dab494d1b451a2f5b8205d412240743ca2c4606090d4681181e40deb066537fae01155cb1dc21a8f9b171eb2e8c2a52b2d159f51d18300d3aae50070def7a822d7a5c9ac531747c4a79795350507d604e1e3e7e575021f97d8e02d85f5f5032570a597e373838ce819c007554b1735ffb080465109328ba816a6c15cf9111b37b207d5bcc8852024c045bd05cfc597585a2415d56937085aafb6c9edfdb17b779ae7bea2548788cbf7e5c1d09ba0c5477190bda39734b4c4f0d1353b4a04677809a29bb3f3e2504734312e345744475def368fd50270f466f082d0771547ea1e15b09b63cb07c48d4824d7e85eb013eaa761f640581394e001f1c3051401458b19c6d5e48d514cf1c631d78b64f05ee5601372acef2034bacd85c02ab222f6352a605cd43a3714473af055af98e32b0a4cf6a7c21c0165f480a6d16760e4dc05a6562c35fd77433bf82163e4bc53f316bbc3c7bf3a938dd80dd5dbd7e157467794534b5142c30d26c872c68123d2f18fac323bdf5a27c221b1d2d0bc2ad73e6ca291a377a743a82f9693156cf921e24e1916937b488575ab81e630773da322caa50310349d80f2674c54cd6aaef482e070d6e40ca985ace02db1fd7eabc5ef3f884726d0bde6538e7654053d0df1f39d11458fb00d95cb7d8d617bf81dd560c9ae1029dceb7403356e56c495a16030cd326463083b714e7ac676d860d5a1cc6272c2f599cc17c8ab5664322e6031d19d9924829ba5d4ab55a06260bddc743d5007233ebb4e056b6fb8e06f8916e33ff8f7b39d5bfb847645dc65d2f0cc9276a6f0a170fc85d3e0bed707a5cb42765dfa8e8274afc73499267e46fc217c52f2b62f60149a52155bf6bdb4b5a4227218cd0f14299ab0f12267b9334da02320d4e6358519d2e947aced9b117c835711f9343b7265848fc4fb9f0a40d81b1d52748b11462aa1f1b031f3f2006501be41f1cb2fa7e692ead33f2028560f059ff49d8128a34645f4d2f7c47d736d231a03ba71bd506305c704440e3427511931b74290d976fc33c5d12878afe3d496038473424cb0d490a073642afe72bab7b19270c30f23fa9569f3bf373cc0ae139b84a4f51414e0484d3159652a3722988e31d02172938c5bb3f2cf39c2550f20ce51f732eb76db8c0831bc3b6ce151649f4404347b40f9c43ed17bed9e124d5f6ef07197ae00e78becf71df3d2b5f17143c54ebfb621959696d3a67e4721d32beff1702cec1566c6332307e6d093bc249c618f28bc45640e7e54206bb5740886c3d628fe152746040f87020113368261fe81f172ef94fb3ab3123e9e262466413c65053a6035ed1ecd85ee9fe964ccf302f780102f328f988c83b0b218759959ac1732dd1c5709b99e348fccf245d89279b246a2b4d79bf559946a740a524fddea40a429c5b6fac27863066a73069002dec1167c7a632c7c4fa1508454a298ff4983f64c06f5034a8886db7511f3509a52007b2184b6082fafd3df36741608745170dee883a550c35914e3f78cc75d223e85ec465c92425639f2beb83ed73fd350c19cfcb946e7377786a4d9b4e2d608ac75d9c591a6fb550ba620f81fd4a7642c620357b1e6928cd0839915c1223ac156a22c658fa5d5b67a337a57f6636d9da4d309c34f637d726d36e2a9adf7ef0152426c22aa4499629aa53b3b6273e6b6b722e4ccc2c2169dab8187c74b4246bdb002be5801b255c3bd20b4e9b6533f0afaf70e1e55953084c382025ff701fac48f40557457629bf66fa7281d85e75e095d06bf488700cabdc89799c81821ebc89f85b8d34ea29cc1ca860d3f65b2ab528b5782d97d510309d232416913b1a7f89d01531b3c42e2188bc6dd5179e28f643774e551b2c75160fa2241093f13a04b4373acc9c72200aff5e0835dd9500929f4b22c8822e4f06b91f77612e1c2c29f9722cd90fec653d6539089fa5091b71696a44"
+                },
+                "isAggregator": true
+            },
+            {
+                "valid": true,
+                "storeSnapshot": {
+                    "time": 30,
+                    "headRoot": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                    "safeTargetRoot": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                    "latestJustified": {
+                        "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "slot": 3
+                    },
+                    "latestFinalized": {
+                        "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "slot": 2
+                    },
+                    "blockRoots": [
+                        "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                        "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                        "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2",
+                        "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                            "weight": 3
+                        },
+                        {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "weight": 6
+                        },
+                        {
+                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                            "weight": 3
+                        }
+                    ],
+                    "attestationSignatures": [
+                        {
+                            "dataRoot": "0xa77dea68a4b12b826c1a84d7dad87a51dbab7b49a991cfef570da22679d36b8c",
+                            "validatorIndices": [
+                                6
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "validatorIndices": [
+                                6
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc62dfe95dc7386d227d948d90d606e085fe685323ebffa5c4184a88fd3a68b51",
+                            "validatorIndices": [
+                                6
+                            ]
+                        }
+                    ],
+                    "newAggregatedPayloads": [
+                        {
+                            "dataRoot": "0xa77dea68a4b12b826c1a84d7dad87a51dbab7b49a991cfef570da22679d36b8c",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc62dfe95dc7386d227d948d90d606e085fe685323ebffa5c4184a88fd3a68b51",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xd006f546e54d13ad625dd845ed52e930e37c58b33e5db98e1d6c0921dc6ab4fd",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        }
+                    ],
+                    "knownAggregatedPayloads": [
+                        {
+                            "dataRoot": "0x9b9b5304ed9a19b45257cdb98fa7eedb0bdf9e87c270f48a2f9b0b45865f29f8",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2,
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xa77dea68a4b12b826c1a84d7dad87a51dbab7b49a991cfef570da22679d36b8c",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc62dfe95dc7386d227d948d90d606e085fe685323ebffa5c4184a88fd3a68b51",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xd006f546e54d13ad625dd845ed52e930e37c58b33e5db98e1d6c0921dc6ab4fd",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                "stepType": "attestation",
+                "attestation": {
+                    "validatorIndex": 6,
+                    "data": {
+                        "slot": 5,
+                        "head": {
+                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                            "slot": 4
+                        },
+                        "target": {
+                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                            "slot": 4
+                        },
+                        "source": {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "slot": 3
+                        }
+                    },
+                    "signature": "0x240000007cf56a1dc034850221d72d5f7a4dac764c44030ecd23c410391172502804000004000000ee28820132969c2f6b5b070d94e08d4d3eebdf237e01d053f6c26575900db651a6a4d6165074c20009619d31b279842827c59d41ac609644ece6b74709bbc5067dfa5d26086efb653926da0ecc02f96aa6b5197781082d4693feb955d998ba3d0907711fef62a50e8d82d52279b5c247982867194741cf03234c924ae8dd31380dd2d27008d46333e410607b99528746c4b5136c553a332da959573d380a1f463a071f786f8e172945bbbb207612f97b834e9f10bd59e302748c556fef4af13503a44d7d9ed7b75a9e55952c1641030d6947b7425c268c0cb8f74b44dbd2570c0035632de1c389786086204baa57e9145052cd58bdbef0576a99c8380e084c142c63ca2f21f3060cef7595607e8e742dee995279ab40fe462cbad57323452b4f5da8182d99605313f14c8569f5c7f57d9c33dd0f42fba924a4a47708beb9a12abfa90e4cefac983d59ce3730600d4945b10b467d9c29707849eaf164f2bb84578f9ce71d9d465d36deb866398855f53116d88a1d039b8a612bad1b53de86cc01ea83171e5b52bc2cb939966c80674704ce216f199ad5027afd60bd6ab4a60532b25c851cca430f75ae441d19e21adc4905975074c894eb0645b7301f7599c956468b831163176b46183e1260e4b4f0118c17d03aa7cfa847df57a2279e1818130a977b6307471b72faaa317bc2df8d23250f73089d83186ff230450123ae3b7ade036355303d3173ecbe5c3d0c02954f3b0d851a206b5d10186908681aff0b232d0e0950ea6a232ff1ff7f2b74e7e53a9bde7478f264614b683a0309f502c51cfa7fee1c9bb4956492264b24ea37772e85ca5b1614efd73c47dd92714162a8305a090e3e2001df08f311a153c38f1444be9fcc0453695f7de7dbc717a07a876452806469a55e8d179873876f53e78c5b157c7f335c6a163c5fa99f2a9dfd0568659986748c6bff0c0454355a17847425b7cb223e901e4e4aa2023d6f507596490954e66aeaf01619616ecd496d3ab52d5d61cd4ac3081a419d11b82864840e1dfab51d537e680d128d5c09629f7d200901fdbc58530b207902797529f63ff43007b3422e349fea1ed5064d2795ae0e220fe0281aef72a012ddc43451ef574d74082c5346c0fe8a2f4920705a9992de137c20290c2c2fe72d3e227a7125666933ebeb2023b6d2dd084ef6397160be99201d1f1b03349f5d046ef3f112fa9ec8286a9d4539061d6409cc887066062f7e7afae9c036f82d7d0f37ca89063de4696bc737247c1f26dd4ed369a24c00ef64060072a82e0fe5404db83b8915207fa00ddb03ab4cedecea6b5da0134cded36439c37dcc3ad8b48a59853dc6700eceae27ef595c64c28c5d4ef1a8bf529780e8566ecf327131215f5dfe1b1d7b1b47c908365d6936fe07c073670638479308011c94168179a98fc1177924ff1e1e68a84a06bd756b5f188864e7375f2360366831d9c3695a56ad5f7368c79303b8316c1627f2d56d0b87c52e61d08f595727d2485c76bf311a418b2c1478f66b40ed123247a5e51961ff935d9a43a2067c35ef5b2337795cc9dc94002c83297959779813cb9e27339dc03632a3dae72b07702724788c2035913e98272aa4417cb3785a3cbe2d886c0ef9772421dc3a29e2daed3678fc9b41f619d539f1bb0a4b4b3712389d9fbc651b3100404ffeed5262d0897566161f1316b4ad5242cdb4571af5ea4971c84464f2f2e128a820b963e416f84d7c3d092c0331c2343ed8c871788ad05898b3cd5d6a39010f252bfc730a10833584a15a63f475ca201ebb2224b78fd113add3471745e8430b7e0a007968193d793548991bde0415660fdf4668ebe879265f115f2852b886574ed0d844b4ccc4219f2aa5180a5c9717df9e933d9be0a4123eaa761f640581394e001f1c3051401458b19c6d5e48d514cf1c631d78b64f05dee79d6ee82a9819238b2a1087cc57587b45e713cc7fbd185c17d8689419204a2d12294ed1b0932c7248951027d58177fc53c9639a8296782c4fc15419d2965e4fe36b626449d670fca274787f24f4700daebc0b4efe78311446ff3e908b0933bf6fa94de68cdf053d0af14ecece690abce914070799a46ca102892b18aff54924e1916937b488575ab81e630773da322caa50310349d80f2674c54cd6aaef482e070d6e40ca985ace02db1fd7eabc5ef3f884726d0bde6538e7654053d0df1f39d11458fb00d95cb7d8d617bf81dd560c9ae1029dceb7403356e56c495a160388a9473bf470667201610d00dda86628eb950f0df9303b242cf04c7cbd13af441f5edb6cecc92d425d238d292907f4385759ff36f5f25567ae9b7c5a2468676e5be24a59e2996732ee167d58894897144926ba5cb5518c2087118315aa1dd95d44a73c26d4b0b954d5dcfa5c8e756a5775d5615eb58c1109d033eb44529cb17425871f3fc811f14ff6baf0292faabe53661a81751d4ffd4e837fe75fd98cd06e7d85b033942c8d20397f0d556e228d2e939e8e7d1ff2d023ef3d3e2db66c6d5bc390d275c585b3553d45d8761bf2580f33cee32c23abf0780fe01c533b66ae15821ae42901ebe627f4ec4712463b1069f82a006729501c6c5c1a6868fdd02731b6d69f696f33860c7334a37345a14f04cf71416b780de45a757a0c13e0847d3b4f51414e0484d3159652a3722988e31d02172938c5bb3f2cf39c2550f20ce51f732eb76db8c0831bc3b6ce151649f4404347b40f9c43ed17bed9e124d5f6ef07f0f959344ad75333871c1b6c8ff9dd5ac5857017ba2fbf00113ec21a4cdae52b7997504f83838855a038cf02a1c82c0635a31b36b7a75f2a72d8b40e9bf107103407ff34cb21622ec05f8d0a29265d32716bfc39521abe245af7821668c2e94453a6035ed1ecd85ee9fe964ccf302f780102f328f988c83b0b218759959ac1733cedd70ea9acdb67381ccd4fbf9ca70d3e829b7e20d72a53439c2b2081eb723ce7ab552a3fdb8c4dda413f7c5884c53cc6faea68165e320f794b6a4079c2f75f77b1d32c19f8347c0beb8c705d6360278e908b39d1fc8377b02d886379e1be7d4352a74b054e5a7380f79d3fc7b30616da59e0066a2c2363ffea9e1487973a6877d85d74babd1d4e36beae690a533322b6d3590bae77f737d79d892607806f7c37ceb456c3dff7722e9beb074c4f5a45d0d675245db1985c1750e2173143e5028a9aad1fa7c35d53d5bb850d4b29226f737e8809cf278e29a3eaa65419f38d55759b2437d4fecf466386994b5681c81868f51d5b65fdad3d87d641208f287b137a5a425353af957ba84a85171e133a0970318975f2d8547814b85a00aeed9543f46e6c113f83420636354624a3786e29bfa58961536ed50699eaaa4f59ebf143ba92ab700de979796e6de33070b0f027bebbb968e6a0757e36e19c2afa011478551b2c75160fa2241093f13a04b4373acc9c72200aff5e0835dd9500929f4b22c8822e4f06b91f77612e1c2c29f9722cd90fec653d6539089fa5091b71696a44"
+                },
+                "isAggregator": true
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "latestFinalizedSlot": 2,
+                    "attestationSignatureTargetSlots": [
+                        2,
+                        3,
+                        4,
+                        5
+                    ],
+                    "latestNewAggregatedTargetSlots": [
+                        2,
+                        3,
+                        4,
+                        5
+                    ],
+                    "latestKnownAggregatedTargetSlots": [
+                        2,
+                        3,
+                        4,
+                        5
+                    ]
+                },
+                "storeSnapshot": {
+                    "time": 30,
+                    "headRoot": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                    "safeTargetRoot": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                    "latestJustified": {
+                        "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "slot": 3
+                    },
+                    "latestFinalized": {
+                        "root": "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "slot": 2
+                    },
+                    "blockRoots": [
+                        "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                        "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                        "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2",
+                        "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                            "weight": 3
+                        },
+                        {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "weight": 6
+                        },
+                        {
+                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                            "weight": 3
+                        }
+                    ],
+                    "attestationSignatures": [
+                        {
+                            "dataRoot": "0xa77dea68a4b12b826c1a84d7dad87a51dbab7b49a991cfef570da22679d36b8c",
+                            "validatorIndices": [
+                                6
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "validatorIndices": [
+                                6
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc62dfe95dc7386d227d948d90d606e085fe685323ebffa5c4184a88fd3a68b51",
+                            "validatorIndices": [
+                                6
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xd006f546e54d13ad625dd845ed52e930e37c58b33e5db98e1d6c0921dc6ab4fd",
+                            "validatorIndices": [
+                                6
+                            ]
+                        }
+                    ],
+                    "newAggregatedPayloads": [
+                        {
+                            "dataRoot": "0xa77dea68a4b12b826c1a84d7dad87a51dbab7b49a991cfef570da22679d36b8c",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc62dfe95dc7386d227d948d90d606e085fe685323ebffa5c4184a88fd3a68b51",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xd006f546e54d13ad625dd845ed52e930e37c58b33e5db98e1d6c0921dc6ab4fd",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        }
+                    ],
+                    "knownAggregatedPayloads": [
+                        {
+                            "dataRoot": "0x9b9b5304ed9a19b45257cdb98fa7eedb0bdf9e87c270f48a2f9b0b45865f29f8",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2,
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xa77dea68a4b12b826c1a84d7dad87a51dbab7b49a991cfef570da22679d36b8c",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc0e4f3f3578e988f0e45d0b6404fa67a0cf7e7afbd3fda367c79066a4494d791",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xc62dfe95dc7386d227d948d90d606e085fe685323ebffa5c4184a88fd3a68b51",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xd006f546e54d13ad625dd845ed52e930e37c58b33e5db98e1d6c0921dc6ab4fd",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                "stepType": "attestation",
+                "attestation": {
+                    "validatorIndex": 6,
+                    "data": {
+                        "slot": 5,
+                        "head": {
+                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                            "slot": 5
+                        },
+                        "target": {
+                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                            "slot": 5
+                        },
+                        "source": {
+                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                            "slot": 3
+                        }
+                    },
+                    "signature": "0x2400000053c1fe22b84e2e4309c12254eb21fc209f313e50e926547374555b532804000004000000ee28820132969c2f6b5b070d94e08d4d3eebdf237e01d053f6c26575900db651a6a4d6165074c20009619d31b279842827c59d41ac609644ece6b74709bbc5067dfa5d26086efb653926da0ecc02f96aa6b5197781082d4693feb955d998ba3d0907711fef62a50e8d82d52279b5c247982867194741cf03234c924ae8dd31380dd2d27008d46333e410607b99528746c4b5136c553a332da959573d380a1f463a071f786f8e172945bbbb207612f97b834e9f10bd59e302748c556fef4af13503a44d7d9ed7b75a9e55952c1641030d6947b7425c268c0cb8f74b44dbd2570c0035632de1c389786086204baa57e9145052cd58bdbef0576a99c8380e084c142c63ca2f21f3060cef7595607e8e742dee995279ab40fe462cbad57323452b4f5da8182d99605313f14c8569f5c7f57d9c33dd0f42fba924a4a47708beb9a12abfa90e4cefac983d59ce3730600d4945b10b467d9c29707849eaf164f2bb84578f9ce71d9d465d36deb866398855f53116d88a1d039b8a612bad1b53de86cc01ea83171e5b52bc2cb939966c80674704ce216f199ad5027afd60bd6ab4a60532b25c851cca430f75ae441d19e21adc4905975074c894eb0645b7301f7599c956468b831163176b46183e1260e4b4f0118c17d03aa7cfa847df57a2279e1818130a977b6307471b72faaa317bc2df8d23250f73089d83186ff230450123ae3b7ade036355303d3173ecbe5c3d0c02954f3b0d851a206b5d10186908681aff0b232d0e0950ea6a232ff1ff7f2b74e7e53a9bde7478f264614b683a0309f502c51cfa7fee1c9bb4956492264b24ea37772e85ca5b1614efd73c47dd92714162a8305a090e3e2001df08f311a153c38f1444be9fcc0453695f7de7dbc717a07a876452806469a55e8d179873876f53e78c5b157c7f335c6a163c5fa99f2a9dfd0568659986748c6bff0c0454355a17847425b7cb223e901e4e4aa2023d6f507596490954e66aeaf01619616ecd496d3ab52d5d61cd4ac3081a419d11b82864840e1dfab51d537e680d128d5c09629f7d200901fdbc58530b207902797529f63ff43007b3422e349fea1ed5064d2795ae0e220fe0281aef72a012ddc43451ef574d74082c5346c0fe8a2f4920705a9992de137c20290c2c2fe72d3e227a7125666933ebeb2023b6d2dd084ef6397160be99201d1f1b03349f5d046ef3f112fa9ec8286a9d4539061d6409cc887066062f7e7afae9c036f82d7d0f37ca89063de4696bc737247c1f26dd4ed369a24c00ef64060072a82e0fe5404db83b8915207fa00ddb03ab4cedecea6b5da0134cded36439c37dcc3ad8b48a59853dc6700eceae27ef595c64c28c5d4ef1a8bf529780e8566ecf327131215f5dfe1b1d7b1b47c908365d6936fe07c073670638479308011c94168179a98fc1177924ff1e1e68a84a1667d301dc0c984ec7715115267b34145b80af027dfb1813c7380517ac0e3700855c0e70828fad1e579c4f3866746658b011ff0619bef6746b303474fe21630068931871a5c878784d801110b281596dc0d6d636b5f5626163063b37fd999328cb9e27339dc03632a3dae72b07702724788c2035913e98272aa4417cb3785a3cbe2d886c0ef9772421dc3a29e2daed3678fc9b41f619d539f1bb0a4b4b3712384edeca0a9152606cf64dbd37c57edd649b3e234a82033462505e8b596055a70b71c84464f2f2e128a820b963e416f84d7c3d092c0331c2343ed8c871788ad0583821df7e5d1bd9154cd3bc2b4706a35102d6865182a84537f613ef02b2c3da0d5477190bda39734b4c4f0d1353b4a04677809a29bb3f3e2504734312e34574445f115f2852b886574ed0d844b4ccc4219f2aa5180a5c9717df9e933d9be0a4123eaa761f640581394e001f1c3051401458b19c6d5e48d514cf1c631d78b64f05dee79d6ee82a9819238b2a1087cc57587b45e713cc7fbd185c17d8689419204a295db55f8d13142e8da5f825602b963fceff7e08bf74a522ee296e59e1dbb031d081d775213fd00eb7302b228f14324aef01fb14c0e1117d6fa210585d9fb950bf6fa94de68cdf053d0af14ecece690abce914070799a46ca102892b18aff54924e1916937b488575ab81e630773da322caa50310349d80f2674c54cd6aaef489550091b5a766165e0ef34677386e92056a33b05dbdd58040b27473c21a14338e0f1e378d839c01965272b621edc5208b3cca00a87334c170d599f75f796887e0cd326463083b714e7ac676d860d5a1cc6272c2f599cc17c8ab5664322e6031d19d9924829ba5d4ab55a06260bddc743d5007233ebb4e056b6fb8e06f8916e336a7402365aad08583be4984ab9b74c77cf87a50c29152264c64144563c52f73128fc3b7b33fc3b494c7c7b4fff228d6033f32450fd622b22132274385ba4577aa5af665e7993455448b34b16385f1822930f0a35ad12ee7ba5a9986d0e966b0e7d85b033942c8d20397f0d556e228d2e939e8e7d1ff2d023ef3d3e2db66c6d5b97a26a61a0a12416aa8bef1af6378020e2cec1117ea97a40fa6ce01e06aa6b113892a2538357e97e7a8c8c386343943b46d5346b8e40af224f99cf324c7a5d79ac43812dcfcc1a6d77f33050c3b4f879c7e4865777af497a0f335c7d38e3ca0c4f51414e0484d3159652a3722988e31d02172938c5bb3f2cf39c2550f20ce51fd6c6bf39fdd0ad2324272e0e13f49616a6d56f117cecdc5725bf312fcfa6af09ff66cb029bf098132f129926a9a654077834957e25b9093be49aa8613007ac3cf936ed57e177447949120609c069b612eb658828bfa14877331d394c3079f4403407ff34cb21622ec05f8d0a29265d32716bfc39521abe245af7821668c2e944e75fd56141d4015da432712915fbef1a2d827c20da97272122f93a310b2b444f3cedd70ea9acdb67381ccd4fbf9ca70d3e829b7e20d72a53439c2b2081eb723c14450023bfecec61facd2f53466b302fbad9e4102507452ed07e29639dccfa758a45407ea51bc049cb746b4eef6e015881dd036c37708011bf2d6c309dbcb378f14d577be46f206a57e3fd7489516a674c756d42ff716125dd39c713ed240804619d562632cad516a9ebe1143d877e3e92ba69705a0912309b34b0641a44586dff2fea3eb83de6495eb1804bad177c126a8d1834982fb25ebe079116fe05921b8a9aad1fa7c35d53d5bb850d4b29226f737e8809cf278e29a3eaa65419f38d5509497755325e30321b8b9273b262400e918d0b62b7eca429699cc861f0d96b2e610c721efde3244349c7101e84bf940a5b80780253ea272479f36a6984b53157f488700cabdc89799c81821ebc89f85b8d34ea29cc1ca860d3f65b2ab528b578ba92ab700de979796e6de33070b0f027bebbb968e6a0757e36e19c2afa011478551b2c75160fa2241093f13a04b4373acc9c72200aff5e0835dd9500929f4b227315320b2c3066073f386b2d739a4c58cfd7753b6956b461fb268a0dc217063b"
+                },
+                "isAggregator": true
+            },
+            {
+                "valid": true,
+                "checks": {
+                    "headSlot": 6,
+                    "latestJustifiedSlot": 5,
+                    "latestFinalizedSlot": 3,
+                    "attestationSignatureTargetSlots": [
+                        4,
+                        5
+                    ],
+                    "latestNewAggregatedTargetSlots": [
+                        4,
+                        5
+                    ],
+                    "latestKnownAggregatedTargetSlots": [
+                        4,
+                        5
+                    ]
+                },
+                "storeSnapshot": {
+                    "time": 30,
+                    "headRoot": "0xf87b6a9ed768514b704b0dd7f5126111ea67b3a9c185535c2372a28acf2be945",
+                    "safeTargetRoot": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                    "latestJustified": {
+                        "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                        "slot": 5
+                    },
+                    "latestFinalized": {
+                        "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "slot": 3
+                    },
+                    "blockRoots": [
+                        "0x329acac2630db3f79f1b988a61d45489355bb26acb520ebd99f152efd7c0a3a8",
+                        "0x3a0bcc038003e06e9973287bb3845ccdae3c457b9e1f9188dcd53a6e5a0c90d0",
+                        "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                        "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                        "0x7db9d2c48182c4a26360d5bfd75d251abba0801f8289e776065221a4531991f2",
+                        "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                        "0xf87b6a9ed768514b704b0dd7f5126111ea67b3a9c185535c2372a28acf2be945"
+                    ],
+                    "blockWeights": [
+                        {
+                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                            "weight": 7
+                        },
+                        {
+                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                            "weight": 1
+                        },
+                        {
+                            "root": "0xf87b6a9ed768514b704b0dd7f5126111ea67b3a9c185535c2372a28acf2be945",
+                            "weight": 0
+                        }
+                    ],
+                    "attestationSignatures": [
+                        {
+                            "dataRoot": "0xa77dea68a4b12b826c1a84d7dad87a51dbab7b49a991cfef570da22679d36b8c",
+                            "validatorIndices": [
+                                6
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xd006f546e54d13ad625dd845ed52e930e37c58b33e5db98e1d6c0921dc6ab4fd",
+                            "validatorIndices": [
+                                6
+                            ]
+                        }
+                    ],
+                    "newAggregatedPayloads": [
+                        {
+                            "dataRoot": "0xa77dea68a4b12b826c1a84d7dad87a51dbab7b49a991cfef570da22679d36b8c",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xd006f546e54d13ad625dd845ed52e930e37c58b33e5db98e1d6c0921dc6ab4fd",
+                            "participantSets": [
+                                [
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        }
+                    ],
+                    "knownAggregatedPayloads": [
+                        {
+                            "dataRoot": "0xa77dea68a4b12b826c1a84d7dad87a51dbab7b49a991cfef570da22679d36b8c",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ],
+                                [
+                                    0,
+                                    1,
+                                    2,
+                                    3,
+                                    4,
+                                    5,
+                                    6
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xb6251de10c60425f6e107b72a5b9b47943e47f99ac542518ec45ad0a9330d5de",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2,
+                                    3,
+                                    4,
+                                    5
+                                ]
+                            ]
+                        },
+                        {
+                            "dataRoot": "0xd006f546e54d13ad625dd845ed52e930e37c58b33e5db98e1d6c0921dc6ab4fd",
+                            "participantSets": [
+                                [
+                                    0,
+                                    1,
+                                    2
+                                ],
+                                [
+                                    0,
+                                    1,
+                                    2,
+                                    3,
+                                    4,
+                                    5,
+                                    6
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                "stepType": "block",
+                "tickToSlot": true,
+                "block": {
+                    "slot": 6,
+                    "proposerIndex": 6,
+                    "parentRoot": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                    "stateRoot": "0xd1030fdd7480a16f212521aee8d86e354f2060aade10244154cfc0b6f660fedb",
+                    "body": {
+                        "attestations": {
+                            "data": [
+                                {
+                                    "aggregationBits": {
+                                        "data": [
+                                            true,
+                                            true,
+                                            true,
+                                            true,
+                                            true,
+                                            true,
+                                            true
+                                        ]
+                                    },
+                                    "data": {
+                                        "slot": 5,
+                                        "head": {
+                                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                                            "slot": 4
+                                        },
+                                        "target": {
+                                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                                            "slot": 4
+                                        },
+                                        "source": {
+                                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                                            "slot": 3
+                                        }
+                                    }
+                                },
+                                {
+                                    "aggregationBits": {
+                                        "data": [
+                                            true,
+                                            true,
+                                            true,
+                                            true,
+                                            true,
+                                            true
+                                        ]
+                                    },
+                                    "data": {
+                                        "slot": 6,
+                                        "head": {
+                                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                                            "slot": 4
+                                        },
+                                        "target": {
+                                            "root": "0x4462ad5964d4a0ce46213670557aa336b63ac02dc19261f4c7f10c3465e2f4a5",
+                                            "slot": 4
+                                        },
+                                        "source": {
+                                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                                            "slot": 3
+                                        }
+                                    }
+                                },
+                                {
+                                    "aggregationBits": {
+                                        "data": [
+                                            true,
+                                            true,
+                                            true,
+                                            true,
+                                            true,
+                                            true,
+                                            true
+                                        ]
+                                    },
+                                    "data": {
+                                        "slot": 5,
+                                        "head": {
+                                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                                            "slot": 5
+                                        },
+                                        "target": {
+                                            "root": "0xba98d69e2892197fd286f5b6c5398229334430e45fdd4adfc8a042dba747cd63",
+                                            "slot": 5
+                                        },
+                                        "source": {
+                                            "root": "0x7696950bbcf8653e5bb6214562dd5b8fe28c550986a406904def1ad38561c6d5",
+                                            "slot": 3
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "blockRootLabel": "block_6"
+                }
+            }
+        ],
+        "maxSlot": 6,
+        "_info": {
+            "hash": "0x4f4120e0bbf3106aea56b699fff48cbebf314d988b247a23e0aa10149ebaea5c",
+            "comment": "`leanSpec` generated test",
+            "testId": "tests/consensus/lstar/fork_choice/test_store_pruning.py::test_finalization_prunes_stale_attestation_signatures[fork_Lstar]",
+            "description": "Finalization prunes stale attestation data from every store pool at once.\n\n    Given\n    -----\n    - 8 validators; a slot needs 6 votes (2/3) to be justified.\n    - the chain:\n        genesis(0) -> block_1(1) -> block_2(2) -> block_3(3) -> block_4(4) -> block_5(5)\n    - block_2, block_3, block_4 each carry 6 votes, finalizing up to slot 2.\n    - block_5 carries no votes and does not advance finalization.\n    - each seeded vote heads a canonical block descending from the finalized block at slot 2.\n    - the raw signature pool holds votes for targets 2 through 5.\n    - the new aggregate pool holds votes for targets 2 through 5.\n    - the known aggregate pool holds votes for targets 2 through 5.\n\n    When\n    ----\n    - block_6 carries V0 through V5 justifying slot 4, which finalizes slot 3.\n\n    Then\n    ----\n    - finalized advances to slot 3.\n    - votes targeting slots 2, 3 are pruned from all three pools.\n    - votes targeting slots 4, 5 survive in all three pools.",
+            "fixtureFormat": "fork_choice_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
+        }
+    }
+}

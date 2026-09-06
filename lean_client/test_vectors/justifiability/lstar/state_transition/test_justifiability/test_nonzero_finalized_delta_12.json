@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/state_transition/test_justifiability.py::test_nonzero_finalized_delta_12[fork_Lstar][fork_Lstar-justifiability]": {
+    "tests/consensus/lstar/state_transition/test_justifiability.py::test_nonzero_finalized_delta_12[fork_Lstar][fork_Lstar-justifiability_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "slot": 512,
         "finalizedSlot": 500,
         "output": {
@@ -9,11 +10,12 @@
             "isJustifiable": true
         },
         "_info": {
-            "hash": "0xf75de70bbb69729dc89e8d022d40d12e8e41fdd457502f8e5a35932a34933b21",
+            "hash": "0x9b68a5aae443a02bfd7d83e556ae670b865c3d6714d123d16f77b550bba75944",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/state_transition/test_justifiability.py::test_nonzero_finalized_delta_12[fork_Lstar]",
-            "description": "Finalized at slot 500, candidate at 512. Delta 12: pronic (3*4).",
-            "fixtureFormat": "justifiability"
+            "description": "Delta 12 is justifiable when measured from a non-zero finalized slot.\n\n    Given\n    -----\n    - the finalized slot is 500.\n    - the candidate slot is 512.\n    - the delta is 12, pronic (3*4).\n\n    When\n    ----\n    - the candidate is checked for justifiability.\n\n    Then\n    ----\n    - the candidate is justifiable.",
+            "fixtureFormat": "justifiability_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

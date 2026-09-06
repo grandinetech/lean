@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_snappy_codec.py::test_snappy_frame_ssz_like_payload[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_snappy_codec.py::test_snappy_frame_ssz_like_payload[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "snappy_frame",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "snappy_frame",
             "data": "0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
         },
         "output": {
@@ -12,11 +13,12 @@
             "uncompressedLength": 512
         },
         "_info": {
-            "hash": "0x50941559ca3bf489e66aacd7d75a47ef975bfee5e3e06e5a2180a7a68873a834",
+            "hash": "0x5663b45cbb64d57dcbe6f1a31f8932ea8ac758ef3a36f3802ea075b402992912",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_snappy_codec.py::test_snappy_frame_ssz_like_payload[fork_Lstar]",
-            "description": "Realistic SSZ-like payload: fixed header + repeated zero padding (512 bytes).",
-            "fixtureFormat": "networking_codec"
+            "description": "A realistic SSZ-like payload roundtrips through the snappy framing format.\n\n    Given\n    -----\n    - a 512-byte payload.\n    - a 64-byte fixed header followed by 448 zero-padding bytes.\n\n    When\n    ----\n    - the input is compressed then decompressed.\n\n    Then\n    ----\n    - the output equals the original.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

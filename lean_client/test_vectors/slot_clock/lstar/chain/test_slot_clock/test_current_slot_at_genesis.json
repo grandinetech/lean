@@ -1,26 +1,28 @@
 {
-    "tests/consensus/lstar/chain/test_slot_clock.py::test_current_slot_at_genesis[fork_Lstar][fork_Lstar-slot_clock]": {
+    "tests/consensus/lstar/chain/test_slot_clock.py::test_current_slot_at_genesis[fork_Lstar][fork_Lstar-slot_clock_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "operation": "current_slot",
-        "input": {
+        "proofSetting": 0,
+        "operation": {
+            "kind": "current_slot",
             "genesisTime": 1700000000,
-            "currentTimeMs": 1700000000000
+            "currentTimeMilliseconds": 1700000000000.0
+        },
+        "config": {
+            "secondsPerSlot": 4,
+            "intervalsPerSlot": 5,
+            "millisecondsPerInterval": 800
         },
         "output": {
-            "config": {
-                "secondsPerSlot": 4,
-                "intervalsPerSlot": 5,
-                "millisecondsPerInterval": 800
-            },
             "slot": 0
         },
         "_info": {
-            "hash": "0x170bba4a0a21c3f26cf064a228458cf422205bea4313b6e8973a0de87dee8aa5",
+            "hash": "0x4456f99df2e46c3fcaaa935bbcfdb94c648d66fbc1262f7c610a21f97c648773",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/chain/test_slot_clock.py::test_current_slot_at_genesis[fork_Lstar]",
-            "description": "Exactly at genesis: slot 0.",
-            "fixtureFormat": "slot_clock"
+            "description": "A clock exactly at genesis reports slot 0.\n\n    Given\n    -----\n    - a wall-clock time equal to the genesis time.\n\n    When\n    ----\n    - the current slot is computed.\n\n    Then\n    ----\n    - the current slot is 0.",
+            "fixtureFormat": "slot_clock_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_7_not_justifiable[fork_Lstar][fork_Lstar-justifiability]": {
+    "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_7_not_justifiable[fork_Lstar][fork_Lstar-justifiability_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "slot": 7,
         "finalizedSlot": 0,
         "output": {
@@ -9,11 +10,12 @@
             "isJustifiable": false
         },
         "_info": {
-            "hash": "0x87499e3b62180daf756fee0484d07f4fbdc17adcd0044f1c509d921ee83291f0",
+            "hash": "0xc1170835254eb7722248e9dc974a16113efd4ef9a3c35ca04d58cb75068585f6",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_7_not_justifiable[fork_Lstar]",
-            "description": "Delta 7: not square, not pronic, outside window. First non-justifiable delta.",
-            "fixtureFormat": "justifiability"
+            "description": "Delta 7 is the first non-justifiable slot outside the immediate window.\n\n    Given\n    -----\n    - the finalized slot is 0.\n    - the candidate slot is 7.\n    - the delta is 7, just past the immediate window.\n    - the delta is neither square nor pronic.\n\n    When\n    ----\n    - the candidate is checked for justifiability.\n\n    Then\n    ----\n    - the candidate is not justifiable.",
+            "fixtureFormat": "justifiability_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

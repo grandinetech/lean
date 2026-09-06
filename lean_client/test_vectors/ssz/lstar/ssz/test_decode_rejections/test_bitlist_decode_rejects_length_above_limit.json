@@ -1,8 +1,9 @@
 {
-    "tests/consensus/lstar/ssz/test_decode_rejections.py::test_bitlist_decode_rejects_length_above_limit[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_decode_rejections.py::test_bitlist_decode_rejects_length_above_limit[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "expectException": "SSZValueError",
+        "rejectionReason": "DECODE_ERROR",
+        "proofSetting": 0,
         "typeName": "DecodeBitlist8",
         "value": {
             "data": [
@@ -13,11 +14,12 @@
         "serialized": "0x0002",
         "root": "",
         "_info": {
-            "hash": "0x6c36d319025aa5a7b6b25828680e1496b95911461bc1f23bbd87299f0c03df4b",
+            "hash": "0x722b3df9d92bf861063ceb22c918cd9b1feba9c9a63b47df1208ecd19a328a48",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_decode_rejections.py::test_bitlist_decode_rejects_length_above_limit[fork_Lstar]",
-            "description": "Bitlist whose sentinel implies a bit-length beyond the type limit must be rejected.\n\n    The payload 0x0002 places the sentinel at bit index nine, implying a\n    nine-bit bitlist. The type caps at eight bits, so the decoder must\n    refuse to widen past its own limit.",
-            "fixtureFormat": "ssz"
+            "description": "Decoding a bitlist whose sentinel implies too many bits is rejected.\n\n    Given\n    -----\n    - a bitlist type capped at eight bits.\n    - the input bytes 0x0002, which place the sentinel at bit index nine.\n\n    When\n    ----\n    - the input is decoded into that type.\n\n    Then\n    ----\n    - decoding is rejected.\n    - the reason is that the implied bit-length exceeds the limit.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

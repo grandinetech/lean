@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_merkleization_boundaries.py::test_bitvector_length_one_all_set[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_merkleization_boundaries.py::test_bitvector_length_one_all_set[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "BoundaryBitvector1",
         "value": {
             "data": [
@@ -11,11 +12,12 @@
         "serialized": "0x01",
         "root": "0x0100000000000000000000000000000000000000000000000000000000000000",
         "_info": {
-            "hash": "0x76436cb7590234b7bd0fca2cb53836d000995467ca35e32e9e9f844930c795f3",
+            "hash": "0x25b046b4c49caa3c04b855a430b45236d5041392010069dc5af6114fcb3279cb",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_merkleization_boundaries.py::test_bitvector_length_one_all_set[fork_Lstar]",
-            "description": "Single-bit vector with the bit set pins the minimal Merkle chunk layout.",
-            "fixtureFormat": "ssz"
+            "description": "A one-bit vector merkleizes to a stable root.\n\n    Given\n    -----\n    - a one-bit vector with its only bit set.\n\n    When\n    ----\n    - the value is merkleized.\n\n    Then\n    ----\n    - the root matches the minimal single-chunk layout.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

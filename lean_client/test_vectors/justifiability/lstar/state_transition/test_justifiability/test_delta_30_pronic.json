@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_30_pronic[fork_Lstar][fork_Lstar-justifiability]": {
+    "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_30_pronic[fork_Lstar][fork_Lstar-justifiability_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "slot": 30,
         "finalizedSlot": 0,
         "output": {
@@ -9,11 +10,12 @@
             "isJustifiable": true
         },
         "_info": {
-            "hash": "0xa5ca734fa8faa2f3d3bce35ee177029c231b5b574961944394db19f5e754a2ce",
+            "hash": "0xae6634a818a92dd380b2c5847f68879dc9296d12b83f3ef46a84268970225021",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_30_pronic[fork_Lstar]",
-            "description": "Delta 30: pronic number (5*6).",
-            "fixtureFormat": "justifiability"
+            "description": "Delta 30 is justifiable as a pronic number.\n\n    Given\n    -----\n    - the finalized slot is 0.\n    - the candidate slot is 30.\n    - the delta is 30, pronic (5*6).\n\n    When\n    ----\n    - the candidate is checked for justifiability.\n\n    Then\n    ----\n    - the candidate is justifiable.",
+            "fixtureFormat": "justifiability_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

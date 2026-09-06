@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_64_square[fork_Lstar][fork_Lstar-justifiability]": {
+    "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_64_square[fork_Lstar][fork_Lstar-justifiability_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "slot": 64,
         "finalizedSlot": 0,
         "output": {
@@ -9,11 +10,12 @@
             "isJustifiable": true
         },
         "_info": {
-            "hash": "0xe837b599ea70085b9d310f979dc2f0abd05dc832b297c5c553cc855da58ab5b8",
+            "hash": "0x257edd06ebe34c5a4ee13cd8b4f5726dc3376da36de2d8d8060006a27aa9c933",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_64_square[fork_Lstar]",
-            "description": "Delta 64: perfect square (8^2).",
-            "fixtureFormat": "justifiability"
+            "description": "Delta 64 is justifiable as a perfect square.\n\n    Given\n    -----\n    - the finalized slot is 0.\n    - the candidate slot is 64.\n    - the delta is 64, a perfect square (8*8).\n\n    When\n    ----\n    - the candidate is checked for justifiability.\n\n    Then\n    ----\n    - the candidate is justifiable.",
+            "fixtureFormat": "justifiability_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

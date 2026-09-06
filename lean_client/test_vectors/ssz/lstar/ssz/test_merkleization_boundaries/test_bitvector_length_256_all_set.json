@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_merkleization_boundaries.py::test_bitvector_length_256_all_set[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_merkleization_boundaries.py::test_bitvector_length_256_all_set[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "BoundaryBitvector256",
         "value": {
             "data": [
@@ -266,11 +267,12 @@
         "serialized": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
         "root": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
         "_info": {
-            "hash": "0x3b5697c7b3b6e09714e325ccff84d20670a5a39fc02a742c9edcb4ebbf767ca9",
+            "hash": "0x3d71bc5e967aa72935652f42f940d10bddbe2e696d5c16ab97b9d05182b1c3d5",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_merkleization_boundaries.py::test_bitvector_length_256_all_set[fork_Lstar]",
-            "description": "256-bit vector fills exactly one Merkle chunk with no padding.",
-            "fixtureFormat": "ssz"
+            "description": "A 256-bit vector merkleizes to a stable root.\n\n    Given\n    -----\n    - a 256-bit vector with all bits set.\n    - data that fills exactly one chunk with no padding.\n\n    When\n    ----\n    - the value is merkleized.\n\n    Then\n    ----\n    - the root matches the exact single-chunk layout.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

@@ -71,3 +71,27 @@ leanEthereum Consensus Client written in Rust using Grandine's libraries.
    ```
    
 After a minute all the nodes should be synced up and see each other
+
+## Running Hive tests
+
+Runs the [Hive](https://github.com/ethereum/hive) lean simulator against our
+`grandine_lean` client. From the repo root:
+
+```bash
+make test-hive
+```
+
+Requires a **Go toolchain**, **Docker** (running, usable without `sudo`), and
+**Rust + [`cross`](https://github.com/cross-rs/cross)**.
+
+Pin a hive version (defaults to latest `master`):
+
+```bash
+make test-hive HIVE_VERSION=<full-commit-hash>
+```
+
+Remove the hive clone and other build artifacts:
+
+```bash
+make clean
+```

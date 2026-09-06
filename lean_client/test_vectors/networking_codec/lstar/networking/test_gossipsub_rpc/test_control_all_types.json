@@ -1,9 +1,10 @@
 {
-    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_control_all_types[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_control_all_types[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "gossipsub_rpc",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "gossipsub_rpc",
             "subscriptions": [],
             "publish": [],
             "control": {
@@ -46,11 +47,12 @@
             "encoded": "0x1ad8010a420a2a2f6c65616e636f6e73656e7375732f307831323334353637382f626c6f636b2f73737a5f736e617070791214aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa12160a14bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb1a2c0a2a2f6c65616e636f6e73656e7375732f307831323334353637382f626c6f636b2f73737a5f736e6170707922340a302f6c65616e636f6e73656e7375732f307831323334353637382f6167677265676174696f6e2f73737a5f736e61707079183c2a160a14cccccccccccccccccccccccccccccccccccccccc"
         },
         "_info": {
-            "hash": "0x90c68a8b47bdbf3562804624bfc3ee13d28226fe060893f39ac70f8aebb6ea9f",
+            "hash": "0xcc1965a1da33217e817137dca772528ea99f89aa4f6985fa08ed7b2daf4f5a82",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_control_all_types[fork_Lstar]",
-            "description": "Control message with one of each control type.",
-            "fixtureFormat": "networking_codec"
+            "description": "A control message holding one of each control type round-trips.\n\n    Given\n    -----\n    - an RPC whose control message holds an IHAVE, IWANT, GRAFT, PRUNE, and IDONTWANT.\n\n    When\n    ----\n    - the RPC is encoded and decoded.\n\n    Then\n    ----\n    - the decoded RPC matches the input.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

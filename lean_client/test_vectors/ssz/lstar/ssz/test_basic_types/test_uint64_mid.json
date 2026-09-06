@@ -1,17 +1,19 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_uint64_mid[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_uint64_mid[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "Uint64",
         "value": "9223372036854775808",
         "serialized": "0x0000000000000080",
         "root": "0x0000000000000080000000000000000000000000000000000000000000000000",
         "_info": {
-            "hash": "0x751e13bd66a59b60c724aa744baacc8a615fc27664d5678bb979be73f8057335",
+            "hash": "0xc525ea5ad6bacf1a7b2cb7ceca69043c1eebe81b2e358555ca02afd959d7bd53",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_uint64_mid[fork_Lstar]",
-            "description": "Uint64 midpoint with high bit set (2^63). Tests 8-byte little-endian layout.",
-            "fixtureFormat": "ssz"
+            "description": "An eight-byte uint with its high bit set round-trips unchanged.\n\n    Given\n    -----\n    - the value 2^63 as an eight-byte uint.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.\n    - the eight-byte little-endian layout is preserved.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

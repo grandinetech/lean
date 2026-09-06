@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/ssz/test_merkleization_boundaries.py::test_bitvector_length_nine_all_set[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_merkleization_boundaries.py::test_bitvector_length_nine_all_set[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "BoundaryBitvector9",
         "value": {
             "data": [
@@ -19,11 +20,12 @@
         "serialized": "0xff01",
         "root": "0xff01000000000000000000000000000000000000000000000000000000000000",
         "_info": {
-            "hash": "0xe8a630f62cb01d5c1c8c509ea574f0db92c297968df6059c7a740d5dadf6182f",
+            "hash": "0x35e72ebdb9eff046539e83c27c5d37c7001a5158bee5af5a6ab2750a22d2b322",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_merkleization_boundaries.py::test_bitvector_length_nine_all_set[fork_Lstar]",
-            "description": "Nine-bit vector straddles the single-byte boundary.",
-            "fixtureFormat": "ssz"
+            "description": "A nine-bit vector merkleizes to a stable root.\n\n    Given\n    -----\n    - a nine-bit vector with all bits set.\n    - data that straddles the single-byte boundary.\n\n    When\n    ----\n    - the value is merkleized.\n\n    Then\n    ----\n    - the root matches the expected two-byte layout.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

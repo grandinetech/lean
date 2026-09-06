@@ -1,17 +1,19 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_uint64_max[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_uint64_max[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "Uint64",
         "value": "18446744073709551615",
         "serialized": "0xffffffffffffffff",
         "root": "0xffffffffffffffff000000000000000000000000000000000000000000000000",
         "_info": {
-            "hash": "0x3db1bb5dd0270c47780613dd68db7046a5dd842049825accaeea14c7d6412ced",
+            "hash": "0x0209936c13e79776e7d09244088b8a5d26561471df8af8477b63442fc8c080dc",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_uint64_max[fork_Lstar]",
-            "description": "Uint64 upper bound (2^64 - 1). All bytes 0xFF.",
-            "fixtureFormat": "ssz"
+            "description": "An eight-byte uint at its upper bound round-trips unchanged.\n\n    Given\n    -----\n    - the largest eight-byte uint value (2^64 - 1).\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.\n    - the encoding is eight bytes of 0xff.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

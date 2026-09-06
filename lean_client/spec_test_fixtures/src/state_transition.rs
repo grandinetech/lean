@@ -35,7 +35,7 @@ pub struct TestCase {
     #[serde(default)]
     pub post: Option<PostState>,
     #[serde(default)]
-    pub expect_exception: Option<String>,
+    pub rejection_reason: Option<String>,
     /// `_info` is metadata for traceability; we don't read any sub-field, so
     /// we keep it fully optional to tolerate fixtures that omit it.
     #[serde(default, rename = "_info")]
@@ -45,7 +45,8 @@ pub struct TestCase {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PostState {
-    pub slot: Slot,
+    #[serde(default)]
+    pub slot: Option<Slot>,
     #[serde(default)]
     pub validator_count: Option<usize>,
 }

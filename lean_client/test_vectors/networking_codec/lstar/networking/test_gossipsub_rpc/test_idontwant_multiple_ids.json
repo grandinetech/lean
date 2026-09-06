@@ -1,12 +1,17 @@
 {
-    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_idontwant_multiple_ids[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_idontwant_multiple_ids[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "codecName": "gossipsub_rpc",
-        "input": {
+        "proofSetting": 0,
+        "codec": {
+            "kind": "gossipsub_rpc",
             "subscriptions": [],
             "publish": [],
             "control": {
+                "ihave": [],
+                "iwant": [],
+                "graft": [],
+                "prune": [],
                 "idontwant": [
                     {
                         "messageIds": [
@@ -21,11 +26,12 @@
             "encoded": "0x1a2e2a2c0a14aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0a14bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         },
         "_info": {
-            "hash": "0x9a7434381853873c957421e75b077d9f40ad1f46c15e8c80f4469a29d7aa00a8",
+            "hash": "0xc183e4edb335aa6d02901be78ec8efa50938369b1f4ebcda222bf20520674e68",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_gossipsub_rpc.py::test_idontwant_multiple_ids[fork_Lstar]",
-            "description": "IDONTWANT declining two messages.",
-            "fixtureFormat": "networking_codec"
+            "description": "An IDONTWANT declining two message ids round-trips.\n\n    Given\n    -----\n    - an RPC whose control message holds an IDONTWANT with two message ids.\n\n    When\n    ----\n    - the RPC is encoded and decoded.\n\n    Then\n    ----\n    - the decoded RPC matches the input.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

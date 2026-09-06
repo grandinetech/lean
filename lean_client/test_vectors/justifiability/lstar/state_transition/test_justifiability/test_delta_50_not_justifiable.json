@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_50_not_justifiable[fork_Lstar][fork_Lstar-justifiability]": {
+    "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_50_not_justifiable[fork_Lstar][fork_Lstar-justifiability_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "slot": 50,
         "finalizedSlot": 0,
         "output": {
@@ -9,11 +10,12 @@
             "isJustifiable": false
         },
         "_info": {
-            "hash": "0x11806d25582c8cf299845897fbbd159e3dc95da5d706955f2cdb5e1d1293a359",
+            "hash": "0x96c2d1621ce4c2601e59d1255d8ff1c0c243ed12e1292f590c507e0f41fb78b3",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_50_not_justifiable[fork_Lstar]",
-            "description": "Delta 50: between square 49 and pronic 56.",
-            "fixtureFormat": "justifiability"
+            "description": "Delta 50 is not justifiable.\n\n    Given\n    -----\n    - the finalized slot is 0.\n    - the candidate slot is 50.\n    - the delta is 50, between square 49 and pronic 56.\n\n    When\n    ----\n    - the candidate is checked for justifiability.\n\n    Then\n    ----\n    - the candidate is not justifiable.",
+            "fixtureFormat": "justifiability_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

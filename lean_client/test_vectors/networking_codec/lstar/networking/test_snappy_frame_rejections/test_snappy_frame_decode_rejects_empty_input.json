@@ -1,24 +1,24 @@
 {
-    "tests/consensus/lstar/networking/test_snappy_frame_rejections.py::test_snappy_frame_decode_rejects_empty_input[fork_Lstar][fork_Lstar-networking_codec]": {
+    "tests/consensus/lstar/networking/test_snappy_frame_rejections.py::test_snappy_frame_decode_rejects_empty_input[fork_Lstar][fork_Lstar-networking_codec_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
-        "expectException": "SnappyDecompressionError",
-        "codecName": "decode_failure",
-        "input": {
+        "rejectionReason": "DECODE_ERROR",
+        "proofSetting": 0,
+        "codec": {
+            "kind": "decode_failure",
             "decoder": "snappy_frame",
-            "bytes": "0x"
+            "rawBytes": "0x"
         },
         "output": {
-            "decoder": "snappy_frame",
-            "errorType": "SnappyDecompressionError",
-            "errorMessage": "Input too short for framed snappy"
+            "decoder": "snappy_frame"
         },
         "_info": {
-            "hash": "0x6224fdfdb4e748e83f5a2ee5bbdb3040c4fa641dfe03208429f8548a41d2c0e1",
+            "hash": "0xcffce48363ae9439366f6e0475a3120e5077f915e5de24809bcfdd6742521d3e",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/networking/test_snappy_frame_rejections.py::test_snappy_frame_decode_rejects_empty_input[fork_Lstar]",
-            "description": "Empty input is not a valid snappy frame and must be rejected.\n\n    Every framed snappy stream begins with a ten-byte stream identifier.\n    Zero bytes cannot satisfy that minimum so the decoder aborts early\n    with SnappyDecompressionError.",
-            "fixtureFormat": "networking_codec"
+            "description": "Empty input is rejected as an invalid snappy frame.\n\n    Given\n    -----\n    - zero input bytes.\n    - every framed stream must begin with a ten-byte stream identifier.\n\n    When\n    ----\n    - the bytes are decoded as a snappy frame.\n\n    Then\n    ----\n    - decoding is rejected because the input is shorter than the identifier.",
+            "fixtureFormat": "networking_codec_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

@@ -1,17 +1,19 @@
 {
-    "tests/consensus/lstar/ssz/test_basic_types.py::test_uint16_max[fork_Lstar][fork_Lstar-ssz]": {
+    "tests/consensus/lstar/ssz/test_basic_types.py::test_uint16_max[fork_Lstar][fork_Lstar-ssz_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "typeName": "Uint16",
         "value": "65535",
         "serialized": "0xffff",
         "root": "0xffff000000000000000000000000000000000000000000000000000000000000",
         "_info": {
-            "hash": "0x50130ae2227c772fe5f5da4d66efa7ce40520e8160325870cb38b5e015a2e18c",
+            "hash": "0xa32693437dd59abdb3b68581cfabf36b849aea719117da52a520b3d085ba5f5c",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/ssz/test_basic_types.py::test_uint16_max[fork_Lstar]",
-            "description": "Uint16 upper bound (65535).",
-            "fixtureFormat": "ssz"
+            "description": "A two-byte uint at its upper bound round-trips unchanged.\n\n    Given\n    -----\n    - the value 65535 as a two-byte uint.\n\n    When\n    ----\n    - the value is encoded and then decoded.\n\n    Then\n    ----\n    - the decoded value equals the original.",
+            "fixtureFormat": "ssz_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }

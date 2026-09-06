@@ -1,7 +1,8 @@
 {
-    "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_10_not_justifiable[fork_Lstar][fork_Lstar-justifiability]": {
+    "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_10_not_justifiable[fork_Lstar][fork_Lstar-justifiability_test]": {
         "network": "Lstar",
         "leanEnv": "prod",
+        "proofSetting": 0,
         "slot": 10,
         "finalizedSlot": 0,
         "output": {
@@ -9,11 +10,12 @@
             "isJustifiable": false
         },
         "_info": {
-            "hash": "0x80cf03cf8ce81542a5c97feb8f17ca52cce70cc3c0a8fe8592411f8ac2f1f19e",
+            "hash": "0x61ceca232b168d70c53a654a4140e80e2683090514b77c3dbdc0e9d3bb85dbf3",
             "comment": "`leanSpec` generated test",
             "testId": "tests/consensus/lstar/state_transition/test_justifiability.py::test_delta_10_not_justifiable[fork_Lstar]",
-            "description": "Delta 10: between square 9 and pronic 12.",
-            "fixtureFormat": "justifiability"
+            "description": "Delta 10 is not justifiable.\n\n    Given\n    -----\n    - the finalized slot is 0.\n    - the candidate slot is 10.\n    - the delta is 10, between square 9 and pronic 12.\n\n    When\n    ----\n    - the candidate is checked for justifiability.\n\n    Then\n    ----\n    - the candidate is not justifiable.",
+            "fixtureFormat": "justifiability_test",
+            "keySetDigest": "0xc2b5fc4c1f1fbc181ddf07db3df985f79e1dcedcfb7df732ef20863d7cbcf491"
         }
     }
 }
