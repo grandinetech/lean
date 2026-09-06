@@ -99,6 +99,8 @@ pub fn parse_root(hex_str: &str) -> H256 {
 pub struct TestAttestation {
     pub validator_index: u64,
     pub data: TestAttestationData,
+    #[serde(default)]
+    pub signature: Option<String>,
 }
 
 impl From<TestAttestation> for Attestation {

@@ -11,6 +11,7 @@
 //! The wire shapes here are dictated by the hive simulator at
 //! `simulators/lean/src/scenarios/spec_assets.rs`.
 
+use std::str::FromStr;
 use std::sync::Arc;
 
 use axum::{
@@ -22,7 +23,9 @@ use containers::{
 };
 use fork_choice::{
     block_cache::BlockCache,
-    handlers::{on_aggregated_attestation, on_block, on_gossip_attestation, on_tick},
+    handlers::{
+        AttestationOutcome, on_aggregated_attestation, on_block, on_gossip_attestation, on_tick,
+    },
     store::{MILLIS_PER_INTERVAL, SECONDS_PER_SLOT, Store, get_forkchoice_store},
 };
 use parking_lot::RwLock;
@@ -398,13 +401,23 @@ fn apply_step(
                 .map_err(|err| err.to_string())
         }
         ForkChoiceStep::Attestation { attestation, .. } => {
+            let signature = match attestation.signature.as_deref() {
+                Some(hex) => Signature::from_str(hex)
+                    .map_err(|err| format!("invalid fixture attestation signature: {err}"))?,
+                None => Signature::default(),
+            };
             let attestation: containers::Attestation = attestation.into();
             let signed = SignedAttestation {
                 validator_id: attestation.validator_id,
                 message: attestation.data,
-                signature: Signature::default(),
+                signature,
             };
-            on_gossip_attestation(store, signed).map_err(|err| err.to_string())
+            match on_gossip_attestation(store, signed).map_err(|err| err.to_string())? {
+                AttestationOutcome::Applied => Ok(()),
+                AttestationOutcome::Queued(root) => {
+                    Err(format!("attestation references unknown block {root:?}"))
+                }
+            }
         }
         ForkChoiceStep::GossipAggregatedAttestation { attestation, .. } => {
             let Some(step) = attestation else {
@@ -413,7 +426,12 @@ fn apply_step(
                 return Ok(());
             };
             let signed = build_signed_aggregated_attestation(step)?;
-            on_aggregated_attestation(store, signed).map_err(|err| err.to_string())
+            match on_aggregated_attestation(store, signed).map_err(|err| err.to_string())? {
+                AttestationOutcome::Applied => Ok(()),
+                AttestationOutcome::Queued(root) => {
+                    Err(format!("attestation references unknown block {root:?}"))
+                }
+            }
         }
         ForkChoiceStep::Checks { .. } => {
             // Pure-assertion step. The simulator validates against the

@@ -180,6 +180,11 @@ fn find_unknown_attestation_block(
     .find(|root| !store.blocks.contains_key(root))
 }
 
+pub enum AttestationOutcome {
+    Applied,
+    Queued(H256),
+}
+
 /// Process a signed attestation received via gossip network
 ///
 /// 1. Validates the attestation data
@@ -190,7 +195,7 @@ fn find_unknown_attestation_block(
 pub fn on_gossip_attestation(
     store: &mut Store,
     signed_attestation: SignedAttestation,
-) -> Result<()> {
+) -> Result<AttestationOutcome> {
     let _timer = METRICS.get().map(|metrics| {
         metrics
             .lean_attestation_validation_time_seconds
@@ -213,7 +218,7 @@ pub fn on_gossip_attestation(
             m.grandine_pending_fetch_roots
                 .set(store.pending_fetch_roots.len() as i64)
         });
-        return Ok(());
+        return Ok(AttestationOutcome::Queued(missing_root));
     }
 
     // Validate the attestation data first
@@ -226,12 +231,19 @@ pub fn on_gossip_attestation(
         });
     })?;
 
-    // Non-aggregators validate attestation data but do not store or verify individual
-    // signatures. Per leanSpec: only aggregators import gossip attestations for aggregation.
-    // Subnet filtering is already enforced at the p2p subscription layer.
-    if !store.is_aggregator {
-        return Ok(());
-    }
+    // Reject validators outside the registry (independent of signature checks).
+    let num_validators = store
+        .states
+        .get(&attestation_data.target.root)
+        .ok_or_else(|| anyhow!("no state for target block {}", attestation_data.target.root))?
+        .validators
+        .len_u64();
+    ensure!(
+        validator_id < num_validators,
+        "validator {} out of range (max {})",
+        validator_id,
+        num_validators
+    );
 
     let data_root = attestation_data.hash_tree_root();
     let sig_key = SignatureKey::new(signed_attestation.validator_id, data_root);
@@ -240,7 +252,13 @@ pub fn on_gossip_attestation(
     // Duplicate attestations arrive when the IDontWant buffer fills under CPU load,
     // causing peers to rebroadcast. Each verify costs ~100ms; the early exit breaks
     // the saturation loop without dropping vote data.
-    if !store.gossip_signatures.contains_key(&sig_key) {
+    let already_verified = if store.is_aggregator {
+        store.gossip_signatures.contains_key(&sig_key)
+    } else {
+        store.verified_gossip_signatures.contains(&sig_key)
+    };
+
+    if !already_verified {
         // Verify individual XMSS signature against the validator's public key.
         // State is available: the pending-block check above confirmed target.root is in
         // the store, and states are stored 1:1 with blocks in process_block_internal.
@@ -267,20 +285,28 @@ pub fn on_gossip_attestation(
             .verify(&pubkey, attestation_data.slot.0 as u32, data_root)
             .context("individual attestation signature verification failed")?;
 
-        store
-            .gossip_signatures
-            .insert(sig_key, signed_attestation.signature);
+        if store.is_aggregator {
+            store
+                .gossip_signatures
+                .insert(sig_key, signed_attestation.signature);
 
-        // Update gossip signatures gauge
-        METRICS.get().map(|metrics| {
-            metrics
-                .lean_gossip_signatures
-                .set(store.gossip_signatures.len() as i64);
-        });
+            // Update gossip signatures gauge
+            METRICS.get().map(|metrics| {
+                metrics
+                    .lean_gossip_signatures
+                    .set(store.gossip_signatures.len() as i64);
+            });
+        } else {
+            store.verified_gossip_signatures.insert(sig_key);
+        }
     } else {
         METRICS
             .get()
             .map(|m| m.grandine_xmss_verify_skipped_total.inc());
+    }
+
+    if !store.is_aggregator {
+        return Ok(AttestationOutcome::Applied);
     }
 
     store
@@ -309,6 +335,7 @@ pub fn on_gossip_attestation(
                     .inc()
             });
         })
+        .map(|()| AttestationOutcome::Applied)
 }
 
 /// Process an attestation and place it into the correct attestation stage
@@ -413,7 +440,7 @@ pub fn on_attestation(
 pub fn on_aggregated_attestation(
     store: &mut Store,
     signed_aggregated_attestation: SignedAggregatedAttestation,
-) -> Result<()> {
+) -> Result<AttestationOutcome> {
     // Structure: { data: AttestationData, proof: AggregatedSignatureProof }
     let attestation_data = signed_aggregated_attestation.data.clone();
     let proof = signed_aggregated_attestation.proof.clone();
@@ -430,7 +457,7 @@ pub fn on_aggregated_attestation(
             m.grandine_pending_fetch_roots
                 .set(store.pending_fetch_roots.len() as i64)
         });
-        return Ok(());
+        return Ok(AttestationOutcome::Queued(missing_root));
     }
 
     // Validate attestation data (slot bounds, target validity, etc.)
@@ -507,7 +534,7 @@ pub fn on_aggregated_attestation(
             .set(store.latest_new_aggregated_payloads.len() as i64);
     });
 
-    Ok(())
+    Ok(AttestationOutcome::Applied)
 }
 
 /// Three-phase variant of `on_aggregated_attestation` that releases the store
@@ -892,6 +919,10 @@ pub fn apply_verified_block(
             adr.get(&key.data_root)
                 .map_or(true, |data| data.target.slot.0 > finalized_slot)
         });
+        store.verified_gossip_signatures.retain(|key| {
+            adr.get(&key.data_root)
+                .map_or(true, |data| data.target.slot.0 > finalized_slot)
+        });
         store
             .latest_known_aggregated_payloads
             .retain(|data_root, _| {
@@ -975,6 +1006,10 @@ fn prune_with_retention_bounds(store: &mut Store) {
     // attestation_data_by_root must be pruned last so the lookups can resolve.
     let adr = &store.attestation_data_by_root;
     store.gossip_signatures.retain(|key, _| {
+        adr.get(&key.data_root)
+            .is_none_or(|data| data.target.slot.0 >= keep_min_slot)
+    });
+    store.verified_gossip_signatures.retain(|key| {
         adr.get(&key.data_root)
             .is_none_or(|data| data.target.slot.0 >= keep_min_slot)
     });

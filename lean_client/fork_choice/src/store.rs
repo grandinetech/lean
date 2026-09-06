@@ -79,6 +79,8 @@ pub struct Store {
 
     pub gossip_signatures: HashMap<SignatureKey, Signature>,
 
+    pub verified_gossip_signatures: HashSet<SignatureKey>,
+
     /// Aggregated signature proofs from block bodies (on-chain).
     /// These are attestations that have been included in blocks and are part of
     /// the "known" pool for safe target computation.
@@ -288,6 +290,7 @@ pub fn get_forkchoice_store(
         latest_known_attestations: HashMap::new(),
         latest_new_attestations: HashMap::new(),
         gossip_signatures: HashMap::new(),
+        verified_gossip_signatures: HashSet::new(),
         latest_known_aggregated_payloads: IndexMap::new(),
         latest_new_aggregated_payloads: IndexMap::new(),
         attestation_data_by_root: HashMap::new(),
@@ -395,11 +398,19 @@ pub fn get_latest_justified(states: &HashMap<H256, Arc<State>>) -> Option<&Check
 pub fn update_head(store: &mut Store) {
     let old_head = store.head;
 
-    let latest_votes = extract_attestations_from_aggregated_payloads(
+    let mut latest_votes = extract_attestations_from_aggregated_payloads(
         &store.latest_known_aggregated_payloads,
         &store.attestation_data_by_root,
         store.latest_finalized.slot,
     );
+
+    for (validator_id, data) in &store.latest_known_attestations {
+        if data.head.slot > store.latest_finalized.slot {
+            latest_votes
+                .entry(*validator_id)
+                .or_insert_with(|| data.clone());
+        }
+    }
 
     // Compute new head using LMD-GHOST from latest justified root
     let new_head = get_fork_choice_head(store, store.latest_justified.root, &latest_votes, 0);
