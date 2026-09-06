@@ -22,5 +22,5 @@ pub fn create_test_store() -> Store {
         proof: Default::default(),
     };
 
-    get_forkchoice_store(state, signed_block, config, true, 1)
+    get_forkchoice_store(state, signed_block, config, true, 1).expect("failed to create test store")
 }

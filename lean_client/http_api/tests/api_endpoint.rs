@@ -12,6 +12,9 @@ use axum::{
     body::Body,
     http::{Request, header::CONTENT_TYPE},
 };
+use database::{
+    BLOCKS_TABLE_NAME, Compression, Database, EnvironmentBuilder, GENESIS_STATE_TABLE_NAME,
+};
 use containers::{Block, BlockBody, Checkpoint, MultiMessageAggregate, SignedBlock, Slot};
 use fork_choice::store::Store;
 use http_api::{
@@ -72,9 +75,43 @@ fn api_endpoint(spec_file: &str) {
         // Build a minimal store — aggregator handlers only read/write
         // `store.is_aggregator`; no chain state is needed.
         let initial_is_aggregator = case.initial_is_aggregator.unwrap_or(false);
+        let env = EnvironmentBuilder::new(
+            std::env::temp_dir().join(format!(
+                "lean_api_test_db_{}",
+                spec_file.replace(['/', '\\'], "_")
+            )),
+            1,
+        )
+        .build()
+        .expect("failed to open test database environment");
+        let blocks_db = Database::new(env.clone(), BLOCKS_TABLE_NAME, Compression::Lz4)
+            .expect("failed to open blocks table");
+        let genesis_db = Database::new(env, GENESIS_STATE_TABLE_NAME, Compression::Zstd)
+            .expect("failed to open genesis table");
         let store: SharedStore = Arc::new(RwLock::new(Store {
+            time: Default::default(),
+            config: Default::default(),
             is_aggregator: initial_is_aggregator,
-            ..Default::default()
+            head: Default::default(),
+            safe_target: Default::default(),
+            latest_justified: Default::default(),
+            latest_finalized: Default::default(),
+            justified_ever_updated: false,
+            finalized_ever_updated: false,
+            blocks: Default::default(),
+            states: Default::default(),
+            latest_known_attestations: Default::default(),
+            latest_new_attestations: Default::default(),
+            gossip_signatures: Default::default(),
+            latest_known_aggregated_payloads: Default::default(),
+            latest_new_aggregated_payloads: Default::default(),
+            attestation_data_by_root: Default::default(),
+            pending_attestations: Default::default(),
+            pending_aggregated_attestations: Default::default(),
+            pending_fetch_roots: Default::default(),
+            log_inv_rate: Default::default(),
+            blocks_db,
+            genesis_db,
         }));
 
         let signed_blocks: SharedSignedBlocks = Arc::new(RwLock::new(HashMap::new()));

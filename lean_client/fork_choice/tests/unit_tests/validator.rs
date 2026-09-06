@@ -9,6 +9,9 @@ use containers::{
     AggregatedSignatureProof, AggregationBits, Attestation, AttestationData, Block, BlockBody,
     Checkpoint, Config, MultiMessageAggregate, SignedBlock, Slot, State, Validator,
 };
+use database::{
+    BLOCKS_TABLE_NAME, Compression, Database, EnvironmentBuilder, GENESIS_STATE_TABLE_NAME,
+};
 use fork_choice::block_cache::BlockCache;
 use fork_choice::handlers::on_block;
 use fork_choice::store::{Store, get_forkchoice_store, produce_block_with_signatures, update_head};
@@ -122,7 +125,8 @@ fn create_test_store_with_signers() -> (Store, HashMap<u64, SecretKey>) {
     };
 
     (
-        get_forkchoice_store(state, signed_block, config, true, 1),
+        get_forkchoice_store(state, signed_block, config, true, 1)
+            .expect("failed to create test store"),
         keys,
     )
 }
@@ -520,7 +524,8 @@ fn test_validator_operations_empty_store() {
         proof: Default::default(),
     };
 
-    let mut store = get_forkchoice_store(state, signed_block, config, true, 1);
+    let mut store = get_forkchoice_store(state, signed_block, config, true, 1)
+        .expect("failed to create test store");
 
     // Should be able to produce block and attestation
     let (_root, block, _sig) = produce_block_with_signatures(&mut store, Slot(1), 1, 1, true)
@@ -560,16 +565,38 @@ fn test_produce_block_missing_parent_state() {
     };
 
     // Create store with missing parent state
+    let env = EnvironmentBuilder::new(std::env::temp_dir().join("lean_test_missing_parent_db"), 1)
+        .build()
+        .expect("failed to open test database environment");
+    let blocks_db = Database::new(env.clone(), BLOCKS_TABLE_NAME, Compression::Lz4)
+        .expect("failed to open blocks table");
+    let genesis_db = Database::new(env, GENESIS_STATE_TABLE_NAME, Compression::Zstd)
+        .expect("failed to open genesis table");
+
     let store = Store {
         time: 100,
         config: Config { genesis_time: 1000 },
+        is_aggregator: true,
         head: H256::from_slice(&[0xab; 32]),
         safe_target: H256::from_slice(&[0xab; 32]),
         latest_justified: checkpoint.clone(),
         latest_finalized: checkpoint,
+        justified_ever_updated: false,
+        finalized_ever_updated: false,
         blocks: Default::default(),
         states: Default::default(),
-        ..Default::default()
+        latest_known_attestations: Default::default(),
+        latest_new_attestations: Default::default(),
+        gossip_signatures: Default::default(),
+        latest_known_aggregated_payloads: Default::default(),
+        latest_new_aggregated_payloads: Default::default(),
+        attestation_data_by_root: Default::default(),
+        pending_attestations: Default::default(),
+        pending_aggregated_attestations: Default::default(),
+        pending_fetch_roots: Default::default(),
+        log_inv_rate: 1,
+        blocks_db,
+        genesis_db,
     };
 
     let mut s = store;
