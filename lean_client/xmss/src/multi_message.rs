@@ -3,10 +3,7 @@ use std::str::FromStr;
 
 use anyhow::{Context, Error, Result, anyhow, bail};
 use ethereum_types::H256;
-use lean_multisig::{
-    MultiMessageAggregateSignature, XmssPublicKey, merge_single_message_aggregates,
-    split_multi_message_aggregate, verify_multi_message_aggregate,
-};
+use leanvm::{ClaimSelection, EthereumProof, SignatureClaims, XmssClaimGroup, aggregate};
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 use ssz::{ByteList, Ssz};
 use typenum::U524288;
@@ -30,8 +27,12 @@ impl MultiMessageAggregate {
         Ok(Self { proof })
     }
 
+    /// Merge Type-1 components, each bound to its own `(message, slot)`, into
+    /// one Type-2 proof. leanVM groups claims by `(epoch, message)`, so a slot
+    /// may carry several messages; components sharing a `(slot, message)` have
+    /// their keys unioned into one group.
     pub fn aggregate(
-        parts: &[(&AggregatedSignature, &[PublicKey])],
+        parts: &[(&AggregatedSignature, &[PublicKey], H256, u32)],
         log_inv_rate: usize,
     ) -> Result<Self> {
         setup_aggregation();
@@ -45,7 +46,7 @@ impl MultiMessageAggregate {
             let merge_n = parts.len();
             let count_bytes = merge_n.to_le_bytes();
             let mut seed: Vec<&[u8]> = Vec::with_capacity(parts.len() + 1);
-            for (sig, _) in parts {
+            for (sig, _, _, _) in parts {
                 seed.push(sig.as_bytes());
             }
             seed.push(&count_bytes);
@@ -58,17 +59,14 @@ impl MultiMessageAggregate {
 
         let parts_lean = parts
             .iter()
-            .map(|(sig, pks)| {
-                let mut lean: Vec<XmssPublicKey> = pks.iter().map(|pk| pk.as_lean()).collect();
-                lean.sort();
-                lean.dedup();
-                sig.as_lean(lean)
+            .map(|(sig, pks, message, slot)| {
+                sig.as_lean(*message, *slot, pks.iter().map(|pk| pk.as_lean()).collect())
             })
             .collect::<Result<Vec<_>>>()?;
 
         let _permit = PROVER_PERMIT.lock().unwrap();
 
-        let merged = merge_single_message_aggregates(parts_lean, log_inv_rate)?;
+        let merged = aggregate(&parts_lean, vec![], vec![], &[], None, log_inv_rate)?;
         let bytes = merged.to_bytes_without_pubkeys();
         Self::new(&bytes)
     }
@@ -80,51 +78,27 @@ impl MultiMessageAggregate {
     ) -> Result<()> {
         setup_aggregation();
 
-        if pubkeys_per_message.len() != messages.len() {
-            bail!(
-                "binding length mismatch: {} pubkey sets vs {} messages",
-                pubkeys_per_message.len(),
-                messages.len()
-            );
-        }
-
         #[cfg(shadow_mode)]
         if crate::shadow_cost::fake_xmss() {
             return Ok(());
         }
 
-        let pubkeys_per_info = sorted_dedup_lean_pubkeys(pubkeys_per_message);
+        let sig = self.as_lean(pubkeys_per_message, messages)?;
 
-        let sig = MultiMessageAggregateSignature::from_bytes_without_pubkeys(
-            self.proof.as_bytes(),
-            pubkeys_per_info,
-        )
-        .ok_or_else(|| anyhow!("invalid multi-message aggregate bytes"))?;
-
-        if sig.info.len() != messages.len() {
-            bail!(
-                "component count mismatch: proof has {}, expected {}",
-                sig.info.len(),
-                messages.len()
-            );
-        }
-        for (i, (expected_message, expected_slot)) in messages.iter().enumerate() {
-            if sig.info[i].core.message != *expected_message.as_fixed_bytes() {
-                bail!("component {i} bound to a different message than expected");
-            }
-            if sig.info[i].core.slot != *expected_slot {
-                bail!("component {i} bound to a different slot than expected");
-            }
-        }
-
-        verify_multi_message_aggregate(&sig)
-            .map(|_| ())
-            .map_err(|err| anyhow!("{err:?}"))
+        sig.verify().map_err(|err| anyhow!("{err:?}"))
     }
 
+    /// Narrow the Type-2 down to the single claim bound to `message`, yielding
+    /// a Type-1 for it. leanVM does this by re-aggregating the parent with a
+    /// declaration of the one group to keep, so it generates a fresh SNARK.
+    ///
+    /// `messages` gives every `(message, slot)` claim the parent carries, in
+    /// the same order as `pubkeys_per_message`; the binding is not on the wire,
+    /// so decoding needs them all even though only one survives.
     pub fn split_by_message(
         &self,
         pubkeys_per_message: &[&[PublicKey]],
+        messages: &[(H256, u32)],
         message: H256,
         log_inv_rate: usize,
     ) -> Result<AggregatedSignature> {
@@ -141,43 +115,89 @@ impl MultiMessageAggregate {
             return AggregatedSignature::new(&bytes);
         }
 
-        let pubkeys_per_info = sorted_dedup_lean_pubkeys(pubkeys_per_message);
-        let sig = MultiMessageAggregateSignature::from_bytes_without_pubkeys(
-            self.proof.as_bytes(),
-            pubkeys_per_info,
-        )
-        .ok_or_else(|| anyhow!("invalid multi-message aggregate bytes"))?;
+        let sig = self.as_lean(pubkeys_per_message, messages)?;
 
-        let matches: Vec<usize> = sig
-            .info
+        // Groups are keyed by (epoch, message), so a message appears in one
+        // group unless two slots signed the very same bytes.
+        let matches: Vec<&XmssClaimGroup> = sig
+            .xmss_signers()
             .iter()
-            .enumerate()
-            .filter_map(|(i, info)| (info.core.message == *message.as_fixed_bytes()).then_some(i))
+            .filter(|group| group.message == *message.as_fixed_bytes())
             .collect();
-        let index = match matches.as_slice() {
-            [i] => *i,
+        let group = match matches.as_slice() {
+            [group] => (*group).clone(),
             [] => bail!("split-by-message target not found in multi-message components"),
             _ => bail!("split-by-message target matched multiple components"),
         };
 
+        let kept = SignatureClaims {
+            xmss: vec![group],
+            sphincs: Vec::new(),
+        };
+        let declare = ClaimSelection {
+            signatures: &kept,
+            da_commitments: &[],
+        };
+
         let _permit = PROVER_PERMIT.lock().unwrap();
 
-        let recovered = split_multi_message_aggregate(sig, index, log_inv_rate)?;
+        let recovered = aggregate(&[sig], vec![], vec![], &[], Some(declare), log_inv_rate)?;
         let bytes = recovered.to_bytes_without_pubkeys();
         AggregatedSignature::new(&bytes)
     }
+
+    fn as_lean(
+        &self,
+        pubkeys_per_message: &[&[PublicKey]],
+        messages: &[(H256, u32)],
+    ) -> Result<EthereumProof> {
+        let claims = wire_claims(pubkeys_per_message, messages)?;
+        EthereumProof::from_bytes_without_pubkeys(self.proof.as_bytes(), claims)
+            .map_err(|err| anyhow!("invalid multi-message aggregate bytes: {err}"))
+    }
 }
 
-fn sorted_dedup_lean_pubkeys(per_component: &[&[PublicKey]]) -> Vec<Vec<XmssPublicKey>> {
-    per_component
-        .iter()
-        .map(|pks| {
-            let mut lean: Vec<XmssPublicKey> = pks.iter().map(|pk| pk.as_lean()).collect();
-            lean.sort();
-            lean.dedup();
-            lean
-        })
-        .collect()
+/// The signer set leanVM binds a Type-2 aggregate to, built from the caller's
+/// view of the claims: one group per `(slot, message)` pair, holding its
+/// strictly sorted, deduplicated keys, with the groups themselves strictly
+/// increasing on `(epoch, message)`. Claims sharing a `(slot, message)` merge
+/// into one group; a slot may carry several messages, each its own group.
+fn wire_claims(
+    pubkeys_per_message: &[&[PublicKey]],
+    messages: &[(H256, u32)],
+) -> Result<SignatureClaims> {
+    if pubkeys_per_message.len() != messages.len() {
+        bail!(
+            "binding length mismatch: {} pubkey sets vs {} messages",
+            pubkeys_per_message.len(),
+            messages.len()
+        );
+    }
+
+    let mut groups: Vec<XmssClaimGroup> = Vec::with_capacity(messages.len());
+    for ((message, slot), pks) in messages.iter().zip(pubkeys_per_message) {
+        let keys = pks.iter().map(|pk| pk.as_lean());
+        match groups
+            .iter_mut()
+            .find(|group| group.epoch == *slot && group.message == *message.as_fixed_bytes())
+        {
+            Some(group) => group.keys.extend(keys),
+            None => groups.push(XmssClaimGroup {
+                epoch: *slot,
+                message: *message.as_fixed_bytes(),
+                keys: keys.collect(),
+            }),
+        }
+    }
+    for group in &mut groups {
+        group.keys.sort_unstable();
+        group.keys.dedup();
+    }
+    groups.sort_unstable_by_key(|group| (group.epoch, group.message));
+    Ok(SignatureClaims {
+        xmss: groups,
+        sphincs: Vec::new(),
+    })
 }
 
 impl Display for MultiMessageAggregate {

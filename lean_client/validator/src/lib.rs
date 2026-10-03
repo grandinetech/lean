@@ -661,14 +661,38 @@ impl ValidatorService {
             }
             pubkeys_owned.push(vec![proposer_proposal_pubkey]);
 
-            let mut parts: Vec<(&AggregatedSignature, &[xmss::PublicKey])> =
+            // Each Type-1 part carries its own (message, slot) binding, needed
+            // to decode the proof bytes: attestation proofs are index-aligned
+            // with the block body's attestations, the proposer part binds the
+            // block root at the block's slot.
+            let attestation_bindings: Vec<(H256, u32)> = (&block.body.attestations)
+                .into_iter()
+                .map(|att| (att.data.hash_tree_root(), att.data.slot.0 as u32))
+                .collect();
+            if attestation_bindings.len() != attestation_signatures.len() {
+                bail!(
+                    "attestation proof count ({}) does not match block body attestations ({})",
+                    attestation_signatures.len(),
+                    attestation_bindings.len()
+                );
+            }
+
+            let mut parts: Vec<(&AggregatedSignature, &[xmss::PublicKey], H256, u32)> =
                 Vec::with_capacity(attestation_signatures.len() + 1);
             for (i, sig) in attestation_signatures.iter().enumerate() {
-                parts.push((&sig.proof_data, pubkeys_owned[i].as_slice()));
+                let (data_root, data_slot) = attestation_bindings[i];
+                parts.push((
+                    &sig.proof_data,
+                    pubkeys_owned[i].as_slice(),
+                    data_root,
+                    data_slot,
+                ));
             }
             parts.push((
                 &proposer_type1,
                 pubkeys_owned[attestation_signatures.len()].as_slice(),
+                block_root,
+                block_slot,
             ));
 
             let type2_start = std::time::Instant::now();

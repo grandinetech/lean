@@ -14,6 +14,9 @@ pub const MAX_REAGGREGATIONS_PER_BLOCK: usize = 4;
 
 pub struct ReaggregateContext {
     pubkeys_per_component: Vec<Vec<PublicKey>>,
+    /// The `(message, slot)` binding of each component, index-aligned with
+    /// `pubkeys_per_component`: one per attestation, then the proposer's.
+    components: Vec<(H256, u32)>,
     candidates: Vec<(H256, AggregationBits)>,
 }
 
@@ -41,6 +44,7 @@ pub fn select_candidates(
 
     let mut pubkeys_per_component: Vec<Vec<PublicKey>> =
         Vec::with_capacity(attestations.len_u64() as usize + 1);
+    let mut components: Vec<(H256, u32)> = Vec::with_capacity(attestations.len_u64() as usize + 1);
 
     for att in attestations.into_iter() {
         let validator_ids = att.aggregation_bits.to_validator_indices();
@@ -62,6 +66,7 @@ pub fn select_candidates(
             pks.push(v.attestation_pubkey.clone());
         }
         pubkeys_per_component.push(pks);
+        components.push((att.data.hash_tree_root(), att.data.slot.0 as u32));
     }
 
     let proposer = match validators.get(proposer_index) {
@@ -76,6 +81,7 @@ pub fn select_candidates(
         }
     };
     pubkeys_per_component.push(vec![proposer.proposal_pubkey.clone()]);
+    components.push((block.hash_tree_root(), block.slot.0 as u32));
 
     let latest_justified_slot = store.latest_justified.slot;
     let mut candidates: Vec<(H256, AggregationBits)> = Vec::new();
@@ -147,6 +153,7 @@ pub fn select_candidates(
 
     Some(ReaggregateContext {
         pubkeys_per_component,
+        components,
         candidates,
     })
 }
@@ -166,6 +173,7 @@ pub fn compute_recoveries(
     for (data_root, participants) in context.candidates {
         match signed_block.proof.split_by_message(
             &pubkeys_per_component_view,
+            &context.components,
             data_root,
             log_inv_rate,
         ) {
@@ -233,6 +241,19 @@ pub fn run_sync(store: &mut Store, signed_block: &SignedBlock, log_inv_rate: usi
 }
 
 pub fn run_in_executor(store: Arc<RwLock<Store>>, signed_block: SignedBlock, log_inv_rate: usize) {
+    if xmss::prover_busy() {
+        debug!(
+            block_root = %signed_block.block.hash_tree_root(),
+            "reaggregate skipped: prover busy"
+        );
+        METRICS.get().map(|m| {
+            m.grandine_reaggregate_split_outcomes_total
+                .with_label_values(&["skipped_prover_busy"])
+                .inc()
+        });
+        return;
+    }
+
     let context = {
         let s = store.read();
         let parent_validators = match s.states.get(&signed_block.block.parent_root) {
