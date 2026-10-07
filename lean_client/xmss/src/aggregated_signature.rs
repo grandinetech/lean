@@ -10,10 +10,7 @@ use std::{
 use crate::{PublicKey, Signature};
 use anyhow::{Context, Error, Result, anyhow, bail};
 use ethereum_types::H256;
-use lean_multisig::{
-    SingleMessageAggregateSignature, XmssPublicKey, aggregate_single_message_signatures,
-    verify_single_message_aggregate,
-};
+use leanvm::{EthereumProof, SignatureClaims, XmssClaimGroup, aggregate, xmss::XmssPublicKey};
 use metrics::{METRICS, stop_and_discard};
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 use ssz::{ByteList, ReadError, Size, SszHash, SszRead, SszSize, SszWrite, U1, WriteError};
@@ -24,8 +21,9 @@ type AggregatedSignatureSizeLimit = U524288;
 
 /// Cryptographic proof that a set of validators signed a message.
 ///
-/// Wire form: the lean-multisig `to_bytes_without_pubkeys()` output. Pubkeys
-/// are not baked into the bytes — verifiers must supply them externally,
+/// Wire form: the leanVM `EthereumProof::to_bytes_without_pubkeys()` output.
+/// Neither the pubkeys nor the `(message, slot)` binding are baked into the
+/// bytes — verifiers must supply them externally,
 /// matching `SingleMessageAggregate.proof: ByteList512KiB` in leanSpec
 /// (`forks/lstar/containers/aggregation.py`) and zeam's `xmss_verify_type_1`
 /// FFI which takes `pks + msg + slot + wire` as separate args.
@@ -71,16 +69,37 @@ pub fn setup_aggregation() {
     static SETUP: Once = Once::new();
     SETUP.call_once(|| {
         if USE_ARENA.load(Ordering::SeqCst) {
-            lean_multisig::setup_prover();
+            leanvm::setup_prover();
         } else {
-            lean_multisig::setup_prover_without_arena();
+            leanvm::setup_prover_without_arena();
         }
     });
+}
+
+/// The signer set leanVM binds a Type-1 aggregate to: one XMSS group carrying
+/// the `(message, slot)` claim and its strictly sorted, deduplicated keys.
+/// The binding is not on the wire; a set other than the one aggregated decodes
+/// fine and fails inside the SNARK verifier.
+pub(crate) fn one_group(message: H256, slot: u32, mut keys: Vec<XmssPublicKey>) -> SignatureClaims {
+    keys.sort();
+    keys.dedup();
+    SignatureClaims {
+        xmss: vec![XmssClaimGroup {
+            epoch: slot,
+            message: *message.as_fixed_bytes(),
+            keys,
+        }],
+        sphincs: Vec::new(),
+    }
 }
 
 /// leanVM allows one proof at a time per process; a second concurrent one
 /// panics. Hold this lock across every prove call; verification needs no permit.
 pub(crate) static PROVER_PERMIT: Mutex<()> = Mutex::new(());
+
+pub fn prover_busy() -> bool {
+    PROVER_PERMIT.try_lock().is_err()
+}
 
 impl AggregatedSignature {
     pub fn new(bytes: &[u8]) -> Result<Self> {
@@ -163,23 +182,19 @@ impl AggregatedSignature {
         let raw_xmss = public_keys
             .into_iter()
             .zip(signatures)
-            .map(|(pk, sig)| (pk.as_lean(), sig.as_lean()))
+            .map(|(pk, sig)| (pk.as_lean(), slot, *message.as_fixed_bytes(), sig.as_lean()))
             .collect::<Vec<_>>();
 
-        let children_arg: Vec<SingleMessageAggregateSignature> = children
+        let children_arg: Vec<EthereumProof> = children
             .iter()
-            .map(|(pks, agg)| agg.as_lean(sorted_dedup_lean_pubkeys(pks)))
+            .map(|(pks, agg)| {
+                agg.as_lean(message, slot, pks.iter().map(|pk| pk.as_lean()).collect())
+            })
             .collect::<Result<Vec<_>>>()?;
 
         let _permit = PROVER_PERMIT.lock().unwrap();
 
-        let agg = aggregate_single_message_signatures(
-            &children_arg,
-            raw_xmss,
-            *message.as_fixed_bytes(),
-            slot,
-            log_inv_rate,
-        )?;
+        let agg = aggregate(&children_arg, raw_xmss, vec![], &[], None, log_inv_rate)?;
 
         METRICS.get().map(|metrics| {
             metrics
@@ -216,25 +231,17 @@ impl AggregatedSignature {
                 .start_timer()
         });
 
-        let mut expected_pubkeys = public_keys
+        let expected_pubkeys = public_keys
             .into_iter()
             .map(|k| k.as_lean())
             .collect::<Vec<_>>();
-        expected_pubkeys.sort();
-        expected_pubkeys.dedup();
 
-        let agg = self.as_lean(expected_pubkeys)?;
+        // The `(message, slot)` binding travels out of band: it goes into the
+        // signer set the proof's digest commits to, so a proof bound to another
+        // message, slot, or key set fails inside the SNARK verifier.
+        let agg = self.as_lean(message, slot, expected_pubkeys)?;
 
-        if agg.info.core.message != *message.as_fixed_bytes() {
-            bail!("aggregated signature bound to a different message than expected");
-        }
-        if agg.info.core.slot != slot {
-            bail!("aggregated signature bound to a different slot than expected");
-        }
-
-        let result = verify_single_message_aggregate(&agg)
-            .map(|_| ())
-            .map_err(|err| anyhow!("{err:?}"));
+        let result = agg.verify().map_err(|err| anyhow!("{err:?}"));
 
         match &result {
             Ok(()) => {
@@ -255,10 +262,15 @@ impl AggregatedSignature {
 
     pub(crate) fn as_lean(
         &self,
+        message: H256,
+        slot: u32,
         pubkeys: Vec<XmssPublicKey>,
-    ) -> Result<SingleMessageAggregateSignature> {
-        SingleMessageAggregateSignature::from_bytes_without_pubkeys(self.0.as_bytes(), pubkeys)
-            .ok_or_else(|| anyhow!("invalid aggregated XMSS signature"))
+    ) -> Result<EthereumProof> {
+        EthereumProof::from_bytes_without_pubkeys(
+            self.0.as_bytes(),
+            one_group(message, slot, pubkeys),
+        )
+        .map_err(|err| anyhow!("invalid aggregated XMSS signature: {err}"))
     }
 
     // todo(xmss): this is a function used only for testing. ideally, it should not exist
@@ -270,13 +282,6 @@ impl AggregatedSignature {
     pub(crate) fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }
-}
-
-fn sorted_dedup_lean_pubkeys(pks: &[PublicKey]) -> Vec<XmssPublicKey> {
-    let mut lean: Vec<XmssPublicKey> = pks.iter().map(|pk| pk.as_lean()).collect();
-    lean.sort();
-    lean.dedup();
-    lean
 }
 
 impl Display for AggregatedSignature {

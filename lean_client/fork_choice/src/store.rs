@@ -12,6 +12,8 @@ use ssz::{H256, SszHash};
 use tracing::{info, warn};
 use xmss::Signature;
 
+use crate::proto::ProtoForkChoice;
+
 pub type Interval = u64;
 pub const INTERVALS_PER_SLOT: Interval = 5;
 pub const SECONDS_PER_SLOT: u64 = 4;
@@ -109,6 +111,29 @@ pub struct Store {
     pub pending_fetch_roots: HashSet<H256>,
 
     pub log_inv_rate: usize,
+
+    pub proto: ProtoForkChoice,
+}
+
+impl Store {
+    pub fn add_new_aggregated_payload(
+        &mut self,
+        data_root: H256,
+        proof: AggregatedSignatureProof,
+    ) {
+        if let Some(data) = self.attestation_data_by_root.get(&data_root).cloned() {
+            self.proto.ingest_payload(&data, data_root, &proof, false);
+        } else {
+            warn!(
+                %data_root,
+                "aggregated payload stored without attestation data; vote not counted"
+            );
+        }
+        self.latest_new_aggregated_payloads
+            .entry(data_root)
+            .or_default()
+            .push(proof);
+    }
 }
 
 const JUSTIFICATION_LOOKBACK_SLOTS: u64 = 3;
@@ -295,6 +320,11 @@ pub fn get_forkchoice_store(
         pending_aggregated_attestations: HashMap::new(),
         pending_fetch_roots: HashSet::new(),
         log_inv_rate,
+        proto: {
+            let mut proto = ProtoForkChoice::default();
+            proto.on_block(block_slot.0, block_root, H256::zero());
+            proto
+        },
     }
 }
 
@@ -395,14 +425,15 @@ pub fn get_latest_justified(states: &HashMap<H256, Arc<State>>) -> Option<&Check
 pub fn update_head(store: &mut Store) {
     let old_head = store.head;
 
-    let latest_votes = extract_attestations_from_aggregated_payloads(
-        &store.latest_known_aggregated_payloads,
-        &store.attestation_data_by_root,
-        store.latest_finalized.slot,
-    );
-
-    // Compute new head using LMD-GHOST from latest justified root
-    let new_head = get_fork_choice_head(store, store.latest_justified.root, &latest_votes, 0);
+    let justified_root = store.latest_justified.root;
+    let new_head = store.proto.update_head(&justified_root).unwrap_or_else(|| {
+        warn!(
+            %justified_root,
+            justified_slot = store.latest_justified.slot.0,
+            "justified root not in proto fork choice, returning justified root as head"
+        );
+        justified_root
+    });
     store.head = new_head;
 
     if let Some(head_state) = store.states.get(&new_head) {
@@ -420,11 +451,15 @@ pub fn update_head(store: &mut Store) {
         }
         if let Some(block) = store.blocks.get(&finalized_root) {
             if block.slot == finalized_slot {
+                let advanced = finalized_slot > store.latest_finalized.slot;
                 store.latest_finalized = Checkpoint {
                     root: finalized_root,
                     slot: finalized_slot,
                 };
                 store.finalized_ever_updated = true;
+                if advanced {
+                    store.proto.prune(&finalized_root);
+                }
                 METRICS.get().map(|m| {
                     if let Ok(s) = i64::try_from(finalized_slot.0) {
                         m.lean_latest_finalized_slot.set(s);
@@ -552,17 +587,12 @@ pub fn update_safe_target(store: &mut Store) {
     let min_score = (n_validators * 2 + 2) / 3;
     let root = store.latest_justified.root;
 
-    // Extract per-validator attestations from the "new" pool only.
-    // The "known" pool is intentionally excluded — see the doc comment above
+    // Only the "new" pool is consulted here — see the doc comment above
     // for the availability rationale tied to the interval-3/interval-4 ordering.
-    let attestations = extract_attestations_from_aggregated_payloads(
-        &store.latest_new_aggregated_payloads,
-        &store.attestation_data_by_root,
-        store.latest_finalized.slot,
-    );
-
-    // Run LMD-GHOST with 2/3 threshold to find safe target
-    let new_safe_target = get_fork_choice_head(store, root, &attestations, min_score);
+    let new_safe_target = store
+        .proto
+        .update_safe_target(&root, min_score as u64)
+        .unwrap_or(root);
     store.safe_target = new_safe_target;
 
     set_gauge_u64(
@@ -579,6 +609,7 @@ pub fn update_safe_target(store: &mut Store) {
 }
 
 pub fn accept_new_attestations(store: &mut Store) {
+    store.proto.promote_new_to_known();
     store
         .latest_known_attestations
         .extend(store.latest_new_attestations.drain());

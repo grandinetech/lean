@@ -6,7 +6,7 @@ use core::{
 
 use anyhow::{Error, anyhow};
 use eth_ssz::{Decode as _, DecodeError, Encode as _};
-use lean_multisig::XmssPublicKey;
+use leanvm::xmss::XmssPublicKey;
 use serde::{
     Deserialize, Serialize,
     de::{self, Visitor},

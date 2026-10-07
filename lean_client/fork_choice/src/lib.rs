@@ -1,5 +1,6 @@
 pub mod block_cache;
 pub mod handlers;
+pub mod proto;
 pub mod reaggregate;
 pub mod store;
 pub mod sync_state;

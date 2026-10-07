@@ -58,23 +58,85 @@ mod aggregation;
 const BACKFILL_ORPHAN_TRIGGER: usize = 5;
 const BACKFILL_RANGE_COUNT: u64 = 256;
 
+const RANGE_REQUEST_RETRY: Duration = Duration::from_secs(10);
+const MAX_FETCH_RETRIES: u32 = 10;
+const INITIAL_FETCH_BACKOFF: Duration = Duration::from_secs(1);
+const MAX_FETCH_BACKOFF: Duration = Duration::from_secs(30);
+
+struct FetchQueue {
+    entries: HashMap<H256, (u32, Instant)>,
+}
+
+impl FetchQueue {
+    fn new() -> Self {
+        Self {
+            entries: HashMap::new(),
+        }
+    }
+
+    fn add(&mut self, root: H256) {
+        self.entries.entry(root).or_insert((0, Instant::now()));
+    }
+
+    fn resolve(&mut self, root: &H256) {
+        self.entries.remove(root);
+    }
+
+    fn due(&mut self) -> Vec<H256> {
+        let now = Instant::now();
+        let mut ready = Vec::new();
+        self.entries.retain(|root, (attempts, next_attempt)| {
+            if *next_attempt > now {
+                return true;
+            }
+            if *attempts >= MAX_FETCH_RETRIES {
+                return false;
+            }
+            *attempts += 1;
+            let backoff = INITIAL_FETCH_BACKOFF
+                .saturating_mul(1u32 << (*attempts - 1).min(5))
+                .min(MAX_FETCH_BACKOFF);
+            *next_attempt = now + backoff;
+            ready.push(*root);
+            true
+        });
+        ready
+    }
+}
+
 fn dispatch_backfill(
     missing: Vec<H256>,
     local_head_slot: u64,
     orphan_count: usize,
+    range_watermark: &mut Option<(u64, Instant)>,
     outbound_p2p_sender: &mpsc::UnboundedSender<OutboundP2pRequest>,
 ) {
+    if !missing.is_empty() {
+        if let Err(e) = outbound_p2p_sender.send(OutboundP2pRequest::RequestBlocksByRoot(missing)) {
+            warn!("Failed to dispatch BlocksByRoot backfill: {}", e);
+        }
+    }
     if orphan_count >= BACKFILL_ORPHAN_TRIGGER {
+        let head_next = local_head_slot.saturating_add(1);
+        let start_slot = match *range_watermark {
+            Some((covered, requested_at)) if requested_at.elapsed() < RANGE_REQUEST_RETRY => {
+                if covered >= head_next.saturating_add(BACKFILL_RANGE_COUNT - 1) {
+                    return;
+                }
+                covered.saturating_add(1).max(head_next)
+            }
+            _ => head_next,
+        };
+        *range_watermark = Some((
+            start_slot.saturating_add(BACKFILL_RANGE_COUNT - 1),
+            Instant::now(),
+        ));
         let request = OutboundP2pRequest::RequestBlocksByRange {
-            start_slot: local_head_slot.saturating_add(1),
+            start_slot,
             count: BACKFILL_RANGE_COUNT,
         };
         if let Err(e) = outbound_p2p_sender.send(request) {
             warn!("Failed to dispatch BlocksByRange backfill: {}", e);
-        }
-    } else if !missing.is_empty() {
-        if let Err(e) = outbound_p2p_sender.send(OutboundP2pRequest::RequestBlocksByRoot(missing)) {
-            warn!("Failed to dispatch BlocksByRoot backfill: {}", e);
         }
     }
 }
@@ -1235,6 +1297,9 @@ async fn main() -> Result<()> {
         // rx error; the caller can retry on the next tick.
         let mut current_produce_block: Option<(Slot, tokio::task::JoinHandle<()>)> = None;
         let mut block_cache = BlockCache::new();
+        let mut range_watermark: Option<(u64, Instant)> = None;
+        let mut last_pruned_finalized = Slot(0);
+        let mut fetch_queue = FetchQueue::new();
         let mut sync_state = if has_aggregator {
             SyncState::Syncing
         } else {
@@ -1452,22 +1517,51 @@ async fn main() -> Result<()> {
                                     let _ = block_slot_tx.send(block_slot.0);
 
                                     {
-                                        let exec = cpu_verify_executor.clone();
-                                        let store_for_reagg = store.clone();
-                                        let signed_block_for_reagg = signed_block.clone();
-                                        let log_inv_rate = chain_log_inv_rate;
-                                        tokio::spawn(async move {
-                                            let job = exec.spawn(async move {
-                                                fork_choice::reaggregate::run_in_executor(
-                                                    store_for_reagg,
-                                                    signed_block_for_reagg,
-                                                    log_inv_rate,
-                                                );
+                                        let (head_slot_now, latest_justified_slot, wall_slot) = {
+                                            let s = store.read();
+                                            (
+                                                s.blocks.get(&s.head).map(|b| b.slot.0).unwrap_or(0),
+                                                s.latest_justified.slot.0,
+                                                s.time / INTERVALS_PER_SLOT,
+                                            )
+                                        };
+                                        let wall_head_lag = wall_slot.saturating_sub(head_slot_now);
+                                        let peer_head = *network_head_slot.lock();
+                                        let has_fresher_peer_near_wall = peer_head
+                                            .map(|h| {
+                                                h.saturating_add(BLOCK_PROPOSAL_MAX_HEAD_LAG_SLOTS)
+                                                    >= wall_slot
+                                            })
+                                            .unwrap_or(false);
+                                        if should_suppress_proposal_for_head_lag(
+                                            wall_head_lag,
+                                            BLOCK_PROPOSAL_MAX_HEAD_LAG_SLOTS,
+                                            latest_justified_slot,
+                                            has_fresher_peer_near_wall,
+                                        ) {
+                                            debug!(
+                                                wall_head_lag,
+                                                head_slot = head_slot_now,
+                                                "Skipping reaggregation: local head is behind wall clock"
+                                            );
+                                        } else {
+                                            let exec = cpu_verify_executor.clone();
+                                            let store_for_reagg = store.clone();
+                                            let signed_block_for_reagg = signed_block.clone();
+                                            let log_inv_rate = chain_log_inv_rate;
+                                            tokio::spawn(async move {
+                                                let job = exec.spawn(async move {
+                                                    fork_choice::reaggregate::run_in_executor(
+                                                        store_for_reagg,
+                                                        signed_block_for_reagg,
+                                                        log_inv_rate,
+                                                    );
+                                                });
+                                                if let Err(e) = job.await {
+                                                    warn!("reaggregate executor failed: {e}");
+                                                }
                                             });
-                                            if let Err(e) = job.await {
-                                                warn!("reaggregate executor failed: {e}");
-                                            }
-                                        });
+                                        }
                                     }
 
                                     {
@@ -1478,6 +1572,17 @@ async fn main() -> Result<()> {
                                             root: s.head,
                                             slot: s.blocks.get(&s.head).map(|b| b.slot).unwrap_or(Slot(0)),
                                         };
+                                    }
+
+                                    {
+                                        let finalized_slot = store.read().latest_finalized.slot;
+                                        if finalized_slot > last_pruned_finalized {
+                                            last_pruned_finalized = finalized_slot;
+                                            block_cache.prune_finalized(finalized_slot);
+                                            METRICS.get().map(|m| {
+                                                m.grandine_block_cache_size.set(block_cache.len() as i64)
+                                            });
+                                        }
                                     }
 
                                     // Bug 1 invariant: rebroadcast only on Apply (apply_verified_block
@@ -1562,7 +1667,12 @@ async fn main() -> Result<()> {
                                         .get()
                                         .map(|m| m.grandine_block_cache_size.set(block_cache.len() as i64));
 
-                                    let missing: Vec<H256> = store.write().pending_fetch_roots.drain().collect();
+                                    for root in store.write().pending_fetch_roots.drain() {
+                                        if !block_cache.contains(&root) {
+                                            fetch_queue.add(root);
+                                        }
+                                    }
+                                    let missing: Vec<H256> = fetch_queue.due();
                                     METRICS.get().map(|m| m.grandine_pending_fetch_roots.set(0));
                                     let local_head_slot = {
                                         let s = store.read();
@@ -1572,6 +1682,7 @@ async fn main() -> Result<()> {
                                         missing,
                                         local_head_slot,
                                         block_cache.orphan_count(),
+                                        &mut range_watermark,
                                         &outbound_p2p_sender,
                                     );
                                 }
@@ -1597,10 +1708,10 @@ async fn main() -> Result<()> {
                             let mut s = store.write();
                             for aggregation in aggregations {
                                 let data_root = aggregation.data.hash_tree_root();
-                                s.latest_new_aggregated_payloads
+                                s.attestation_data_by_root
                                     .entry(data_root)
-                                    .or_default()
-                                    .push(aggregation.proof.clone());
+                                    .or_insert_with(|| aggregation.data.clone());
+                                s.add_new_aggregated_payload(data_root, aggregation.proof.clone());
                                 to_publish.push(aggregation);
                             }
                             s.gossip_signatures.retain(|key, _| {
@@ -1653,7 +1764,17 @@ async fn main() -> Result<()> {
                             let block_root = signed_block.block.hash_tree_root();
                             let parent_root = signed_block.block.parent_root;
 
+                            fetch_queue.resolve(&block_root);
+
                             if store.read().blocks.contains_key(&block_root) {
+                                continue;
+                            }
+
+                            let parent_state = {
+                                let s = store.read();
+                                s.states.get(&parent_root).cloned()
+                            };
+                            if parent_state.is_none() && block_cache.contains(&block_root) {
                                 continue;
                             }
 
@@ -1703,16 +1824,17 @@ async fn main() -> Result<()> {
                                 }
                             }
 
-                            // Snapshot parent state for the executor. If absent, treat as
-                            // orphan and re-queue. Genesis (parent_root.is_zero()) is loaded
-                            // at startup, so a None here for non-zero parents means the
-                            // parent block hasn't been processed yet.
-                            let parent_state = {
-                                let s = store.read();
-                                s.states.get(&parent_root).cloned()
-                            };
-
                             let Some(parent_state) = parent_state else {
+                                let finalized_slot = { store.read().latest_finalized.slot };
+                                if block_slot <= finalized_slot {
+                                    debug!(
+                                        slot = block_slot.0,
+                                        finalized_slot = finalized_slot.0,
+                                        "Dropping orphan at or below finalized slot"
+                                    );
+                                    continue;
+                                }
+
                                 block_cache.add(
                                     signed_block.clone(),
                                     block_root,
@@ -1733,13 +1855,19 @@ async fn main() -> Result<()> {
                                     "Block cached (proactive) - parent not found, requesting via BlocksByRoot"
                                 );
 
-                                let missing: Vec<H256> = store.write().pending_fetch_roots.drain().collect();
+                                for root in store.write().pending_fetch_roots.drain() {
+                                    if !block_cache.contains(&root) {
+                                        fetch_queue.add(root);
+                                    }
+                                }
+                                let missing: Vec<H256> = fetch_queue.due();
                                 METRICS.get().map(|m| m.grandine_pending_fetch_roots.set(0));
                                 let head_slot = { let s = store.read(); s.blocks.get(&s.head).map(|b| b.slot.0).unwrap_or(0) };
                                 dispatch_backfill(
                                     missing,
                                     head_slot,
                                     block_cache.orphan_count(),
+                                    &mut range_watermark,
                                     &outbound_p2p_sender,
                                 );
 
@@ -1749,6 +1877,8 @@ async fn main() -> Result<()> {
 
                                 continue;
                             };
+
+                            block_cache.remove(&block_root);
 
                             // Phase 1: ship verify+state_transition to the cpu_normal executor.
                             // The chain task returns to the select! loop immediately and processes
@@ -1840,7 +1970,12 @@ async fn main() -> Result<()> {
                                 Err(e) => warn!("Error processing attestation: {}", e),
                             }
 
-                            let missing: Vec<H256> = store.write().pending_fetch_roots.drain().collect();
+                            for root in store.write().pending_fetch_roots.drain() {
+                                if !block_cache.contains(&root) {
+                                    fetch_queue.add(root);
+                                }
+                            }
+                            let missing: Vec<H256> = fetch_queue.due();
                             METRICS.get().map(|m| m.grandine_pending_fetch_roots.set(0));
                             let local_head_slot = {
                                 let s = store.read();
@@ -1850,6 +1985,7 @@ async fn main() -> Result<()> {
                                 missing,
                                 local_head_slot,
                                 block_cache.orphan_count(),
+                                &mut range_watermark,
                                 &outbound_p2p_sender,
                             );
                         }
@@ -1899,7 +2035,12 @@ async fn main() -> Result<()> {
                                 });
                             }
 
-                            let missing: Vec<H256> = store.write().pending_fetch_roots.drain().collect();
+                            for root in store.write().pending_fetch_roots.drain() {
+                                if !block_cache.contains(&root) {
+                                    fetch_queue.add(root);
+                                }
+                            }
+                            let missing: Vec<H256> = fetch_queue.due();
                             METRICS.get().map(|m| m.grandine_pending_fetch_roots.set(0));
                             let local_head_slot = {
                                 let s = store.read();
@@ -1909,6 +2050,7 @@ async fn main() -> Result<()> {
                                 missing,
                                 local_head_slot,
                                 block_cache.orphan_count(),
+                                &mut range_watermark,
                                 &outbound_p2p_sender,
                             );
 
@@ -2057,6 +2199,36 @@ async fn main() -> Result<()> {
                                 );
                                 let _ = sender.send(Err(anyhow::anyhow!(
                                     "not ready: justified checkpoint has not advanced from anchor value"
+                                )));
+                                continue;
+                            }
+
+                            let head_slot = store_read
+                                .blocks
+                                .get(&store_read.head)
+                                .map(|b| b.slot.0)
+                                .unwrap_or(0);
+                            let wall_head_lag = slot.0.saturating_sub(head_slot);
+                            let peer_head = *network_head_slot.lock();
+                            let has_fresher_peer_near_wall = peer_head
+                                .map(|h| {
+                                    h.saturating_add(BLOCK_PROPOSAL_MAX_HEAD_LAG_SLOTS) >= slot.0
+                                })
+                                .unwrap_or(false);
+                            if should_suppress_proposal_for_head_lag(
+                                wall_head_lag,
+                                BLOCK_PROPOSAL_MAX_HEAD_LAG_SLOTS,
+                                store_read.latest_justified.slot.0,
+                                has_fresher_peer_near_wall,
+                            ) {
+                                warn!(
+                                    slot = slot.0,
+                                    wall_head_lag,
+                                    head_slot,
+                                    "Skipping attestation production: local head is {wall_head_lag} wall-clock slots behind"
+                                );
+                                let _ = sender.send(Err(anyhow::anyhow!(
+                                    "attestation suppressed: head {wall_head_lag} slots behind wall"
                                 )));
                             } else {
                                 let result = store_read.produce_attestation_data(slot);

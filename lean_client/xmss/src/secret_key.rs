@@ -1,6 +1,6 @@
 use anyhow::{Error, Result, anyhow};
 use derive_more::Debug;
-use lean_multisig::{XmssSecretKey, xmss_key_gen, xmss_sign};
+use leanvm::xmss::{self, XmssSecretKey};
 use rand::CryptoRng;
 use ssz::H256;
 
@@ -16,11 +16,11 @@ pub struct SecretKey(XmssSecretKey);
 
 impl SecretKey {
     pub fn sign(&self, message: H256, epoch: u32) -> Result<Signature> {
-        if !self.0.activation_slots().contains(&epoch) {
+        if !self.0.epoch_range().contains(&epoch) {
             return Err(anyhow!("epoch {epoch} outside key activation window"));
         }
 
-        let sig = xmss_sign(&self.0, epoch, message.as_fixed_bytes())
+        let sig = xmss::sign(&self.0, message.as_fixed_bytes(), epoch)
             .map_err(|err| anyhow!("failed to sign message: {err:?}"))?;
         Ok(Signature::from_lean(sig))
     }
@@ -30,7 +30,18 @@ impl SecretKey {
         activation_epoch: u32,
         num_active_epochs: u32,
     ) -> (PublicKey, SecretKey) {
-        let (pk, sk) = xmss_key_gen(rng, activation_epoch as u64, num_active_epochs as u64)
+        let epoch_end = num_active_epochs
+            .checked_sub(1)
+            .and_then(|len| activation_epoch.checked_add(len))
+            .expect("activation range must be non-empty and fit within the 2^32 key lifetime");
+
+        // leanVM's `key_gen` draws its seed from leanVM's own (older) `rand`,
+        // whose traits the caller's rng does not implement; drawing the seed
+        // here and using the deterministic entry point sidesteps the mismatch.
+        let mut seed = [0u8; 32];
+        rng.fill_bytes(&mut seed);
+
+        let (sk, pk) = xmss::key_gen_from_seed(seed, activation_epoch, epoch_end)
             .expect("activation range must fit within the 2^32 key lifetime");
         (PublicKey::from_lean(pk), SecretKey(sk))
     }

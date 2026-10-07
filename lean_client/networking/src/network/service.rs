@@ -1789,36 +1789,21 @@ where
                                 tokio::spawn(async move {
                                     for block in blocks {
                                         let slot = block.block.slot.0;
-                                        match chain_sink.try_send(ChainMessage::ProcessBlock {
-                                            signed_block: block,
-                                            is_trusted: false,
-                                            should_gossip: false,
-                                            cached_post_state: None,
-                                        }) {
-                                            Ok(()) => {}
-                                            Err(tokio::sync::mpsc::error::TrySendError::Full(
-                                                _,
-                                            )) => {
-                                                warn!(
-                                                    slot,
-                                                    protocol = "blocks_by_range",
-                                                    "Dropping RPC chunk: chain channel full"
-                                                );
-                                                METRICS.get().map(|m| {
-                                                    m.lean_chain_message_drop_total
-                                                        .with_label_values(&["blocks_by_range"])
-                                                        .inc()
-                                                });
-                                            }
-                                            Err(
-                                                tokio::sync::mpsc::error::TrySendError::Closed(_),
-                                            ) => {
-                                                warn!(
-                                                    slot,
-                                                    "Failed to forward range block to chain: channel closed"
-                                                );
-                                                break;
-                                            }
+                                        if let Err(err) = chain_sink
+                                            .send(ChainMessage::ProcessBlock {
+                                                signed_block: block,
+                                                is_trusted: false,
+                                                should_gossip: false,
+                                                cached_post_state: None,
+                                            })
+                                            .await
+                                        {
+                                            warn!(
+                                                slot,
+                                                ?err,
+                                                "Failed to forward range block to chain"
+                                            );
+                                            break;
                                         }
                                     }
                                 });

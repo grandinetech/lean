@@ -489,12 +489,7 @@ pub fn on_aggregated_attestation(
         }
     }
 
-    // Store the verified proof in latest_new_aggregated_payloads, keyed by data_root
-    store
-        .latest_new_aggregated_payloads
-        .entry(data_root)
-        .or_default()
-        .push(proof);
+    store.add_new_aggregated_payload(data_root, proof);
 
     METRICS.get().map(|metrics| {
         metrics
@@ -765,6 +760,9 @@ pub fn apply_verified_block(
     );
 
     store.blocks.insert(block_root, block.clone());
+    store
+        .proto
+        .on_block(block.slot.0, block_root, block.parent_root);
     store.states.insert(block_root, Arc::clone(&new_state));
 
     METRICS.get().map(|m| {

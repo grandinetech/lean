@@ -157,6 +157,18 @@ impl BlockCache {
         results.into_iter().collect()
     }
 
+    pub fn prune_finalized(&mut self, finalized_slot: Slot) {
+        let stale: Vec<H256> = self
+            .blocks
+            .iter()
+            .filter(|(_, pending)| pending.slot <= finalized_slot)
+            .map(|(root, _)| *root)
+            .collect();
+        for root in stale {
+            self.remove(&root);
+        }
+    }
+
     pub fn clear(&mut self) {
         self.blocks.clear();
         self.insertion_order.clear();

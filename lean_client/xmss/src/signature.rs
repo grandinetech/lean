@@ -7,7 +7,7 @@ use core::{
 use crate::public_key::PublicKey;
 use anyhow::{Error, Result, anyhow};
 use eth_ssz::{Decode as _, DecodeError, Encode as _};
-use lean_multisig::{XmssSignature, xmss_verify};
+use leanvm::xmss::{self, XmssSignature};
 use metrics::METRICS;
 use serde::de::{self, Visitor};
 use serde::{Deserialize, Serialize};
@@ -35,11 +35,11 @@ impl Signature {
     }
 
     pub fn verify(&self, public_key: &PublicKey, epoch: u32, message: H256) -> Result<()> {
-        match xmss_verify(
+        match xmss::verify(
             &public_key.as_lean(),
-            epoch,
             message.as_fixed_bytes(),
             &self.as_lean(),
+            epoch,
         ) {
             Ok(()) => {
                 METRICS.get().map(|metrics| {
