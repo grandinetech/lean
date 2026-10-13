@@ -20,3 +20,7 @@ typenum = { workspace = true }
 xmss = { workspace = true }
 zeroize = { workspace = true }
 rayon = { workspace = true }
+
+[dev-dependencies]
+rand = { workspace = true }
+rand_chacha = { workspace = true }

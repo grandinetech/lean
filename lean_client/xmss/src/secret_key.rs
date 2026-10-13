@@ -15,6 +15,11 @@ use crate::{PublicKey, Signature};
 pub struct SecretKey(XmssSecretKey);
 
 impl SecretKey {
+    /// Returns the public key this secret key signs for.
+    pub fn public_key(&self) -> PublicKey {
+        PublicKey::from_lean(self.0.public_key())
+    }
+
     pub fn sign(&self, message: H256, epoch: u32) -> Result<Signature> {
         if !self.0.activation_slots().contains(&epoch) {
             return Err(anyhow!("epoch {epoch} outside key activation window"));
