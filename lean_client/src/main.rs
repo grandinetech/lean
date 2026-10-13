@@ -723,7 +723,7 @@ async fn main() -> Result<()> {
                     if keys_path.exists() {
                         match ValidatorService::new_with_keys_and_aggregator(
                             config.clone(),
-                            num_validators,
+                            &anchor_state.validators,
                             keys_path,
                             cpu_normal_executor.clone(),
                             cpu_verify_executor.clone(),

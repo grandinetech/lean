@@ -43,3 +43,24 @@ fn test_is_assigned() {
     assert!(!config.is_assigned(1));
     assert!(!config.is_assigned(3));
 }
+
+#[test]
+fn test_load_from_file_rejects_single_key_entry() {
+    let path = std::env::temp_dir().join(format!(
+        "annotated_validators_single_key_{}.yaml",
+        std::process::id()
+    ));
+    std::fs::write(
+        &path,
+        "test_0:\n  - index: 0\n    pubkey_hex: \"0x00\"\n    privkey_file: validator_0_sk.ssz\n",
+    )
+    .unwrap();
+
+    let result = ValidatorConfig::load_from_file(&path, "test_0");
+    std::fs::remove_file(&path).unwrap();
+    let err = result.expect_err("single-key entry").to_string();
+    assert!(
+        err.contains("names neither an attester nor a proposer key"),
+        "error {err:?}"
+    );
+}

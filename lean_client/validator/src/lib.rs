@@ -181,8 +181,6 @@ pub fn snapshot_aggregation_inputs(store: &Store) -> Option<AggregationSnapshot>
 /// Entry in an annotated_validators.yaml file.
 /// Each validator index has two entries: one for the attester key and one for the proposer key,
 /// distinguished by the filename containing "attester" or "proposer".
-/// Single-key format (e.g. validator_N_sk.ssz with neither keyword) is also accepted and
-/// uses the same file for both attestation and proposal.
 #[derive(Debug, Clone, Deserialize)]
 pub struct AnnotatedValidatorEntry {
     pub index: u64,
@@ -219,9 +217,12 @@ impl ValidatorConfig {
             } else if entry.privkey_file.contains("proposer") {
                 slot.1 = Some(entry.privkey_file.clone());
             } else {
-                // Single-key format: same file for both keys.
-                slot.0 = Some(entry.privkey_file.clone());
-                slot.1 = Some(entry.privkey_file.clone());
+                // One key for both roles would reuse XMSS one-time state; leanSpec rejects it.
+                bail!(
+                    "privkey_file {} for validator {} names neither an attester nor a proposer key",
+                    entry.privkey_file,
+                    entry.index
+                );
             }
         }
 
@@ -372,7 +373,7 @@ impl ValidatorService {
 
     pub fn new_with_keys(
         config: ValidatorConfig,
-        num_validators: u64,
+        validators: &Validators,
         keys_dir: impl AsRef<Path>,
         cpu_normal_executor: Arc<DedicatedExecutor>,
         cpu_verify_executor: Arc<DedicatedExecutor>,
@@ -380,7 +381,7 @@ impl ValidatorService {
     ) -> Result<Self, Box<dyn std::error::Error>> {
         Self::new_with_keys_and_aggregator(
             config,
-            num_validators,
+            validators,
             keys_dir,
             cpu_normal_executor,
             cpu_verify_executor,
@@ -389,9 +390,11 @@ impl ValidatorService {
         )
     }
 
+    /// Loads each assigned validator's keys and checks them against `validators`, the
+    /// anchor state's registry; see `KeyManager::check_keys`.
     pub fn new_with_keys_and_aggregator(
         config: ValidatorConfig,
-        num_validators: u64,
+        validators: &Validators,
         keys_dir: impl AsRef<Path>,
         cpu_normal_executor: Arc<DedicatedExecutor>,
         cpu_verify_executor: Arc<DedicatedExecutor>,
@@ -411,7 +414,15 @@ impl ValidatorService {
             } else {
                 key_manager.load_keys(idx)?;
             }
+            let validator = validators.get(idx).map_err(|_| {
+                format!(
+                    "Validator {idx} is not in the registry of {} validators",
+                    validators.len_u64()
+                )
+            })?;
+            key_manager.check_keys(idx, validator)?;
         }
+        let num_validators = validators.len_u64();
 
         info!(
             node_id = %config.node_id,
